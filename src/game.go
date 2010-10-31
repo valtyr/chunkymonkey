@@ -28,15 +28,15 @@ type Game struct {
 func (game *Game) Login(conn net.Conn) {
 	username, err := ReadHandshake(conn)
 	if err != nil {
-		log.Stderr("ReadHandshake: ", err.String())
+		log.Print("ReadHandshake: ", err.String())
 		return
 	}
-	log.Stderr("Client ", conn.RemoteAddr(), " connected as ", username)
+	log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
 	WriteHandshake(conn, "-")
 
 	_, _, err = ReadLogin(conn)
 	if err != nil {
-		log.Stderr("ReadLogin: ", err.String())
+		log.Print("ReadLogin: ", err.String())
 		return
 	}
 	WriteLogin(conn)
@@ -49,12 +49,12 @@ func (game *Game) Serve(addr string) {
 	if e != nil {
 		log.Exit("Listen: ", e.String())
 	}
-	log.Stderr("Listening on ", addr)
+	log.Print("Listening on ", addr)
 
 	for {
 		conn, e2 := listener.Accept()
 		if e2 != nil {
-			log.Stderr("Accept: ", e2.String())
+			log.Print("Accept: ", e2.String())
 			continue
 		}
 

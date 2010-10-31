@@ -43,7 +43,7 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-	log.Stderrf("PacketChatMessage message=%s", message)
+	log.Printf("PacketChatMessage message=%s", message)
 
 	player.game.Enqueue(func(game *Game) { game.SendChatMessage(message) })
 }
@@ -52,7 +52,7 @@ func (player *Player) PacketFlying(flying bool) {
 }
 
 func (player *Player) PacketPlayerPosition(position *XYZ, stance float64, flying bool) {
-	log.Stderrf("PacketPlayerPosition position=(%.2f, %.2f, %.2f) stance=%.2f flying=%v",
+	log.Printf("PacketPlayerPosition position=(%.2f, %.2f, %.2f) stance=%.2f flying=%v",
 		position.x, position.y, position.z, stance, flying)
 
 	player.game.Enqueue(func(game *Game) {
@@ -61,7 +61,7 @@ func (player *Player) PacketPlayerPosition(position *XYZ, stance float64, flying
 			position.z - player.position.z}
 		distance := math.Sqrt(delta.x*delta.x + delta.y*delta.y + delta.z*delta.z)
 		if distance > 10 {
-			log.Stderrf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
+			log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
 				position.x, position.y, position.z)
 			return
 		}
@@ -86,25 +86,25 @@ func (player *Player) PacketPlayerLook(orientation *Orientation, flying bool) {
 }
 
 func (player *Player) PacketPlayerDigging(status byte, x int32, y byte, z int32, face byte) {
-	log.Stderrf("PacketPlayerDigging status=%d x=%d y=%d z=%d face=%d",
+	log.Printf("PacketPlayerDigging status=%d x=%d y=%d z=%d face=%d",
 		status, x, y, z, face)
 }
 
 func (player *Player) PacketPlayerBlockPlacement(blockItemID int16, x int32, y byte, z int32, direction byte) {
-	log.Stderrf("PacketPlayerBlockPlacement blockItemID=%d x=%d y=%d z=%d direction=%d",
+	log.Printf("PacketPlayerBlockPlacement blockItemID=%d x=%d y=%d z=%d direction=%d",
 		blockItemID, x, y, z, direction)
 }
 
 func (player *Player) PacketHoldingChange(blockItemID int16) {
-	log.Stderrf("PacketHoldingChange blockItemID=%d", blockItemID)
+	log.Printf("PacketHoldingChange blockItemID=%d", blockItemID)
 }
 
 func (player *Player) PacketArmAnimation(forward bool) {
-	log.Stderrf("PacketArmAnimation forward=%v", forward)
+	log.Printf("PacketArmAnimation forward=%v", forward)
 }
 
 func (player *Player) PacketDisconnect(reason string) {
-	log.Stderrf("PacketDisconnect reason=%s", reason)
+	log.Printf("PacketDisconnect reason=%s", reason)
 	player.game.Enqueue(func(game *Game) {
 		game.RemovePlayer(player)
 		close(player.txQueue)
@@ -117,7 +117,7 @@ func (player *Player) ReceiveLoop() {
 		err := ReadPacket(player.conn, player)
 		if err != nil {
 			if err != os.EOF {
-				log.Stderr("ReceiveLoop failed: ", err.String())
+				log.Print("ReceiveLoop failed: ", err.String())
 			}
 			return
 		}
@@ -134,7 +134,7 @@ func (player *Player) TransmitLoop() {
 		_, err := player.conn.Write(bs)
 		if err != nil {
 			if err != os.EOF {
-				log.Stderr("TransmitLoop failed: ", err.String())
+				log.Print("TransmitLoop failed: ", err.String())
 			}
 			return
 		}
