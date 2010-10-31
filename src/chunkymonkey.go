@@ -5,7 +5,7 @@ import (
 	"path"
 	"flag"
 	"log"
-	"nbt"
+	"nbt/nbt"
 )
 
 // The player's starting position is loaded from level.dat for now

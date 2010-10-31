@@ -8,7 +8,7 @@ import (
 	"os"
 	"log"
 	"path"
-	"nbt"
+	"nbt/nbt"
 )
 
 const (
