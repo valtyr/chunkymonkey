@@ -14,7 +14,7 @@ const (
     PixelsPerBlock = 32
 
     // Currently only this protocol version is supported
-    protocolVersion = 2
+    protocolVersion = 4
 
     // Packet type IDs
     packetIDKeepAlive            = 0x0
