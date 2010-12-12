@@ -14,7 +14,7 @@ const (
     PixelsPerBlock = 32
 
     // Currently only this protocol version is supported
-    protocolVersion = 4
+    protocolVersion = 6
 
     // Packet type IDs
     packetIDKeepAlive            = 0x0
@@ -118,20 +118,20 @@ func WriteHandshake(writer io.Writer, reply string) (err os.Error) {
 }
 
 func ReadLogin(reader io.Reader) (username, password string, err os.Error) {
-    var packet struct {
+    var packetStart struct {
         PacketID byte
         Version  int32
     }
 
-    err = binary.Read(reader, binary.BigEndian, &packet)
+    err = binary.Read(reader, binary.BigEndian, &packetStart)
     if err != nil {
         return
     }
-    if packet.PacketID != packetIDLogin {
-        panic(fmt.Sprintf("ReadLogin: invalid packet ID %#x", packet.PacketID))
+    if packetStart.PacketID != packetIDLogin {
+        panic(fmt.Sprintf("ReadLogin: invalid packet ID %#x", packetStart.PacketID))
     }
-    if packet.Version != protocolVersion {
-        panic(fmt.Sprintf("ReadLogin: unsupported protocol version %#x", packet.Version))
+    if packetStart.Version != protocolVersion {
+        panic(fmt.Sprintf("ReadLogin: unsupported protocol version %#x", packetStart.Version))
     }
 
     username, err = ReadString(reader)
@@ -140,12 +140,56 @@ func ReadLogin(reader io.Reader) (username, password string, err os.Error) {
     }
 
     password, err = ReadString(reader)
+    if err != nil {
+        return
+    }
+
+    var packetEnd struct {
+        MapSeed   int64
+        Dimension byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packetEnd)
+
     return
 }
 
 func WriteLogin(writer io.Writer) (err os.Error) {
-    _, err = writer.Write([]byte{packetIDLogin, 0, 0, 0, 0, 0, 0, 0, 0})
-    return err
+    var packetStart = struct {
+        PacketID byte
+        EntityID int32
+    }{
+        packetIDLogin,
+        // TODO proper entity ID as a parameter
+        0,
+    }
+    err = binary.Write(writer, binary.BigEndian, &packetStart)
+    if err != nil {
+        return
+    }
+
+    // TODO unknown string
+    err = WriteString(writer, "")
+    if err != nil {
+        return
+    }
+
+    // TODO unknown string
+    err = WriteString(writer, "")
+    if err != nil {
+        return
+    }
+
+    var packetEnd = struct {
+        MapSeed   int64
+        Dimension byte
+    }{
+        // TODO proper map seed as a parameter
+        0,
+        // TODO proper dimension as a parameter
+        0,
+    }
+    return binary.Write(writer, binary.BigEndian, &packetEnd)
 }
 
 func WriteSpawnPosition(writer io.Writer, position *XYZ) os.Error {

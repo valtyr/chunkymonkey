@@ -20,6 +20,8 @@ type Player struct {
     txQueue     chan []byte
 }
 
+const StanceNormal = 1.62
+
 func StartPlayer(game *Game, conn net.Conn, name string) {
     player := &Player{
         game:        game,
@@ -172,6 +174,6 @@ func (player *Player) postLogin() {
     player.sendChunks(buf)
     WritePlayerInventory(buf)
     WritePlayerPositionLook(buf, &player.position, &player.orientation,
-        0, false)
+        player.position.y + StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
 }
