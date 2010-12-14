@@ -174,6 +174,6 @@ func (player *Player) postLogin() {
     player.sendChunks(buf)
     WritePlayerInventory(buf)
     WritePlayerPositionLook(buf, &player.position, &player.orientation,
-        player.position.y + StanceNormal, false)
+        player.position.y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
 }
