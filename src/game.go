@@ -61,15 +61,40 @@ func (game *Game) Serve(addr string) {
     }
 }
 
+// Add a player to the game
+// This function sends spawn messages to all players in range.  It also spawns
+// all existing players so the new player can see them.
 func (game *Game) AddPlayer(player *Player) {
     game.entityManager.AddEntity(&player.Entity)
     game.players[player.EntityID] = player
     game.SendChatMessage(fmt.Sprintf("%s has joined", player.name))
-    game.chunkManager.AddPlayer(player)
+
+    // Spawn new player for existing players
+    buf := &bytes.Buffer{}
+    WriteNamedEntitySpawn(buf, player.EntityID, player.name, &player.position, &player.orientation, player.currentItem)
+    game.MulticastRadiusPacket(buf.Bytes(), player)
+
+    // Spawn existing players for new player
+    buf = &bytes.Buffer{}
+    for existing := range game.PlayersInPlayerRadius(player) {
+        if existing == player {
+            continue
+        }
+
+        WriteNamedEntitySpawn(buf, existing.EntityID, existing.name, &existing.position, &existing.orientation, existing.currentItem)
+    }
+    player.TransmitPacket(buf.Bytes())
 }
 
+// Remove a player from the game
+// This function sends destroy messages so the other players see the player
+// disappear.
 func (game *Game) RemovePlayer(player *Player) {
-    game.chunkManager.RemovePlayer(player)
+    // Destroy player for other players
+    buf := &bytes.Buffer{}
+    WriteDestroyEntity(buf, player.EntityID)
+    game.MulticastRadiusPacket(buf.Bytes(), player)
+
     game.players[player.EntityID] = nil, false
     game.entityManager.RemoveEntity(&player.Entity)
     game.SendChatMessage(fmt.Sprintf("%s has left", player.name))
@@ -131,4 +156,42 @@ func NewGame(chunkManager *ChunkManager) (game *Game) {
     go game.mainLoop()
     go game.timer()
     return
+}
+
+// Return a channel to iterate over all players within a chunk's radius
+func (game *Game) PlayersInRadius(x ChunkCoord, z ChunkCoord) (c chan *Player) {
+    // We return any player whose chunk position is within these bounds:
+    minX := x - ChunkRadius
+    minZ := z - ChunkRadius
+    maxX := x + ChunkRadius + 1
+    maxZ := x + ChunkRadius + 1
+
+    c = make(chan *Player)
+    go func() {
+        for _, player := range game.players {
+            pX, pZ := AbsoluteToChunkCoords(player.position.x, player.position.z)
+            if pX >= minX && pX <= maxX && pZ >= minZ && pZ <= maxZ {
+                c <- player
+            }
+        }
+        close(c)
+    }()
+    return
+}
+
+// Return a channel to iterate over all players within a chunk's radius
+func (game *Game) PlayersInPlayerRadius(player *Player) chan *Player {
+    x, z := AbsoluteToChunkCoords(player.position.x, player.position.z)
+    return game.PlayersInRadius(x, z)
+}
+
+// Transmit a packet to all players in radius (except the player itself)
+func (game *Game) MulticastRadiusPacket(packet []byte, sender *Player) {
+    for receiver := range game.PlayersInPlayerRadius(sender) {
+        if receiver == sender {
+            continue
+        }
+
+        receiver.TransmitPacket(packet)
+    }
 }
