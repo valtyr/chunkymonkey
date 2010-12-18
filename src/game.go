@@ -160,8 +160,6 @@ func (game *Game) PlayersInRadius(loc ChunkXZ) (c chan *Player) {
     c = make(chan *Player)
     go func() {
         for _, player := range game.players {
-            // FIXME something else might concurrently write to player position
-            // here, so there's potential for failure.
             p := player.position.ToChunkXZ()
             if p.x >= minX && p.x <= maxX && p.z >= minZ && p.z <= maxZ {
                 c <- player
