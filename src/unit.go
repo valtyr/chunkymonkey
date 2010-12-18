@@ -30,6 +30,6 @@ type ChunkCoord int32
 type AngleRadians float32
 
 // Convert an (x, z) block coordinate pair to chunk coordinates
-func AbsoluteToChunkCoords(blockX AbsoluteCoord, blockZ AbsoluteCoord) (chunkX ChunkCoord, chunkZ ChunkCoord) {
-    return ChunkCoord(blockX / ChunkSizeX), ChunkCoord(blockZ / ChunkSizeZ)
+func AbsoluteToChunkCoords(absX AbsoluteCoord, absZ AbsoluteCoord) (chunkX ChunkCoord, chunkZ ChunkCoord) {
+    return ChunkCoord(absX / ChunkSizeX), ChunkCoord(absZ / ChunkSizeZ)
 }
