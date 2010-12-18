@@ -110,9 +110,9 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
                 return
             }
 
-            if !chunk.SetBlock(&subLoc, BlockAir, 0) {
+            if !chunk.SetBlock(&subLoc, BlockIDAir, 0) {
                 packet := &bytes.Buffer{}
-                WriteBlockChange(packet, blockLoc, BlockAir, 0)
+                WriteBlockChange(packet, blockLoc, BlockIDAir, 0)
                 game.MulticastChunkPacket(packet.Bytes(), chunkLoc)
             }
         })

@@ -14,7 +14,7 @@ const (
 type BlockID byte
 
 const (
-    BlockAir                 = BlockID(0)
+    BlockIDAir               = BlockID(0)
     BlockStone               = BlockID(1)
     BlockGrass               = BlockID(2)
     BlockDirt                = BlockID(3)
