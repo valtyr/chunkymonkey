@@ -169,6 +169,8 @@ func (game *Game) PlayersInRadius(x ChunkCoord, z ChunkCoord) (c chan *Player) {
     c = make(chan *Player)
     go func() {
         for _, player := range game.players {
+            // FIXME something else might concurrently write to player position
+            // here, so there's potential for failure.
             pX, pZ := AbsoluteToChunkCoords(player.position.x, player.position.z)
             if pX >= minX && pX <= maxX && pZ >= minZ && pZ <= maxZ {
                 c <- player
