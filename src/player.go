@@ -35,12 +35,12 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
     game.Enqueue(func(game *Game) {
         game.AddPlayer(player)
         WriteLogin(conn, player.Entity.EntityID)
-        player.Start()
+        player.start()
         player.postLogin()
     })
 }
 
-func (player *Player) Start() {
+func (player *Player) start() {
     go player.ReceiveLoop()
     go player.TransmitLoop()
 }
