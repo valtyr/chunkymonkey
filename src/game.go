@@ -39,7 +39,6 @@ func (game *Game) Login(conn net.Conn) {
         log.Print("ReadLogin: ", err.String())
         return
     }
-    WriteLogin(conn)
 
     StartPlayer(game, conn, username)
 }

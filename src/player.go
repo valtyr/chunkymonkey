@@ -32,13 +32,17 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
         txQueue:     make(chan []byte, 128),
     }
 
-    go player.ReceiveLoop()
-    go player.TransmitLoop()
-
     game.Enqueue(func(game *Game) {
         game.AddPlayer(player)
+        WriteLogin(conn, player.Entity.EntityID)
+        player.Start()
         player.postLogin()
     })
+}
+
+func (player *Player) Start() {
+    go player.ReceiveLoop()
+    go player.TransmitLoop()
 }
 
 func (player *Player) PacketKeepAlive() {

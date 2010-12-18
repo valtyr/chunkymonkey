@@ -154,14 +154,13 @@ func ReadLogin(reader io.Reader) (username, password string, err os.Error) {
     return
 }
 
-func WriteLogin(writer io.Writer) (err os.Error) {
+func WriteLogin(writer io.Writer, entityID EntityID) (err os.Error) {
     var packetStart = struct {
         PacketID byte
         EntityID int32
     }{
         packetIDLogin,
-        // TODO proper entity ID as a parameter
-        0,
+        int32(entityID),
     }
     err = binary.Write(writer, binary.BigEndian, &packetStart)
     if err != nil {
