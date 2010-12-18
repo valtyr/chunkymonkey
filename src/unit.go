@@ -29,7 +29,7 @@ type ChunkCoord int32
 // An angle in radians
 type AngleRadians float32
 
-// Convert an (x, z) block coordinate pair to chunk coordinates
+// Convert an (x, z) absolute coordinate pair to chunk coordinates
 func AbsoluteToChunkCoords(absX AbsoluteCoord, absZ AbsoluteCoord) (chunkX ChunkCoord, chunkZ ChunkCoord) {
     return ChunkCoord(absX / ChunkSizeX), ChunkCoord(absZ / ChunkSizeZ)
 }
