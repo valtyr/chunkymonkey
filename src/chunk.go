@@ -20,6 +20,43 @@ type Chunk struct {
     HeightMap  []byte
 }
 
+func blockIndex(x, y, z SubChunkCoord) (index int32, shift byte, err bool) {
+    if x < 0 || y < 0 || z < 0 || x >= ChunkSizeX || y >= ChunkSizeY || z >= ChunkSizeZ {
+        err = true
+        index = 0
+    } else {
+        err = false
+
+        index = int32(y + (z * ChunkSizeY) + (x * ChunkSizeY * ChunkSizeZ))
+
+        if index%2 == 0 {
+            // Low nibble
+            shift = 0
+        } else {
+            // High nibble
+            shift = 4
+        }
+    }
+    return
+}
+
+// Sets a block and its data. Returns true if the block was not changed.
+func (chunk *Chunk) SetBlock(x, y, z SubChunkCoord, blockType BlockID, blockMetadata byte) (err bool) {
+    index, shift, err := blockIndex(x, y, z)
+    if err {
+        return
+    }
+
+    chunk.Blocks[index] = byte(blockType)
+
+    mask := byte(0x0f) << shift
+    twoBlockData := chunk.BlockData[index/2]
+    twoBlockData = ((blockMetadata << shift) & mask) | (twoBlockData & ^mask)
+    chunk.BlockData[index/2] = twoBlockData
+
+    return
+}
+
 // Load a chunk from its NBT representation
 func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
     level, err := nbt.Read(reader)

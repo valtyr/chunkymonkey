@@ -185,6 +185,13 @@ func (game *Game) PlayersInPlayerRadius(player *Player) chan *Player {
     return game.PlayersInRadius(x, z)
 }
 
+// Transmit a packet to all players in chunk radius
+func (game *Game) MulticastChunkPacket(packet []byte, x, z ChunkCoord) {
+    for receiver := range game.PlayersInRadius(x, z) {
+        receiver.TransmitPacket(packet)
+    }
+}
+
 // Transmit a packet to all players in radius (except the player itself)
 func (game *Game) MulticastRadiusPacket(packet []byte, sender *Player) {
     for receiver := range game.PlayersInPlayerRadius(sender) {

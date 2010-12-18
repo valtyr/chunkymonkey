@@ -26,15 +26,29 @@ type BlockCoord int32
 // Coordinate of a chunk in the world (block / 16)
 type ChunkCoord int32
 
+// Coordinate of a block within a chunk
+type SubChunkCoord int32
+
 // An angle in radians
 type AngleRadians float32
 
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
-func AbsoluteToChunkCoords(absX AbsoluteCoord, absZ AbsoluteCoord) (chunkX ChunkCoord, chunkZ ChunkCoord) {
+func AbsoluteToChunkCoords(absX, absZ AbsoluteCoord) (chunkX, chunkZ ChunkCoord) {
     return ChunkCoord(absX / ChunkSizeX), ChunkCoord(absZ / ChunkSizeZ)
 }
 
-// Convert an (x, z) block coordinate pair to chunk coordinates
-func BlockToChunkCoords(blockX AbsoluteCoord, blockZ AbsoluteCoord) (chunkX ChunkCoord, chunkZ ChunkCoord) {
-    return ChunkCoord(blockX / ChunkSizeX), ChunkCoord(blockZ / ChunkSizeZ)
+// Convert an (x, z) block coordinate pair to chunk coordinates and the
+// coordinates of the block within the chunk
+func BlockToChunkCoords(blockX, blockZ BlockCoord) (chunkX, chunkZ ChunkCoord, subX, subZ SubChunkCoord) {
+    chunkX = ChunkCoord(blockX / ChunkSizeX)
+    subX = SubChunkCoord(blockX % ChunkSizeX)
+    if subX < 0 {
+        subX += ChunkSizeX
+    }
+    chunkZ = ChunkCoord(blockZ / ChunkSizeZ)
+    subZ = SubChunkCoord(blockZ % ChunkSizeZ)
+    if subZ < 0 {
+        subZ += ChunkSizeZ
+    }
+    return
 }

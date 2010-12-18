@@ -38,6 +38,7 @@ const (
     packetIDEntityTeleport       = 0x22
     packetIDPreChunk             = 0x32
     packetIDMapChunk             = 0x33
+    packetIDBlockChange          = 0x35
     packetIDDisconnect           = 0xff
 
     // Inventory types
@@ -385,6 +386,26 @@ func WriteMapChunk(writer io.Writer, chunk *Chunk) (err os.Error) {
         return
     }
     err = binary.Write(writer, binary.BigEndian, bs)
+    return
+}
+
+func WriteBlockChange(writer io.Writer, x, y, z BlockCoord, blockType BlockID, blockMetaData byte) (err os.Error) {
+    var packet = struct {
+        PacketID      byte
+        X             int32
+        Y             byte
+        Z             int32
+        BlockType     byte
+        BlockMetadata byte
+    }{
+        packetIDBlockChange,
+        int32(x),
+        byte(y),
+        int32(z),
+        byte(blockType),
+        byte(blockMetaData),
+    }
+    err = binary.Write(writer, binary.BigEndian, &packet)
     return
 }
 

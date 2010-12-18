@@ -94,9 +94,29 @@ func (player *Player) PacketPlayerLook(orientation *Orientation, flying bool) {
     })
 }
 
-func (player *Player) PacketPlayerDigging(status DigStatus, x BlockCoord, y BlockCoord, z BlockCoord, face Face) {
-    log.Printf("PacketPlayerDigging status=%d x=%d y=%d z=%d face=%d",
-        status, x, y, z, face)
+func (player *Player) PacketPlayerDigging(status DigStatus, x, y, z BlockCoord, face Face) {
+    // TODO validate that the player is actually somewhere near the block
+
+    if status == DigBlockBroke {
+        // TODO validate that the player has dug long enough to stop speed
+        // hacking (based on block type and tool used - non-trivial).
+
+        player.game.Enqueue(func(game *Game) {
+            chunkX, chunkZ, subX, subZ := BlockToChunkCoords(x, z)
+
+            chunk := game.chunkManager.Get(chunkX, chunkZ)
+
+            if chunk == nil {
+                return
+            }
+
+            if !chunk.SetBlock(subX, SubChunkCoord(y), subZ, BlockAir, 0) {
+                packet := &bytes.Buffer{}
+                WriteBlockChange(packet, x, y, z, BlockAir, 0)
+                game.MulticastChunkPacket(packet.Bytes(), chunkX, chunkZ)
+            }
+        })
+    }
 }
 
 func (player *Player) PacketPlayerBlockPlacement(blockItemID int16, x BlockCoord, y BlockCoord, z BlockCoord, direction Face) {
@@ -109,7 +129,6 @@ func (player *Player) PacketHoldingChange(blockItemID int16) {
 }
 
 func (player *Player) PacketArmAnimation(forward bool) {
-    log.Printf("PacketArmAnimation forward=%v", forward)
 }
 
 func (player *Player) PacketDisconnect(reason string) {
