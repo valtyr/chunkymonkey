@@ -24,8 +24,10 @@ http://golang.org/doc/install.html#fetch
 Building
 ========
 
-$ cd nbt && make && cd ..
-$ make
+Godag is used to build chunkymonkey, see:
+http://code.google.com/p/godag/wiki/Install
+
+$ ./build.sh
 
 Running
 =======
