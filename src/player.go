@@ -94,7 +94,7 @@ func (player *Player) PacketPlayerLook(orientation *Orientation, flying bool) {
     })
 }
 
-func (player *Player) PacketPlayerDigging(status byte, x BlockCoord, y BlockCoord, z BlockCoord, face Face) {
+func (player *Player) PacketPlayerDigging(status DigStatus, x BlockCoord, y BlockCoord, z BlockCoord, face Face) {
     log.Printf("PacketPlayerDigging status=%d x=%d y=%d z=%d face=%d",
         status, x, y, z, face)
 }

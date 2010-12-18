@@ -53,7 +53,7 @@ type PacketHandler interface {
     PacketFlying(flying bool)
     PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, flying bool)
     PacketPlayerLook(orientation *Orientation, flying bool)
-    PacketPlayerDigging(status byte, x BlockCoord, y BlockCoord, z BlockCoord, face Face)
+    PacketPlayerDigging(status DigStatus, x BlockCoord, y BlockCoord, z BlockCoord, face Face)
     PacketPlayerBlockPlacement(blockItemID int16, x BlockCoord, y BlockCoord, z BlockCoord, direction Face)
     PacketHoldingChange(blockItemID int16)
     PacketArmAnimation(forward bool)
@@ -574,7 +574,7 @@ func ReadPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
     }
 
     handler.PacketPlayerDigging(
-        packet.Status,
+        DigStatus(packet.Status),
         BlockCoord(packet.X),
         BlockCoord(packet.Y),
         BlockCoord(packet.Z),
