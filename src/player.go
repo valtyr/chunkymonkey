@@ -61,6 +61,12 @@ func (player *Player) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, 
     log.Printf("PacketPlayerPosition position=(%.2f, %.2f, %.2f) stance=%.2f flying=%v",
         position.x, position.y, position.z, stance, flying)
 
+    // TODO: Should keep track of when players enter/leave their mutual radius
+    // of "awareness". I.e a client should receive a RemoveEntity packet when
+    // the player walks out of range, and no longer receive WriteEntityTeleport
+    // packets for them. The converse should happen when players come in range
+    // of each other.
+
     player.game.Enqueue(func(game *Game) {
         var delta = XYZ{position.x - player.position.x,
             position.y - player.position.y,
