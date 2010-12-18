@@ -54,8 +54,8 @@ type PacketHandler interface {
     PacketFlying(flying bool)
     PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, flying bool)
     PacketPlayerLook(orientation *Orientation, flying bool)
-    PacketPlayerDigging(status DigStatus, x BlockCoord, y BlockCoord, z BlockCoord, face Face)
-    PacketPlayerBlockPlacement(blockItemID int16, x BlockCoord, y BlockCoord, z BlockCoord, direction Face)
+    PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
+    PacketPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face)
     PacketHoldingChange(blockItemID int16)
     PacketArmAnimation(forward bool)
     PacketDisconnect(reason string)
@@ -332,7 +332,7 @@ func WriteEntityTeleport(writer io.Writer, entityID EntityID, position *XYZ, ori
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func WritePreChunk(writer io.Writer, x ChunkCoord, z ChunkCoord, willSend bool) os.Error {
+func WritePreChunk(writer io.Writer, chunkLoc *ChunkXZ, willSend bool) os.Error {
     var packet = struct {
         PacketID byte
         X        int32
@@ -340,8 +340,8 @@ func WritePreChunk(writer io.Writer, x ChunkCoord, z ChunkCoord, willSend bool) 
         WillSend byte
     }{
         packetIDPreChunk,
-        int32(x),
-        int32(z),
+        int32(chunkLoc.x),
+        int32(chunkLoc.z),
         boolToByte(willSend),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
@@ -372,9 +372,9 @@ func WriteMapChunk(writer io.Writer, chunk *Chunk) (err os.Error) {
         CompressedLength int32
     }{
         packetIDMapChunk,
-        int32(chunk.X * ChunkSizeX),
+        int32(chunk.XZ.x * ChunkSizeX),
         0,
-        int32(chunk.Z * ChunkSizeZ),
+        int32(chunk.XZ.z * ChunkSizeZ),
         ChunkSizeX - 1,
         ChunkSizeY - 1,
         ChunkSizeZ - 1,
@@ -389,7 +389,7 @@ func WriteMapChunk(writer io.Writer, chunk *Chunk) (err os.Error) {
     return
 }
 
-func WriteBlockChange(writer io.Writer, x, y, z BlockCoord, blockType BlockID, blockMetaData byte) (err os.Error) {
+func WriteBlockChange(writer io.Writer, blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) (err os.Error) {
     var packet = struct {
         PacketID      byte
         X             int32
@@ -399,9 +399,9 @@ func WriteBlockChange(writer io.Writer, x, y, z BlockCoord, blockType BlockID, b
         BlockMetadata byte
     }{
         packetIDBlockChange,
-        int32(x),
-        byte(y),
-        int32(z),
+        int32(blockLoc.x),
+        byte(blockLoc.y),
+        int32(blockLoc.z),
         byte(blockType),
         byte(blockMetaData),
     }
@@ -596,9 +596,11 @@ func ReadPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
 
     handler.PacketPlayerDigging(
         DigStatus(packet.Status),
-        BlockCoord(packet.X),
-        BlockCoord(packet.Y),
-        BlockCoord(packet.Z),
+        &BlockXYZ{
+            BlockCoord(packet.X),
+            BlockCoord(packet.Y),
+            BlockCoord(packet.Z),
+        },
         Face(packet.Face))
     return
 }
@@ -618,9 +620,11 @@ func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
     }
 
     handler.PacketPlayerBlockPlacement(packet.ID,
-        BlockCoord(packet.X),
-        BlockCoord(packet.Y),
-        BlockCoord(packet.Z),
+        &BlockXYZ{
+            BlockCoord(packet.X),
+            BlockCoord(packet.Y),
+            BlockCoord(packet.Z),
+        },
         Face(packet.Direction))
     return
 }

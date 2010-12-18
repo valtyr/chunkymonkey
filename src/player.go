@@ -94,7 +94,7 @@ func (player *Player) PacketPlayerLook(orientation *Orientation, flying bool) {
     })
 }
 
-func (player *Player) PacketPlayerDigging(status DigStatus, x, y, z BlockCoord, face Face) {
+func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
     // TODO validate that the player is actually somewhere near the block
 
     if status == DigBlockBroke {
@@ -102,26 +102,26 @@ func (player *Player) PacketPlayerDigging(status DigStatus, x, y, z BlockCoord, 
         // hacking (based on block type and tool used - non-trivial).
 
         player.game.Enqueue(func(game *Game) {
-            chunkX, chunkZ, subX, subZ := BlockToChunkCoords(x, z)
+            chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
-            chunk := game.chunkManager.Get(chunkX, chunkZ)
+            chunk := game.chunkManager.Get(chunkLoc)
 
             if chunk == nil {
                 return
             }
 
-            if !chunk.SetBlock(subX, SubChunkCoord(y), subZ, BlockAir, 0) {
+            if !chunk.SetBlock(&subLoc, BlockAir, 0) {
                 packet := &bytes.Buffer{}
-                WriteBlockChange(packet, x, y, z, BlockAir, 0)
-                game.MulticastChunkPacket(packet.Bytes(), chunkX, chunkZ)
+                WriteBlockChange(packet, blockLoc, BlockAir, 0)
+                game.MulticastChunkPacket(packet.Bytes(), chunkLoc)
             }
         })
     }
 }
 
-func (player *Player) PacketPlayerBlockPlacement(blockItemID int16, x BlockCoord, y BlockCoord, z BlockCoord, direction Face) {
-    log.Printf("PacketPlayerBlockPlacement blockItemID=%d x=%d y=%d z=%d direction=%d",
-        blockItemID, x, y, z, direction)
+func (player *Player) PacketPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face) {
+    log.Printf("PacketPlayerBlockPlacement blockItemID=%d blockLoc=%v direction=%d",
+        blockItemID, *blockLoc, direction)
 }
 
 func (player *Player) PacketHoldingChange(blockItemID int16) {
@@ -170,20 +170,14 @@ func (player *Player) TransmitLoop() {
 }
 
 func (player *Player) sendChunks(writer io.Writer) {
-    playerX := ChunkCoord(player.position.x / ChunkSizeX)
-    playerZ := ChunkCoord(player.position.z / ChunkSizeZ)
+    playerChunkLoc := player.position.ToChunkXZ()
 
-    for z := playerZ - ChunkRadius; z <= playerZ+ChunkRadius; z++ {
-        for x := playerX - ChunkRadius; x <= playerX+ChunkRadius; x++ {
-            WritePreChunk(writer, x, z, true)
-        }
+    for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
+        WritePreChunk(writer, &chunk.XZ, true)
     }
 
-    for z := playerZ - ChunkRadius; z <= playerZ+ChunkRadius; z++ {
-        for x := playerX - ChunkRadius; x <= playerX+ChunkRadius; x++ {
-            chunk := player.game.chunkManager.Get(x, z)
-            WriteMapChunk(writer, chunk)
-        }
+    for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
+        WriteMapChunk(writer, chunk)
     }
 }
 

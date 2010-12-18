@@ -8,15 +8,6 @@ import (
     "fmt"
 )
 
-type XYZ struct {
-    x, y, z AbsoluteCoord
-}
-
-type Orientation struct {
-    rotation AngleRadians
-    pitch    AngleRadians
-}
-
 type Game struct {
     chunkManager  *ChunkManager
     mainQueue     chan func(*Game)
@@ -159,20 +150,20 @@ func NewGame(chunkManager *ChunkManager) (game *Game) {
 }
 
 // Return a channel to iterate over all players within a chunk's radius
-func (game *Game) PlayersInRadius(x ChunkCoord, z ChunkCoord) (c chan *Player) {
+func (game *Game) PlayersInRadius(loc ChunkXZ) (c chan *Player) {
     // We return any player whose chunk position is within these bounds:
-    minX := x - ChunkRadius
-    minZ := z - ChunkRadius
-    maxX := x + ChunkRadius + 1
-    maxZ := x + ChunkRadius + 1
+    minX := loc.x - ChunkRadius
+    minZ := loc.z - ChunkRadius
+    maxX := loc.x + ChunkRadius + 1
+    maxZ := loc.x + ChunkRadius + 1
 
     c = make(chan *Player)
     go func() {
         for _, player := range game.players {
             // FIXME something else might concurrently write to player position
             // here, so there's potential for failure.
-            pX, pZ := AbsoluteToChunkCoords(player.position.x, player.position.z)
-            if pX >= minX && pX <= maxX && pZ >= minZ && pZ <= maxZ {
+            p := player.position.ToChunkXZ()
+            if p.x >= minX && p.x <= maxX && p.z >= minZ && p.z <= maxZ {
                 c <- player
             }
         }
@@ -183,13 +174,13 @@ func (game *Game) PlayersInRadius(x ChunkCoord, z ChunkCoord) (c chan *Player) {
 
 // Return a channel to iterate over all players within a chunk's radius
 func (game *Game) PlayersInPlayerRadius(player *Player) chan *Player {
-    x, z := AbsoluteToChunkCoords(player.position.x, player.position.z)
-    return game.PlayersInRadius(x, z)
+    pos := player.position.ToChunkXZ()
+    return game.PlayersInRadius(pos)
 }
 
 // Transmit a packet to all players in chunk radius
-func (game *Game) MulticastChunkPacket(packet []byte, x, z ChunkCoord) {
-    for receiver := range game.PlayersInRadius(x, z) {
+func (game *Game) MulticastChunkPacket(packet []byte, loc ChunkXZ) {
+    for receiver := range game.PlayersInRadius(loc) {
         receiver.TransmitPacket(packet)
     }
 }

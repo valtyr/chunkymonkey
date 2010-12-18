@@ -32,23 +32,52 @@ type SubChunkCoord int32
 // An angle in radians
 type AngleRadians float32
 
+type XYZ struct {
+    x, y, z AbsoluteCoord
+}
+
+type Orientation struct {
+    rotation AngleRadians
+    pitch    AngleRadians
+}
+
+type ChunkXZ struct {
+    x, z ChunkCoord
+}
+
+type BlockXYZ struct {
+    x, y, z BlockCoord
+}
+
+type SubChunkXYZ struct {
+    x, y, z SubChunkCoord
+}
+
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
-func AbsoluteToChunkCoords(absX, absZ AbsoluteCoord) (chunkX, chunkZ ChunkCoord) {
-    return ChunkCoord(absX / ChunkSizeX), ChunkCoord(absZ / ChunkSizeZ)
+func (abs XYZ) ToChunkXZ() (chunkXz ChunkXZ) {
+    return ChunkXZ{
+        ChunkCoord(abs.x / ChunkSizeX),
+        ChunkCoord(abs.z / ChunkSizeZ),
+    }
 }
 
 // Convert an (x, z) block coordinate pair to chunk coordinates and the
 // coordinates of the block within the chunk
-func BlockToChunkCoords(blockX, blockZ BlockCoord) (chunkX, chunkZ ChunkCoord, subX, subZ SubChunkCoord) {
-    chunkX = ChunkCoord(blockX / ChunkSizeX)
-    subX = SubChunkCoord(blockX % ChunkSizeX)
+func (blockLoc BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) {
+    chunkLoc = ChunkXZ{
+        ChunkCoord(blockLoc.x / ChunkSizeX),
+        ChunkCoord(blockLoc.z / ChunkSizeZ),
+    }
+
+    subX := SubChunkCoord(blockLoc.x % ChunkSizeX)
     if subX < 0 {
         subX += ChunkSizeX
     }
-    chunkZ = ChunkCoord(blockZ / ChunkSizeZ)
-    subZ = SubChunkCoord(blockZ % ChunkSizeZ)
+    subZ := SubChunkCoord(blockLoc.z % ChunkSizeZ)
     if subZ < 0 {
         subZ += ChunkSizeZ
     }
+
+    subLoc = SubChunkXYZ{subX, SubChunkCoord(blockLoc.y), subZ}
     return
 }

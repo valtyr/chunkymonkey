@@ -12,7 +12,7 @@ import (
 
 // A chunk is slice of the world map
 type Chunk struct {
-    X, Z       ChunkCoord
+    XZ         ChunkXZ
     Blocks     []byte
     BlockData  []byte
     SkyLight   []byte
@@ -20,14 +20,14 @@ type Chunk struct {
     HeightMap  []byte
 }
 
-func blockIndex(x, y, z SubChunkCoord) (index int32, shift byte, err bool) {
-    if x < 0 || y < 0 || z < 0 || x >= ChunkSizeX || y >= ChunkSizeY || z >= ChunkSizeZ {
+func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, err bool) {
+    if subLoc.x < 0 || subLoc.y < 0 || subLoc.z < 0 || subLoc.x >= ChunkSizeX || subLoc.y >= ChunkSizeY || subLoc.z >= ChunkSizeZ {
         err = true
         index = 0
     } else {
         err = false
 
-        index = int32(y + (z * ChunkSizeY) + (x * ChunkSizeY * ChunkSizeZ))
+        index = int32(subLoc.y + (subLoc.z * ChunkSizeY) + (subLoc.x * ChunkSizeY * ChunkSizeZ))
 
         if index%2 == 0 {
             // Low nibble
@@ -41,8 +41,8 @@ func blockIndex(x, y, z SubChunkCoord) (index int32, shift byte, err bool) {
 }
 
 // Sets a block and its data. Returns true if the block was not changed.
-func (chunk *Chunk) SetBlock(x, y, z SubChunkCoord, blockType BlockID, blockMetadata byte) (err bool) {
-    index, shift, err := blockIndex(x, y, z)
+func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetadata byte) (err bool) {
+    index, shift, err := blockIndex(subLoc)
     if err {
         return
     }
@@ -65,8 +65,10 @@ func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
     }
 
     chunk = &Chunk{
-        X:          ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
-        Z:          ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
+        XZ: ChunkXZ{
+            x:  ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
+            z:  ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
+        },
         Blocks:     level.Lookup("/Level/Blocks").(*nbt.ByteArray).Value,
         BlockData:  level.Lookup("/Level/Data").(*nbt.ByteArray).Value,
         SkyLight:   level.Lookup("/Level/SkyLight").(*nbt.ByteArray).Value,
@@ -112,20 +114,21 @@ func base36Encode(n int32) (s string) {
     return
 }
 
-func (mgr *ChunkManager) chunkPath(x ChunkCoord, z ChunkCoord) string {
-    return path.Join(mgr.worldPath, base36Encode(int32(x&63)), base36Encode(int32(z&63)),
-        "c."+base36Encode(int32(x))+"."+base36Encode(int32(z))+".dat")
+func (mgr *ChunkManager) chunkPath(loc ChunkXZ) string {
+    return path.Join(mgr.worldPath, base36Encode(int32(loc.z&63)), base36Encode(int32(loc.z&63)),
+        "c."+base36Encode(int32(loc.x))+"."+base36Encode(int32(loc.z))+".dat")
 }
 
 // Get a chunk at given coordinates
-func (mgr *ChunkManager) Get(x ChunkCoord, z ChunkCoord) (chunk *Chunk) {
-    key := uint64(x)<<32 | uint64(uint32(z))
+func (mgr *ChunkManager) Get(loc ChunkXZ) (chunk *Chunk) {
+    // FIXME this function looks subject to race conditions with itself
+    key := uint64(loc.x)<<32 | uint64(uint32(loc.z))
     chunk, ok := mgr.chunks[key]
     if ok {
         return
     }
 
-    file, err := os.Open(mgr.chunkPath(x, z), os.O_RDONLY, 0)
+    file, err := os.Open(mgr.chunkPath(loc), os.O_RDONLY, 0)
     if err != nil {
         log.Exit("ChunkManager.Get: ", err.String())
     }
@@ -141,12 +144,14 @@ func (mgr *ChunkManager) Get(x ChunkCoord, z ChunkCoord) (chunk *Chunk) {
 }
 
 // Return a channel to iterate over all chunks within a chunk's radius
-func (mgr *ChunkManager) ChunksInRadius(chunkX ChunkCoord, chunkZ ChunkCoord) (c chan *Chunk) {
+func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan *Chunk) {
     c = make(chan *Chunk)
     go func() {
-        for z := chunkZ - ChunkRadius; z <= chunkZ+ChunkRadius; z++ {
-            for x := chunkX - ChunkRadius; x <= chunkX+ChunkRadius; x++ {
-                c <- mgr.Get(x, z)
+        curChunkXZ := ChunkXZ{0, 0}
+        for z := loc.z - ChunkRadius; z <= loc.z+ChunkRadius; z++ {
+            for x := loc.x - ChunkRadius; x <= loc.x+ChunkRadius; x++ {
+                curChunkXZ.x, curChunkXZ.z = x, z
+                c <- mgr.Get(curChunkXZ)
             }
         }
         close(c)
@@ -156,6 +161,6 @@ func (mgr *ChunkManager) ChunksInRadius(chunkX ChunkCoord, chunkZ ChunkCoord) (c
 
 // Return a channel to iterate over all chunks within a player's radius
 func (mgr *ChunkManager) ChunksInPlayerRadius(player *Player) chan *Chunk {
-    playerX, playerZ := AbsoluteToChunkCoords(player.position.x, player.position.z)
-    return mgr.ChunksInRadius(playerX, playerZ)
+    playerChunkXZ := player.position.ToChunkXZ()
+    return mgr.ChunksInRadius(&playerChunkXZ)
 }
