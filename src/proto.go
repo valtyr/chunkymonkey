@@ -51,10 +51,10 @@ type PacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
     PacketFlying(flying bool)
-    PacketPlayerPosition(position *XYZ, stance float64, flying bool)
+    PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, flying bool)
     PacketPlayerLook(orientation *Orientation, flying bool)
-    PacketPlayerDigging(status byte, x int32, y byte, z int32, face byte)
-    PacketPlayerBlockPlacement(blockItemID int16, x int32, y byte, z int32, direction byte)
+    PacketPlayerDigging(status byte, x BlockCoord, y BlockCoord, z BlockCoord, face Face)
+    PacketPlayerBlockPlacement(blockItemID int16, x BlockCoord, y BlockCoord, z BlockCoord, direction Face)
     PacketHoldingChange(blockItemID int16)
     PacketArmAnimation(forward bool)
     PacketDisconnect(reason string)
@@ -263,16 +263,16 @@ func WritePlayerPosition(writer io.Writer, position *XYZ, stance float64, flying
         Flying   byte
     }{
         packetIDPlayerPosition,
-        position.x,
-        position.y,
-        stance,
-        position.z,
+        float64(position.x),
+        float64(position.y),
+        float64(stance),
+        float64(position.z),
         boolToByte(flying),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func WritePlayerPositionLook(writer io.Writer, position *XYZ, orientation *Orientation, stance float64, flying bool) os.Error {
+func WritePlayerPositionLook(writer io.Writer, position *XYZ, orientation *Orientation, stance AbsoluteCoord, flying bool) os.Error {
     var packet = struct {
         PacketID byte
         X        float64
@@ -284,12 +284,12 @@ func WritePlayerPositionLook(writer io.Writer, position *XYZ, orientation *Orien
         Flying   byte
     }{
         packetIDPlayerPositionLook,
-        position.x,
-        position.y,
-        stance,
-        position.z,
-        orientation.rotation,
-        orientation.pitch,
+        float64(position.x),
+        float64(position.y),
+        float64(stance),
+        float64(position.z),
+        float32(orientation.rotation),
+        float32(orientation.pitch),
         boolToByte(flying),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
@@ -500,7 +500,12 @@ func ReadPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) 
         return
     }
 
-    handler.PacketPlayerPosition(&XYZ{packet.X, packet.Y, packet.Z}, packet.Stance, byteToBool(packet.Flying))
+    handler.PacketPlayerPosition(&XYZ{
+        AbsoluteCoord(packet.X),
+        AbsoluteCoord(packet.Y),
+        AbsoluteCoord(packet.Z),
+    },
+        AbsoluteCoord(packet.Stance), byteToBool(packet.Flying))
     return
 }
 
@@ -516,7 +521,11 @@ func ReadPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketPlayerLook(&Orientation{packet.Rotation, packet.Pitch}, byteToBool(packet.Flying))
+    handler.PacketPlayerLook(&Orientation{
+        AngleRadians(packet.Rotation),
+        AngleRadians(packet.Pitch),
+    },
+        byteToBool(packet.Flying))
     return
 }
 
@@ -536,8 +545,17 @@ func ReadPlayerPositionLook(reader io.Reader, handler PacketHandler) (err os.Err
         return
     }
 
-    handler.PacketPlayerPosition(&XYZ{packet.X, packet.Y, packet.Z}, packet.Stance, byteToBool(packet.Flying))
-    handler.PacketPlayerLook(&Orientation{packet.Rotation, packet.Pitch}, byteToBool(packet.Flying))
+    handler.PacketPlayerPosition(&XYZ{
+        AbsoluteCoord(packet.X),
+        AbsoluteCoord(packet.Y),
+        AbsoluteCoord(packet.Z),
+    },
+        AbsoluteCoord(packet.Stance), byteToBool(packet.Flying))
+    handler.PacketPlayerLook(&Orientation{
+        AngleRadians(packet.Rotation),
+        AngleRadians(packet.Pitch),
+    },
+        byteToBool(packet.Flying))
     return
 }
 
@@ -555,7 +573,12 @@ func ReadPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketPlayerDigging(packet.Status, packet.X, packet.Y, packet.Z, packet.Face)
+    handler.PacketPlayerDigging(
+        packet.Status,
+        BlockCoord(packet.X),
+        BlockCoord(packet.Y),
+        BlockCoord(packet.Z),
+        Face(packet.Face))
     return
 }
 
@@ -573,7 +596,11 @@ func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
         return
     }
 
-    handler.PacketPlayerBlockPlacement(packet.ID, packet.X, packet.Y, packet.Z, packet.Direction)
+    handler.PacketPlayerBlockPlacement(packet.ID,
+        BlockCoord(packet.X),
+        BlockCoord(packet.Y),
+        BlockCoord(packet.Z),
+        Face(packet.Direction))
     return
 }
 

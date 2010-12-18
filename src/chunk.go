@@ -11,18 +11,6 @@ import (
     "nbt/nbt"
 )
 
-const (
-    // Chunk coordinates can be converted to block coordinates
-    ChunkSizeX = 16
-    ChunkSizeY = 128
-    ChunkSizeZ = 16
-
-    // The area within which a client receives updates
-    ChunkRadius = 10
-)
-
-type ChunkCoord int32
-
 // A chunk is slice of the world map
 type Chunk struct {
     X, Z       ChunkCoord
@@ -32,11 +20,6 @@ type Chunk struct {
     BlockLight []byte
     HeightMap  []byte
     players    map[EntityID]*Player
-}
-
-// Convert an (x, z) block coordinate pair to chunk coordinates
-func BlockToChunkCoords(blockX float64, blockZ float64) (chunkX ChunkCoord, chunkZ ChunkCoord) {
-    return ChunkCoord(blockX / ChunkSizeX), ChunkCoord(blockZ / ChunkSizeZ)
 }
 
 // Load a chunk from its NBT representation
@@ -139,7 +122,7 @@ func (mgr *ChunkManager) ChunksInRadius(chunkX ChunkCoord, chunkZ ChunkCoord) (c
 
 // Return a channel to iterate over all chunks within a player's radius
 func (mgr *ChunkManager) ChunksInPlayerRadius(player *Player) chan *Chunk {
-    playerX, playerZ := BlockToChunkCoords(player.position.x, player.position.z)
+    playerX, playerZ := AbsoluteToChunkCoords(player.position.x, player.position.z)
     return mgr.ChunksInRadius(playerX, playerZ)
 }
 
@@ -163,7 +146,7 @@ func (mgr *ChunkManager) PlayersInRadius(x ChunkCoord, z ChunkCoord) (c chan *Pl
 
 // Return a channel to iterate over all players within a chunk's radius
 func (mgr *ChunkManager) PlayersInPlayerRadius(player *Player) chan *Player {
-    x, z := BlockToChunkCoords(player.position.x, player.position.z)
+    x, z := AbsoluteToChunkCoords(player.position.x, player.position.z)
     return mgr.PlayersInRadius(x, z)
 }
 

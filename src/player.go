@@ -57,7 +57,7 @@ func (player *Player) PacketChatMessage(message string) {
 func (player *Player) PacketFlying(flying bool) {
 }
 
-func (player *Player) PacketPlayerPosition(position *XYZ, stance float64, flying bool) {
+func (player *Player) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, flying bool) {
     log.Printf("PacketPlayerPosition position=(%.2f, %.2f, %.2f) stance=%.2f flying=%v",
         position.x, position.y, position.z, stance, flying)
 
@@ -65,7 +65,7 @@ func (player *Player) PacketPlayerPosition(position *XYZ, stance float64, flying
         var delta = XYZ{position.x - player.position.x,
             position.y - player.position.y,
             position.z - player.position.z}
-        distance := math.Sqrt(delta.x*delta.x + delta.y*delta.y + delta.z*delta.z)
+        distance := math.Sqrt(float64(delta.x*delta.x + delta.y*delta.y + delta.z*delta.z))
         if distance > 10 {
             log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
                 position.x, position.y, position.z)
@@ -91,12 +91,12 @@ func (player *Player) PacketPlayerLook(orientation *Orientation, flying bool) {
     })
 }
 
-func (player *Player) PacketPlayerDigging(status byte, x int32, y byte, z int32, face byte) {
+func (player *Player) PacketPlayerDigging(status byte, x BlockCoord, y BlockCoord, z BlockCoord, face Face) {
     log.Printf("PacketPlayerDigging status=%d x=%d y=%d z=%d face=%d",
         status, x, y, z, face)
 }
 
-func (player *Player) PacketPlayerBlockPlacement(blockItemID int16, x int32, y byte, z int32, direction byte) {
+func (player *Player) PacketPlayerBlockPlacement(blockItemID int16, x BlockCoord, y BlockCoord, z BlockCoord, direction Face) {
     log.Printf("PacketPlayerBlockPlacement blockItemID=%d x=%d y=%d z=%d direction=%d",
         blockItemID, x, y, z, direction)
 }

@@ -25,9 +25,9 @@ func loadStartPosition(worldPath string) {
 
     pos := level.Lookup("/Data/Player/Pos")
     StartPosition = XYZ{
-        pos.(*nbt.List).Value[0].(*nbt.Double).Value,
-        pos.(*nbt.List).Value[1].(*nbt.Double).Value,
-        pos.(*nbt.List).Value[2].(*nbt.Double).Value,
+        AbsoluteCoord(pos.(*nbt.List).Value[0].(*nbt.Double).Value),
+        AbsoluteCoord(pos.(*nbt.List).Value[1].(*nbt.Double).Value),
+        AbsoluteCoord(pos.(*nbt.List).Value[2].(*nbt.Double).Value),
     }
 }
 

@@ -9,12 +9,12 @@ import (
 )
 
 type XYZ struct {
-    x, y, z float64
+    x, y, z AbsoluteCoord
 }
 
 type Orientation struct {
-    rotation float32
-    pitch    float32
+    rotation AngleRadians
+    pitch    AngleRadians
 }
 
 type Game struct {
