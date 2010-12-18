@@ -115,7 +115,7 @@ func base36Encode(n int32) (s string) {
 }
 
 func (mgr *ChunkManager) chunkPath(loc ChunkXZ) string {
-    return path.Join(mgr.worldPath, base36Encode(int32(loc.z&63)), base36Encode(int32(loc.z&63)),
+    return path.Join(mgr.worldPath, base36Encode(int32(loc.x&63)), base36Encode(int32(loc.z&63)),
         "c."+base36Encode(int32(loc.x))+"."+base36Encode(int32(loc.z))+".dat")
 }
 
