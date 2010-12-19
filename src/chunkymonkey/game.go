@@ -188,6 +188,7 @@ func NewGame(worldPath string) (game *Game) {
         players:      make(map[EntityID]*Player),
         pickupItems:  make(map[EntityID]*PickupItem),
     }
+    chunkManager.game = game
 
     go game.mainLoop()
     go game.timer()

@@ -56,6 +56,15 @@ type ChunkXZ struct {
     x, z ChunkCoord
 }
 
+// Convert a position within a chunk to a block position within the world
+func (chunkLoc *ChunkXZ) ToBlockXY(subLoc *SubChunkXYZ) *BlockXYZ {
+    return &BlockXYZ{
+        BlockCoord(chunkLoc.x)*ChunkSizeX + BlockCoord(subLoc.x),
+        BlockCoord(subLoc.y),
+        BlockCoord(chunkLoc.z)*ChunkSizeZ + BlockCoord(subLoc.z),
+    }
+}
+
 type BlockXYZ struct {
     x, y, z BlockCoord
 }

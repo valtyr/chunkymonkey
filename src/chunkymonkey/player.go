@@ -117,18 +117,11 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
 
             if !chunk.SetBlock(&subLoc, BlockIDAir, 0) {
                 // Experimental code - we spawn earth blocks if earth/grass was dug out
-                packet := &bytes.Buffer{}
-
                 if blockType == BlockIDDirt || blockType == BlockIDGrass {
                     // TODO model the item's fall to the ground. Do we need
                     // update clients as to its final position?
                     NewPickupItem(game, ItemID(BlockIDDirt), 1, blockLoc.ToXYZInteger())
                 }
-
-                // Tell players that the block was destroyed
-                WriteBlockChange(packet, blockLoc, BlockIDAir, 0)
-
-                game.MulticastChunkPacket(packet.Bytes(), chunkLoc)
             }
         })
     }

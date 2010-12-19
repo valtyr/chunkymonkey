@@ -3,6 +3,7 @@
 package chunkymonkey
 
 import (
+    "bytes"
     "io"
     "os"
     "log"
@@ -12,6 +13,7 @@ import (
 
 // A chunk is slice of the world map
 type Chunk struct {
+    mgr        *ChunkManager
     XZ         ChunkXZ
     Blocks     []byte
     BlockData  []byte
@@ -54,6 +56,11 @@ func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetada
     twoBlockData = ((blockMetadata << shift) & mask) | (twoBlockData & ^mask)
     chunk.BlockData[index/2] = twoBlockData
 
+    // Tell players that the block was destroyed
+    packet := &bytes.Buffer{}
+    WriteBlockChange(packet, chunk.XZ.ToBlockXY(subLoc), BlockIDAir, 0)
+    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), chunk.XZ)
+
     return
 }
 
@@ -92,6 +99,7 @@ func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
 
 // ChunkManager contains all chunks and can look them up
 type ChunkManager struct {
+    game      *Game
     worldPath string
     chunks    map[uint64]*Chunk
 }
@@ -146,6 +154,7 @@ func (mgr *ChunkManager) Get(loc ChunkXZ) (chunk *Chunk) {
     }
 
     chunk, err = loadChunk(file)
+    chunk.mgr = mgr
     file.Close()
     if err != nil {
         log.Exit("ChunkManager.loadChunk: ", err.String())
