@@ -61,23 +61,23 @@ func (abs XYZ) ToChunkXZ() (chunkXz ChunkXZ) {
     }
 }
 
+func coordDivMod(num, denom int32) (div, mod int32) {
+    div = num / denom
+    mod = num % denom
+    if mod < 0 {
+        mod += denom
+        div -= 1
+    }
+    return
+}
+
 // Convert an (x, z) block coordinate pair to chunk coordinates and the
 // coordinates of the block within the chunk
 func (blockLoc BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) {
-    chunkLoc = ChunkXZ{
-        ChunkCoord(blockLoc.x / ChunkSizeX),
-        ChunkCoord(blockLoc.z / ChunkSizeZ),
-    }
+    chunkX, subX := coordDivMod(int32(blockLoc.x), ChunkSizeX)
+    chunkZ, subZ := coordDivMod(int32(blockLoc.z), ChunkSizeZ)
 
-    subX := SubChunkCoord(blockLoc.x % ChunkSizeX)
-    if subX < 0 {
-        subX += ChunkSizeX
-    }
-    subZ := SubChunkCoord(blockLoc.z % ChunkSizeZ)
-    if subZ < 0 {
-        subZ += ChunkSizeZ
-    }
-
-    subLoc = SubChunkXYZ{subX, SubChunkCoord(blockLoc.y), subZ}
+    chunkLoc = ChunkXZ{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
+    subLoc = SubChunkXYZ{SubChunkCoord(subX), SubChunkCoord(blockLoc.y), SubChunkCoord(subZ)}
     return
 }
