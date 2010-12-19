@@ -1,4 +1,4 @@
-package main
+package chunkymonkey
 
 const (
     // Chunk coordinates can be converted to block coordinates

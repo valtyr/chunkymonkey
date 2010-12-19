@@ -1,12 +1,38 @@
-package main
+package chunkymonkey
 
 import (
     "bytes"
-    "log"
-    "net"
-    "time"
     "fmt"
+    "log"
+    "nbt/nbt"
+    "net"
+    "os"
+    "path"
+    "time"
 )
+
+// The player's starting position is loaded from level.dat for now
+var StartPosition XYZ
+
+func loadStartPosition(worldPath string) {
+    file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
+    if err != nil {
+        log.Exit("loadStartPosition: ", err.String())
+    }
+
+    level, err := nbt.Read(file)
+    file.Close()
+    if err != nil {
+        log.Exit("loadStartPosition: ", err.String())
+    }
+
+    pos := level.Lookup("/Data/Player/Pos")
+    StartPosition = XYZ{
+        AbsoluteCoord(pos.(*nbt.List).Value[0].(*nbt.Double).Value),
+        AbsoluteCoord(pos.(*nbt.List).Value[1].(*nbt.Double).Value),
+        AbsoluteCoord(pos.(*nbt.List).Value[2].(*nbt.Double).Value),
+    }
+}
 
 type Game struct {
     chunkManager  *ChunkManager
@@ -137,7 +163,10 @@ func (game *Game) tick() {
     game.sendTimeUpdate()
 }
 
-func NewGame(chunkManager *ChunkManager) (game *Game) {
+func NewGame(worldPath string) (game *Game) {
+    chunkManager := NewChunkManager(worldPath)
+    loadStartPosition(worldPath)
+
     game = &Game{
         chunkManager: chunkManager,
         mainQueue:    make(chan func(*Game), 256),

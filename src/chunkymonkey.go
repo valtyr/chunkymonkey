@@ -1,35 +1,10 @@
 package main
 
 import (
-    "os"
-    "path"
+    "chunkymonkey/chunkymonkey"
     "flag"
-    "log"
-    "nbt/nbt"
+    "os"
 )
-
-// The player's starting position is loaded from level.dat for now
-var StartPosition XYZ
-
-func loadStartPosition(worldPath string) {
-    file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
-    if err != nil {
-        log.Exit("loadStartPosition: ", err.String())
-    }
-
-    level, err := nbt.Read(file)
-    file.Close()
-    if err != nil {
-        log.Exit("loadStartPosition: ", err.String())
-    }
-
-    pos := level.Lookup("/Data/Player/Pos")
-    StartPosition = XYZ{
-        AbsoluteCoord(pos.(*nbt.List).Value[0].(*nbt.Double).Value),
-        AbsoluteCoord(pos.(*nbt.List).Value[1].(*nbt.Double).Value),
-        AbsoluteCoord(pos.(*nbt.List).Value[2].(*nbt.Double).Value),
-    }
-}
 
 func usage() {
     os.Stderr.WriteString("usage: " + os.Args[0] + " <world>\n")
@@ -47,8 +22,6 @@ func main() {
 
     worldPath := flag.Arg(0)
 
-    loadStartPosition(worldPath)
-    chunkManager := NewChunkManager(worldPath)
-    game := NewGame(chunkManager)
+    game := chunkymonkey.NewGame(worldPath)
     game.Serve(":25565")
 }

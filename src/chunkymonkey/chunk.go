@@ -1,6 +1,6 @@
 // Map chunks
 
-package main
+package chunkymonkey
 
 import (
     "io"

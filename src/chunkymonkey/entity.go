@@ -1,4 +1,4 @@
-package main
+package chunkymonkey
 
 type EntityID int32
 
