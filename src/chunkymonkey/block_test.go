@@ -9,7 +9,7 @@ func TestLoadStandardBlocks(t *testing.T) {
     LoadStandardBlocks(b)
 
     type BlockTransTest struct {
-        id BlockID
+        id                    BlockID
         expected_transparency int8
     }
 
