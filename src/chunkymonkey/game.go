@@ -41,6 +41,7 @@ type Game struct {
     players       map[EntityID]*Player
     pickupItems   map[EntityID]*PickupItem
     time          int64
+    blockTypes    map[BlockID]*Block
 }
 
 func (game *Game) Login(conn net.Conn) {
@@ -187,8 +188,11 @@ func NewGame(worldPath string) (game *Game) {
         mainQueue:    make(chan func(*Game), 256),
         players:      make(map[EntityID]*Player),
         pickupItems:  make(map[EntityID]*PickupItem),
+        blockTypes:   make(map[BlockID]*Block),
     }
     chunkManager.game = game
+
+    LoadStandardBlocks(game.blockTypes)
 
     go game.mainLoop()
     go game.timer()

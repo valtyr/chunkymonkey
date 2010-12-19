@@ -85,7 +85,7 @@ const (
     BlockIDWallSign            = BlockID(68)
     BlockIDLever               = BlockID(69)
     BlockIDStonePressurePlate  = BlockID(70)
-    BlockIDIronoor             = BlockID(71)
+    BlockIDIrondoor            = BlockID(71)
     BlockIDWoodenPressurePlate = BlockID(72)
     BlockIDRedstoneOre         = BlockID(73)
     BlockIDGlowingRedstoneOre  = BlockID(74)
@@ -107,3 +107,131 @@ const (
     BlockIDPortal              = BlockID(90)
     BlockIDJackOLantern        = BlockID(91)
 )
+
+type Block struct {
+    id           BlockID
+    name         string
+    transparency int8
+}
+
+func LoadStandardBlocks(b map[BlockID]*Block) {
+    newBlock := func(id BlockID, name string) {
+        b[id] = &Block{
+            id:           id,
+            name:         name,
+            transparency: -1,
+        }
+    }
+
+    newBlock(BlockIDAir, "air")
+    newBlock(BlockIDStone, "stone")
+    newBlock(BlockIDGrass, "grass")
+    newBlock(BlockIDDirt, "dirt")
+    newBlock(BlockIDCobblestone, "cobblestone")
+    newBlock(BlockIDWood, "wood")
+    newBlock(BlockIDSapling, "sapling")
+    newBlock(BlockIDBedrock, "bedrock")
+    newBlock(BlockIDWater, "water")
+    newBlock(BlockIDStationaryWater, "stationary water")
+    newBlock(BlockIDLava, "lava")
+    newBlock(BlockIDStationaryLava, "stationary lava")
+    newBlock(BlockIDSand, "sand")
+    newBlock(BlockIDGravel, "gravel")
+    newBlock(BlockIDGoldOre, "gold ore")
+    newBlock(BlockIDIronOre, "iron ore")
+    newBlock(BlockIDCoalOre, "coal ore")
+    newBlock(BlockIDLog, "log")
+    newBlock(BlockIDLeaves, "leaves")
+    newBlock(BlockIDSponge, "sponge")
+    newBlock(BlockIDGlass, "glass")
+    newBlock(BlockIDRedCloth, "red cloth")
+    newBlock(BlockIDOrangeCloth, "orange cloth")
+    newBlock(BlockIDYellowCloth, "yellow cloth")
+    newBlock(BlockIDLimeCloth, "lime cloth")
+    newBlock(BlockIDGreenCloth, "green cloth")
+    newBlock(BlockIDAquagreenCloth, "aquagreen cloth")
+    newBlock(BlockIDCyanCloth, "cyan cloth")
+    newBlock(BlockIDBlueCloth, "blue cloth")
+    newBlock(BlockIDPurpleCloth, "purple cloth")
+    newBlock(BlockIDIndigoCloth, "indigo cloth")
+    newBlock(BlockIDVioletCloth, "violet cloth")
+    newBlock(BlockIDMagentaCloth, "magenta cloth")
+    newBlock(BlockIDPinkCloth, "Pink Cloth")
+    newBlock(BlockIDBlackCloth, "Black Cloth")
+    newBlock(BlockIDGrayCloth, "Gray Cloth")
+    newBlock(BlockIDWhiteCloth, "white cloth")
+    newBlock(BlockIDYellowflower, "yellowflower")
+    newBlock(BlockIDRedRose, "red rose")
+    newBlock(BlockIDBrownMushroom, "brown mushroom")
+    newBlock(BlockIDRedMushroom, "red mushroom")
+    newBlock(BlockIDGoldBlock, "gold block")
+    newBlock(BlockIDIronBlock, "iron block")
+    newBlock(BlockIDDoubleStep, "double step")
+    newBlock(BlockIDStep, "step")
+    newBlock(BlockIDBrick, "brick")
+    newBlock(BlockIDTNT, "t n t")
+    newBlock(BlockIDBookshelf, "bookshelf")
+    newBlock(BlockIDMossyCobblestone, "mossy cobblestone")
+    newBlock(BlockIDObsidian, "obsidian")
+    newBlock(BlockIDTorch, "torch")
+    newBlock(BlockIDFire, "fire")
+    newBlock(BlockIDMobSpawner, "mob spawner")
+    newBlock(BlockIDWoodenStairs, "wooden stairs")
+    newBlock(BlockIDChest, "chest")
+    newBlock(BlockIDRedstoneWire, "redstone wire")
+    newBlock(BlockIDDiamondOre, "diamond ore")
+    newBlock(BlockIDDiamondBlock, "diamond block")
+    newBlock(BlockIDWorkbench, "workbench")
+    newBlock(BlockIDCrops, "crops")
+    newBlock(BlockIDSoil, "soil")
+    newBlock(BlockIDFurnace, "furnace")
+    newBlock(BlockIDBurningFurnace, "burning furnace")
+    newBlock(BlockIDSignPost, "sign post")
+    newBlock(BlockIDWoodenoor, "wooden door")
+    newBlock(BlockIDLadder, "ladder")
+    newBlock(BlockIDMinecartTracks, "minecart tracks")
+    newBlock(BlockIDCobblestoneStairs, "cobblestone stairs")
+    newBlock(BlockIDWallSign, "wall sign")
+    newBlock(BlockIDLever, "lever")
+    newBlock(BlockIDStonePressurePlate, "stone pressure plate")
+    newBlock(BlockIDIrondoor, "irondoor")
+    newBlock(BlockIDWoodenPressurePlate, "wooden pressure plate")
+    newBlock(BlockIDRedstoneOre, "redstone ore")
+    newBlock(BlockIDGlowingRedstoneOre, "glowing redstone ore")
+    newBlock(BlockIDRedstoneTorchOff, "redstone torch off")
+    newBlock(BlockIDRedstoneTorchOn, "redstone torch on")
+    newBlock(BlockIDStoneButton, "stone button")
+    newBlock(BlockIDSnow, "snow")
+    newBlock(BlockIDIce, "ice")
+    newBlock(BlockIDSnowBlock, "snow block")
+    newBlock(BlockIDCactus, "cactus")
+    newBlock(BlockIDClay, "clay")
+    newBlock(BlockIDReed, "reed")
+    newBlock(BlockIDJukebox, "jukebox")
+    newBlock(BlockIDFence, "fence")
+    newBlock(BlockIDPumpkin, "pumpkin")
+    newBlock(BlockIDNetherstone, "netherstone")
+    newBlock(BlockIDSlowSand, "slow sand")
+    newBlock(BlockIDLightstone, "lightstone")
+    newBlock(BlockIDPortal, "portal")
+    newBlock(BlockIDJackOLantern, "jack o lantern")
+
+    setTrans := func(transparency int8, blockTypes []BlockID) {
+        for _, blockType := range blockTypes {
+            b[blockType].transparency = transparency
+        }
+    }
+    // Setup transparent blocks
+    setTrans(0, [...]BlockID{BlockIDAir, BlockIDSapling, BlockIDGlass,
+        BlockIDYellowflower, BlockIDRedRose, BlockIDBrownMushroom,
+        BlockIDRedMushroom, BlockIDFire, BlockIDMobSpawner, BlockIDWoodenStairs,
+        BlockIDRedstoneWire, BlockIDCrops, BlockIDSignPost, BlockIDLadder,
+        BlockIDMinecartTracks, BlockIDCobblestoneStairs, BlockIDWallSign,
+        BlockIDLever, BlockIDIrondoor, BlockIDRedstoneTorchOff,
+        BlockIDRedstoneTorchOn, BlockIDStoneButton, BlockIDSnow, BlockIDCactus,
+        BlockIDReed, BlockIDFence, BlockIDPortal}[:])
+
+    // Setup semi-transparent blocks
+    setTrans(1, [...]BlockID{BlockIDLeaves}[:])
+    setTrans(3, [...]BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce}[:])
+}
