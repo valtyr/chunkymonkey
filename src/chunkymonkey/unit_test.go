@@ -6,7 +6,7 @@ import (
 
 type CoordDivModTest struct {
     expected_div, expected_mod int32
-    num, denom int32
+    num, denom                 int32
 }
 
 var CoordDivModTests = []CoordDivModTest{
