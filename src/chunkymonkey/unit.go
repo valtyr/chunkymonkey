@@ -8,6 +8,9 @@ const (
 
     // The area within which a client receives updates
     ChunkRadius = 10
+
+    // Sometimes it is useful to convert block coordinates to pixels
+    PixelsPerBlock = 32
 )
 
 // Block face (0-5)
@@ -36,9 +39,17 @@ type XYZ struct {
     x, y, z AbsoluteCoord
 }
 
+type XYZInteger struct {
+    x, y, z AbsoluteCoordInteger
+}
+
 type Orientation struct {
     rotation AngleRadians
     pitch    AngleRadians
+}
+
+type OrientationPacked struct {
+    rotation, pitch, roll byte
 }
 
 type ChunkXZ struct {
@@ -55,6 +66,15 @@ type SubChunkXYZ struct {
 
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
 func (abs XYZ) ToChunkXZ() (chunkXz ChunkXZ) {
+    return ChunkXZ{
+        ChunkCoord(abs.x / ChunkSizeX),
+        ChunkCoord(abs.z / ChunkSizeZ),
+    }
+}
+
+// Convert (x, z) absolute integer coordinates to chunk coordinates
+func (abs XYZInteger) ToChunkXZ() ChunkXZ {
+    // TODO check this conversion
     return ChunkXZ{
         ChunkCoord(abs.x / ChunkSizeX),
         ChunkCoord(abs.z / ChunkSizeZ),
@@ -80,4 +100,13 @@ func (blockLoc BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) {
     chunkLoc = ChunkXZ{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
     subLoc = SubChunkXYZ{SubChunkCoord(subX), SubChunkCoord(blockLoc.y), SubChunkCoord(subZ)}
     return
+}
+
+func (blockLoc BlockXYZ) ToXYZInteger() XYZInteger {
+    // TODO check this conversion
+    return XYZInteger{
+        AbsoluteCoordInteger(blockLoc.x * PixelsPerBlock),
+        AbsoluteCoordInteger(blockLoc.y * PixelsPerBlock),
+        AbsoluteCoordInteger(blockLoc.z * PixelsPerBlock),
+    }
 }

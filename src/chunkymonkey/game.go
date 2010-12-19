@@ -39,6 +39,7 @@ type Game struct {
     mainQueue     chan func(*Game)
     entityManager EntityManager
     players       map[EntityID]*Player
+    pickupItems   map[EntityID]*PickupItem
     time          int64
 }
 
@@ -117,6 +118,20 @@ func (game *Game) RemovePlayer(player *Player) {
     game.SendChatMessage(fmt.Sprintf("%s has left", player.name))
 }
 
+func (game *Game) AddPickupItem(item *PickupItem) {
+    game.entityManager.AddEntity(&item.Entity)
+    game.pickupItems[item.Entity.EntityID] = item
+
+    // Spawn new item for players
+    buf := &bytes.Buffer{}
+    err := WritePickupSpawn(buf, item)
+    if err != nil {
+        log.Print("AddPickupItem", err.String())
+        return
+    }
+    game.MulticastChunkPacket(buf.Bytes(), item.position.ToChunkXZ())
+}
+
 func (game *Game) MulticastPacket(packet []byte, except *Player) {
     for _, player := range game.players {
         if player == except {
@@ -171,6 +186,7 @@ func NewGame(worldPath string) (game *Game) {
         chunkManager: chunkManager,
         mainQueue:    make(chan func(*Game), 256),
         players:      make(map[EntityID]*Player),
+        pickupItems:  make(map[EntityID]*PickupItem),
     }
 
     go game.mainLoop()

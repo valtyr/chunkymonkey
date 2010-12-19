@@ -4,15 +4,13 @@ import (
     "io"
     "os"
     "fmt"
+    "log"
     "bytes"
     "encoding/binary"
     "compress/zlib"
 )
 
 const (
-    // Sometimes it is useful to convert block coordinates to pixels
-    PixelsPerBlock = 32
-
     // Currently only this protocol version is supported
     protocolVersion = 6
 
@@ -33,6 +31,7 @@ const (
     packetIDHoldingChange        = 0x10
     packetIDArmAnimation         = 0x12
     packetIDNamedEntitySpawn     = 0x14
+    packetIDPickupSpawn          = 0x15
     packetIDDestroyEntity        = 0x1d
     packetIDEntityLook           = 0x20
     packetIDEntityTeleport       = 0x22
@@ -446,6 +445,35 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
 
     err = binary.Write(writer, binary.BigEndian, &packetFinish)
     return
+}
+
+func WritePickupSpawn(writer io.Writer, item *PickupItem) os.Error {
+    log.Println("WritePickupSpawn", item.position)
+    var packet = struct {
+        PacketID byte
+        EntityID int32
+        ItemID   int16
+        Count    byte
+        X        int32
+        Y        int32
+        Z        int32
+        Rotation byte
+        Pitch    byte
+        Roll     byte
+    }{
+        packetIDPickupSpawn,
+        int32(item.Entity.EntityID),
+        int16(item.itemType),
+        byte(item.count),
+        int32(item.position.x),
+        int32(item.position.y),
+        int32(item.position.z),
+        byte(item.orientation.rotation),
+        byte(item.orientation.pitch),
+        byte(item.orientation.roll),
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
 }
 
 func WriteDestroyEntity(writer io.Writer, entityID EntityID) os.Error {

@@ -57,6 +57,18 @@ func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetada
     return
 }
 
+// Returns information about the block at the given location. err is true if
+// subLoc is outside of the chunk.
+func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, err bool) {
+    index, _, err := blockIndex(subLoc)
+    if err {
+        return
+    }
+
+    blockType = BlockID(chunk.Blocks[index])
+    return
+}
+
 // Load a chunk from its NBT representation
 func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
     level, err := nbt.Read(reader)
