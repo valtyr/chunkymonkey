@@ -8,5 +8,5 @@ type ServerMessageParser struct {}
 
 // Parses messages from the server
 func (p *ServerMessageParser)Parse(reader io.Reader) {
-    consumeUnrecognizedInput(reader)
+    dumpInput("(S->C) ", reader)
 }
