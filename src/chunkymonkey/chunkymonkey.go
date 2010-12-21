@@ -6,8 +6,10 @@ import (
     "os"
 )
 
+var addr = flag.String("addr", ":25565", "Serves on the given address:port.")
+
 func usage() {
-    os.Stderr.WriteString("usage: " + os.Args[0] + " <world>\n")
+    os.Stderr.WriteString("usage: " + os.Args[0] + " [flags] <world>\n")
     flag.PrintDefaults()
 }
 
@@ -23,5 +25,5 @@ func main() {
     worldPath := flag.Arg(0)
 
     game := chunkymonkey.NewGame(worldPath)
-    game.Serve(":25565")
+    game.Serve(*addr)
 }
