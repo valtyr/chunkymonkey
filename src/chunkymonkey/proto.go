@@ -12,7 +12,7 @@ import (
 
 const (
     // Currently only this protocol version is supported
-    protocolVersion = 6
+    protocolVersion = 7
 
     // Packet type IDs
     packetIDKeepAlive            = 0x0
@@ -659,7 +659,6 @@ func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
 
 func ReadHoldingChange(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
-        EntityID    int32
         BlockItemID int16
     }
 
