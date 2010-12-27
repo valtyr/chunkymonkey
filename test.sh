@@ -1,2 +1,2 @@
 #!/bin/sh
-gd -t src $*
+gd -t src/lib $*
