@@ -48,6 +48,8 @@ func (game *Game) Login(conn net.Conn) {
     username, err := ReadHandshake(conn)
     if err != nil {
         log.Print("ReadHandshake: ", err.String())
+        WriteDisconnect(conn, err.String())
+        conn.Close()
         return
     }
     log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
@@ -56,6 +58,8 @@ func (game *Game) Login(conn net.Conn) {
     _, _, err = ReadLogin(conn)
     if err != nil {
         log.Print("ReadLogin: ", err.String())
+        WriteDisconnect(conn, err.String())
+        conn.Close()
         return
     }
 

@@ -106,7 +106,8 @@ func ReadHandshake(reader io.Reader) (username string, err os.Error) {
         return
     }
     if packetID != packetIDHandshake {
-        panic(fmt.Sprintf("ReadHandshake: invalid packet ID %#x", packetID))
+        err = os.NewError(fmt.Sprintf("ReadHandshake: invalid packet ID %#x", packetID))
+        return
     }
 
     return ReadString(reader)
@@ -132,10 +133,12 @@ func ReadLogin(reader io.Reader) (username, password string, err os.Error) {
         return
     }
     if packetStart.PacketID != packetIDLogin {
-        panic(fmt.Sprintf("ReadLogin: invalid packet ID %#x", packetStart.PacketID))
+        err = os.NewError(fmt.Sprintf("ReadLogin: invalid packet ID %#x", packetStart.PacketID))
+        return
     }
     if packetStart.Version != protocolVersion {
-        panic(fmt.Sprintf("ReadLogin: unsupported protocol version %#x", packetStart.Version))
+        err = os.NewError(fmt.Sprintf("ReadLogin: unsupported protocol version %#x", packetStart.Version))
+        return
     }
 
     username, err = ReadString(reader)
@@ -697,6 +700,14 @@ func ReadDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
     }
 
     handler.PacketDisconnect(reason)
+    return
+}
+
+func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
+    buf := &bytes.Buffer{}
+    binary.Write(buf, binary.BigEndian, byte(packetIDDisconnect))
+    WriteString(buf, reason)
+    _, err = writer.Write(buf.Bytes())
     return
 }
 
