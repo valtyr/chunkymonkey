@@ -95,6 +95,10 @@ func WriteString(writer io.Writer, s string) (err os.Error) {
     return
 }
 
+func WriteKeepAlive(writer io.Writer) os.Error {
+    return binary.Write(writer, binary.BigEndian, byte(packetIDKeepAlive))
+}
+
 func ReadHandshake(reader io.Reader) (username string, err os.Error) {
     var packetID byte
     err = binary.Read(reader, binary.BigEndian, &packetID)

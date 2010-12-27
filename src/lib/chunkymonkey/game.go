@@ -171,6 +171,11 @@ func (game *Game) timer() {
 func (game *Game) sendTimeUpdate() {
     buf := &bytes.Buffer{}
     WriteTimeUpdate(buf, game.time)
+
+    // The "keep-alive" packet to client sent here as well, as there seems no
+    // particular reason to send time and keep-alive separately for now.
+    WriteKeepAlive(buf)
+
     game.MulticastPacket(buf.Bytes(), nil)
 }
 
