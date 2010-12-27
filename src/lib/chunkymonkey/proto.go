@@ -12,7 +12,7 @@ import (
 
 const (
     // Currently only this protocol version is supported
-    protocolVersion = 7
+    protocolVersion = 8
 
     // Packet type IDs
     packetIDKeepAlive            = 0x0
