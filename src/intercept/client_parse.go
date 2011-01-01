@@ -60,22 +60,22 @@ func (p *ClientMessageParser) Parse(reader io.Reader) {
         }
     }()
 
-    username, err := cm.ReadHandshake(reader)
+    username, err := cm.CSReadHandshake(reader)
     if err != nil {
-        log.Printf("(C->S) ReadHandshake error: %v", err)
+        log.Printf("(C->S) CSReadHandshake error: %v", err)
         return
     }
-    log.Printf("(C->S) ReadHandshake username=%v", username)
+    log.Printf("(C->S) CSReadHandshake username=%v", username)
 
-    loginUsername, _, err := cm.ReadLogin(reader)
+    loginUsername, _, err := cm.CSReadLogin(reader)
     if err != nil {
-        log.Print("(C->S) ReadLogin error: %v", err)
+        log.Print("(C->S) CSReadLogin error: %v", err)
         return
     }
-    log.Printf("(C->S) ReadLogin username=%v", loginUsername)
+    log.Printf("(C->S) CSReadLogin username=%v", loginUsername)
 
     for {
-        err := cm.ReadPacket(reader, p)
+        err := cm.CSReadPacket(reader, p)
         if err != nil {
             if err != os.EOF {
                 log.Printf("(C->S) ReceiveLoop failed: %v", err)

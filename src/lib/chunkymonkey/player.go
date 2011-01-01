@@ -34,7 +34,7 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
 
     game.Enqueue(func(game *Game) {
         game.AddPlayer(player)
-        WriteLogin(conn, player.Entity.EntityID)
+        SCWriteLogin(conn, player.Entity.EntityID)
         player.start()
         player.postLogin()
     })
@@ -150,7 +150,7 @@ func (player *Player) PacketDisconnect(reason string) {
 
 func (player *Player) ReceiveLoop() {
     for {
-        err := ReadPacket(player.conn, player)
+        err := CSReadPacket(player.conn, player)
         if err != nil {
             if err != os.EOF {
                 log.Print("ReceiveLoop failed: ", err.String())
@@ -201,7 +201,7 @@ func (player *Player) postLogin() {
     WriteSpawnPosition(buf, &player.position)
     player.sendChunks(buf)
     WritePlayerInventory(buf)
-    WritePlayerPositionLook(buf, &player.position, &player.orientation,
+    SCWritePlayerPositionLook(buf, &player.position, &player.orientation,
         player.position.y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
 }

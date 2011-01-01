@@ -47,7 +47,7 @@ const (
 )
 
 // Callers must implement this interface to receive packets
-type PacketHandler interface {
+type CSPacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
     PacketFlying(flying bool)
@@ -99,21 +99,21 @@ func WriteKeepAlive(writer io.Writer) os.Error {
     return binary.Write(writer, binary.BigEndian, byte(packetIDKeepAlive))
 }
 
-func ReadHandshake(reader io.Reader) (username string, err os.Error) {
+func CSReadHandshake(reader io.Reader) (username string, err os.Error) {
     var packetID byte
     err = binary.Read(reader, binary.BigEndian, &packetID)
     if err != nil {
         return
     }
     if packetID != packetIDHandshake {
-        err = os.NewError(fmt.Sprintf("ReadHandshake: invalid packet ID %#x", packetID))
+        err = os.NewError(fmt.Sprintf("CSReadHandshake: invalid packet ID %#x", packetID))
         return
     }
 
     return ReadString(reader)
 }
 
-func WriteHandshake(writer io.Writer, reply string) (err os.Error) {
+func SCWriteHandshake(writer io.Writer, reply string) (err os.Error) {
     err = binary.Write(writer, binary.BigEndian, byte(packetIDHandshake))
     if err != nil {
         return
@@ -122,7 +122,7 @@ func WriteHandshake(writer io.Writer, reply string) (err os.Error) {
     return WriteString(writer, reply)
 }
 
-func ReadLogin(reader io.Reader) (username, password string, err os.Error) {
+func CSReadLogin(reader io.Reader) (username, password string, err os.Error) {
     var packetStart struct {
         PacketID byte
         Version  int32
@@ -133,11 +133,11 @@ func ReadLogin(reader io.Reader) (username, password string, err os.Error) {
         return
     }
     if packetStart.PacketID != packetIDLogin {
-        err = os.NewError(fmt.Sprintf("ReadLogin: invalid packet ID %#x", packetStart.PacketID))
+        err = os.NewError(fmt.Sprintf("CSReadLogin: invalid packet ID %#x", packetStart.PacketID))
         return
     }
     if packetStart.Version != protocolVersion {
-        err = os.NewError(fmt.Sprintf("ReadLogin: unsupported protocol version %#x", packetStart.Version))
+        err = os.NewError(fmt.Sprintf("CSReadLogin: unsupported protocol version %#x", packetStart.Version))
         return
     }
 
@@ -161,7 +161,7 @@ func ReadLogin(reader io.Reader) (username, password string, err os.Error) {
     return
 }
 
-func WriteLogin(writer io.Writer, entityID EntityID) (err os.Error) {
+func SCWriteLogin(writer io.Writer, entityID EntityID) (err os.Error) {
     var packetStart = struct {
         PacketID byte
         EntityID int32
@@ -279,7 +279,7 @@ func WritePlayerPosition(writer io.Writer, position *XYZ, stance float64, flying
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func WritePlayerPositionLook(writer io.Writer, position *XYZ, orientation *Orientation, stance AbsoluteCoord, flying bool) os.Error {
+func SCWritePlayerPositionLook(writer io.Writer, position *XYZ, orientation *Orientation, stance AbsoluteCoord, flying bool) os.Error {
     var packet = struct {
         PacketID byte
         X        float64
@@ -494,12 +494,12 @@ func WriteDestroyEntity(writer io.Writer, entityID EntityID) os.Error {
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func ReadKeepAlive(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadKeepAlive(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     handler.PacketKeepAlive()
     return
 }
 
-func ReadChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadChatMessage(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var length int16
     err = binary.Read(reader, binary.BigEndian, &length)
     if err != nil {
@@ -528,7 +528,7 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
     return
 }
 
-func ReadFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadFlying(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         Flying byte
     }
@@ -542,7 +542,7 @@ func ReadFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
-func ReadPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadPlayerPosition(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         X      float64
         Y      float64
@@ -565,7 +565,7 @@ func ReadPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) 
     return
 }
 
-func ReadPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadPlayerLook(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         Rotation float32
         Pitch    float32
@@ -585,7 +585,7 @@ func ReadPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
-func ReadPlayerPositionLook(reader io.Reader, handler PacketHandler) (err os.Error) {
+func CSReadPlayerPositionLook(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         X        float64
         Y        float64
@@ -615,7 +615,7 @@ func ReadPlayerPositionLook(reader io.Reader, handler PacketHandler) (err os.Err
     return
 }
 
-func ReadPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadPlayerDigging(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         Status byte
         X      int32
@@ -640,7 +640,7 @@ func ReadPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
-func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadPlayerBlockPlacement(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         ID        int16
         X         int32
@@ -664,7 +664,7 @@ func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
     return
 }
 
-func ReadHoldingChange(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadHoldingChange(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         BlockItemID int16
     }
@@ -678,7 +678,7 @@ func ReadHoldingChange(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
-func ReadArmAnimation(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadArmAnimation(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packet struct {
         EntityID int32
         Forward  byte
@@ -693,7 +693,7 @@ func ReadArmAnimation(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
-func ReadDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
+func ReadDisconnect(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     reason, err := ReadString(reader)
     if err != nil {
         return
@@ -711,14 +711,14 @@ func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
     return
 }
 
-// Packet reader functions
-var readFns = map[byte]func(io.Reader, PacketHandler) os.Error{
+// Client->server packet reader functions
+var cSreadFns = map[byte]func(io.Reader, CSPacketHandler) os.Error{
     packetIDKeepAlive:            ReadKeepAlive,
     packetIDChatMessage:          ReadChatMessage,
     packetIDFlying:               ReadFlying,
     packetIDPlayerPosition:       ReadPlayerPosition,
     packetIDPlayerLook:           ReadPlayerLook,
-    packetIDPlayerPositionLook:   ReadPlayerPositionLook,
+    packetIDPlayerPositionLook:   CSReadPlayerPositionLook,
     packetIDPlayerDigging:        ReadPlayerDigging,
     packetIDPlayerBlockPlacement: ReadPlayerBlockPlacement,
     packetIDHoldingChange:        ReadHoldingChange,
@@ -726,7 +726,7 @@ var readFns = map[byte]func(io.Reader, PacketHandler) os.Error{
     packetIDDisconnect:           ReadDisconnect,
 }
 
-func ReadPacket(reader io.Reader, handler PacketHandler) (err os.Error) {
+func CSReadPacket(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     var packetID byte
 
     err = binary.Read(reader, binary.BigEndian, &packetID)
@@ -734,7 +734,7 @@ func ReadPacket(reader io.Reader, handler PacketHandler) (err os.Error) {
         return err
     }
 
-    fn, ok := readFns[packetID]
+    fn, ok := cSreadFns[packetID]
     if !ok {
         return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetID))
     }

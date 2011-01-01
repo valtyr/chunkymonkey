@@ -45,19 +45,19 @@ type Game struct {
 }
 
 func (game *Game) Login(conn net.Conn) {
-    username, err := ReadHandshake(conn)
+    username, err := CSReadHandshake(conn)
     if err != nil {
-        log.Print("ReadHandshake: ", err.String())
+        log.Print("CSReadHandshake: ", err.String())
         WriteDisconnect(conn, err.String())
         conn.Close()
         return
     }
     log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
-    WriteHandshake(conn, "-")
+    SCWriteHandshake(conn, "-")
 
-    _, _, err = ReadLogin(conn)
+    _, _, err = CSReadLogin(conn)
     if err != nil {
-        log.Print("ReadLogin: ", err.String())
+        log.Print("CSReadLogin: ", err.String())
         WriteDisconnect(conn, err.String())
         conn.Close()
         return
