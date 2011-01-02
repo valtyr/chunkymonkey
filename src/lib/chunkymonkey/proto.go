@@ -47,7 +47,7 @@ const (
 )
 
 // Callers must implement this interface to receive packets
-type CSPacketHandler interface {
+type PacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
     PacketFlying(flying bool)
@@ -494,12 +494,12 @@ func WriteDestroyEntity(writer io.Writer, entityID EntityID) os.Error {
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func ReadKeepAlive(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadKeepAlive(reader io.Reader, handler PacketHandler) (err os.Error) {
     handler.PacketKeepAlive()
     return
 }
 
-func ReadChatMessage(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
     var length int16
     err = binary.Read(reader, binary.BigEndian, &length)
     if err != nil {
@@ -528,7 +528,7 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
     return
 }
 
-func ReadFlying(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         Flying byte
     }
@@ -542,7 +542,7 @@ func ReadFlying(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     return
 }
 
-func ReadPlayerPosition(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         X      float64
         Y      float64
@@ -565,7 +565,7 @@ func ReadPlayerPosition(reader io.Reader, handler CSPacketHandler) (err os.Error
     return
 }
 
-func ReadPlayerLook(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         Rotation float32
         Pitch    float32
@@ -585,7 +585,7 @@ func ReadPlayerLook(reader io.Reader, handler CSPacketHandler) (err os.Error) {
     return
 }
 
-func CSReadPlayerPositionLook(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func CSReadPlayerPositionLook(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         X        float64
         Y        float64
@@ -615,7 +615,7 @@ func CSReadPlayerPositionLook(reader io.Reader, handler CSPacketHandler) (err os
     return
 }
 
-func ReadPlayerDigging(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         Status byte
         X      int32
@@ -640,7 +640,7 @@ func ReadPlayerDigging(reader io.Reader, handler CSPacketHandler) (err os.Error)
     return
 }
 
-func ReadPlayerBlockPlacement(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         ID        int16
         X         int32
@@ -664,7 +664,7 @@ func ReadPlayerBlockPlacement(reader io.Reader, handler CSPacketHandler) (err os
     return
 }
 
-func ReadHoldingChange(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadHoldingChange(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         BlockItemID int16
     }
@@ -678,7 +678,7 @@ func ReadHoldingChange(reader io.Reader, handler CSPacketHandler) (err os.Error)
     return
 }
 
-func ReadArmAnimation(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadArmAnimation(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         EntityID int32
         Forward  byte
@@ -693,7 +693,7 @@ func ReadArmAnimation(reader io.Reader, handler CSPacketHandler) (err os.Error) 
     return
 }
 
-func ReadDisconnect(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+func ReadDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
     reason, err := ReadString(reader)
     if err != nil {
         return
@@ -711,8 +711,27 @@ func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
     return
 }
 
+type packetReaderMap map[byte]func(io.Reader, PacketHandler) os.Error
+
+func readPacket(readerMap packetReaderMap, reader io.Reader, handler PacketHandler) (err os.Error) {
+    var packetID byte
+
+    err = binary.Read(reader, binary.BigEndian, &packetID)
+    if err != nil {
+        return err
+    }
+
+    fn, ok := readerMap[packetID]
+    if !ok {
+        return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetID))
+    }
+
+    err = fn(reader, handler)
+    return
+}
+
 // Client->server packet reader functions
-var cSreadFns = map[byte]func(io.Reader, CSPacketHandler) os.Error{
+var cSreadFns = packetReaderMap {
     packetIDKeepAlive:            ReadKeepAlive,
     packetIDChatMessage:          ReadChatMessage,
     packetIDFlying:               ReadFlying,
@@ -726,19 +745,17 @@ var cSreadFns = map[byte]func(io.Reader, CSPacketHandler) os.Error{
     packetIDDisconnect:           ReadDisconnect,
 }
 
-func CSReadPacket(reader io.Reader, handler CSPacketHandler) (err os.Error) {
-    var packetID byte
+func CSReadPacket(reader io.Reader, handler PacketHandler) os.Error {
+    return readPacket(cSreadFns, reader, handler)
+}
 
-    err = binary.Read(reader, binary.BigEndian, &packetID)
-    if err != nil {
-        return err
-    }
+// Server->client packet reader functions
+var sCreadFns = map[byte]func(io.Reader, PacketHandler) os.Error{
+    packetIDKeepAlive:            ReadKeepAlive,
+    packetIDChatMessage:          ReadChatMessage,
+    packetIDDisconnect:           ReadDisconnect,
+}
 
-    fn, ok := cSreadFns[packetID]
-    if !ok {
-        return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetID))
-    }
-
-    err = fn(reader, handler)
-    return
+func SCReadPacket(reader io.Reader, handler PacketHandler) os.Error {
+    return readPacket(sCreadFns, reader, handler)
 }
