@@ -22,6 +22,7 @@ const (
     packetIDTimeUpdate           = 0x4
     packetIDPlayerInventory      = 0x5
     packetIDSpawnPosition        = 0x6
+    packetIDUpdateHealth         = 0x8
     packetIDFlying               = 0xa
     packetIDPlayerPosition       = 0xb
     packetIDPlayerLook           = 0xc
@@ -58,6 +59,17 @@ type PacketHandler interface {
     PacketHoldingChange(blockItemID int16)
     PacketArmAnimation(forward bool)
     PacketDisconnect(reason string)
+}
+
+type CSPacketHandler interface {
+    PacketHandler
+}
+
+type SCPacketHandler interface {
+    PacketHandler
+    SCPacketLogin(entityID EntityID, str1 string, str2 string, mapSeed int64, dimension byte)
+    SCPacketSpawnPosition(position *BlockXYZ)
+    SCPacketUpdateHealth(health int16)
 }
 
 func boolToByte(b bool) byte {
@@ -113,6 +125,20 @@ func CSReadHandshake(reader io.Reader) (username string, err os.Error) {
     return ReadString(reader)
 }
 
+func SCReadHandshake(reader io.Reader) (connectionHash string, err os.Error) {
+    var packetID byte
+    err = binary.Read(reader, binary.BigEndian, &packetID)
+    if err != nil {
+        return
+    }
+    if packetID != packetIDHandshake {
+        err = os.NewError(fmt.Sprintf("SCReadHandshake: invalid packet ID %#x", packetID))
+        return
+    }
+
+    return ReadString(reader)
+}
+
 func SCWriteHandshake(writer io.Writer, reply string) (err os.Error) {
     err = binary.Write(writer, binary.BigEndian, byte(packetIDHandshake))
     if err != nil {
@@ -157,6 +183,44 @@ func CSReadLogin(reader io.Reader) (username, password string, err os.Error) {
     }
 
     err = binary.Read(reader, binary.BigEndian, &packetEnd)
+
+    return
+}
+
+func SCReadLogin(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var entityID int32
+
+    err = binary.Read(reader, binary.BigEndian, &entityID)
+    if err != nil {
+        return
+    }
+
+    str1, err := ReadString(reader)
+    if err != nil {
+        return
+    }
+
+    str2, err := ReadString(reader)
+    if err != nil {
+        return
+    }
+
+    var packetEnd struct {
+        MapSeed   int64
+        Dimension byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packetEnd)
+    if err != nil {
+        return
+    }
+
+    handler.SCPacketLogin(
+        EntityID(entityID),
+        str1,
+        str2,
+        packetEnd.MapSeed,
+        packetEnd.Dimension)
 
     return
 }
@@ -211,6 +275,38 @@ func WriteSpawnPosition(writer io.Writer, position *XYZ) os.Error {
         int32(position.z),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func SCReadSpawnPosition(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packet struct {
+        X      int32
+        Y      int32
+        Z      int32
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    handler.SCPacketSpawnPosition(&BlockXYZ{
+        BlockCoord(packet.X),
+        BlockCoord(packet.Y),
+        BlockCoord(packet.Z),
+    })
+    return
+}
+
+func SCReadUpdateHealth(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var health int16
+
+    err = binary.Read(reader, binary.BigEndian, &health)
+    if err != nil {
+        return
+    }
+
+    handler.SCPacketUpdateHealth(health)
+    return
 }
 
 func WriteTimeUpdate(writer io.Writer, time int64) os.Error {
@@ -585,7 +681,37 @@ func ReadPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
-func CSReadPlayerPositionLook(reader io.Reader, handler PacketHandler) (err os.Error) {
+func CSReadPlayerPositionLook(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+    var packet struct {
+        X        float64
+        Stance   float64
+        Y        float64
+        Z        float64
+        Rotation float32
+        Pitch    float32
+        Flying   byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    handler.PacketPlayerPosition(&XYZ{
+        AbsoluteCoord(packet.X),
+        AbsoluteCoord(packet.Y),
+        AbsoluteCoord(packet.Z),
+    },
+        AbsoluteCoord(packet.Stance), byteToBool(packet.Flying))
+    handler.PacketPlayerLook(&Orientation{
+        AngleRadians(packet.Rotation),
+        AngleRadians(packet.Pitch),
+    },
+        byteToBool(packet.Flying))
+    return
+}
+
+func SCReadPlayerPositionLook(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     var packet struct {
         X        float64
         Y        float64
@@ -711,33 +837,21 @@ func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
     return
 }
 
-type packetReaderMap map[byte]func(io.Reader, PacketHandler) os.Error
+type commonPacketHandler func(io.Reader, PacketHandler) os.Error
+type csPacketHandler func(io.Reader, CSPacketHandler) os.Error
+type scPacketHandler func(io.Reader, SCPacketHandler) os.Error
 
-func readPacket(readerMap packetReaderMap, reader io.Reader, handler PacketHandler) (err os.Error) {
-    var packetID byte
+type commonPacketReaderMap map[byte]commonPacketHandler
+type csPacketReaderMap map[byte]csPacketHandler
+type scPacketReaderMap map[byte]scPacketHandler
 
-    err = binary.Read(reader, binary.BigEndian, &packetID)
-    if err != nil {
-        return err
-    }
-
-    fn, ok := readerMap[packetID]
-    if !ok {
-        return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetID))
-    }
-
-    err = fn(reader, handler)
-    return
-}
-
-// Client->server packet reader functions
-var cSreadFns = packetReaderMap {
+// Common packet reader functions
+var commonReadFns = commonPacketReaderMap {
     packetIDKeepAlive:            ReadKeepAlive,
     packetIDChatMessage:          ReadChatMessage,
     packetIDFlying:               ReadFlying,
     packetIDPlayerPosition:       ReadPlayerPosition,
     packetIDPlayerLook:           ReadPlayerLook,
-    packetIDPlayerPositionLook:   CSReadPlayerPositionLook,
     packetIDPlayerDigging:        ReadPlayerDigging,
     packetIDPlayerBlockPlacement: ReadPlayerBlockPlacement,
     packetIDHoldingChange:        ReadHoldingChange,
@@ -745,17 +859,51 @@ var cSreadFns = packetReaderMap {
     packetIDDisconnect:           ReadDisconnect,
 }
 
-func CSReadPacket(reader io.Reader, handler PacketHandler) os.Error {
-    return readPacket(cSreadFns, reader, handler)
+// Client->server specific packet reader functions
+var csReadFns = csPacketReaderMap {
+    packetIDPlayerPositionLook:   CSReadPlayerPositionLook,
 }
 
-// Server->client packet reader functions
-var sCreadFns = map[byte]func(io.Reader, PacketHandler) os.Error{
-    packetIDKeepAlive:            ReadKeepAlive,
-    packetIDChatMessage:          ReadChatMessage,
-    packetIDDisconnect:           ReadDisconnect,
+func CSReadPacket(reader io.Reader, handler CSPacketHandler) os.Error {
+    var packetID byte
+
+    if err := binary.Read(reader, binary.BigEndian, &packetID); err != nil {
+        return err
+    }
+
+    if commonFn, ok := commonReadFns[packetID]; ok {
+        return commonFn(reader, handler)
+    }
+
+    if csFn, ok := csReadFns[packetID];ok {
+        return csFn(reader, handler)
+    }
+
+    return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetID))
 }
 
-func SCReadPacket(reader io.Reader, handler PacketHandler) os.Error {
-    return readPacket(sCreadFns, reader, handler)
+// Server->client specific packet reader functions
+var scReadFns = scPacketReaderMap {
+    packetIDLogin:                SCReadLogin,
+    packetIDSpawnPosition:        SCReadSpawnPosition,
+    packetIDUpdateHealth:         SCReadUpdateHealth,
+    packetIDPlayerPositionLook:   SCReadPlayerPositionLook,
+}
+
+func SCReadPacket(reader io.Reader, handler SCPacketHandler) os.Error {
+    var packetID byte
+
+    if err := binary.Read(reader, binary.BigEndian, &packetID); err != nil {
+        return err
+    }
+
+    if commonFn, ok := commonReadFns[packetID]; ok {
+        return commonFn(reader, handler)
+    }
+
+    if scFn, ok := scReadFns[packetID];ok {
+        return scFn(reader, handler)
+    }
+
+    return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetID))
 }
