@@ -103,11 +103,11 @@ func (p *MessageParser) SCPacketMobSpawn(entityID cm.EntityID, mobType byte, pos
         entityID, mobType, position, yaw, pitch)
 }
 
-func (p *MessageParser)SCPacketPreChunk(position *cm.ChunkXZ, mode bool) {
+func (p *MessageParser) SCPacketPreChunk(position *cm.ChunkXZ, mode bool) {
     p.printf("SCPacketPreChunk(position=%v, mode=%v)", position, mode)
 }
 
-func (p *MessageParser)SCPacketMapChunk(position *cm.BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte) {
+func (p *MessageParser) SCPacketMapChunk(position *cm.BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte) {
     p.printf("SCPacketMapChunk(position=%v, sizeX=%d, sizeY=%d, sizeZ=%d, len(data)=%d)",
         position, sizeX, sizeY, sizeZ, len(data))
 }

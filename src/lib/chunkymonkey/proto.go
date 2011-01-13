@@ -15,31 +15,45 @@ const (
     protocolVersion = 8
 
     // Packet type IDs
-    packetIDKeepAlive            = 0x0
-    packetIDLogin                = 0x1
-    packetIDHandshake            = 0x2
-    packetIDChatMessage          = 0x3
-    packetIDTimeUpdate           = 0x4
-    packetIDPlayerInventory      = 0x5
-    packetIDSpawnPosition        = 0x6
-    packetIDUpdateHealth         = 0x8
-    packetIDFlying               = 0xa
-    packetIDPlayerPosition       = 0xb
-    packetIDPlayerLook           = 0xc
-    packetIDPlayerPositionLook   = 0xd
-    packetIDPlayerDigging        = 0xe
-    packetIDPlayerBlockPlacement = 0xf
+    packetIDKeepAlive            = 0x00
+    packetIDLogin                = 0x01
+    packetIDHandshake            = 0x02
+    packetIDChatMessage          = 0x03
+    packetIDTimeUpdate           = 0x04
+    packetIDPlayerInventory      = 0x05
+    packetIDSpawnPosition        = 0x06
+    packetIDUseEntity            = 0x07
+    packetIDUpdateHealth         = 0x08
+    packetIDFlying               = 0x0a
+    packetIDPlayerPosition       = 0x0b
+    packetIDPlayerLook           = 0x0c
+    packetIDPlayerPositionLook   = 0x0d
+    packetIDPlayerDigging        = 0x0e
+    packetIDPlayerBlockPlacement = 0x0f
     packetIDHoldingChange        = 0x10
     packetIDArmAnimation         = 0x12
     packetIDNamedEntitySpawn     = 0x14
     packetIDPickupSpawn          = 0x15
     packetIDMobSpawn             = 0x18
+    packetIDUnknownX19           = 0x19
+    packetIDEntityVelocity       = 0x1c
     packetIDDestroyEntity        = 0x1d
+    packetIDEntity               = 0x1e
+    packetIDEntityDestroy        = 0x1d
+    packetIDEntityRelMove        = 0x1f
     packetIDEntityLook           = 0x20
+    packetIDEntityLookAndRelMove = 0x21
     packetIDEntityTeleport       = 0x22
+    packetIDEntityStatus         = 0x26
+    packetIDUnknownX28           = 0x28
     packetIDPreChunk             = 0x32
     packetIDMapChunk             = 0x33
+    packetIDBlockChangeMulti     = 0x34
     packetIDBlockChange          = 0x35
+    packetIDUnknownX36           = 0x36
+    packetIDWindowClick          = 0x66
+    packetIDSetSlot              = 0x67
+    packetIDWindowItems          = 0x68
     packetIDDisconnect           = 0xff
 
     // Inventory types
@@ -52,9 +66,9 @@ const (
 type PacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
-    PacketFlying(flying bool)
-    PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, flying bool)
-    PacketPlayerLook(orientation *Orientation, flying bool)
+    PacketFlying(onGround bool)
+    PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool)
+    PacketPlayerLook(orientation *Orientation, onGround bool)
     PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
     PacketPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face)
     PacketHoldingChange(blockItemID int16)
@@ -109,6 +123,54 @@ func WriteString(writer io.Writer, s string) (err os.Error) {
     }
 
     _, err = writer.Write(bs)
+    return
+}
+
+// Reads extra data from the end of certain packets, whose meaning isn't known
+// yet. Currently all this code does is read and discard bytes.
+// TODO update to pull useful data out as it becomes understood
+// http://pastebin.com/HHW52Awn
+func readUnknownExtra(reader io.Reader) (err os.Error) {
+    var entryType byte
+
+    var byteVal byte
+    var int16Val int16
+    var int32Val int32
+    var floatVal float32
+    var position struct {
+        X   int16
+        Y   byte
+        Z   int16
+    }
+
+    for {
+        err = binary.Read(reader, binary.BigEndian, &entryType)
+        if err != nil {
+            return
+        }
+        if entryType == 127 {
+            break
+        }
+
+        switch entryTypeEnum := (entryType & 0xe0) >> 5; entryTypeEnum {
+        case 0:
+            err = binary.Read(reader, binary.BigEndian, &byteVal)
+        case 1:
+            err = binary.Read(reader, binary.BigEndian, &int16Val)
+        case 2:
+            err = binary.Read(reader, binary.BigEndian, &int32Val)
+        case 3:
+            err = binary.Read(reader, binary.BigEndian, &floatVal)
+        case 4:
+            _, err = ReadString(reader)
+        case 5:
+            err = binary.Read(reader, binary.BigEndian, &position)
+        }
+
+        if err != nil {
+            return
+        }
+    }
     return
 }
 
@@ -302,6 +364,23 @@ func SCReadSpawnPosition(reader io.Reader, handler SCPacketHandler) (err os.Erro
     return
 }
 
+func ReadUseEntity(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var packet struct {
+        User      EntityID
+        Target    EntityID
+        LeftClick byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
 func SCReadUpdateHealth(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     var health int16
 
@@ -326,7 +405,7 @@ func WriteTimeUpdate(writer io.Writer, time int64) os.Error {
 }
 
 func SCReadTimeUpdate(reader io.Reader, handler SCPacketHandler) (err os.Error) {
-    var time     int64
+    var time int64
 
     err = binary.Read(reader, binary.BigEndian, &time)
     if err != nil {
@@ -341,11 +420,15 @@ func WritePlayerInventory(writer io.Writer) (err os.Error) {
     type InventoryType struct {
         inventoryType int32
         count         int16
+        itemID        int16
+        // TODO confirm what this field really is
+        damage int16
     }
+    // TODO pass actual values
     var inventories = []InventoryType{
-        InventoryType{inventoryTypeMain, 36},
-        InventoryType{inventoryTypeArmor, 4},
-        InventoryType{inventoryTypeCrafting, 4},
+        InventoryType{inventoryTypeMain, 36, 0, 0},
+        InventoryType{inventoryTypeArmor, 4, 0, 0},
+        InventoryType{inventoryTypeCrafting, 4, 0, 0},
     }
 
     for _, inventory := range inventories {
@@ -373,21 +456,21 @@ func WritePlayerInventory(writer io.Writer) (err os.Error) {
     return
 }
 
-func WritePlayerPosition(writer io.Writer, position *XYZ, stance float64, flying bool) os.Error {
+func WritePlayerPosition(writer io.Writer, position *XYZ, stance float64, onGround bool) os.Error {
     var packet = struct {
         PacketID byte
         X        float64
         Y        float64
         Stance   float64
         Z        float64
-        Flying   byte
+        OnGround byte
     }{
         packetIDPlayerPosition,
         float64(position.x),
         float64(position.y),
         float64(stance),
         float64(position.z),
-        boolToByte(flying),
+        boolToByte(onGround),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
 }
@@ -399,7 +482,7 @@ func SCWritePlayerPositionLook(writer io.Writer, position *XYZ, orientation *Ori
         Y        float64
         Stance   float64
         Z        float64
-        Rotation float32
+        Yaw      float32
         Pitch    float32
         Flying   byte
     }{
@@ -419,7 +502,7 @@ func WriteEntityLook(writer io.Writer, entityID EntityID, orientation *Orientati
     var packet = struct {
         PacketID byte
         EntityID int32
-        Rotation byte
+        Yaw      byte
         Pitch    byte
     }{
         packetIDEntityLook,
@@ -430,6 +513,41 @@ func WriteEntityLook(writer io.Writer, entityID EntityID, orientation *Orientati
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
+func SCReadEntityLook(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID int32
+        Yaw      byte
+        Pitch    byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
+func SCReadEntityLookAndRelMove(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID int32
+        X, Y, Z  byte
+        Yaw      byte
+        Pitch    byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
 func WriteEntityTeleport(writer io.Writer, entityID EntityID, position *XYZ, orientation *Orientation) os.Error {
     var packet = struct {
         PacketID byte
@@ -437,7 +555,7 @@ func WriteEntityTeleport(writer io.Writer, entityID EntityID, position *XYZ, ori
         X        int32
         Y        int32
         Z        int32
-        Rotation byte
+        Yaw      byte
         Pitch    byte
     }{
         packetIDEntityTeleport,
@@ -449,6 +567,40 @@ func WriteEntityTeleport(writer io.Writer, entityID EntityID, position *XYZ, ori
         byte(orientation.pitch * 64 / 90),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func SCReadEntityStatus(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        Status   byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
+func ReadUnknownX28(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var field1 int32
+
+    err = binary.Read(reader, binary.BigEndian, &field1)
+    if err != nil {
+        return
+    }
+
+    err = readUnknownExtra(reader)
+    if err != nil {
+        return
+    }
+
+    // TODO pass values to handler
+
+    return
 }
 
 func WritePreChunk(writer io.Writer, chunkLoc *ChunkXZ, willSend bool) os.Error {
@@ -468,9 +620,9 @@ func WritePreChunk(writer io.Writer, chunkLoc *ChunkXZ, willSend bool) os.Error 
 
 func SCReadPreChunk(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     var packet struct {
-        X        ChunkCoord
-        Z        ChunkCoord
-        Mode     byte
+        X    ChunkCoord
+        Z    ChunkCoord
+        Mode byte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -478,7 +630,7 @@ func SCReadPreChunk(reader io.Reader, handler SCPacketHandler) (err os.Error) {
         return
     }
 
-    handler.SCPacketPreChunk(&ChunkXZ{packet.X, packet.Z}, packet.Mode!=0)
+    handler.SCPacketPreChunk(&ChunkXZ{packet.X, packet.Z}, packet.Mode != 0)
 
     return
 }
@@ -554,6 +706,31 @@ func SCReadMapChunk(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     return
 }
 
+func SCReadBlockChangeMulti(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packet struct {
+        ChunkX int32
+        ChunkZ int32
+        Count  int16
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    coordArray := make([]int16, packet.Count)
+    blockTypeArray := make([]byte, packet.Count)
+    blockMetadataArray := make([]byte, packet.Count)
+
+    err = binary.Read(reader, binary.BigEndian, coordArray)
+    err = binary.Read(reader, binary.BigEndian, blockTypeArray)
+    err = binary.Read(reader, binary.BigEndian, blockMetadataArray)
+
+    // TODO pass values to handler
+
+    return
+}
+
 func WriteBlockChange(writer io.Writer, blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) (err os.Error) {
     var packet = struct {
         PacketID      byte
@@ -571,6 +748,44 @@ func WriteBlockChange(writer io.Writer, blockLoc *BlockXYZ, blockType BlockID, b
         byte(blockMetaData),
     }
     err = binary.Write(writer, binary.BigEndian, &packet)
+    return
+}
+
+func SCReadBlockChange(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packet struct {
+        X             int32
+        Y             byte
+        Z             int32
+        BlockType     byte
+        BlockMetadata byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
+func ReadUnknownX36(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var packet struct {
+        field1         int32
+        field2         int16
+        field3         int32
+        field4, field5 byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+
+    if err != nil {
+        return
+    }
+
+    // TODO pass values to handler
+
     return
 }
 
@@ -597,7 +812,7 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
         X           int32
         Y           int32
         Z           int32
-        Rotation    byte
+        Yaw         byte
         Pitch       byte
         CurrentItem int16
     }{
@@ -620,20 +835,24 @@ func WritePickupSpawn(writer io.Writer, item *PickupItem) os.Error {
         EntityID int32
         ItemID   int16
         Count    byte
-        X        int32
-        Y        int32
-        Z        int32
-        Rotation byte
-        Pitch    byte
-        Roll     byte
+        // TODO check this field
+        Uses  int16
+        X     AbsoluteCoordInteger
+        Y     AbsoluteCoordInteger
+        Z     AbsoluteCoordInteger
+        Yaw   byte
+        Pitch byte
+        Roll  byte
     }{
         packetIDPickupSpawn,
         int32(item.Entity.EntityID),
         int16(item.itemType),
         byte(item.count),
-        int32(item.position.x),
-        int32(item.position.y),
-        int32(item.position.z),
+        // TODO pass proper damage value
+        0,
+        item.position.x,
+        item.position.y,
+        item.position.z,
         byte(item.orientation.rotation),
         byte(item.orientation.pitch),
         byte(item.orientation.roll),
@@ -658,12 +877,102 @@ func SCReadMobSpawn(reader io.Reader, handler SCPacketHandler) (err os.Error) {
         return
     }
 
+    err = readUnknownExtra(reader)
+    if err != nil {
+        return
+    }
+
     handler.SCPacketMobSpawn(
         EntityID(packet.EntityID), packet.MobType,
         &XYZInteger{packet.X, packet.Y, packet.Z},
         packet.Yaw, packet.Pitch)
 
     return err
+}
+
+func SCReadEntityDestroy(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var entityID EntityID
+
+    err = binary.Read(reader, binary.BigEndian, &entityID)
+    if err != nil {
+        return
+    }
+
+    // TODO pass this data to handler
+
+    return
+}
+
+func SCReadEntity(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var entityID EntityID
+
+    err = binary.Read(reader, binary.BigEndian, &entityID)
+    if err != nil {
+        return
+    }
+
+    // TODO pass this data to handler
+
+    return
+}
+
+func SCReadEntityRelMove(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        X, Y, Z  byte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    // TODO pass this data to handler
+
+    return
+}
+
+// TODO determine what this packet is
+func ReadUnknownX19(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var field1 int32
+    err = binary.Read(reader, binary.BigEndian, &field1)
+    if err != nil {
+        return
+    }
+
+    _, err = ReadString(reader)
+    if err != nil {
+        return
+    }
+
+    var packetEnd struct {
+        field3, field4, field5, field6 int32
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packetEnd)
+    if err != nil {
+        return
+    }
+
+    // TODO pass this data to handler
+
+    return
+}
+
+func ReadEntityVelocity(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        X, Y, Z  int16
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    // TODO pass this data to handler
+
+    return
 }
 
 func WriteDestroyEntity(writer io.Writer, entityID EntityID) os.Error {
@@ -706,7 +1015,7 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
 
 func ReadFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
-        Flying byte
+        OnGround byte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -714,7 +1023,7 @@ func ReadFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketFlying(byteToBool(packet.Flying))
+    handler.PacketFlying(byteToBool(packet.OnGround))
     return
 }
 
@@ -743,9 +1052,9 @@ func ReadPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) 
 
 func ReadPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
-        Rotation float32
+        Yaw      float32
         Pitch    float32
-        Flying   byte
+        OnGround byte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -754,10 +1063,10 @@ func ReadPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
     }
 
     handler.PacketPlayerLook(&Orientation{
-        AngleRadians(packet.Rotation),
+        AngleRadians(packet.Yaw),
         AngleRadians(packet.Pitch),
     },
-        byteToBool(packet.Flying))
+        byteToBool(packet.OnGround))
     return
 }
 
@@ -767,9 +1076,9 @@ func CSReadPlayerPositionLook(reader io.Reader, handler CSPacketHandler) (err os
         Stance   float64
         Y        float64
         Z        float64
-        Rotation float32
+        Yaw      float32
         Pitch    float32
-        Flying   byte
+        OnGround byte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -782,12 +1091,12 @@ func CSReadPlayerPositionLook(reader io.Reader, handler CSPacketHandler) (err os
         AbsoluteCoord(packet.Y),
         AbsoluteCoord(packet.Z),
     },
-        AbsoluteCoord(packet.Stance), byteToBool(packet.Flying))
+        AbsoluteCoord(packet.Stance), byteToBool(packet.OnGround))
     handler.PacketPlayerLook(&Orientation{
-        AngleRadians(packet.Rotation),
+        AngleRadians(packet.Yaw),
         AngleRadians(packet.Pitch),
     },
-        byteToBool(packet.Flying))
+        byteToBool(packet.OnGround))
     return
 }
 
@@ -797,9 +1106,9 @@ func SCReadPlayerPositionLook(reader io.Reader, handler SCPacketHandler) (err os
         Y        float64
         Stance   float64
         Z        float64
-        Rotation float32
+        Yaw      float32
         Pitch    float32
-        Flying   byte
+        OnGround byte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -812,12 +1121,12 @@ func SCReadPlayerPositionLook(reader io.Reader, handler SCPacketHandler) (err os
         AbsoluteCoord(packet.Y),
         AbsoluteCoord(packet.Z),
     },
-        AbsoluteCoord(packet.Stance), byteToBool(packet.Flying))
+        AbsoluteCoord(packet.Stance), byteToBool(packet.OnGround))
     handler.PacketPlayerLook(&Orientation{
-        AngleRadians(packet.Rotation),
+        AngleRadians(packet.Yaw),
         AngleRadians(packet.Pitch),
     },
-        byteToBool(packet.Flying))
+        byteToBool(packet.OnGround))
     return
 }
 
@@ -853,6 +1162,11 @@ func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
         Y         byte
         Z         int32
         Direction byte
+        ItemID    int16
+    }
+    var packetExtra struct {
+        Amount byte
+        Uses   int16
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -860,6 +1174,14 @@ func ReadPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
         return
     }
 
+    if packet.ItemID >= 0 {
+        err = binary.Read(reader, binary.BigEndian, &packetExtra)
+        if err != nil {
+            return
+        }
+    }
+
+    // TODO pass ItemID, Amount, Uses on to handler
     handler.PacketPlayerBlockPlacement(packet.ID,
         &BlockXYZ{
             BlockCoord(packet.X),
@@ -899,6 +1221,102 @@ func ReadArmAnimation(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
+func CSReadWindowClick(reader io.Reader, handler CSPacketHandler) (err os.Error) {
+    var packetStart struct {
+        WindowId     byte
+        Slot         int16
+        RightClick   byte
+        ActionNumber int16
+        ItemID       int16
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packetStart)
+    if err != nil {
+        return
+    }
+
+    if packetStart.ItemID != -1 {
+        var packetEnd struct {
+            Amount byte
+            Uses   int16
+        }
+        err = binary.Read(reader, binary.BigEndian, &packetEnd)
+        if err != nil {
+            return
+        }
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
+func SCReadSetSlot(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packetStart struct {
+        WindowId byte
+        Slot     int16
+        ItemID   int16
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packetStart)
+    if err != nil {
+        return
+    }
+
+    if packetStart.ItemID != -1 {
+        var packetEnd struct {
+            Amount byte
+            Uses   int16
+        }
+
+        err = binary.Read(reader, binary.BigEndian, &packetEnd)
+        if err != nil {
+            return
+        }
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
+func SCReadWindowItems(reader io.Reader, handler SCPacketHandler) (err os.Error) {
+    var packetStart struct {
+        WindowId byte
+        Count    int16
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packetStart)
+    if err != nil {
+        return
+    }
+
+    var itemID int16
+    var itemInfo struct {
+        Amount byte
+        Uses   int16
+    }
+
+    // TODO collect inventory data for handler, data is currently discarded
+    for i := int16(0); i < packetStart.Count; i++ {
+        err = binary.Read(reader, binary.BigEndian, &itemID)
+        if err != nil {
+            return
+        }
+
+        if itemID != -1 {
+            err = binary.Read(reader, binary.BigEndian, &itemInfo)
+            if err != nil {
+                return
+            }
+        }
+    }
+
+    // TODO pass values to handler
+
+    return
+}
+
 func ReadDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
     reason, err := ReadString(reader)
     if err != nil {
@@ -929,6 +1347,7 @@ type scPacketReaderMap map[byte]scPacketHandler
 var commonReadFns = commonPacketReaderMap{
     packetIDKeepAlive:            ReadKeepAlive,
     packetIDChatMessage:          ReadChatMessage,
+    packetIDUseEntity:            ReadUseEntity,
     packetIDFlying:               ReadFlying,
     packetIDPlayerPosition:       ReadPlayerPosition,
     packetIDPlayerLook:           ReadPlayerLook,
@@ -936,12 +1355,17 @@ var commonReadFns = commonPacketReaderMap{
     packetIDPlayerBlockPlacement: ReadPlayerBlockPlacement,
     packetIDHoldingChange:        ReadHoldingChange,
     packetIDArmAnimation:         ReadArmAnimation,
+    packetIDUnknownX19:           ReadUnknownX19,
+    packetIDEntityVelocity:       ReadEntityVelocity,
+    packetIDUnknownX28:           ReadUnknownX28,
+    packetIDUnknownX36:           ReadUnknownX36,
     packetIDDisconnect:           ReadDisconnect,
 }
 
 // Client->server specific packet reader functions
 var csReadFns = csPacketReaderMap{
     packetIDPlayerPositionLook: CSReadPlayerPositionLook,
+    packetIDWindowClick:        CSReadWindowClick,
 }
 
 func CSReadPacket(reader io.Reader, handler CSPacketHandler) os.Error {
@@ -964,14 +1388,24 @@ func CSReadPacket(reader io.Reader, handler CSPacketHandler) os.Error {
 
 // Server->client specific packet reader functions
 var scReadFns = scPacketReaderMap{
-    packetIDLogin:              SCReadLogin,
-    packetIDTimeUpdate:         SCReadTimeUpdate,
-    packetIDSpawnPosition:      SCReadSpawnPosition,
-    packetIDUpdateHealth:       SCReadUpdateHealth,
-    packetIDPlayerPositionLook: SCReadPlayerPositionLook,
-    packetIDMobSpawn:           SCReadMobSpawn,
-    packetIDPreChunk:           SCReadPreChunk,
-    packetIDMapChunk:           SCReadMapChunk,
+    packetIDLogin:                SCReadLogin,
+    packetIDTimeUpdate:           SCReadTimeUpdate,
+    packetIDSpawnPosition:        SCReadSpawnPosition,
+    packetIDUpdateHealth:         SCReadUpdateHealth,
+    packetIDPlayerPositionLook:   SCReadPlayerPositionLook,
+    packetIDMobSpawn:             SCReadMobSpawn,
+    packetIDEntityDestroy:        SCReadEntityDestroy,
+    packetIDEntity:               SCReadEntity,
+    packetIDEntityRelMove:        SCReadEntityRelMove,
+    packetIDEntityLook:           SCReadEntityLook,
+    packetIDEntityLookAndRelMove: SCReadEntityLookAndRelMove,
+    packetIDEntityStatus:         SCReadEntityStatus,
+    packetIDPreChunk:             SCReadPreChunk,
+    packetIDMapChunk:             SCReadMapChunk,
+    packetIDBlockChangeMulti:     SCReadBlockChangeMulti,
+    packetIDBlockChange:          SCReadBlockChange,
+    packetIDSetSlot:              SCReadSetSlot,
+    packetIDWindowItems:          SCReadWindowItems,
 }
 
 func SCReadPacket(reader io.Reader, handler SCPacketHandler) os.Error {
