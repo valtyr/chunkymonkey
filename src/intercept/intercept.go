@@ -15,15 +15,15 @@ type RelayReport struct {
 }
 
 // Sends a report on reportChan when it completes
-func spliceParser(parser func (reader io.Reader),
-    dst io.Writer, src io.Reader) (reportChan chan RelayReport) {
+func spliceParser(parser func(reader io.Reader),
+dst io.Writer, src io.Reader) (reportChan chan RelayReport) {
 
     parserReader, parserWriter := io.Pipe()
     wrappedDst := io.MultiWriter(dst, parserWriter)
     reportChan = make(chan RelayReport)
 
     go parser(parserReader)
-    go func(){
+    go func() {
         written, err := io.Copy(wrappedDst, src)
         reportChan <- RelayReport{written, err}
     }()
@@ -55,12 +55,12 @@ func serveConn(clientConn net.Conn, remoteaddr string) {
 
     // Set up for parsing messages from server to client
     serverToClientReportChan := spliceParser(
-        func(reader io.Reader) {serverParser.SCParse(reader)},
+        func(reader io.Reader) { serverParser.SCParse(reader) },
         clientConn, serverConn)
 
     // Set up for parsing messages from client to server
     clientToServerReportChan := spliceParser(
-        func(reader io.Reader) {clientParser.CSParse(reader)},
+        func(reader io.Reader) { clientParser.CSParse(reader) },
         serverConn, clientConn)
 
     // Wait for the both relay/splices to stop, then we let the connections

@@ -1,7 +1,7 @@
 package intercept_parse
 
 import (
-    cm "chunkymonkey/chunkymonkey"
+    cm  "chunkymonkey/chunkymonkey"
     "encoding/hex"
     "io"
     "log"
@@ -39,7 +39,7 @@ type MessageParser struct {
 }
 
 func (p *MessageParser) printf(format string, v ...interface{}) {
-    log.Printf(p.logPrefix + format, v...)
+    log.Printf(p.logPrefix+format, v...)
 }
 
 func (p *MessageParser) PacketKeepAlive() {
@@ -86,12 +86,30 @@ func (p *MessageParser) SCPacketLogin(entityID cm.EntityID, str1 string, str2 st
         entityID, str1, str2, mapSeed, dimension)
 }
 
+func (p *MessageParser) SCPacketTimeUpdate(time int64) {
+    p.printf("SCPacketTime(time=%d)", time)
+}
+
 func (p *MessageParser) SCPacketSpawnPosition(position *cm.BlockXYZ) {
     p.printf("SCPacketSpawnPosition(position=%v)", position)
 }
 
 func (p *MessageParser) SCPacketUpdateHealth(health int16) {
     p.printf("SCPacketUpdateHealth(health=%d)", health)
+}
+
+func (p *MessageParser) SCPacketMobSpawn(entityID cm.EntityID, mobType byte, position *cm.XYZInteger, yaw byte, pitch byte) {
+    p.printf("SCPacketMobSpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d)",
+        entityID, mobType, position, yaw, pitch)
+}
+
+func (p *MessageParser)SCPacketPreChunk(position *cm.ChunkXZ, mode bool) {
+    p.printf("SCPacketPreChunk(position=%v, mode=%v)", position, mode)
+}
+
+func (p *MessageParser)SCPacketMapChunk(position *cm.BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte) {
+    p.printf("SCPacketMapChunk(position=%v, sizeX=%d, sizeY=%d, sizeZ=%d, len(data)=%d)",
+        position, sizeX, sizeY, sizeZ, len(data))
 }
 
 // Parses messages from the client
@@ -134,7 +152,7 @@ func (p *MessageParser) CSParse(reader io.Reader) {
 }
 
 // Parses messages from the server
-func (p *MessageParser)SCParse(reader io.Reader) {
+func (p *MessageParser) SCParse(reader io.Reader) {
     // If we return, we should consume all input to avoid blocking the pipe
     // we're listening on. TODO Maybe we could just close it?
     defer p.consumeUnrecognizedInput(reader)
