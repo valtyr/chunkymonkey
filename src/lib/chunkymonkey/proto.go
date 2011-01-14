@@ -85,8 +85,12 @@ type SCPacketHandler interface {
     SCPacketLogin(entityID EntityID, str1 string, str2 string, mapSeed int64, dimension byte)
     SCPacketTimeUpdate(time int64)
     SCPacketSpawnPosition(position *BlockXYZ)
+    SCPacketUseEntity(user EntityID, target EntityID, leftClick bool)
     SCPacketUpdateHealth(health int16)
-    SCPacketMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte)
+    SCPacketMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []UnknownEntityExtra)
+    SCPacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32)
+    SCPacketEntityVelocity(entityID EntityID, x, y, z int16)
+    SCPacketUnknownX28(field1 int32, data []UnknownEntityExtra)
     SCPacketPreChunk(position *ChunkXZ, mode bool)
     SCPacketMapChunk(position *BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte)
 }
@@ -128,22 +132,21 @@ func WriteString(writer io.Writer, s string) (err os.Error) {
     return
 }
 
+type UnknownEntityExtra struct {
+    field1 byte
+    field2 byte
+    field3 interface{}
+}
+
 // Reads extra data from the end of certain packets, whose meaning isn't known
 // yet. Currently all this code does is read and discard bytes.
 // TODO update to pull useful data out as it becomes understood
 // http://pastebin.com/HHW52Awn
-func readUnknownExtra(reader io.Reader) (err os.Error) {
+func readUnknownExtra(reader io.Reader) (data []UnknownEntityExtra, err os.Error) {
     var entryType byte
 
-    var byteVal byte
-    var int16Val int16
-    var int32Val int32
-    var floatVal float32
-    var position struct {
-        X   int16
-        Y   byte
-        Z   int16
-    }
+    var field1, field2 byte
+    var field3 interface{}
 
     for {
         err = binary.Read(reader, binary.BigEndian, &entryType)
@@ -154,20 +157,38 @@ func readUnknownExtra(reader io.Reader) (err os.Error) {
             break
         }
 
-        switch entryTypeEnum := (entryType & 0xe0) >> 5; entryTypeEnum {
+        switch field1 := (entryType & 0xe0) >> 5; field1 {
         case 0:
+            var byteVal byte
             err = binary.Read(reader, binary.BigEndian, &byteVal)
+            field3 = byteVal
         case 1:
+            var int16Val int16
             err = binary.Read(reader, binary.BigEndian, &int16Val)
+            field3 = int16Val
         case 2:
+            var int32Val int32
             err = binary.Read(reader, binary.BigEndian, &int32Val)
+            field3 = int32Val
         case 3:
+            var floatVal float32
             err = binary.Read(reader, binary.BigEndian, &floatVal)
+            field3 = floatVal
         case 4:
-            _, err = ReadString(reader)
+            var stringVal string
+            stringVal, err = ReadString(reader)
+            field3 = stringVal
         case 5:
+            var position struct {
+                X   int16
+                Y   byte
+                Z   int16
+            }
             err = binary.Read(reader, binary.BigEndian, &position)
+            field3 = position
         }
+
+        data = append(data, UnknownEntityExtra{field1, field2, field3})
 
         if err != nil {
             return
@@ -474,7 +495,7 @@ func SCReadSpawnPosition(reader io.Reader, handler SCPacketHandler) (err os.Erro
 
 // packetIDUseEntity
 
-func ReadUseEntity(reader io.Reader, handler PacketHandler) (err os.Error) {
+func SCReadUseEntity(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     var packet struct {
         User      EntityID
         Target    EntityID
@@ -486,7 +507,7 @@ func ReadUseEntity(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    // TODO pass values to handler
+    handler.SCPacketUseEntity(packet.User, packet.Target, byteToBool(packet.LeftClick))
 
     return
 }
@@ -864,7 +885,7 @@ func SCReadMobSpawn(reader io.Reader, handler SCPacketHandler) (err os.Error) {
         return
     }
 
-    err = readUnknownExtra(reader)
+    data, err := readUnknownExtra(reader)
     if err != nil {
         return
     }
@@ -872,7 +893,7 @@ func SCReadMobSpawn(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     handler.SCPacketMobSpawn(
         EntityID(packet.EntityID), packet.MobType,
         &XYZInteger{packet.X, packet.Y, packet.Z},
-        packet.Yaw, packet.Pitch)
+        packet.Yaw, packet.Pitch, data)
 
     return err
 }
@@ -880,14 +901,14 @@ func SCReadMobSpawn(reader io.Reader, handler SCPacketHandler) (err os.Error) {
 // packetIDUnknownX19
 
 // TODO determine what this packet is
-func ReadUnknownX19(reader io.Reader, handler PacketHandler) (err os.Error) {
+func SCReadUnknownX19(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     var field1 int32
     err = binary.Read(reader, binary.BigEndian, &field1)
     if err != nil {
         return
     }
 
-    _, err = ReadString(reader)
+    field2, err := ReadString(reader)
     if err != nil {
         return
     }
@@ -901,14 +922,16 @@ func ReadUnknownX19(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    // TODO pass this data to handler
+    handler.SCPacketUnknownX19(
+        field1, field2,
+        packetEnd.field3, packetEnd.field4, packetEnd.field5, packetEnd.field6)
 
     return
 }
 
 // packetIDEntityVelocity
 
-func ReadEntityVelocity(reader io.Reader, handler PacketHandler) (err os.Error) {
+func SCReadEntityVelocity(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
         X, Y, Z  int16
@@ -919,7 +942,7 @@ func ReadEntityVelocity(reader io.Reader, handler PacketHandler) (err os.Error) 
         return
     }
 
-    // TODO pass this data to handler
+    handler.SCPacketEntityVelocity(packet.EntityID, packet.X, packet.Y, packet.Z)
 
     return
 }
@@ -1080,7 +1103,7 @@ func SCReadEntityStatus(reader io.Reader, handler SCPacketHandler) (err os.Error
 
 // packetIDUnknownX28
 
-func ReadUnknownX28(reader io.Reader, handler PacketHandler) (err os.Error) {
+func SCReadUnknownX28(reader io.Reader, handler SCPacketHandler) (err os.Error) {
     var field1 int32
 
     err = binary.Read(reader, binary.BigEndian, &field1)
@@ -1088,12 +1111,12 @@ func ReadUnknownX28(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    err = readUnknownExtra(reader)
+    data, err := readUnknownExtra(reader)
     if err != nil {
         return
     }
 
-    // TODO pass values to handler
+    handler.SCPacketUnknownX28(field1, data)
 
     return
 }
@@ -1432,7 +1455,6 @@ type scPacketReaderMap map[byte]scPacketHandler
 var commonReadFns = commonPacketReaderMap{
     packetIDKeepAlive:            ReadKeepAlive,
     packetIDChatMessage:          ReadChatMessage,
-    packetIDUseEntity:            ReadUseEntity,
     packetIDFlying:               ReadFlying,
     packetIDPlayerPosition:       ReadPlayerPosition,
     packetIDPlayerLook:           ReadPlayerLook,
@@ -1440,9 +1462,6 @@ var commonReadFns = commonPacketReaderMap{
     packetIDPlayerBlockPlacement: ReadPlayerBlockPlacement,
     packetIDHoldingChange:        ReadHoldingChange,
     packetIDArmAnimation:         ReadArmAnimation,
-    packetIDUnknownX19:           ReadUnknownX19,
-    packetIDEntityVelocity:       ReadEntityVelocity,
-    packetIDUnknownX28:           ReadUnknownX28,
     packetIDUnknownX36:           ReadUnknownX36,
     packetIDDisconnect:           ReadDisconnect,
 }
@@ -1458,15 +1477,19 @@ var scReadFns = scPacketReaderMap{
     packetIDLogin:                SCReadLogin,
     packetIDTimeUpdate:           SCReadTimeUpdate,
     packetIDSpawnPosition:        SCReadSpawnPosition,
+    packetIDUseEntity:            SCReadUseEntity,
     packetIDUpdateHealth:         SCReadUpdateHealth,
     packetIDPlayerPositionLook:   SCReadPlayerPositionLook,
     packetIDMobSpawn:             SCReadMobSpawn,
+    packetIDUnknownX19:           SCReadUnknownX19,
+    packetIDEntityVelocity:       SCReadEntityVelocity,
     packetIDEntityDestroy:        SCReadEntityDestroy,
     packetIDEntity:               SCReadEntity,
     packetIDEntityRelMove:        SCReadEntityRelMove,
     packetIDEntityLook:           SCReadEntityLook,
     packetIDEntityLookAndRelMove: SCReadEntityLookAndRelMove,
     packetIDEntityStatus:         SCReadEntityStatus,
+    packetIDUnknownX28:           SCReadUnknownX28,
     packetIDPreChunk:             SCReadPreChunk,
     packetIDMapChunk:             SCReadMapChunk,
     packetIDBlockChangeMulti:     SCReadBlockChangeMulti,

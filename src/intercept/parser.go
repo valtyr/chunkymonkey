@@ -96,13 +96,31 @@ func (p *MessageParser) SCPacketSpawnPosition(position *BlockXYZ) {
     p.printf("SCPacketSpawnPosition(position=%v)", position)
 }
 
+func (p *MessageParser) SCPacketUseEntity(user EntityID, target EntityID, leftClick bool) {
+    p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%v)", user, target, leftClick)
+}
+
 func (p *MessageParser) SCPacketUpdateHealth(health int16) {
     p.printf("SCPacketUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) SCPacketMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte) {
-    p.printf("SCPacketMobSpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d)",
-        entityID, mobType, position, yaw, pitch)
+func (p *MessageParser) SCPacketMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []proto.UnknownEntityExtra) {
+    p.printf("SCPacketMobSpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
+        entityID, mobType, position, yaw, pitch, data)
+}
+
+func (p *MessageParser) SCPacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32) {
+    p.printf("SCPacketUnknownX19(field1=%d, field2=%v, field3=%d, field4=%d, field5=%d, field6=%d)",
+        field1, field2, field3, field4, field5, field6)
+}
+
+func (p *MessageParser) SCPacketEntityVelocity(entityID EntityID, x, y, z int16) {
+    p.printf("SCPacketEntityVelocity(entityID=%d, x=%d, y=%d, z=%d)",
+        entityID, x, y, z)
+}
+
+func (p *MessageParser) SCPacketUnknownX28(field1 int32, data []proto.UnknownEntityExtra) {
+    p.printf("SCPacketUnknownX28(field1=%d, data=%v)", field1, data)
 }
 
 func (p *MessageParser) SCPacketPreChunk(position *ChunkXZ, mode bool) {
