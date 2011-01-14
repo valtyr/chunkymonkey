@@ -1,8 +1,8 @@
 package chunkymonkey
 
-type ItemCount byte
-
-type ItemID int16
+import (
+    .   "chunkymonkey/types"
+)
 
 const (
     ItemIDIronSpade           = ItemID(256)

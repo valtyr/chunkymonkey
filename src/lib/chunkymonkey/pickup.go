@@ -3,6 +3,7 @@ package chunkymonkey
 import (
     "io"
     "os"
+    "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
 
@@ -29,5 +30,5 @@ func NewPickupItem(game *Game, itemType ItemID, count ItemCount, position XYZInt
 }
 
 func (item *PickupItem) SendSpawn(writer io.Writer) os.Error {
-    return WritePickupSpawn(writer, item.EntityID, item.itemType, item.count, &item.position, &item.orientation)
+    return proto.WritePickupSpawn(writer, item.EntityID, item.itemType, item.count, &item.position, &item.orientation)
 }

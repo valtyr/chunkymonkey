@@ -1,4 +1,4 @@
-package chunkymonkey
+package proto
 
 import (
     "io"

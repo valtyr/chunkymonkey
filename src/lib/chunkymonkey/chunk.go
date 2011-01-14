@@ -10,6 +10,7 @@ import (
     "path"
 
     "nbt/nbt"
+    "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
 
@@ -60,7 +61,7 @@ func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetada
 
     // Tell players that the block was destroyed
     packet := &bytes.Buffer{}
-    WriteBlockChange(packet, chunk.XZ.ToBlockXY(subLoc), BlockIDAir, 0)
+    proto.WriteBlockChange(packet, chunk.XZ.ToBlockXY(subLoc), BlockIDAir, 0)
     chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), chunk.XZ)
 
     return
@@ -80,7 +81,7 @@ func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, err bool) 
 
 // Send chunk data down network connection
 func (chunk *Chunk) SendChunkData(writer io.Writer) (err os.Error) {
-    return WriteMapChunk(writer, &chunk.XZ, chunk.Blocks, chunk.BlockData, chunk.BlockLight, chunk.SkyLight)
+    return proto.WriteMapChunk(writer, &chunk.XZ, chunk.Blocks, chunk.BlockData, chunk.BlockLight, chunk.SkyLight)
 }
 
 // Load a chunk from its NBT representation

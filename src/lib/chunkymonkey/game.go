@@ -10,6 +10,7 @@ import (
     "time"
 
     "nbt/nbt"
+    "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
 
@@ -47,20 +48,20 @@ type Game struct {
 }
 
 func (game *Game) Login(conn net.Conn) {
-    username, err := CSReadHandshake(conn)
+    username, err := proto.CSReadHandshake(conn)
     if err != nil {
         log.Print("CSReadHandshake: ", err.String())
-        WriteDisconnect(conn, err.String())
+        proto.WriteDisconnect(conn, err.String())
         conn.Close()
         return
     }
     log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
-    SCWriteHandshake(conn, "-")
+    proto.SCWriteHandshake(conn, "-")
 
-    _, _, err = CSReadLogin(conn)
+    _, _, err = proto.CSReadLogin(conn)
     if err != nil {
         log.Print("CSReadLogin: ", err.String())
-        WriteDisconnect(conn, err.String())
+        proto.WriteDisconnect(conn, err.String())
         conn.Close()
         return
     }
@@ -96,7 +97,7 @@ func (game *Game) AddPlayer(player *Player) {
 
     // Spawn new player for existing players
     buf := &bytes.Buffer{}
-    WriteNamedEntitySpawn(buf, player.EntityID, player.name, &player.position, &player.orientation, player.currentItem)
+    proto.WriteNamedEntitySpawn(buf, player.EntityID, player.name, &player.position, &player.orientation, player.currentItem)
     game.MulticastRadiusPacket(buf.Bytes(), player)
 
     // Spawn existing players for new player
@@ -106,7 +107,7 @@ func (game *Game) AddPlayer(player *Player) {
             continue
         }
 
-        WriteNamedEntitySpawn(buf, existing.EntityID, existing.name, &existing.position, &existing.orientation, existing.currentItem)
+        proto.WriteNamedEntitySpawn(buf, existing.EntityID, existing.name, &existing.position, &existing.orientation, existing.currentItem)
     }
     player.TransmitPacket(buf.Bytes())
 }
@@ -117,7 +118,7 @@ func (game *Game) AddPlayer(player *Player) {
 func (game *Game) RemovePlayer(player *Player) {
     // Destroy player for other players
     buf := &bytes.Buffer{}
-    WriteEntityDestroy(buf, player.EntityID)
+    proto.WriteEntityDestroy(buf, player.EntityID)
     game.MulticastRadiusPacket(buf.Bytes(), player)
 
     game.players[player.EntityID] = nil, false
@@ -151,7 +152,7 @@ func (game *Game) MulticastPacket(packet []byte, except *Player) {
 
 func (game *Game) SendChatMessage(message string) {
     buf := &bytes.Buffer{}
-    WriteChatMessage(buf, message)
+    proto.WriteChatMessage(buf, message)
     game.MulticastPacket(buf.Bytes(), nil)
 }
 
@@ -176,11 +177,11 @@ func (game *Game) timer() {
 
 func (game *Game) sendTimeUpdate() {
     buf := &bytes.Buffer{}
-    WriteTimeUpdate(buf, game.time)
+    proto.WriteTimeUpdate(buf, game.time)
 
     // The "keep-alive" packet to client sent here as well, as there seems no
     // particular reason to send time and keep-alive separately for now.
-    WriteKeepAlive(buf)
+    proto.WriteKeepAlive(buf)
 
     game.MulticastPacket(buf.Bytes(), nil)
 }

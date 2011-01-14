@@ -6,7 +6,7 @@ import (
     "log"
     "os"
 
-    cm  "chunkymonkey/chunkymonkey"
+    "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
 
@@ -128,14 +128,14 @@ func (p *MessageParser) CSParse(reader io.Reader) {
         }
     }()
 
-    username, err := cm.CSReadHandshake(reader)
+    username, err := proto.CSReadHandshake(reader)
     if err != nil {
         p.printf("CSReadHandshake error: %v", err)
         return
     }
     p.printf("CSReadHandshake(username=%v)", username)
 
-    loginUsername, _, err := cm.CSReadLogin(reader)
+    loginUsername, _, err := proto.CSReadLogin(reader)
     if err != nil {
         p.printf("CSReadLogin error: %v", err)
         return
@@ -143,7 +143,7 @@ func (p *MessageParser) CSParse(reader io.Reader) {
     p.printf("CSReadLogin(username=%v)", loginUsername)
 
     for {
-        err := cm.CSReadPacket(reader, p)
+        err := proto.CSReadPacket(reader, p)
         if err != nil {
             if err != os.EOF {
                 p.printf("ReceiveLoop failed: %v", err)
@@ -161,7 +161,7 @@ func (p *MessageParser) SCParse(reader io.Reader) {
 
     p.logPrefix = "(S->C) "
 
-    connectionHash, err := cm.SCReadHandshake(reader)
+    connectionHash, err := proto.SCReadHandshake(reader)
     if err != nil {
         p.printf("SCReadHandshake error: %v", err)
         return
@@ -169,7 +169,7 @@ func (p *MessageParser) SCParse(reader io.Reader) {
     p.printf("SCReadHandshake connectionHash=%v", connectionHash)
 
     for {
-        err := cm.SCReadPacket(reader, p)
+        err := proto.SCReadPacket(reader, p)
         if err != nil {
             if err != os.EOF {
                 p.printf("ReceiveLoop failed: %v", err)

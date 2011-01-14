@@ -8,6 +8,7 @@ import (
     "math"
     "bytes"
 
+    "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
 
@@ -36,7 +37,7 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
 
     game.Enqueue(func(game *Game) {
         game.AddPlayer(player)
-        SCWriteLogin(conn, player.Entity.EntityID)
+        proto.SCWriteLogin(conn, player.Entity.EntityID)
         player.start()
         player.postLogin()
     })
@@ -80,7 +81,7 @@ func (player *Player) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, 
         player.position = *position
 
         buf := &bytes.Buffer{}
-        WriteEntityTeleport(buf, player.EntityID, &player.position, &player.orientation)
+        proto.WriteEntityTeleport(buf, player.EntityID, &player.position, &player.orientation)
         game.MulticastPacket(buf.Bytes(), player)
     })
 }
@@ -91,7 +92,7 @@ func (player *Player) PacketPlayerLook(orientation *Orientation, flying bool) {
         player.orientation = *orientation
 
         buf := &bytes.Buffer{}
-        WriteEntityLook(buf, player.EntityID, orientation)
+        proto.WriteEntityLook(buf, player.EntityID, orientation)
         game.MulticastPacket(buf.Bytes(), player)
     })
 }
@@ -152,7 +153,7 @@ func (player *Player) PacketDisconnect(reason string) {
 
 func (player *Player) ReceiveLoop() {
     for {
-        err := CSReadPacket(player.conn, player)
+        err := proto.CSReadPacket(player.conn, player)
         if err != nil {
             if err != os.EOF {
                 log.Print("ReceiveLoop failed: ", err.String())
@@ -183,7 +184,7 @@ func (player *Player) sendChunks(writer io.Writer) {
     playerChunkLoc := player.position.ToChunkXZ()
 
     for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
-        WritePreChunk(writer, &chunk.XZ, true)
+        proto.WritePreChunk(writer, &chunk.XZ, true)
     }
 
     for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
@@ -200,10 +201,10 @@ func (player *Player) TransmitPacket(packet []byte) {
 
 func (player *Player) postLogin() {
     buf := &bytes.Buffer{}
-    WriteSpawnPosition(buf, &player.position)
+    proto.WriteSpawnPosition(buf, &player.position)
     player.sendChunks(buf)
-    WritePlayerInventory(buf)
-    SCWritePlayerPositionLook(buf, &player.position, &player.orientation,
+    proto.WritePlayerInventory(buf)
+    proto.SCWritePlayerPositionLook(buf, &player.position, &player.orientation,
         player.position.Y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
 }
