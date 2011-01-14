@@ -115,7 +115,7 @@ func (game *Game) AddPlayer(player *Player) {
 func (game *Game) RemovePlayer(player *Player) {
     // Destroy player for other players
     buf := &bytes.Buffer{}
-    WriteDestroyEntity(buf, player.EntityID)
+    WriteEntityDestroy(buf, player.EntityID)
     game.MulticastRadiusPacket(buf.Bytes(), player)
 
     game.players[player.EntityID] = nil, false
