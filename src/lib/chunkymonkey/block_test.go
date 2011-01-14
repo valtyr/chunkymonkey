@@ -2,7 +2,7 @@ package chunkymonkey
 
 import (
     "testing"
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 func TestLoadStandardBlocks(t *testing.T) {

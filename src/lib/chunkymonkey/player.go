@@ -8,7 +8,7 @@ import (
     "math"
     "bytes"
 
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 type Player struct {

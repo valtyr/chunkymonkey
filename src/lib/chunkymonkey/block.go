@@ -1,7 +1,7 @@
 package chunkymonkey
 
 import (
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 const (

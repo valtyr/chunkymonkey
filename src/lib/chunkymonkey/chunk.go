@@ -10,7 +10,7 @@ import (
     "path"
 
     "nbt/nbt"
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 // A chunk is slice of the world map

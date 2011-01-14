@@ -7,7 +7,7 @@ import (
     "os"
 
     cm  "chunkymonkey/chunkymonkey"
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 // Hex dumps the input to the log
