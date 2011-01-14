@@ -4,7 +4,6 @@ import (
     "io"
     "os"
     "fmt"
-    "log"
     "bytes"
     "encoding/binary"
     "compress/zlib"
@@ -814,7 +813,6 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
 // packetIDPickupSpawn
 
 func WritePickupSpawn(writer io.Writer, item *PickupItem) os.Error {
-    log.Println("WritePickupSpawn", item.position)
     var packet = struct {
         PacketID byte
         EntityID int32
@@ -1134,17 +1132,17 @@ func SCReadPreChunk(reader io.Reader, handler SCPacketHandler) (err os.Error) {
 
 // packetIDMapChunk
 
-func WriteMapChunk(writer io.Writer, chunk *Chunk) (err os.Error) {
+func WriteMapChunk(writer io.Writer, chunkLoc *ChunkXZ, blocks, blockData, blockLight, skyLight []byte) (err os.Error) {
     buf := &bytes.Buffer{}
     compressed, err := zlib.NewWriter(buf)
     if err != nil {
         return
     }
 
-    compressed.Write(chunk.Blocks)
-    compressed.Write(chunk.BlockData)
-    compressed.Write(chunk.BlockLight)
-    compressed.Write(chunk.SkyLight)
+    compressed.Write(blocks)
+    compressed.Write(blockData)
+    compressed.Write(blockLight)
+    compressed.Write(skyLight)
     compressed.Close()
     bs := buf.Bytes()
 
@@ -1159,9 +1157,9 @@ func WriteMapChunk(writer io.Writer, chunk *Chunk) (err os.Error) {
         CompressedLength int32
     }{
         packetIDMapChunk,
-        int32(chunk.XZ.x * ChunkSizeX),
+        int32(chunkLoc.x * ChunkSizeX),
         0,
-        int32(chunk.XZ.z * ChunkSizeZ),
+        int32(chunkLoc.z * ChunkSizeZ),
         ChunkSizeX - 1,
         ChunkSizeY - 1,
         ChunkSizeZ - 1,

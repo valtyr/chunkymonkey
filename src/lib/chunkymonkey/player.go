@@ -185,7 +185,7 @@ func (player *Player) sendChunks(writer io.Writer) {
     }
 
     for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
-        WriteMapChunk(writer, chunk)
+        chunk.SendChunkData(writer)
     }
 }
 

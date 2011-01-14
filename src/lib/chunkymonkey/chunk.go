@@ -17,8 +17,8 @@ type Chunk struct {
     XZ         ChunkXZ
     Blocks     []byte
     BlockData  []byte
-    SkyLight   []byte
     BlockLight []byte
+    SkyLight   []byte
     HeightMap  []byte
 }
 
@@ -74,6 +74,11 @@ func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, err bool) 
 
     blockType = BlockID(chunk.Blocks[index])
     return
+}
+
+// Send chunk data down network connection
+func (chunk *Chunk) SendChunkData(writer io.Writer) (err os.Error) {
+    return WriteMapChunk(writer, &chunk.XZ, chunk.Blocks, chunk.BlockData, chunk.BlockLight, chunk.SkyLight)
 }
 
 // Load a chunk from its NBT representation
