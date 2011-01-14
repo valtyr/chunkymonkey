@@ -1,11 +1,13 @@
 package intercept_parse
 
 import (
-    cm  "chunkymonkey/chunkymonkey"
     "encoding/hex"
     "io"
     "log"
     "os"
+
+    cm  "chunkymonkey/chunkymonkey"
+    . "chunkymonkey/types"
 )
 
 // Hex dumps the input to the log
@@ -53,19 +55,19 @@ func (p *MessageParser) PacketFlying(flying bool) {
     p.printf("PacketFlying(%v)", flying)
 }
 
-func (p *MessageParser) PacketPlayerPosition(position *cm.XYZ, stance cm.AbsoluteCoord, flying bool) {
+func (p *MessageParser) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, flying bool) {
     p.printf("PacketPlayerPosition(%v, %v, %v)", position, stance, flying)
 }
 
-func (p *MessageParser) PacketPlayerLook(orientation *cm.Orientation, flying bool) {
+func (p *MessageParser) PacketPlayerLook(orientation *Orientation, flying bool) {
     p.printf("PacketPlayerLook(%v, %v)", orientation, flying)
 }
 
-func (p *MessageParser) PacketPlayerDigging(status cm.DigStatus, blockLoc *cm.BlockXYZ, face cm.Face) {
+func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
     p.printf("PacketPlayerDigging(%v, %v, %v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) PacketPlayerBlockPlacement(blockItemID int16, blockLoc *cm.BlockXYZ, direction cm.Face) {
+func (p *MessageParser) PacketPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face) {
     p.printf("PacketPlayerBlockPlacement(%d, %v, %v)", blockItemID, blockLoc, direction)
 }
 
@@ -81,7 +83,7 @@ func (p *MessageParser) PacketDisconnect(reason string) {
     p.printf("PacketDisconnect(%s)", reason)
 }
 
-func (p *MessageParser) SCPacketLogin(entityID cm.EntityID, str1 string, str2 string, mapSeed int64, dimension byte) {
+func (p *MessageParser) SCPacketLogin(entityID EntityID, str1 string, str2 string, mapSeed int64, dimension byte) {
     p.printf("SCPacketLogin(entityID=%d, str1=%v, str2=%v, mapSeed=%d, dimension=%d)",
         entityID, str1, str2, mapSeed, dimension)
 }
@@ -90,7 +92,7 @@ func (p *MessageParser) SCPacketTimeUpdate(time int64) {
     p.printf("SCPacketTime(time=%d)", time)
 }
 
-func (p *MessageParser) SCPacketSpawnPosition(position *cm.BlockXYZ) {
+func (p *MessageParser) SCPacketSpawnPosition(position *BlockXYZ) {
     p.printf("SCPacketSpawnPosition(position=%v)", position)
 }
 
@@ -98,16 +100,16 @@ func (p *MessageParser) SCPacketUpdateHealth(health int16) {
     p.printf("SCPacketUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) SCPacketMobSpawn(entityID cm.EntityID, mobType byte, position *cm.XYZInteger, yaw byte, pitch byte) {
+func (p *MessageParser) SCPacketMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte) {
     p.printf("SCPacketMobSpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d)",
         entityID, mobType, position, yaw, pitch)
 }
 
-func (p *MessageParser) SCPacketPreChunk(position *cm.ChunkXZ, mode bool) {
+func (p *MessageParser) SCPacketPreChunk(position *ChunkXZ, mode bool) {
     p.printf("SCPacketPreChunk(position=%v, mode=%v)", position, mode)
 }
 
-func (p *MessageParser) SCPacketMapChunk(position *cm.BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte) {
+func (p *MessageParser) SCPacketMapChunk(position *BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte) {
     p.printf("SCPacketMapChunk(position=%v, sizeX=%d, sizeY=%d, sizeZ=%d, len(data)=%d)",
         position, sizeX, sizeY, sizeZ, len(data))
 }

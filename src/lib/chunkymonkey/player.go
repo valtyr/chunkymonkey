@@ -7,6 +7,8 @@ import (
     "net"
     "math"
     "bytes"
+
+    . "chunkymonkey/types"
 )
 
 type Player struct {
@@ -65,13 +67,13 @@ func (player *Player) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, 
     // of each other.
 
     player.game.Enqueue(func(game *Game) {
-        var delta = XYZ{position.x - player.position.x,
-            position.y - player.position.y,
-            position.z - player.position.z}
-        distance := math.Sqrt(float64(delta.x*delta.x + delta.y*delta.y + delta.z*delta.z))
+        var delta = XYZ{position.X - player.position.X,
+            position.Y - player.position.Y,
+            position.Z - player.position.Z}
+        distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
         if distance > 10 {
             log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
-                position.x, position.y, position.z)
+                position.X, position.Y, position.Z)
             return
         }
 
@@ -202,6 +204,6 @@ func (player *Player) postLogin() {
     player.sendChunks(buf)
     WritePlayerInventory(buf)
     SCWritePlayerPositionLook(buf, &player.position, &player.orientation,
-        player.position.y+StanceNormal, false)
+        player.position.Y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
 }

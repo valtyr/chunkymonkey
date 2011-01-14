@@ -1,6 +1,8 @@
 package chunkymonkey
 
-type EntityID int32
+import (
+    . "chunkymonkey/types"
+)
 
 type Entity struct {
     EntityID EntityID

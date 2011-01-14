@@ -1,5 +1,9 @@
 package chunkymonkey
 
+import (
+    . "chunkymonkey/types"
+)
+
 type PickupItem struct {
     Entity
     itemType    ItemID

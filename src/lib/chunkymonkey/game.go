@@ -4,11 +4,13 @@ import (
     "bytes"
     "fmt"
     "log"
-    "nbt/nbt"
     "net"
     "os"
     "path"
     "time"
+
+    "nbt/nbt"
+    . "chunkymonkey/types"
 )
 
 // The player's starting position is loaded from level.dat for now
@@ -211,16 +213,16 @@ func NewGame(worldPath string) (game *Game) {
 // Return a channel to iterate over all players within a chunk's radius
 func (game *Game) PlayersInRadius(loc ChunkXZ) (c chan *Player) {
     // We return any player whose chunk position is within these bounds:
-    minX := loc.x - ChunkRadius
-    minZ := loc.z - ChunkRadius
-    maxX := loc.x + ChunkRadius + 1
-    maxZ := loc.x + ChunkRadius + 1
+    minX := loc.X - ChunkRadius
+    minZ := loc.Z - ChunkRadius
+    maxX := loc.X + ChunkRadius + 1
+    maxZ := loc.X + ChunkRadius + 1
 
     c = make(chan *Player)
     go func() {
         for _, player := range game.players {
             p := player.position.ToChunkXZ()
-            if p.x >= minX && p.x <= maxX && p.z >= minZ && p.z <= maxZ {
+            if p.X >= minX && p.X <= maxX && p.Z >= minZ && p.Z <= maxZ {
                 c <- player
             }
         }

@@ -1,17 +1,8 @@
 package chunkymonkey
 
-type DigStatus byte
-
-const (
-    DigStarted    = DigStatus(0)
-    DigDigging    = DigStatus(1)
-    DigStopped    = DigStatus(2)
-    DigBlockBroke = DigStatus(3)
+import (
+    . "chunkymonkey/types"
 )
-
-// Block IDs
-
-type BlockID byte
 
 const (
     BlockIDAir                 = BlockID(0)

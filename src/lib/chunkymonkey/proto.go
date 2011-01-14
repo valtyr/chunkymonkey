@@ -7,6 +7,8 @@ import (
     "bytes"
     "encoding/binary"
     "compress/zlib"
+
+    . "chunkymonkey/types"
 )
 
 const (
@@ -443,9 +445,9 @@ func WriteSpawnPosition(writer io.Writer, position *XYZ) os.Error {
         Z        int32
     }{
         packetIDSpawnPosition,
-        int32(position.x),
-        int32(position.y),
-        int32(position.z),
+        int32(position.X),
+        int32(position.Y),
+        int32(position.Z),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
 }
@@ -531,10 +533,10 @@ func WritePlayerPosition(writer io.Writer, position *XYZ, stance float64, onGrou
         OnGround byte
     }{
         packetIDPlayerPosition,
-        float64(position.x),
-        float64(position.y),
+        float64(position.X),
+        float64(position.Y),
         float64(stance),
-        float64(position.z),
+        float64(position.Z),
         boolToByte(onGround),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
@@ -629,12 +631,12 @@ func SCWritePlayerPositionLook(writer io.Writer, position *XYZ, orientation *Ori
         Flying   byte
     }{
         packetIDPlayerPositionLook,
-        float64(position.x),
-        float64(position.y),
+        float64(position.X),
+        float64(position.Y),
         float64(stance),
-        float64(position.z),
-        float32(orientation.rotation),
-        float32(orientation.pitch),
+        float64(position.Z),
+        float32(orientation.Rotation),
+        float32(orientation.Pitch),
         boolToByte(flying),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
@@ -798,11 +800,11 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
         Pitch       byte
         CurrentItem int16
     }{
-        int32(position.x * PixelsPerBlock),
-        int32(position.y * PixelsPerBlock),
-        int32(position.z * PixelsPerBlock),
-        byte(orientation.rotation),
-        byte(orientation.pitch),
+        int32(position.X * PixelsPerBlock),
+        int32(position.Y * PixelsPerBlock),
+        int32(position.Z * PixelsPerBlock),
+        byte(orientation.Rotation),
+        byte(orientation.Pitch),
         currentItem,
     }
 
@@ -833,12 +835,12 @@ func WritePickupSpawn(writer io.Writer, item *PickupItem) os.Error {
         byte(item.count),
         // TODO pass proper damage value
         0,
-        item.position.x,
-        item.position.y,
-        item.position.z,
-        byte(item.orientation.rotation),
-        byte(item.orientation.pitch),
-        byte(item.orientation.roll),
+        item.position.X,
+        item.position.Y,
+        item.position.Z,
+        byte(item.orientation.Rotation),
+        byte(item.orientation.Pitch),
+        byte(item.orientation.Roll),
     }
 
     return binary.Write(writer, binary.BigEndian, &packet)
@@ -992,8 +994,8 @@ func WriteEntityLook(writer io.Writer, entityID EntityID, orientation *Orientati
     }{
         packetIDEntityLook,
         int32(entityID),
-        byte(orientation.rotation * 256 / 360),
-        byte(orientation.pitch * 64 / 90),
+        byte(orientation.Rotation * 256 / 360),
+        byte(orientation.Pitch * 64 / 90),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
 }
@@ -1049,11 +1051,11 @@ func WriteEntityTeleport(writer io.Writer, entityID EntityID, position *XYZ, ori
     }{
         packetIDEntityTeleport,
         int32(entityID),
-        int32(position.x * PixelsPerBlock),
-        int32(position.y * PixelsPerBlock),
-        int32(position.z * PixelsPerBlock),
-        byte(orientation.rotation * 256 / 360),
-        byte(orientation.pitch * 64 / 90),
+        int32(position.X * PixelsPerBlock),
+        int32(position.Y * PixelsPerBlock),
+        int32(position.Z * PixelsPerBlock),
+        byte(orientation.Rotation * 256 / 360),
+        byte(orientation.Pitch * 64 / 90),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
 }
@@ -1106,8 +1108,8 @@ func WritePreChunk(writer io.Writer, chunkLoc *ChunkXZ, willSend bool) os.Error 
         WillSend byte
     }{
         packetIDPreChunk,
-        int32(chunkLoc.x),
-        int32(chunkLoc.z),
+        int32(chunkLoc.X),
+        int32(chunkLoc.Z),
         boolToByte(willSend),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
@@ -1157,9 +1159,9 @@ func WriteMapChunk(writer io.Writer, chunkLoc *ChunkXZ, blocks, blockData, block
         CompressedLength int32
     }{
         packetIDMapChunk,
-        int32(chunkLoc.x * ChunkSizeX),
+        int32(chunkLoc.X * ChunkSizeX),
         0,
-        int32(chunkLoc.z * ChunkSizeZ),
+        int32(chunkLoc.Z * ChunkSizeZ),
         ChunkSizeX - 1,
         ChunkSizeY - 1,
         ChunkSizeZ - 1,
@@ -1242,9 +1244,9 @@ func WriteBlockChange(writer io.Writer, blockLoc *BlockXYZ, blockType BlockID, b
         BlockMetadata byte
     }{
         packetIDBlockChange,
-        int32(blockLoc.x),
-        byte(blockLoc.y),
-        int32(blockLoc.z),
+        int32(blockLoc.X),
+        byte(blockLoc.Y),
+        int32(blockLoc.Z),
         byte(blockType),
         byte(blockMetaData),
     }

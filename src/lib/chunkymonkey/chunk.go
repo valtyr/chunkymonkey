@@ -8,7 +8,9 @@ import (
     "os"
     "log"
     "path"
+
     "nbt/nbt"
+    . "chunkymonkey/types"
 )
 
 // A chunk is slice of the world map
@@ -23,13 +25,13 @@ type Chunk struct {
 }
 
 func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, err bool) {
-    if subLoc.x < 0 || subLoc.y < 0 || subLoc.z < 0 || subLoc.x >= ChunkSizeX || subLoc.y >= ChunkSizeY || subLoc.z >= ChunkSizeZ {
+    if subLoc.X < 0 || subLoc.Y < 0 || subLoc.Z < 0 || subLoc.X >= ChunkSizeX || subLoc.Y >= ChunkSizeY || subLoc.Z >= ChunkSizeZ {
         err = true
         index = 0
     } else {
         err = false
 
-        index = int32(subLoc.y + (subLoc.z * ChunkSizeY) + (subLoc.x * ChunkSizeY * ChunkSizeZ))
+        index = int32(subLoc.Y + (subLoc.Z * ChunkSizeY) + (subLoc.X * ChunkSizeY * ChunkSizeZ))
 
         if index%2 == 0 {
             // Low nibble
@@ -90,8 +92,8 @@ func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
 
     chunk = &Chunk{
         XZ: ChunkXZ{
-            x:  ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
-            z:  ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
+            X:  ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
+            Z:  ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
         },
         Blocks:     level.Lookup("/Level/Blocks").(*nbt.ByteArray).Value,
         BlockData:  level.Lookup("/Level/Data").(*nbt.ByteArray).Value,
@@ -140,14 +142,14 @@ func base36Encode(n int32) (s string) {
 }
 
 func (mgr *ChunkManager) chunkPath(loc ChunkXZ) string {
-    return path.Join(mgr.worldPath, base36Encode(int32(loc.x&63)), base36Encode(int32(loc.z&63)),
-        "c."+base36Encode(int32(loc.x))+"."+base36Encode(int32(loc.z))+".dat")
+    return path.Join(mgr.worldPath, base36Encode(int32(loc.X&63)), base36Encode(int32(loc.Z&63)),
+        "c."+base36Encode(int32(loc.X))+"."+base36Encode(int32(loc.Z))+".dat")
 }
 
 // Get a chunk at given coordinates
 func (mgr *ChunkManager) Get(loc ChunkXZ) (chunk *Chunk) {
     // FIXME this function looks subject to race conditions with itself
-    key := uint64(loc.x)<<32 | uint64(uint32(loc.z))
+    key := uint64(loc.X)<<32 | uint64(uint32(loc.Z))
     chunk, ok := mgr.chunks[key]
     if ok {
         return
@@ -174,9 +176,9 @@ func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan *Chunk) {
     c = make(chan *Chunk)
     go func() {
         curChunkXZ := ChunkXZ{0, 0}
-        for z := loc.z - ChunkRadius; z <= loc.z+ChunkRadius; z++ {
-            for x := loc.x - ChunkRadius; x <= loc.x+ChunkRadius; x++ {
-                curChunkXZ.x, curChunkXZ.z = x, z
+        for z := loc.Z - ChunkRadius; z <= loc.Z+ChunkRadius; z++ {
+            for x := loc.X - ChunkRadius; x <= loc.X+ChunkRadius; x++ {
+                curChunkXZ.X, curChunkXZ.Z = x, z
                 c <- mgr.Get(curChunkXZ)
             }
         }
