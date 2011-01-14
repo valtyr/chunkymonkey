@@ -10,7 +10,7 @@ import (
     "time"
 
     "nbt/nbt"
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 // The player's starting position is loaded from level.dat for now
@@ -131,7 +131,7 @@ func (game *Game) AddPickupItem(item *PickupItem) {
 
     // Spawn new item for players
     buf := &bytes.Buffer{}
-    err := WritePickupSpawn(buf, item)
+    err := item.SendSpawn(buf)
     if err != nil {
         log.Print("AddPickupItem", err.String())
         return

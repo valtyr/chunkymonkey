@@ -8,7 +8,7 @@ import (
     "encoding/binary"
     "compress/zlib"
 
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 const (
@@ -814,7 +814,7 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
 
 // packetIDPickupSpawn
 
-func WritePickupSpawn(writer io.Writer, item *PickupItem) os.Error {
+func WritePickupSpawn(writer io.Writer, entityID EntityID, itemType ItemID, amount ItemCount, position *XYZInteger, orientation *OrientationPacked) os.Error {
     var packet = struct {
         PacketID byte
         EntityID int32
@@ -830,17 +830,17 @@ func WritePickupSpawn(writer io.Writer, item *PickupItem) os.Error {
         Roll  byte
     }{
         packetIDPickupSpawn,
-        int32(item.Entity.EntityID),
-        int16(item.itemType),
-        byte(item.count),
-        // TODO pass proper damage value
+        int32(entityID),
+        int16(itemType),
+        byte(amount),
+        // TODO pass proper uses value
         0,
-        item.position.X,
-        item.position.Y,
-        item.position.Z,
-        byte(item.orientation.Rotation),
-        byte(item.orientation.Pitch),
-        byte(item.orientation.Roll),
+        position.X,
+        position.Y,
+        position.Z,
+        byte(orientation.Rotation),
+        byte(orientation.Pitch),
+        byte(orientation.Roll),
     }
 
     return binary.Write(writer, binary.BigEndian, &packet)

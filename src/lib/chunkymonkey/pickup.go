@@ -1,7 +1,9 @@
 package chunkymonkey
 
 import (
-    . "chunkymonkey/types"
+    "io"
+    "os"
+    .   "chunkymonkey/types"
 )
 
 type PickupItem struct {
@@ -24,4 +26,8 @@ func NewPickupItem(game *Game, itemType ItemID, count ItemCount, position XYZInt
     game.Enqueue(func(game *Game) {
         game.AddPickupItem(item)
     })
+}
+
+func (item *PickupItem) SendSpawn(writer io.Writer) os.Error {
+    return WritePickupSpawn(writer, item.EntityID, item.itemType, item.count, &item.position, &item.orientation)
 }
