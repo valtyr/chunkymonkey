@@ -142,6 +142,9 @@ func (player *Player) RecvHoldingChange(blockItemID int16) {
 func (player *Player) RecvArmAnimation(forward bool) {
 }
 
+func (player *Player) ServerRecvWindowClick(windowId byte, slot int16, rightClick bool, actionNumber int16, itemID ItemID, amount byte, uses int16) {
+}
+
 func (player *Player) RecvDisconnect(reason string) {
     log.Printf("RecvDisconnect reason=%s", reason)
     player.game.Enqueue(func(game *Game) {

@@ -35,7 +35,7 @@ const (
     packetIDArmAnimation         = 0x12
     packetIDNamedEntitySpawn     = 0x14
     packetIDPickupSpawn          = 0x15
-    packetIDMobSpawn             = 0x18
+    packetIDEntitySpawn          = 0x18
     packetIDUnknownX19           = 0x19
     packetIDEntityVelocity       = 0x1c
     packetIDEntity               = 0x1e
@@ -79,6 +79,7 @@ type RecvHandler interface {
 // Servers to the protocol must implement this interface to receive packets
 type ServerRecvHandler interface {
     RecvHandler
+    ServerRecvWindowClick(windowId byte, slot int16, rightClick bool, actionNumber int16, itemID ItemID, amount byte, uses int16)
 }
 
 // Clients to the protocol must implement this interface to receive packets
@@ -89,16 +90,22 @@ type ClientRecvHandler interface {
     ClientRecvSpawnPosition(position *BlockXYZ)
     ClientRecvUseEntity(user EntityID, target EntityID, leftClick bool)
     ClientRecvUpdateHealth(health int16)
-    ClientRecvMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []UnknownEntityExtra)
+    ClientRecvEntitySpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []UnknownEntityExtra)
     ClientRecvUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32)
     ClientRecvEntityVelocity(entityID EntityID, x, y, z int16)
-    ClientRecvEntity(entityID EntityID)
     ClientRecvEntityDestroy(entityID EntityID)
+    ClientRecvEntity(entityID EntityID)
+    ClientRecvEntityRelMove(entityID EntityID, movement *RelMove)
+    ClientRecvEntityLook(entityID EntityID, yaw, pitch AngleByte)
+    ClientRecvEntityStatus(entityID EntityID, status byte)
     ClientRecvUnknownX28(field1 int32, data []UnknownEntityExtra)
     ClientRecvPreChunk(position *ChunkXZ, mode bool)
     ClientRecvMapChunk(position *BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte)
     ClientRecvBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte)
     ClientRecvBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte)
+    ClientRecvUnknownX36(field1 int32, field2 int16, field3 int32, field4, field5 byte)
+    ClientRecvSetSlot(windowId byte, slot int16, itemID ItemID, amount byte, uses int16)
+    ClientRecvWindowItems(windowId byte, items []WindowSlot)
 }
 
 // Common protocol helper functions
@@ -136,6 +143,12 @@ func WriteString(writer io.Writer, s string) (err os.Error) {
 
     _, err = writer.Write(bs)
     return
+}
+
+type WindowSlot struct {
+    ItemID ItemID
+    Amount byte
+    Uses   int16
 }
 
 type UnknownEntityExtra struct {
@@ -430,6 +443,7 @@ func clientReadTimeUpdate(reader io.Reader, handler ClientRecvHandler) (err os.E
 
 // packetIDPlayerInventory
 
+// TODO replace function and packet ID. The packet ID no longer serves this purpose
 func WritePlayerInventory(writer io.Writer) (err os.Error) {
     type InventoryType struct {
         inventoryType int32
@@ -604,8 +618,8 @@ func readPlayerPosition(reader io.Reader, handler RecvHandler) (err os.Error) {
 
 func readPlayerLook(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
-        Yaw      float32
-        Pitch    float32
+        Yaw      AngleRadians
+        Pitch    AngleRadians
         OnGround byte
     }
 
@@ -615,8 +629,8 @@ func readPlayerLook(reader io.Reader, handler RecvHandler) (err os.Error) {
     }
 
     handler.RecvPlayerLook(&Orientation{
-        AngleRadians(packet.Yaw),
-        AngleRadians(packet.Pitch),
+        packet.Yaw,
+        packet.Pitch,
     },
         byteToBool(packet.OnGround))
     return
@@ -628,8 +642,8 @@ func clientReadPlayerPositionLook(reader io.Reader, handler ClientRecvHandler) (
         Y        float64
         Stance   float64
         Z        float64
-        Yaw      float32
-        Pitch    float32
+        Yaw      AngleRadians
+        Pitch    AngleRadians
         OnGround byte
     }
 
@@ -878,9 +892,9 @@ func WritePickupSpawn(writer io.Writer, entityID EntityID, itemType ItemID, amou
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-// packetIDMobSpawn
+// packetIDEntitySpawn
 
-func clientReadMobSpawn(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
+func clientReadEntitySpawn(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
         MobType  byte
@@ -901,7 +915,7 @@ func clientReadMobSpawn(reader io.Reader, handler ClientRecvHandler) (err os.Err
         return
     }
 
-    handler.ClientRecvMobSpawn(
+    handler.ClientRecvEntitySpawn(
         EntityID(packet.EntityID), packet.MobType,
         &XYZInteger{packet.X, packet.Y, packet.Z},
         packet.Yaw, packet.Pitch, data)
@@ -1004,7 +1018,7 @@ func clientReadEntityDestroy(reader io.Reader, handler ClientRecvHandler) (err o
 func clientReadEntityRelMove(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
-        X, Y, Z  byte
+        X, Y, Z  RelMoveCoord
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -1012,7 +1026,9 @@ func clientReadEntityRelMove(reader io.Reader, handler ClientRecvHandler) (err o
         return
     }
 
-    // TODO pass this data to handler
+    handler.ClientRecvEntityRelMove(
+        packet.EntityID,
+        &RelMove{packet.X, packet.Y, packet.Z})
 
     return
 }
@@ -1022,23 +1038,24 @@ func clientReadEntityRelMove(reader io.Reader, handler ClientRecvHandler) (err o
 func WriteEntityLook(writer io.Writer, entityID EntityID, orientation *Orientation) os.Error {
     var packet = struct {
         PacketID byte
-        EntityID int32
-        Yaw      byte
-        Pitch    byte
+        EntityID EntityID
+        Yaw      AngleByte
+        Pitch    AngleByte
     }{
         packetIDEntityLook,
-        int32(entityID),
-        byte(orientation.Rotation * 256 / 360),
-        byte(orientation.Pitch * 64 / 90),
+        entityID,
+        // TODO use conversion function with proper overflow logic
+        AngleByte(orientation.Rotation * 256 / 360),
+        AngleByte(orientation.Pitch * 64 / 90),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
 func clientReadEntityLook(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
-        EntityID int32
-        Yaw      byte
-        Pitch    byte
+        EntityID EntityID
+        Yaw      AngleByte
+        Pitch    AngleByte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -1046,7 +1063,9 @@ func clientReadEntityLook(reader io.Reader, handler ClientRecvHandler) (err os.E
         return
     }
 
-    // TODO pass values to handler
+    handler.ClientRecvEntityLook(
+        packet.EntityID,
+        packet.Yaw, packet.Pitch)
 
     return
 }
@@ -1055,10 +1074,10 @@ func clientReadEntityLook(reader io.Reader, handler ClientRecvHandler) (err os.E
 
 func clientReadEntityLookAndRelMove(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
-        EntityID int32
-        X, Y, Z  byte
-        Yaw      byte
-        Pitch    byte
+        EntityID EntityID
+        X, Y, Z  RelMoveCoord
+        Yaw      AngleByte
+        Pitch    AngleByte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -1066,7 +1085,13 @@ func clientReadEntityLookAndRelMove(reader io.Reader, handler ClientRecvHandler)
         return
     }
 
-    // TODO pass values to handler
+    handler.ClientRecvEntityRelMove(
+        packet.EntityID,
+        &RelMove{packet.X, packet.Y, packet.Z})
+
+    handler.ClientRecvEntityLook(
+        packet.EntityID,
+        packet.Yaw, packet.Pitch)
 
     return
 }
@@ -1076,20 +1101,22 @@ func clientReadEntityLookAndRelMove(reader io.Reader, handler ClientRecvHandler)
 func WriteEntityTeleport(writer io.Writer, entityID EntityID, position *XYZ, orientation *Orientation) os.Error {
     var packet = struct {
         PacketID byte
-        EntityID int32
+        EntityID EntityID
         X        int32
         Y        int32
         Z        int32
-        Yaw      byte
-        Pitch    byte
+        Yaw      AngleByte
+        Pitch    AngleByte
     }{
         packetIDEntityTeleport,
-        int32(entityID),
+        entityID,
+        // TODO use a conversion function
         int32(position.X * PixelsPerBlock),
         int32(position.Y * PixelsPerBlock),
         int32(position.Z * PixelsPerBlock),
-        byte(orientation.Rotation * 256 / 360),
-        byte(orientation.Pitch * 64 / 90),
+        // TODO use conversion function with proper overflow logic
+        AngleByte(orientation.Rotation * 256 / 360),
+        AngleByte(orientation.Pitch * 64 / 90),
     }
     return binary.Write(writer, binary.BigEndian, &packet)
 }
@@ -1107,7 +1134,7 @@ func clientReadEntityStatus(reader io.Reader, handler ClientRecvHandler) (err os
         return
     }
 
-    // TODO pass values to handler
+    handler.ClientRecvEntityStatus(packet.EntityID, packet.Status)
 
     return
 }
@@ -1327,7 +1354,7 @@ func clientReadBlockChange(reader io.Reader, handler ClientRecvHandler) (err os.
 
 // packetIDUnknownX36
 
-func readUnknownX36(reader io.Reader, handler RecvHandler) (err os.Error) {
+func clientReadUnknownX36(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
         field1         int32
         field2         int16
@@ -1341,7 +1368,7 @@ func readUnknownX36(reader io.Reader, handler RecvHandler) (err os.Error) {
         return
     }
 
-    // TODO pass values to handler
+    handler.ClientRecvUnknownX36(packet.field1, packet.field2, packet.field3, packet.field4, packet.field5)
 
     return
 }
@@ -1354,7 +1381,7 @@ func serverReadWindowClick(reader io.Reader, handler ServerRecvHandler) (err os.
         Slot         int16
         RightClick   byte
         ActionNumber int16
-        ItemID       int16
+        ItemID       ItemID
     }
 
     err = binary.Read(reader, binary.BigEndian, &packetStart)
@@ -1362,18 +1389,26 @@ func serverReadWindowClick(reader io.Reader, handler ServerRecvHandler) (err os.
         return
     }
 
+    var packetEnd struct {
+        Amount byte
+        Uses   int16
+    }
+
     if packetStart.ItemID != -1 {
-        var packetEnd struct {
-            Amount byte
-            Uses   int16
-        }
         err = binary.Read(reader, binary.BigEndian, &packetEnd)
         if err != nil {
             return
         }
     }
 
-    // TODO pass values to handler
+    handler.ServerRecvWindowClick(
+        packetStart.WindowId,
+        packetStart.Slot,
+        byteToBool(packetStart.RightClick),
+        packetStart.ActionNumber,
+        packetStart.ItemID,
+        packetEnd.Amount,
+        packetEnd.Uses)
 
     return
 }
@@ -1384,7 +1419,7 @@ func clientReadSetSlot(reader io.Reader, handler ClientRecvHandler) (err os.Erro
     var packetStart struct {
         WindowId byte
         Slot     int16
-        ItemID   int16
+        ItemID   ItemID
     }
 
     err = binary.Read(reader, binary.BigEndian, &packetStart)
@@ -1392,19 +1427,24 @@ func clientReadSetSlot(reader io.Reader, handler ClientRecvHandler) (err os.Erro
         return
     }
 
-    if packetStart.ItemID != -1 {
-        var packetEnd struct {
-            Amount byte
-            Uses   int16
-        }
+    var packetEnd struct {
+        Amount byte
+        Uses   int16
+    }
 
+    if packetStart.ItemID != -1 {
         err = binary.Read(reader, binary.BigEndian, &packetEnd)
         if err != nil {
             return
         }
     }
 
-    // TODO pass values to handler
+    handler.ClientRecvSetSlot(
+        packetStart.WindowId,
+        packetStart.Slot,
+        packetStart.ItemID,
+        packetEnd.Amount,
+        packetEnd.Uses)
 
     return
 }
@@ -1422,28 +1462,37 @@ func clientReadWindowItems(reader io.Reader, handler ClientRecvHandler) (err os.
         return
     }
 
-    var itemID int16
-    var itemInfo struct {
-        Amount byte
-        Uses   int16
-    }
+    var itemID ItemID
 
-    // TODO collect inventory data for handler, data is currently discarded
+    items := make([]WindowSlot, packetStart.Count)
+
     for i := int16(0); i < packetStart.Count; i++ {
         err = binary.Read(reader, binary.BigEndian, &itemID)
         if err != nil {
             return
         }
 
+        var itemInfo struct {
+            Amount byte
+            Uses   int16
+        }
         if itemID != -1 {
             err = binary.Read(reader, binary.BigEndian, &itemInfo)
             if err != nil {
                 return
             }
         }
+
+        items = append(items, WindowSlot{
+            ItemID: itemID,
+            Amount: itemInfo.Amount,
+            Uses:   itemInfo.Uses,
+        })
     }
 
-    // TODO pass values to handler
+    handler.ClientRecvWindowItems(
+        packetStart.WindowId,
+        items)
 
     return
 }
@@ -1491,7 +1540,6 @@ var commonReadFns = commonPacketReaderMap{
     packetIDPlayerBlockPlacement: readPlayerBlockPlacement,
     packetIDHoldingChange:        readHoldingChange,
     packetIDArmAnimation:         readArmAnimation,
-    packetIDUnknownX36:           readUnknownX36,
     packetIDDisconnect:           readDisconnect,
 }
 
@@ -1509,7 +1557,7 @@ var scReadFns = scPacketReaderMap{
     packetIDUseEntity:            clientReadUseEntity,
     packetIDUpdateHealth:         clientReadUpdateHealth,
     packetIDPlayerPositionLook:   clientReadPlayerPositionLook,
-    packetIDMobSpawn:             clientReadMobSpawn,
+    packetIDEntitySpawn:          clientReadEntitySpawn,
     packetIDUnknownX19:           clientReadUnknownX19,
     packetIDEntityVelocity:       clientReadEntityVelocity,
     packetIDEntityDestroy:        clientReadEntityDestroy,
@@ -1523,6 +1571,7 @@ var scReadFns = scPacketReaderMap{
     packetIDMapChunk:             clientReadMapChunk,
     packetIDBlockChangeMulti:     clientReadBlockChangeMulti,
     packetIDBlockChange:          clientReadBlockChange,
+    packetIDUnknownX36:           clientReadUnknownX36,
     packetIDSetSlot:              clientReadSetSlot,
     packetIDWindowItems:          clientReadWindowItems,
 }

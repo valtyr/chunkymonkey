@@ -105,8 +105,8 @@ func (p *MessageParser) ClientRecvUpdateHealth(health int16) {
     p.printf("ClientRecvUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) ClientRecvMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []proto.UnknownEntityExtra) {
-    p.printf("ClientRecvMobSpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
+func (p *MessageParser) ClientRecvEntitySpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []proto.UnknownEntityExtra) {
+    p.printf("ClientRecvEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
         entityID, mobType, position, yaw, pitch, data)
 }
 
@@ -120,12 +120,27 @@ func (p *MessageParser) ClientRecvEntityVelocity(entityID EntityID, x, y, z int1
         entityID, x, y, z)
 }
 
+func (p *MessageParser) ClientRecvEntityDestroy(entityID EntityID) {
+    p.printf("ClientRecvEntityDestroy(entityID=%d)", entityID)
+}
+
 func (p *MessageParser) ClientRecvEntity(entityID EntityID) {
     p.printf("ClientRecvEntity(entityID=%d)", entityID)
 }
 
-func (p *MessageParser) ClientRecvEntityDestroy(entityID EntityID) {
-    p.printf("ClientRecvEntityDestroy(entityID=%d)", entityID)
+func (p *MessageParser) ClientRecvEntityRelMove(entityID EntityID, movement *RelMove) {
+    p.printf("ClientRecvEntityRelMove(entityID=%d, movement=%v)",
+        entityID, movement)
+}
+
+func (p *MessageParser) ClientRecvEntityLook(entityID EntityID, yaw, pitch AngleByte) {
+    p.printf("ClientRecvEntityLook(entityID=%d, yaw=%d, pitch=%d)",
+        entityID, yaw, pitch)
+}
+
+func (p *MessageParser) ClientRecvEntityStatus(entityID EntityID, status byte) {
+    p.printf("ClientRecvEntityStatus(entityID=%d, status=%d",
+        entityID, status)
 }
 
 func (p *MessageParser) ClientRecvUnknownX28(field1 int32, data []proto.UnknownEntityExtra) {
@@ -149,6 +164,26 @@ func (p *MessageParser) ClientRecvBlockChangeMulti(chunkLoc *ChunkXZ, blockCoord
 func (p *MessageParser) ClientRecvBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) {
     p.printf("ClientRecvBlockChange(blockLoc=%v, blockType=%d, blockMetaData=%d)",
         blockLoc, blockType, blockMetaData)
+}
+
+func (p *MessageParser) ClientRecvUnknownX36(field1 int32, field2 int16, field3 int32, field4, field5 byte) {
+    p.printf("RecvUnknownX36(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
+        field1, field2, field3, field4, field5)
+}
+
+func (p *MessageParser) ServerRecvWindowClick(windowId byte, slot int16, rightClick bool, actionNumber int16, itemID ItemID, amount byte, uses int16) {
+    p.printf("ServerRecvWindowClick(windowId=%d, slot=%d, rightClick=%v, actionNumber=%d, itemID=%d, amount=%d, uses=%d)",
+        windowId, slot, rightClick, actionNumber, itemID, amount, uses)
+}
+
+func (p *MessageParser) ClientRecvSetSlot(windowId byte, slot int16, itemID ItemID, amount byte, uses int16) {
+    p.printf("ClientRecvSetSlot(windowId=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
+        windowId, slot, itemID, amount, uses)
+}
+
+func (p *MessageParser) ClientRecvWindowItems(windowId byte, items []proto.WindowSlot) {
+    p.printf("ClientRecvWindowItems(windowId=%d, items=%v)",
+        windowId, items)
 }
 
 // Parses messages from the client
