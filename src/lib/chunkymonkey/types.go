@@ -2,13 +2,29 @@ package types
 
 // Defines the basic types such as ID types, and world units.
 
+// Item-related types
+
+// Item type ID
+type ItemID int16
+
+// Number of times that an item has been used
+type ItemUses int16
+
+// How many items are in a stack/slot etc.
 type ItemCount byte
 
-type ItemID int16
+// Entity-related types
 
 type EntityID int32
 
+// Block-related types
+
 type BlockID byte
+
+// Block face (0-5)
+type Face byte
+
+// Action-related types and constants
 
 type DigStatus byte
 
@@ -18,6 +34,20 @@ const (
     DigStopped    = DigStatus(2)
     DigBlockBroke = DigStatus(3)
 )
+
+// Window/inventory-related types and constants
+
+// ID specifying which slotted window, such as inventory
+// TODO get numeric constants for these
+type WindowID byte
+
+// ID of the slow in inventory or other item-slotted window element
+type SlotID   int16
+
+// Transaction ID
+type TxID     int16
+
+// Location-related types and constants
 
 const (
     // Chunk coordinates can be converted to block coordinates
@@ -32,16 +62,12 @@ const (
     PixelsPerBlock = 32
 )
 
-// Block face (0-5)
-type Face byte
-
 type RelMoveCoord byte
 
 // Specifies exact world location in pixels
 type AbsoluteCoord float64
 
-// Specifies approximate world coordinate in pixels (absolute / 32 ?)
-// TODO verify the physical size of values of this type
+// Specifies approximate world coordinate in pixels (absolute / PixelsPerBlock)
 type AbsoluteCoordInteger int32
 
 // Coordinate of a block within the world (integer version of AbsoluteCoord)

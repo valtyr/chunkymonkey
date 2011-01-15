@@ -130,19 +130,19 @@ func (player *Player) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, fa
     }
 }
 
-func (player *Player) RecvPlayerBlockPlacement(itemID int16, blockLoc *BlockXYZ, direction Face, amount byte, uses int16) {
+func (player *Player) RecvPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
     log.Printf("RecvPlayerBlockPlacement itemID=%d blockLoc=%v direction=%d, amount=%d, uses=%d",
         itemID, *blockLoc, direction, amount, uses)
 }
 
-func (player *Player) RecvHoldingChange(blockItemID int16) {
-    log.Printf("RecvHoldingChange blockItemID=%d", blockItemID)
+func (player *Player) RecvHoldingChange(itemID ItemID) {
+    log.Printf("RecvHoldingChange blockItemID=%d", itemID)
 }
 
 func (player *Player) RecvArmAnimation(forward bool) {
 }
 
-func (player *Player) ServerRecvWindowClick(windowId byte, slot int16, rightClick bool, actionNumber int16, itemID ItemID, amount byte, uses int16) {
+func (player *Player) ServerRecvWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
 }
 
 func (player *Player) RecvDisconnect(reason string) {

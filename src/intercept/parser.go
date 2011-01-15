@@ -67,13 +67,13 @@ func (p *MessageParser) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
     p.printf("RecvPlayerDigging(%v, %v, %v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) RecvPlayerBlockPlacement(itemID int16, blockLoc *BlockXYZ, direction Face, amount byte, uses int16) {
+func (p *MessageParser) RecvPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
     p.printf("RecvPlayerBlockPlacement(itemId=%d, blockLoc=%v, direction=%d, amount=%d, uses=%d)",
         itemID, blockLoc, direction, amount, uses)
 }
 
-func (p *MessageParser) RecvHoldingChange(blockItemID int16) {
-    p.printf("RecvHoldingChange(%d)", blockItemID)
+func (p *MessageParser) RecvHoldingChange(itemID ItemID) {
+    p.printf("RecvHoldingChange(%d)", itemID)
 }
 
 func (p *MessageParser) RecvArmAnimation(forward bool) {
@@ -105,7 +105,7 @@ func (p *MessageParser) ClientRecvUpdateHealth(health int16) {
     p.printf("ClientRecvUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) ClientRecvPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses int16, location *XYZInteger, yaw, pitch, roll AngleByte) {
+func (p *MessageParser) ClientRecvPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *XYZInteger, yaw, pitch, roll AngleByte) {
     p.printf("ClientRecvPickupSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
         entityID, itemID, count, uses, location, yaw, pitch, roll)
 }
@@ -181,19 +181,19 @@ func (p *MessageParser) ClientRecvUnknownX36(field1 int32, field2 int16, field3 
         field1, field2, field3, field4, field5)
 }
 
-func (p *MessageParser) ServerRecvWindowClick(windowId byte, slot int16, rightClick bool, actionNumber int16, itemID ItemID, amount byte, uses int16) {
-    p.printf("ServerRecvWindowClick(windowId=%d, slot=%d, rightClick=%v, actionNumber=%d, itemID=%d, amount=%d, uses=%d)",
-        windowId, slot, rightClick, actionNumber, itemID, amount, uses)
+func (p *MessageParser) ServerRecvWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
+    p.printf("ServerRecvWindowClick(windowID=%d, slot=%d, rightClick=%v, txID=%d, itemID=%d, amount=%d, uses=%d)",
+        windowID, slot, rightClick, txID, itemID, amount, uses)
 }
 
-func (p *MessageParser) ClientRecvSetSlot(windowId byte, slot int16, itemID ItemID, amount byte, uses int16) {
-    p.printf("ClientRecvSetSlot(windowId=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
-        windowId, slot, itemID, amount, uses)
+func (p *MessageParser) ClientRecvSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses) {
+    p.printf("ClientRecvSetSlot(windowID=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
+        windowID, slot, itemID, amount, uses)
 }
 
-func (p *MessageParser) ClientRecvWindowItems(windowId byte, items []proto.WindowSlot) {
-    p.printf("ClientRecvWindowItems(windowId=%d, items=%v)",
-        windowId, items)
+func (p *MessageParser) ClientRecvWindowItems(windowID WindowID, items []proto.WindowSlot) {
+    p.printf("ClientRecvWindowItems(windowID=%d, items=%v)",
+        windowID, items)
 }
 
 // Parses messages from the client
