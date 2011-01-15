@@ -37,7 +37,7 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
 
     game.Enqueue(func(game *Game) {
         game.AddPlayer(player)
-        proto.SCWriteLogin(conn, player.Entity.EntityID)
+        proto.ServerWriteLogin(conn, player.Entity.EntityID)
         player.start()
         player.postLogin()
     })
@@ -57,10 +57,10 @@ func (player *Player) PacketChatMessage(message string) {
     player.game.Enqueue(func(game *Game) { game.SendChatMessage(message) })
 }
 
-func (player *Player) PacketFlying(flying bool) {
+func (player *Player) PacketOnGround(onGround bool) {
 }
 
-func (player *Player) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, flying bool) {
+func (player *Player) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool) {
     // TODO: Should keep track of when players enter/leave their mutual radius
     // of "awareness". I.e a client should receive a RemoveEntity packet when
     // the player walks out of range, and no longer receive WriteEntityTeleport
@@ -86,7 +86,7 @@ func (player *Player) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, 
     })
 }
 
-func (player *Player) PacketPlayerLook(orientation *Orientation, flying bool) {
+func (player *Player) PacketPlayerLook(orientation *Orientation, onGround bool) {
     player.game.Enqueue(func(game *Game) {
         // TODO input validation
         player.orientation = *orientation
@@ -153,7 +153,7 @@ func (player *Player) PacketDisconnect(reason string) {
 
 func (player *Player) ReceiveLoop() {
     for {
-        err := proto.CSReadPacket(player.conn, player)
+        err := proto.ServerReadPacket(player.conn, player)
         if err != nil {
             if err != os.EOF {
                 log.Print("ReceiveLoop failed: ", err.String())
@@ -204,7 +204,7 @@ func (player *Player) postLogin() {
     proto.WriteSpawnPosition(buf, &player.position)
     player.sendChunks(buf)
     proto.WritePlayerInventory(buf)
-    proto.SCWritePlayerPositionLook(buf, &player.position, &player.orientation,
+    proto.ServerWritePlayerPositionLook(buf, &player.position, &player.orientation,
         player.position.Y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
 }

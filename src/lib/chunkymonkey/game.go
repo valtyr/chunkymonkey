@@ -48,19 +48,19 @@ type Game struct {
 }
 
 func (game *Game) Login(conn net.Conn) {
-    username, err := proto.CSReadHandshake(conn)
+    username, err := proto.ServerReadHandshake(conn)
     if err != nil {
-        log.Print("CSReadHandshake: ", err.String())
+        log.Print("serverReadHandshake: ", err.String())
         proto.WriteDisconnect(conn, err.String())
         conn.Close()
         return
     }
     log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
-    proto.SCWriteHandshake(conn, "-")
+    proto.ServerWriteHandshake(conn, "-")
 
-    _, _, err = proto.CSReadLogin(conn)
+    _, _, err = proto.ServerReadLogin(conn)
     if err != nil {
-        log.Print("CSReadLogin: ", err.String())
+        log.Print("serverReadLogin: ", err.String())
         proto.WriteDisconnect(conn, err.String())
         conn.Close()
         return
@@ -177,7 +177,7 @@ func (game *Game) timer() {
 
 func (game *Game) sendTimeUpdate() {
     buf := &bytes.Buffer{}
-    proto.WriteTimeUpdate(buf, game.time)
+    proto.ServerWriteTimeUpdate(buf, game.time)
 
     // The "keep-alive" packet to client sent here as well, as there seems no
     // particular reason to send time and keep-alive separately for now.
