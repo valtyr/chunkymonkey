@@ -130,9 +130,9 @@ func (player *Player) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, fa
     }
 }
 
-func (player *Player) RecvPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face) {
-    log.Printf("RecvPlayerBlockPlacement blockItemID=%d blockLoc=%v direction=%d",
-        blockItemID, *blockLoc, direction)
+func (player *Player) RecvPlayerBlockPlacement(itemID int16, blockLoc *BlockXYZ, direction Face, amount byte, uses int16) {
+    log.Printf("RecvPlayerBlockPlacement itemID=%d blockLoc=%v direction=%d, amount=%d, uses=%d",
+        itemID, *blockLoc, direction, amount, uses)
 }
 
 func (player *Player) RecvHoldingChange(blockItemID int16) {

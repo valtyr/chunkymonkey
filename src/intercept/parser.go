@@ -67,8 +67,9 @@ func (p *MessageParser) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
     p.printf("RecvPlayerDigging(%v, %v, %v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) RecvPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face) {
-    p.printf("RecvPlayerBlockPlacement(%d, %v, %v)", blockItemID, blockLoc, direction)
+func (p *MessageParser) RecvPlayerBlockPlacement(itemID int16, blockLoc *BlockXYZ, direction Face, amount byte, uses int16) {
+    p.printf("RecvPlayerBlockPlacement(itemId=%d, blockLoc=%v, direction=%d, amount=%d, uses=%d)",
+        itemID, blockLoc, direction, amount, uses)
 }
 
 func (p *MessageParser) RecvHoldingChange(blockItemID int16) {
@@ -148,17 +149,17 @@ func (p *MessageParser) CSParse(reader io.Reader) {
 
     username, err := proto.ServerReadHandshake(reader)
     if err != nil {
-        p.printf("serverReadHandshake error: %v", err)
+        p.printf("ServerReadHandshake error: %v", err)
         return
     }
-    p.printf("serverReadHandshake(username=%v)", username)
+    p.printf("ServerReadHandshake(username=%v)", username)
 
     loginUsername, _, err := proto.ServerReadLogin(reader)
     if err != nil {
-        p.printf("serverReadLogin error: %v", err)
+        p.printf("ServerReadLogin error: %v", err)
         return
     }
-    p.printf("serverReadLogin(username=%v)", loginUsername)
+    p.printf("ServerReadLogin(username=%v)", loginUsername)
 
     for {
         err := proto.ServerReadPacket(reader, p)
@@ -181,10 +182,10 @@ func (p *MessageParser) SCParse(reader io.Reader) {
 
     connectionHash, err := proto.ClientReadHandshake(reader)
     if err != nil {
-        p.printf("clientReadHandshake error: %v", err)
+        p.printf("ClientReadHandshake error: %v", err)
         return
     }
-    p.printf("clientReadHandshake connectionHash=%v", connectionHash)
+    p.printf("ClientReadHandshake connectionHash=%v", connectionHash)
 
     for {
         err := proto.ClientReadPacket(reader, p)

@@ -70,7 +70,7 @@ type RecvHandler interface {
     RecvPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool)
     RecvPlayerLook(orientation *Orientation, onGround bool)
     RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
-    RecvPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face)
+    RecvPlayerBlockPlacement(itemID int16, blockLoc *BlockXYZ, direction Face, amount byte, uses int16)
     RecvHoldingChange(blockItemID int16)
     RecvArmAnimation(forward bool)
     RecvDisconnect(reason string)
@@ -734,7 +734,6 @@ func readPlayerDigging(reader io.Reader, handler RecvHandler) (err os.Error) {
 
 func readPlayerBlockPlacement(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
-        ID        int16
         X         int32
         Y         byte
         Z         int32
@@ -758,14 +757,16 @@ func readPlayerBlockPlacement(reader io.Reader, handler RecvHandler) (err os.Err
         }
     }
 
-    // TODO pass ItemID, Amount, Uses on to handler
-    handler.RecvPlayerBlockPlacement(packet.ID,
+    handler.RecvPlayerBlockPlacement(
+        packet.ItemID,
         &BlockXYZ{
             BlockCoord(packet.X),
             BlockCoord(packet.Y),
             BlockCoord(packet.Z),
         },
-        Face(packet.Direction))
+        Face(packet.Direction),
+        packetExtra.Amount,
+        packetExtra.Uses)
     return
 }
 
