@@ -11,17 +11,17 @@ type PickupItem struct {
     Entity
     itemType    ItemID
     count       ItemCount
-    position    XYZInteger
-    orientation OrientationPacked
+    position    AbsIntXYZ
+    orientation OrientationBytes
 }
 
-func NewPickupItem(game *Game, itemType ItemID, count ItemCount, position XYZInteger) {
+func NewPickupItem(game *Game, itemType ItemID, count ItemCount, position AbsIntXYZ) {
     item := &PickupItem{
         itemType: itemType,
         count:    count,
         position: position,
         // TODO proper orientation
-        orientation: OrientationPacked{0, 0, 0},
+        orientation: OrientationBytes{0, 0, 0},
     }
 
     game.Enqueue(func(game *Game) {

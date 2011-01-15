@@ -17,9 +17,9 @@ type Player struct {
     game        *Game
     conn        net.Conn
     name        string
-    position    XYZ
-    orientation Orientation
-    currentItem int16
+    position    AbsXYZ
+    look        LookDegrees
+    currentItem ItemID
     txQueue     chan []byte
 }
 
@@ -27,12 +27,12 @@ const StanceNormal = 1.62
 
 func StartPlayer(game *Game, conn net.Conn, name string) {
     player := &Player{
-        game:        game,
-        conn:        conn,
-        name:        name,
-        position:    StartPosition,
-        orientation: Orientation{0, 0},
-        txQueue:     make(chan []byte, 128),
+        game:     game,
+        conn:     conn,
+        name:     name,
+        position: StartPosition,
+        look:     LookDegrees{0, 0},
+        txQueue:  make(chan []byte, 128),
     }
 
     game.Enqueue(func(game *Game) {
@@ -60,7 +60,7 @@ func (player *Player) RecvChatMessage(message string) {
 func (player *Player) RecvOnGround(onGround bool) {
 }
 
-func (player *Player) RecvPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool) {
+func (player *Player) RecvPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
     // TODO: Should keep track of when players enter/leave their mutual radius
     // of "awareness". I.e a client should receive a RemoveEntity packet when
     // the player walks out of range, and no longer receive WriteEntityTeleport
@@ -68,7 +68,7 @@ func (player *Player) RecvPlayerPosition(position *XYZ, stance AbsoluteCoord, on
     // of each other.
 
     player.game.Enqueue(func(game *Game) {
-        var delta = XYZ{position.X - player.position.X,
+        var delta = AbsXYZ{position.X - player.position.X,
             position.Y - player.position.Y,
             position.Z - player.position.Z}
         distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
@@ -81,18 +81,22 @@ func (player *Player) RecvPlayerPosition(position *XYZ, stance AbsoluteCoord, on
         player.position = *position
 
         buf := &bytes.Buffer{}
-        proto.WriteEntityTeleport(buf, player.EntityID, &player.position, &player.orientation)
+        proto.WriteEntityTeleport(
+            buf,
+            player.EntityID,
+            player.position.ToAbsIntXYZ(),
+            player.look.ToLookBytes())
         game.MulticastPacket(buf.Bytes(), player)
     })
 }
 
-func (player *Player) RecvPlayerLook(orientation *Orientation, onGround bool) {
+func (player *Player) RecvPlayerLook(look *LookDegrees, onGround bool) {
     player.game.Enqueue(func(game *Game) {
         // TODO input validation
-        player.orientation = *orientation
+        player.look = *look
 
         buf := &bytes.Buffer{}
-        proto.WriteEntityLook(buf, player.EntityID, orientation)
+        proto.WriteEntityLook(buf, player.EntityID, look.ToLookBytes())
         game.MulticastPacket(buf.Bytes(), player)
     })
 }
@@ -139,7 +143,7 @@ func (player *Player) RecvHoldingChange(itemID ItemID) {
     log.Printf("RecvHoldingChange blockItemID=%d", itemID)
 }
 
-func (player *Player) RecvArmAnimation(forward bool) {
+func (player *Player) RecvPlayerAnimation(animation PlayerAnimation) {
 }
 
 func (player *Player) ServerRecvWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
@@ -187,7 +191,7 @@ func (player *Player) sendChunks(writer io.Writer) {
     playerChunkLoc := player.position.ToChunkXZ()
 
     for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
-        proto.WritePreChunk(writer, &chunk.XZ, true)
+        proto.WritePreChunk(writer, &chunk.XZ, ChunkInit)
     }
 
     for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
@@ -204,10 +208,10 @@ func (player *Player) TransmitPacket(packet []byte) {
 
 func (player *Player) postLogin() {
     buf := &bytes.Buffer{}
-    proto.WriteSpawnPosition(buf, &player.position)
+    proto.WriteSpawnPosition(buf, player.position.ToBlockXYZ())
     player.sendChunks(buf)
     // TODO put in required packets for client connection
-    proto.ServerWritePlayerPositionLook(buf, &player.position, &player.orientation,
+    proto.ServerWritePlayerPositionLook(buf, &player.position, &player.look,
         player.position.Y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
 }

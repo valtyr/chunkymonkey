@@ -2,6 +2,18 @@ package types
 
 // Defines the basic types such as ID types, and world units.
 
+type TimeOfDay int64
+
+type RandomSeed int64
+
+// Which 'world'?
+type DimensionID int8
+
+const (
+    DimensionNether = DimensionID(-1)
+    DimensionNormal = DimensionID(0)
+)
+
 // Item-related types
 
 // Item type ID
@@ -16,6 +28,13 @@ type ItemCount byte
 // Entity-related types
 
 type EntityID int32
+
+// The type of mob
+type EntityMobType byte
+
+type EntityStatus byte
+
+type PlayerAnimation byte
 
 // Block-related types
 
@@ -47,6 +66,55 @@ type SlotID int16
 // Transaction ID
 type TxID int16
 
+// Movement-related types and constants
+
+type VelocityComponent int16
+
+type Velocity struct {
+    X, Y, Z VelocityComponent
+}
+
+type RelMoveCoord byte
+
+type RelMove struct {
+    X, Y, Z RelMoveCoord
+}
+
+// Angle-related types and constants
+
+const (
+    DegreesToBytes = 256 / 360
+)
+
+// An angle, where there are 256 units in a circle.
+type AngleBytes byte
+
+// An angle in degrees
+type AngleDegrees float32
+
+type LookDegrees struct {
+    Yaw, Pitch AngleDegrees
+}
+
+func (l *LookDegrees) ToLookBytes() *LookBytes {
+    return &LookBytes{
+        AngleBytes(l.Yaw * DegreesToBytes),
+        AngleBytes(l.Pitch * DegreesToBytes),
+    }
+}
+
+type LookBytes struct {
+    Yaw, Pitch AngleBytes
+}
+
+type OrientationDegrees struct {
+    Yaw, Pitch, Roll AngleDegrees
+}
+
+type OrientationBytes struct {
+    Yaw, Pitch, Roll AngleBytes
+}
+
 // Location-related types and constants
 
 const (
@@ -62,55 +130,50 @@ const (
     PixelsPerBlock = 32
 )
 
-type RelMoveCoord byte
+// Specifies exact world distance in blocks (floating point)
+type AbsCoord float64
 
-// Specifies exact world location in pixels
-type AbsoluteCoord float64
+type AbsXYZ struct {
+    X, Y, Z AbsCoord
+}
 
-// Specifies approximate world coordinate in pixels (absolute / PixelsPerBlock)
-type AbsoluteCoordInteger int32
+func (p *AbsXYZ) ToAbsIntXYZ() *AbsIntXYZ {
+    return &AbsIntXYZ{
+        AbsIntCoord(p.X * PixelsPerBlock),
+        AbsIntCoord(p.Y * PixelsPerBlock),
+        AbsIntCoord(p.Z * PixelsPerBlock),
+    }
+}
 
-// Coordinate of a block within the world (integer version of AbsoluteCoord)
-type BlockCoord int32
-type BlockYCoord byte
+func (p *AbsXYZ) ToBlockXYZ() *BlockXYZ {
+    return &BlockXYZ{
+        BlockCoord(p.X),
+        BlockYCoord(p.Y),
+        BlockCoord(p.Z),
+    }
+}
+
+// Specifies approximate world distance in pixels (absolute / PixelsPerBlock)
+type AbsIntCoord int32
+
+type AbsIntXYZ struct {
+    X, Y, Z AbsIntCoord
+}
 
 // Coordinate of a chunk in the world (block / 16)
 type ChunkCoord int32
 
-// Coordinate of a block within a chunk
-type SubChunkCoord byte
-
-// An angle, where there are 256 units in a circle.
-type AngleByte byte
-
-// An angle in radians
-type AngleRadians float32
-
-type RelMove struct {
-    X, Y, Z RelMoveCoord
-}
-
-type XYZ struct {
-    X, Y, Z AbsoluteCoord
-}
-
-type XYZInteger struct {
-    X, Y, Z AbsoluteCoordInteger
-}
-
-// FIXME go through code and seperate the uses into degrees and radian types of
-// Orientation, rename Rotation to Yaw
-type Orientation struct {
-    Rotation AngleRadians
-    Pitch    AngleRadians
-}
-
-type OrientationPacked struct {
-    Rotation, Pitch, Roll AngleByte
-}
-
 type ChunkXZ struct {
     X, Z ChunkCoord
+}
+
+// Returns the world BlockXYZ position of the (0, 0, 0) block in the chunk
+func (chunkLoc *ChunkXZ) GetChunkCornerBlockXY() *BlockXYZ {
+    return &BlockXYZ{
+        BlockCoord(chunkLoc.X) * ChunkSizeX,
+        0,
+        BlockCoord(chunkLoc.Z) * ChunkSizeZ,
+    }
 }
 
 // Convert a position within a chunk to a block position within the world
@@ -122,18 +185,32 @@ func (chunkLoc *ChunkXZ) ToBlockXY(subLoc *SubChunkXYZ) *BlockXYZ {
     }
 }
 
-type BlockXYZ struct {
-    X   BlockCoord
-    Y   BlockYCoord
-    Z   BlockCoord
+// Size of a sub-chunk
+type SubChunkSizeCoord byte
+
+// Coordinate of a block within a chunk
+type SubChunkCoord byte
+
+type SubChunkSize struct {
+    X, Y, Z SubChunkSizeCoord
 }
 
 type SubChunkXYZ struct {
     X, Y, Z SubChunkCoord
 }
 
+// Coordinate of a block within the world
+type BlockCoord int32
+type BlockYCoord byte
+
+type BlockXYZ struct {
+    X   BlockCoord
+    Y   BlockYCoord
+    Z   BlockCoord
+}
+
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
-func (abs XYZ) ToChunkXZ() (chunkXz ChunkXZ) {
+func (abs *AbsXYZ) ToChunkXZ() (chunkXz ChunkXZ) {
     return ChunkXZ{
         ChunkCoord(abs.X / ChunkSizeX),
         ChunkCoord(abs.Z / ChunkSizeZ),
@@ -141,7 +218,7 @@ func (abs XYZ) ToChunkXZ() (chunkXz ChunkXZ) {
 }
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
-func (abs XYZInteger) ToChunkXZ() ChunkXZ {
+func (abs *AbsIntXYZ) ToChunkXZ() ChunkXZ {
     // TODO check this conversion
     return ChunkXZ{
         ChunkCoord(abs.X / ChunkSizeX),
@@ -161,7 +238,7 @@ func coordDivMod(num, denom int32) (div, mod int32) {
 
 // Convert an (x, z) block coordinate pair to chunk coordinates and the
 // coordinates of the block within the chunk
-func (blockLoc BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) {
+func (blockLoc *BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) {
     chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeX)
     chunkZ, subZ := coordDivMod(int32(blockLoc.Z), ChunkSizeZ)
 
@@ -170,11 +247,23 @@ func (blockLoc BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) {
     return
 }
 
-func (blockLoc BlockXYZ) ToXYZInteger() XYZInteger {
+func (blockLoc *BlockXYZ) ToXYZInteger() AbsIntXYZ {
     // TODO check this conversion
-    return XYZInteger{
-        AbsoluteCoordInteger(blockLoc.X * PixelsPerBlock),
-        AbsoluteCoordInteger(blockLoc.Y * PixelsPerBlock),
-        AbsoluteCoordInteger(blockLoc.Z * PixelsPerBlock),
+    return AbsIntXYZ{
+        AbsIntCoord(blockLoc.X * PixelsPerBlock),
+        AbsIntCoord(blockLoc.Y * PixelsPerBlock),
+        AbsIntCoord(blockLoc.Z * PixelsPerBlock),
     }
 }
+
+// Misc. types and constants
+
+type ChunkLoadMode byte
+
+const (
+    // Client should unload the chunk
+    ChunkUnload = ChunkLoadMode(0)
+
+    // Client should initialise the chunk
+    ChunkInit = ChunkLoadMode(1)
+)

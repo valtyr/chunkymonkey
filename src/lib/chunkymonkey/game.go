@@ -16,7 +16,7 @@ import (
 )
 
 // The player's starting position is loaded from level.dat for now
-var StartPosition XYZ
+var StartPosition AbsXYZ
 
 func loadStartPosition(worldPath string) {
     file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
@@ -31,10 +31,10 @@ func loadStartPosition(worldPath string) {
     }
 
     pos := level.Lookup("/Data/Player/Pos")
-    StartPosition = XYZ{
-        AbsoluteCoord(pos.(*nbt.List).Value[0].(*nbt.Double).Value),
-        AbsoluteCoord(pos.(*nbt.List).Value[1].(*nbt.Double).Value),
-        AbsoluteCoord(pos.(*nbt.List).Value[2].(*nbt.Double).Value),
+    StartPosition = AbsXYZ{
+        AbsCoord(pos.(*nbt.List).Value[0].(*nbt.Double).Value),
+        AbsCoord(pos.(*nbt.List).Value[1].(*nbt.Double).Value),
+        AbsCoord(pos.(*nbt.List).Value[2].(*nbt.Double).Value),
     }
 }
 
@@ -44,7 +44,7 @@ type Game struct {
     entityManager EntityManager
     players       map[EntityID]*Player
     pickupItems   map[EntityID]*PickupItem
-    time          int64
+    time          TimeOfDay
     blockTypes    map[BlockID]*Block
 }
 
@@ -98,7 +98,13 @@ func (game *Game) AddPlayer(player *Player) {
 
     // Spawn new player for existing players
     buf := &bytes.Buffer{}
-    proto.WriteNamedEntitySpawn(buf, player.EntityID, player.name, &player.position, &player.orientation, player.currentItem)
+    proto.WriteNamedEntitySpawn(
+        buf,
+        player.EntityID, player.name,
+        player.position.ToAbsIntXYZ(),
+        player.look.ToLookBytes(),
+        player.currentItem)
+
     game.MulticastRadiusPacket(buf.Bytes(), player)
 
     // Spawn existing players for new player
@@ -108,7 +114,12 @@ func (game *Game) AddPlayer(player *Player) {
             continue
         }
 
-        proto.WriteNamedEntitySpawn(buf, existing.EntityID, existing.name, &existing.position, &existing.orientation, existing.currentItem)
+        proto.WriteNamedEntitySpawn(
+            buf,
+            existing.EntityID, existing.name,
+            existing.position.ToAbsIntXYZ(),
+            existing.look.ToLookBytes(),
+            existing.currentItem)
     }
     player.TransmitPacket(buf.Bytes())
 }

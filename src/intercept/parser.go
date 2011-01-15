@@ -55,16 +55,16 @@ func (p *MessageParser) RecvOnGround(onGround bool) {
     p.printf("RecvOnGround(%v)", onGround)
 }
 
-func (p *MessageParser) RecvPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool) {
-    p.printf("RecvPlayerPosition(%v, %v, %v)", position, stance, onGround)
+func (p *MessageParser) RecvPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
+    p.printf("RecvPlayerPosition(position=%v, stance=%v, onGround=%v)", position, stance, onGround)
 }
 
-func (p *MessageParser) RecvPlayerLook(orientation *Orientation, onGround bool) {
-    p.printf("RecvPlayerLook(%v, %v)", orientation, onGround)
+func (p *MessageParser) RecvPlayerLook(look *LookDegrees, onGround bool) {
+    p.printf("RecvPlayerLook(look=%v, onGround=%v)", look, onGround)
 }
 
 func (p *MessageParser) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
-    p.printf("RecvPlayerDigging(%v, %v, %v)", status, blockLoc, face)
+    p.printf("RecvPlayerDigging(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
 }
 
 func (p *MessageParser) RecvPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
@@ -76,20 +76,20 @@ func (p *MessageParser) RecvHoldingChange(itemID ItemID) {
     p.printf("RecvHoldingChange(%d)", itemID)
 }
 
-func (p *MessageParser) RecvArmAnimation(forward bool) {
-    p.printf("RecvArmAnimation(%v)", forward)
+func (p *MessageParser) RecvPlayerAnimation(animation PlayerAnimation) {
+    p.printf("RecvPlayerAnimation(%v)", animation)
 }
 
 func (p *MessageParser) RecvDisconnect(reason string) {
     p.printf("RecvDisconnect(%s)", reason)
 }
 
-func (p *MessageParser) ClientRecvLogin(entityID EntityID, str1 string, str2 string, mapSeed int64, dimension byte) {
+func (p *MessageParser) ClientRecvLogin(entityID EntityID, str1 string, str2 string, mapSeed RandomSeed, dimension DimensionID) {
     p.printf("ClientRecvLogin(entityID=%d, str1=%v, str2=%v, mapSeed=%d, dimension=%d)",
         entityID, str1, str2, mapSeed, dimension)
 }
 
-func (p *MessageParser) ClientRecvTimeUpdate(time int64) {
+func (p *MessageParser) ClientRecvTimeUpdate(time TimeOfDay) {
     p.printf("ClientRecvTime(time=%d)", time)
 }
 
@@ -110,7 +110,7 @@ func (p *MessageParser) ClientRecvUpdateHealth(health int16) {
     p.printf("ClientRecvUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) ClientRecvPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *XYZInteger, yaw, pitch, roll AngleByte) {
+func (p *MessageParser) ClientRecvPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes) {
     p.printf("ClientRecvPickupSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
         entityID, itemID, count, uses, location, yaw, pitch, roll)
 }
@@ -120,7 +120,7 @@ func (p *MessageParser) ClientRecvItemCollect(collectedItem EntityID, collector 
         collectedItem, collector)
 }
 
-func (p *MessageParser) ClientRecvEntitySpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []proto.UnknownEntityExtra) {
+func (p *MessageParser) ClientRecvEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []proto.UnknownEntityExtra) {
     p.printf("ClientRecvEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
         entityID, mobType, position, yaw, pitch, data)
 }
@@ -130,9 +130,9 @@ func (p *MessageParser) ClientRecvUnknownX19(field1 int32, field2 string, field3
         field1, field2, field3, field4, field5, field6)
 }
 
-func (p *MessageParser) ClientRecvEntityVelocity(entityID EntityID, x, y, z int16) {
-    p.printf("ClientRecvEntityVelocity(entityID=%d, x=%d, y=%d, z=%d)",
-        entityID, x, y, z)
+func (p *MessageParser) ClientRecvEntityVelocity(entityID EntityID, velocity *Velocity) {
+    p.printf("ClientRecvEntityVelocity(entityID=%d, velocity=%v)",
+        entityID, velocity)
 }
 
 func (p *MessageParser) ClientRecvEntityDestroy(entityID EntityID) {
@@ -148,12 +148,12 @@ func (p *MessageParser) ClientRecvEntityRelMove(entityID EntityID, movement *Rel
         entityID, movement)
 }
 
-func (p *MessageParser) ClientRecvEntityLook(entityID EntityID, yaw, pitch AngleByte) {
+func (p *MessageParser) ClientRecvEntityLook(entityID EntityID, yaw, pitch AngleBytes) {
     p.printf("ClientRecvEntityLook(entityID=%d, yaw=%d, pitch=%d)",
         entityID, yaw, pitch)
 }
 
-func (p *MessageParser) ClientRecvEntityStatus(entityID EntityID, status byte) {
+func (p *MessageParser) ClientRecvEntityStatus(entityID EntityID, status EntityStatus) {
     p.printf("ClientRecvEntityStatus(entityID=%d, status=%d",
         entityID, status)
 }
@@ -162,13 +162,13 @@ func (p *MessageParser) ClientRecvUnknownX28(field1 int32, data []proto.UnknownE
     p.printf("ClientRecvUnknownX28(field1=%d, data=%v)", field1, data)
 }
 
-func (p *MessageParser) ClientRecvPreChunk(position *ChunkXZ, mode bool) {
-    p.printf("ClientRecvPreChunk(position=%v, mode=%v)", position, mode)
+func (p *MessageParser) ClientRecvPreChunk(position *ChunkXZ, mode ChunkLoadMode) {
+    p.printf("ClientRecvPreChunk(position=%v, mode=%d)", position, mode)
 }
 
-func (p *MessageParser) ClientRecvMapChunk(position *BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte) {
-    p.printf("ClientRecvMapChunk(position=%v, sizeX=%d, sizeY=%d, sizeZ=%d, len(data)=%d)",
-        position, sizeX, sizeY, sizeZ, len(data))
+func (p *MessageParser) ClientRecvMapChunk(position *BlockXYZ, size *SubChunkSize, data []byte) {
+    p.printf("ClientRecvMapChunk(position=%v, size=%v, len(data)=%d)",
+        position, size, len(data))
 }
 
 func (p *MessageParser) ClientRecvBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte) {
