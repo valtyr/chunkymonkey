@@ -21,7 +21,7 @@ const (
     packetIDHandshake            = 0x02
     packetIDChatMessage          = 0x03
     packetIDTimeUpdate           = 0x04
-    packetIDPlayerInventory      = 0x05
+    packetIDEntityEquipment      = 0x05
     packetIDSpawnPosition        = 0x06
     packetIDUseEntity            = 0x07
     packetIDUpdateHealth         = 0x08
@@ -89,6 +89,7 @@ type ClientRecvHandler interface {
     RecvHandler
     ClientRecvLogin(entityID EntityID, str1 string, str2 string, mapSeed int64, dimension byte)
     ClientRecvTimeUpdate(time int64)
+    ClientRecvEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses)
     ClientRecvSpawnPosition(position *BlockXYZ)
     ClientRecvUseEntity(user EntityID, target EntityID, leftClick bool)
     ClientRecvUpdateHealth(health int16)
@@ -445,46 +446,42 @@ func clientReadTimeUpdate(reader io.Reader, handler ClientRecvHandler) (err os.E
     return
 }
 
-// packetIDPlayerInventory
+// packetIDEntityEquipment
 
-// TODO replace function and packet ID. The packet ID no longer serves this purpose
-func WritePlayerInventory(writer io.Writer) (err os.Error) {
-    type InventoryType struct {
-        InventoryType int32
-        Count         int16
-        ItemID        ItemID
-        // TODO confirm what this field really is
-        Damage int16
-    }
-    // TODO pass actual values
-    var inventories = []InventoryType{
-        InventoryType{inventoryTypeMain, 36, 0, 0},
-        InventoryType{inventoryTypeArmor, 4, 0, 0},
-        InventoryType{inventoryTypeCrafting, 4, 0, 0},
+func ServerWriteEntityEquipment(writer io.Writer, entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+        Slot     SlotID
+        ItemID   ItemID
+        Uses     ItemUses
+    }{
+        packetIDEntityEquipment,
+        entityID,
+        slot,
+        itemID,
+        uses,
     }
 
-    for _, inventory := range inventories {
-        var packet = struct {
-            PacketID      byte
-            InventoryType int32
-            Count         int16
-        }{
-            packetIDPlayerInventory,
-            inventory.InventoryType,
-            inventory.Count,
-        }
-        err = binary.Write(writer, binary.BigEndian, &packet)
-        if err != nil {
-            return
-        }
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
 
-        for i := int16(0); i < inventory.Count; i++ {
-            err = binary.Write(writer, binary.BigEndian, int16(-1))
-            if err != nil {
-                return
-            }
-        }
+func clientReadEntityEquipment(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        Slot     SlotID
+        ItemID   ItemID
+        Uses     ItemUses
     }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    handler.ClientRecvEntityEquipment(
+        packet.EntityID, packet.Slot, packet.ItemID, packet.Uses)
+
     return
 }
 
@@ -1431,11 +1428,11 @@ func clientReadUnknownX36(reader io.Reader, handler ClientRecvHandler) (err os.E
 
 func serverReadWindowClick(reader io.Reader, handler ServerRecvHandler) (err os.Error) {
     var packetStart struct {
-        WindowID     WindowID
-        Slot         SlotID
-        RightClick   byte
-        TxID         TxID
-        ItemID       ItemID
+        WindowID   WindowID
+        Slot       SlotID
+        RightClick byte
+        TxID       TxID
+        ItemID     ItemID
     }
 
     err = binary.Read(reader, binary.BigEndian, &packetStart)

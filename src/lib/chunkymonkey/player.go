@@ -206,7 +206,7 @@ func (player *Player) postLogin() {
     buf := &bytes.Buffer{}
     proto.WriteSpawnPosition(buf, &player.position)
     player.sendChunks(buf)
-    proto.WritePlayerInventory(buf)
+    // TODO put in required packets for client connection
     proto.ServerWritePlayerPositionLook(buf, &player.position, &player.orientation,
         player.position.Y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())

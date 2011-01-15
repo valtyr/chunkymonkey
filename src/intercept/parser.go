@@ -93,6 +93,11 @@ func (p *MessageParser) ClientRecvTimeUpdate(time int64) {
     p.printf("ClientRecvTime(time=%d)", time)
 }
 
+func (p *MessageParser) ClientRecvEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses) {
+    p.printf("ClientRecvEntityEquipment(entityID=%d, slot=%d, itemID=%d, uses=%d)",
+        entityID, slot, itemID, uses)
+}
+
 func (p *MessageParser) ClientRecvSpawnPosition(position *BlockXYZ) {
     p.printf("ClientRecvSpawnPosition(position=%v)", position)
 }

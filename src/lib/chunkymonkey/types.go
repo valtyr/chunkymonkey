@@ -42,10 +42,10 @@ const (
 type WindowID byte
 
 // ID of the slow in inventory or other item-slotted window element
-type SlotID   int16
+type SlotID int16
 
 // Transaction ID
-type TxID     int16
+type TxID int16
 
 // Location-related types and constants
 
