@@ -1,6 +1,6 @@
 // Wrapper for net.Conn which supports recording and replaying received data
 
-package chunkymonkey
+package record
 
 import (
     "io"

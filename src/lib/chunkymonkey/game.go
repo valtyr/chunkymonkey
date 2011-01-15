@@ -11,6 +11,7 @@ import (
 
     "nbt/nbt"
     "chunkymonkey/proto"
+    "chunkymonkey/record"
     .   "chunkymonkey/types"
 )
 
@@ -83,7 +84,7 @@ func (game *Game) Serve(addr string) {
             continue
         }
 
-        go game.Login(WrapConn(conn))
+        go game.Login(record.WrapConn(conn))
     }
 }
 
