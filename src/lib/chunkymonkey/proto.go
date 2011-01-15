@@ -63,27 +63,27 @@ const (
 )
 
 // Packets commonly received by both client and server
-type PacketHandler interface {
-    PacketKeepAlive()
-    PacketChatMessage(message string)
-    PacketOnGround(onGround bool)
-    PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool)
-    PacketPlayerLook(orientation *Orientation, onGround bool)
-    PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
-    PacketPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face)
-    PacketHoldingChange(blockItemID int16)
-    PacketArmAnimation(forward bool)
-    PacketDisconnect(reason string)
+type RecvHandler interface {
+    RecvKeepAlive()
+    RecvChatMessage(message string)
+    RecvOnGround(onGround bool)
+    RecvPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool)
+    RecvPlayerLook(orientation *Orientation, onGround bool)
+    RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
+    RecvPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face)
+    RecvHoldingChange(blockItemID int16)
+    RecvArmAnimation(forward bool)
+    RecvDisconnect(reason string)
 }
 
 // Servers to the protocol must implement this interface to receive packets
 type ServerRecvHandler interface {
-    PacketHandler
+    RecvHandler
 }
 
 // Clients to the protocol must implement this interface to receive packets
 type ClientRecvHandler interface {
-    PacketHandler
+    RecvHandler
     ClientRecvLogin(entityID EntityID, str1 string, str2 string, mapSeed int64, dimension byte)
     ClientRecvTimeUpdate(time int64)
     ClientRecvSpawnPosition(position *BlockXYZ)
@@ -215,8 +215,8 @@ func WriteKeepAlive(writer io.Writer) os.Error {
     return binary.Write(writer, binary.BigEndian, byte(packetIDKeepAlive))
 }
 
-func readKeepAlive(reader io.Reader, handler PacketHandler) (err os.Error) {
-    handler.PacketKeepAlive()
+func readKeepAlive(reader io.Reader, handler RecvHandler) (err os.Error) {
+    handler.RecvKeepAlive()
     return
 }
 
@@ -387,7 +387,7 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
     return
 }
 
-func readChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readChatMessage(reader io.Reader, handler RecvHandler) (err os.Error) {
     message, err := readString(reader)
     if err != nil {
         return
@@ -395,7 +395,7 @@ func readChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
 
     // TODO sanitize chat message
 
-    handler.PacketChatMessage(message)
+    handler.RecvChatMessage(message)
     return
 }
 
@@ -538,7 +538,7 @@ func clientReadUpdateHealth(reader io.Reader, handler ClientRecvHandler) (err os
 
 // packetIDFlying
 
-func readFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readFlying(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         OnGround byte
     }
@@ -548,7 +548,7 @@ func readFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketOnGround(byteToBool(packet.OnGround))
+    handler.RecvOnGround(byteToBool(packet.OnGround))
     return
 }
 
@@ -573,7 +573,7 @@ func WritePlayerPosition(writer io.Writer, position *XYZ, stance float64, onGrou
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readPlayerPosition(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         X        float64
         Y        float64
@@ -587,7 +587,7 @@ func readPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) 
         return
     }
 
-    handler.PacketPlayerPosition(&XYZ{
+    handler.RecvPlayerPosition(&XYZ{
         AbsoluteCoord(packet.X),
         AbsoluteCoord(packet.Y),
         AbsoluteCoord(packet.Z),
@@ -598,7 +598,7 @@ func readPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) 
 
 // packetIDPlayerLook
 
-func readPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readPlayerLook(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         Yaw      float32
         Pitch    float32
@@ -610,7 +610,7 @@ func readPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketPlayerLook(&Orientation{
+    handler.RecvPlayerLook(&Orientation{
         AngleRadians(packet.Yaw),
         AngleRadians(packet.Pitch),
     },
@@ -634,13 +634,13 @@ func clientReadPlayerPositionLook(reader io.Reader, handler ClientRecvHandler) (
         return
     }
 
-    handler.PacketPlayerPosition(&XYZ{
+    handler.RecvPlayerPosition(&XYZ{
         AbsoluteCoord(packet.X),
         AbsoluteCoord(packet.Y),
         AbsoluteCoord(packet.Z),
     },
         AbsoluteCoord(packet.Stance), byteToBool(packet.OnGround))
-    handler.PacketPlayerLook(&Orientation{
+    handler.RecvPlayerLook(&Orientation{
         AngleRadians(packet.Yaw),
         AngleRadians(packet.Pitch),
     },
@@ -689,13 +689,13 @@ func serverReadPlayerPositionLook(reader io.Reader, handler ServerRecvHandler) (
         return
     }
 
-    handler.PacketPlayerPosition(&XYZ{
+    handler.RecvPlayerPosition(&XYZ{
         AbsoluteCoord(packet.X),
         AbsoluteCoord(packet.Y),
         AbsoluteCoord(packet.Z),
     },
         AbsoluteCoord(packet.Stance), byteToBool(packet.OnGround))
-    handler.PacketPlayerLook(&Orientation{
+    handler.RecvPlayerLook(&Orientation{
         AngleRadians(packet.Yaw),
         AngleRadians(packet.Pitch),
     },
@@ -705,7 +705,7 @@ func serverReadPlayerPositionLook(reader io.Reader, handler ServerRecvHandler) (
 
 // packetIDPlayerDigging
 
-func readPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readPlayerDigging(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         Status byte
         X      int32
@@ -719,7 +719,7 @@ func readPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketPlayerDigging(
+    handler.RecvPlayerDigging(
         DigStatus(packet.Status),
         &BlockXYZ{
             BlockCoord(packet.X),
@@ -732,7 +732,7 @@ func readPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
 
 // packetIDPlayerBlockPlacement
 
-func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readPlayerBlockPlacement(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         ID        int16
         X         int32
@@ -759,7 +759,7 @@ func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
     }
 
     // TODO pass ItemID, Amount, Uses on to handler
-    handler.PacketPlayerBlockPlacement(packet.ID,
+    handler.RecvPlayerBlockPlacement(packet.ID,
         &BlockXYZ{
             BlockCoord(packet.X),
             BlockCoord(packet.Y),
@@ -771,7 +771,7 @@ func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
 
 // packetIDHoldingChange
 
-func readHoldingChange(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readHoldingChange(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         BlockItemID int16
     }
@@ -781,13 +781,13 @@ func readHoldingChange(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketHoldingChange(packet.BlockItemID)
+    handler.RecvHoldingChange(packet.BlockItemID)
     return
 }
 
 // packetIDArmAnimation
 
-func readArmAnimation(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readArmAnimation(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         EntityID int32
         Forward  byte
@@ -798,7 +798,7 @@ func readArmAnimation(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketArmAnimation(byteToBool(packet.Forward))
+    handler.RecvArmAnimation(byteToBool(packet.Forward))
     return
 }
 
@@ -1308,7 +1308,7 @@ func clientReadBlockChange(reader io.Reader, handler ClientRecvHandler) (err os.
 
 // packetIDUnknownX36
 
-func readUnknownX36(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readUnknownX36(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         field1         int32
         field2         int16
@@ -1431,13 +1431,13 @@ func clientReadWindowItems(reader io.Reader, handler ClientRecvHandler) (err os.
 
 // packetIDDisconnect
 
-func readDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readDisconnect(reader io.Reader, handler RecvHandler) (err os.Error) {
     reason, err := readString(reader)
     if err != nil {
         return
     }
 
-    handler.PacketDisconnect(reason)
+    handler.RecvDisconnect(reason)
     return
 }
 
@@ -1453,7 +1453,7 @@ func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
 // End of packet reader/writer functions
 
 
-type commonPacketHandler func(io.Reader, PacketHandler) os.Error
+type commonPacketHandler func(io.Reader, RecvHandler) os.Error
 type csPacketHandler func(io.Reader, ServerRecvHandler) os.Error
 type scPacketHandler func(io.Reader, ClientRecvHandler) os.Error
 

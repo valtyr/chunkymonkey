@@ -44,43 +44,43 @@ func (p *MessageParser) printf(format string, v ...interface{}) {
     log.Printf(p.logPrefix+format, v...)
 }
 
-func (p *MessageParser) PacketKeepAlive() {
+func (p *MessageParser) RecvKeepAlive() {
 }
 
-func (p *MessageParser) PacketChatMessage(message string) {
-    p.printf("PacketChatMessage(%s)", message)
+func (p *MessageParser) RecvChatMessage(message string) {
+    p.printf("RecvChatMessage(%s)", message)
 }
 
-func (p *MessageParser) PacketOnGround(onGround bool) {
-    p.printf("PacketOnGround(%v)", onGround)
+func (p *MessageParser) RecvOnGround(onGround bool) {
+    p.printf("RecvOnGround(%v)", onGround)
 }
 
-func (p *MessageParser) PacketPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool) {
-    p.printf("PacketPlayerPosition(%v, %v, %v)", position, stance, onGround)
+func (p *MessageParser) RecvPlayerPosition(position *XYZ, stance AbsoluteCoord, onGround bool) {
+    p.printf("RecvPlayerPosition(%v, %v, %v)", position, stance, onGround)
 }
 
-func (p *MessageParser) PacketPlayerLook(orientation *Orientation, onGround bool) {
-    p.printf("PacketPlayerLook(%v, %v)", orientation, onGround)
+func (p *MessageParser) RecvPlayerLook(orientation *Orientation, onGround bool) {
+    p.printf("RecvPlayerLook(%v, %v)", orientation, onGround)
 }
 
-func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
-    p.printf("PacketPlayerDigging(%v, %v, %v)", status, blockLoc, face)
+func (p *MessageParser) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
+    p.printf("RecvPlayerDigging(%v, %v, %v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) PacketPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face) {
-    p.printf("PacketPlayerBlockPlacement(%d, %v, %v)", blockItemID, blockLoc, direction)
+func (p *MessageParser) RecvPlayerBlockPlacement(blockItemID int16, blockLoc *BlockXYZ, direction Face) {
+    p.printf("RecvPlayerBlockPlacement(%d, %v, %v)", blockItemID, blockLoc, direction)
 }
 
-func (p *MessageParser) PacketHoldingChange(blockItemID int16) {
-    p.printf("PacketHoldingChange(%d)", blockItemID)
+func (p *MessageParser) RecvHoldingChange(blockItemID int16) {
+    p.printf("RecvHoldingChange(%d)", blockItemID)
 }
 
-func (p *MessageParser) PacketArmAnimation(forward bool) {
-    p.printf("PacketArmAnimation(%v)", forward)
+func (p *MessageParser) RecvArmAnimation(forward bool) {
+    p.printf("RecvArmAnimation(%v)", forward)
 }
 
-func (p *MessageParser) PacketDisconnect(reason string) {
-    p.printf("PacketDisconnect(%s)", reason)
+func (p *MessageParser) RecvDisconnect(reason string) {
+    p.printf("RecvDisconnect(%s)", reason)
 }
 
 func (p *MessageParser) ClientRecvLogin(entityID EntityID, str1 string, str2 string, mapSeed int64, dimension byte) {
@@ -97,7 +97,7 @@ func (p *MessageParser) ClientRecvSpawnPosition(position *BlockXYZ) {
 }
 
 func (p *MessageParser) ClientRecvUseEntity(user EntityID, target EntityID, leftClick bool) {
-    p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%v)", user, target, leftClick)
+    p.printf("ClientRecvUseEntity(user=%d, target=%d, leftClick=%v)", user, target, leftClick)
 }
 
 func (p *MessageParser) ClientRecvUpdateHealth(health int16) {
