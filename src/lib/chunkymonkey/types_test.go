@@ -33,3 +33,26 @@ func TestCoordDivMod(t *testing.T) {
         }
     }
 }
+
+func TestChunkXZ_GetChunkCornerBlockXY(t *testing.T) {
+    type Test struct {
+        input           ChunkXZ
+        expected_result BlockXYZ
+    }
+
+    var tests = []Test{
+        {ChunkXZ{0, 0}, BlockXYZ{0, 0, 0}},
+        {ChunkXZ{0, 1}, BlockXYZ{0, 0, 16}},
+        {ChunkXZ{1, 0}, BlockXYZ{16, 0, 0}},
+        {ChunkXZ{0, -1}, BlockXYZ{0, 0, -16}},
+        {ChunkXZ{-1, 0}, BlockXYZ{-16, 0, 0}},
+    }
+
+    for _, r := range tests {
+        result := r.input.GetChunkCornerBlockXY()
+        if r.expected_result.X != result.X || r.expected_result.Y != result.Y || r.expected_result.Z != result.Z {
+            t.Errorf("ChunkXZ%v expected BlockXYZ%v got BlockXYZ%v",
+                r.input, r.expected_result, result)
+        }
+    }
+}
