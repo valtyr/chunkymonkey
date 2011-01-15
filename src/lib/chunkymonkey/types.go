@@ -219,10 +219,10 @@ func (abs *AbsXYZ) ToChunkXZ() (chunkXz ChunkXZ) {
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
 func (abs *AbsIntXYZ) ToChunkXZ() ChunkXZ {
-    // TODO check this conversion
+    // TODO unit tests on this
     return ChunkXZ{
-        ChunkCoord(abs.X / ChunkSizeX),
-        ChunkCoord(abs.Z / ChunkSizeZ),
+        PixelsPerBlock * ChunkCoord(abs.X / ChunkSizeX),
+        PixelsPerBlock * ChunkCoord(abs.Z / ChunkSizeZ),
     }
 }
 
