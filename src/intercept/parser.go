@@ -105,6 +105,16 @@ func (p *MessageParser) ClientRecvUpdateHealth(health int16) {
     p.printf("ClientRecvUpdateHealth(health=%d)", health)
 }
 
+func (p *MessageParser) ClientRecvPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses int16, location *XYZInteger, yaw, pitch, roll AngleByte) {
+    p.printf("ClientRecvPickupSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
+        entityID, itemID, count, uses, location, yaw, pitch, roll)
+}
+
+func (p *MessageParser) ClientRecvItemCollect(collectedItem EntityID, collector EntityID) {
+    p.printf("ClientRecvItemCollect(collectedItem=%d, collector=%d)",
+        collectedItem, collector)
+}
+
 func (p *MessageParser) ClientRecvEntitySpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []proto.UnknownEntityExtra) {
     p.printf("ClientRecvEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
         entityID, mobType, position, yaw, pitch, data)
@@ -192,13 +202,13 @@ func (p *MessageParser) CSParse(reader io.Reader) {
     // we're listening on. TODO Maybe we could just close it?
     defer p.consumeUnrecognizedInput(reader)
 
-    p.logPrefix = "(C->S) "
-
     defer func() {
         if err := recover(); err != nil {
             p.printf("Parsing failed: %v", err)
         }
     }()
+
+    p.logPrefix = "(C->S) "
 
     username, err := proto.ServerReadHandshake(reader)
     if err != nil {
@@ -219,6 +229,8 @@ func (p *MessageParser) CSParse(reader io.Reader) {
         if err != nil {
             if err != os.EOF {
                 p.printf("ReceiveLoop failed: %v", err)
+            } else {
+                p.printf("ReceiveLoop hit EOF")
             }
             return
         }
@@ -230,6 +242,12 @@ func (p *MessageParser) SCParse(reader io.Reader) {
     // If we return, we should consume all input to avoid blocking the pipe
     // we're listening on. TODO Maybe we could just close it?
     defer p.consumeUnrecognizedInput(reader)
+
+    defer func() {
+        if err := recover(); err != nil {
+            p.printf("Parsing failed: %v", err)
+        }
+    }()
 
     p.logPrefix = "(S->C) "
 
@@ -245,6 +263,8 @@ func (p *MessageParser) SCParse(reader io.Reader) {
         if err != nil {
             if err != os.EOF {
                 p.printf("ReceiveLoop failed: %v", err)
+            } else {
+                p.printf("ReceiveLoop hit EOF")
             }
             return
         }

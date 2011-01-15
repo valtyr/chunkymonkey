@@ -35,6 +35,7 @@ const (
     packetIDArmAnimation         = 0x12
     packetIDNamedEntitySpawn     = 0x14
     packetIDPickupSpawn          = 0x15
+    packetIDItemCollect          = 0x16
     packetIDEntitySpawn          = 0x18
     packetIDUnknownX19           = 0x19
     packetIDEntityVelocity       = 0x1c
@@ -90,6 +91,8 @@ type ClientRecvHandler interface {
     ClientRecvSpawnPosition(position *BlockXYZ)
     ClientRecvUseEntity(user EntityID, target EntityID, leftClick bool)
     ClientRecvUpdateHealth(health int16)
+    ClientRecvPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses int16, location *XYZInteger, yaw, pitch, roll AngleByte)
+    ClientRecvItemCollect(collectedItem EntityID, collector EntityID)
     ClientRecvEntitySpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []UnknownEntityExtra)
     ClientRecvUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32)
     ClientRecvEntityVelocity(entityID EntityID, x, y, z int16)
@@ -152,9 +155,9 @@ type WindowSlot struct {
 }
 
 type UnknownEntityExtra struct {
-    field1 byte
-    field2 byte
-    field3 interface{}
+    Field1 byte
+    Field2 byte
+    Field3 interface{}
 }
 
 // Reads extra data from the end of certain packets, whose meaning isn't known
@@ -446,11 +449,11 @@ func clientReadTimeUpdate(reader io.Reader, handler ClientRecvHandler) (err os.E
 // TODO replace function and packet ID. The packet ID no longer serves this purpose
 func WritePlayerInventory(writer io.Writer) (err os.Error) {
     type InventoryType struct {
-        inventoryType int32
-        count         int16
-        itemID        int16
+        InventoryType int32
+        Count         int16
+        ItemID        int16
         // TODO confirm what this field really is
-        damage int16
+        Damage int16
     }
     // TODO pass actual values
     var inventories = []InventoryType{
@@ -466,15 +469,15 @@ func WritePlayerInventory(writer io.Writer) (err os.Error) {
             Count         int16
         }{
             packetIDPlayerInventory,
-            inventory.inventoryType,
-            inventory.count,
+            inventory.InventoryType,
+            inventory.Count,
         }
         err = binary.Write(writer, binary.BigEndian, &packet)
         if err != nil {
             return
         }
 
-        for i := int16(0); i < inventory.count; i++ {
+        for i := int16(0); i < inventory.Count; i++ {
             err = binary.Write(writer, binary.BigEndian, int16(-1))
             if err != nil {
                 return
@@ -863,33 +866,83 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
 func WritePickupSpawn(writer io.Writer, entityID EntityID, itemType ItemID, amount ItemCount, position *XYZInteger, orientation *OrientationPacked) os.Error {
     var packet = struct {
         PacketID byte
-        EntityID int32
-        ItemID   int16
-        Count    byte
+        EntityID EntityID
+        ItemID   ItemID
+        Count    ItemCount
         // TODO check this field
         Uses  int16
         X     AbsoluteCoordInteger
         Y     AbsoluteCoordInteger
         Z     AbsoluteCoordInteger
-        Yaw   byte
-        Pitch byte
-        Roll  byte
+        Yaw   AngleByte
+        Pitch AngleByte
+        Roll  AngleByte
     }{
         packetIDPickupSpawn,
-        int32(entityID),
-        int16(itemType),
-        byte(amount),
+        entityID,
+        itemType,
+        amount,
         // TODO pass proper uses value
         0,
         position.X,
         position.Y,
         position.Z,
-        byte(orientation.Rotation),
-        byte(orientation.Pitch),
-        byte(orientation.Roll),
+        orientation.Rotation,
+        orientation.Pitch,
+        orientation.Roll,
     }
 
     return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func clientReadPickupSpawn(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        ItemID   ItemID
+        Count    ItemCount
+        Uses     int16
+        X        AbsoluteCoordInteger
+        Y        AbsoluteCoordInteger
+        Z        AbsoluteCoordInteger
+        Yaw      AngleByte
+        Pitch    AngleByte
+        Roll     AngleByte
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    handler.ClientRecvPickupSpawn(
+        packet.EntityID,
+        packet.ItemID,
+        packet.Count,
+        packet.Uses,
+        &XYZInteger{packet.X, packet.Y, packet.Z},
+        packet.Yaw,
+        packet.Pitch,
+        packet.Roll)
+
+    return
+}
+
+// packetIDItemCollect
+
+func clientReadItemCollect(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
+    var packet struct {
+        CollectedItem EntityID
+        Collector     EntityID
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    handler.ClientRecvItemCollect(packet.CollectedItem, packet.Collector)
+
+    return
 }
 
 // packetIDEntitySpawn
@@ -927,19 +980,19 @@ func clientReadEntitySpawn(reader io.Reader, handler ClientRecvHandler) (err os.
 
 // TODO determine what this packet is
 func clientReadUnknownX19(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
-    var field1 int32
-    err = binary.Read(reader, binary.BigEndian, &field1)
+    var Field1 int32
+    err = binary.Read(reader, binary.BigEndian, &Field1)
     if err != nil {
         return
     }
 
-    field2, err := readString(reader)
+    Field2, err := readString(reader)
     if err != nil {
         return
     }
 
     var packetEnd struct {
-        field3, field4, field5, field6 int32
+        Field3, Field4, Field5, Field6 int32
     }
 
     err = binary.Read(reader, binary.BigEndian, &packetEnd)
@@ -948,8 +1001,8 @@ func clientReadUnknownX19(reader io.Reader, handler ClientRecvHandler) (err os.E
     }
 
     handler.ClientRecvUnknownX19(
-        field1, field2,
-        packetEnd.field3, packetEnd.field4, packetEnd.field5, packetEnd.field6)
+        Field1, Field2,
+        packetEnd.Field3, packetEnd.Field4, packetEnd.Field5, packetEnd.Field6)
 
     return
 }
@@ -1356,10 +1409,10 @@ func clientReadBlockChange(reader io.Reader, handler ClientRecvHandler) (err os.
 
 func clientReadUnknownX36(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
-        field1         int32
-        field2         int16
-        field3         int32
-        field4, field5 byte
+        Field1         int32
+        Field2         int16
+        Field3         int32
+        Field4, Field5 byte
     }
 
     err = binary.Read(reader, binary.BigEndian, &packet)
@@ -1368,7 +1421,7 @@ func clientReadUnknownX36(reader io.Reader, handler ClientRecvHandler) (err os.E
         return
     }
 
-    handler.ClientRecvUnknownX36(packet.field1, packet.field2, packet.field3, packet.field4, packet.field5)
+    handler.ClientRecvUnknownX36(packet.Field1, packet.Field2, packet.Field3, packet.Field4, packet.Field5)
 
     return
 }
@@ -1558,6 +1611,8 @@ var scReadFns = scPacketReaderMap{
     packetIDUpdateHealth:         clientReadUpdateHealth,
     packetIDPlayerPositionLook:   clientReadPlayerPositionLook,
     packetIDEntitySpawn:          clientReadEntitySpawn,
+    packetIDPickupSpawn:          clientReadPickupSpawn,
+    packetIDItemCollect:          clientReadItemCollect,
     packetIDUnknownX19:           clientReadUnknownX19,
     packetIDEntityVelocity:       clientReadEntityVelocity,
     packetIDEntityDestroy:        clientReadEntityDestroy,
