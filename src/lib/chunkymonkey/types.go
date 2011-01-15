@@ -1,5 +1,9 @@
 package types
 
+import (
+    "math"
+)
+
 // Defines the basic types such as ID types, and world units.
 
 type TimeOfDay int64
@@ -83,7 +87,7 @@ type RelMove struct {
 // Angle-related types and constants
 
 const (
-    DegreesToBytes = 256 / 360
+    DegreesToBytes = 256.0 / 360.0
 )
 
 // An angle, where there are 256 units in a circle.
@@ -92,14 +96,22 @@ type AngleBytes byte
 // An angle in degrees
 type AngleDegrees float32
 
+func (d *AngleDegrees) ToAngleBytes() AngleBytes {
+    norm := math.Fmod(float64(*d), 360)
+    if norm < 0 {
+        norm = 360 + norm
+    }
+    return AngleBytes(norm * DegreesToBytes)
+}
+
 type LookDegrees struct {
     Yaw, Pitch AngleDegrees
 }
 
 func (l *LookDegrees) ToLookBytes() *LookBytes {
     return &LookBytes{
-        AngleBytes(l.Yaw * DegreesToBytes),
-        AngleBytes(l.Pitch * DegreesToBytes),
+        l.Yaw.ToAngleBytes(),
+        l.Pitch.ToAngleBytes(),
     }
 }
 
@@ -177,7 +189,7 @@ func (chunkLoc *ChunkXZ) GetChunkCornerBlockXY() *BlockXYZ {
 }
 
 // Convert a position within a chunk to a block position within the world
-func (chunkLoc *ChunkXZ) ToBlockXY(subLoc *SubChunkXYZ) *BlockXYZ {
+func (chunkLoc *ChunkXZ) ToBlockXYZ(subLoc *SubChunkXYZ) *BlockXYZ {
     return &BlockXYZ{
         BlockCoord(chunkLoc.X)*ChunkSizeX + BlockCoord(subLoc.X),
         BlockYCoord(subLoc.Y),
@@ -219,10 +231,9 @@ func (abs *AbsXYZ) ToChunkXZ() (chunkXz ChunkXZ) {
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
 func (abs *AbsIntXYZ) ToChunkXZ() ChunkXZ {
-    // TODO unit tests on this
     return ChunkXZ{
-        PixelsPerBlock * ChunkCoord(abs.X / ChunkSizeX),
-        PixelsPerBlock * ChunkCoord(abs.Z / ChunkSizeZ),
+        PixelsPerBlock * ChunkCoord(abs.X/ChunkSizeX),
+        PixelsPerBlock * ChunkCoord(abs.Z/ChunkSizeZ),
     }
 }
 
@@ -247,8 +258,7 @@ func (blockLoc *BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) 
     return
 }
 
-func (blockLoc *BlockXYZ) ToXYZInteger() AbsIntXYZ {
-    // TODO check this conversion
+func (blockLoc *BlockXYZ) ToAbsIntXYZ() AbsIntXYZ {
     return AbsIntXYZ{
         AbsIntCoord(blockLoc.X * PixelsPerBlock),
         AbsIntCoord(blockLoc.Y * PixelsPerBlock),

@@ -4,6 +4,33 @@ import (
     "testing"
 )
 
+func TestLookDegrees_ToLookBytes(t *testing.T) {
+    type Test struct {
+        input    LookDegrees
+        expected LookBytes
+    }
+
+    var tests = []Test{
+        {LookDegrees{0, 0}, LookBytes{0, 0}},
+        {LookDegrees{0, 90}, LookBytes{0, 64}},
+        {LookDegrees{0, 180}, LookBytes{0, 128}},
+        {LookDegrees{0, -90}, LookBytes{0, 192}},
+        {LookDegrees{0, 270}, LookBytes{0, 192}},
+        {LookDegrees{90, 0}, LookBytes{64, 0}},
+        {LookDegrees{180, 0}, LookBytes{128, 0}},
+        {LookDegrees{-90, 0}, LookBytes{192, 0}},
+        {LookDegrees{270, 0}, LookBytes{192, 0}},
+    }
+
+    for _, r := range tests {
+        result := r.input.ToLookBytes()
+        if r.expected.Yaw != result.Yaw || r.expected.Pitch != result.Pitch {
+            t.Errorf("LookDegrees%v expected LookBytes%v got LookBytes%v",
+                r.input, r.expected, result)
+        }
+    }
+}
+
 func TestCoordDivMod(t *testing.T) {
     type CoordDivModTest struct {
         expected_div, expected_mod int32
@@ -36,8 +63,8 @@ func TestCoordDivMod(t *testing.T) {
 
 func TestChunkXZ_GetChunkCornerBlockXY(t *testing.T) {
     type Test struct {
-        input           ChunkXZ
-        expected_result BlockXYZ
+        input    ChunkXZ
+        expected BlockXYZ
     }
 
     var tests = []Test{
@@ -50,9 +77,32 @@ func TestChunkXZ_GetChunkCornerBlockXY(t *testing.T) {
 
     for _, r := range tests {
         result := r.input.GetChunkCornerBlockXY()
-        if r.expected_result.X != result.X || r.expected_result.Y != result.Y || r.expected_result.Z != result.Z {
+        if r.expected.X != result.X || r.expected.Y != result.Y || r.expected.Z != result.Z {
             t.Errorf("ChunkXZ%v expected BlockXYZ%v got BlockXYZ%v",
-                r.input, r.expected_result, result)
+                r.input, r.expected, result)
+        }
+    }
+}
+
+func TestBlockXYZ_ToAbsIntXYZ(t *testing.T) {
+    type Test struct {
+        input    BlockXYZ
+        expected AbsIntXYZ
+    }
+
+    var tests = []Test{
+        {BlockXYZ{0, 0, 0}, AbsIntXYZ{0, 0, 0}},
+        {BlockXYZ{0, 0, 1}, AbsIntXYZ{0, 0, 32}},
+        {BlockXYZ{0, 0, -1}, AbsIntXYZ{0, 0, -32}},
+        {BlockXYZ{1, 0, 0}, AbsIntXYZ{32, 0, 0}},
+        {BlockXYZ{-1, 0, 0}, AbsIntXYZ{-32, 0, 0}},
+    }
+
+    for _, r := range tests {
+        result := r.input.ToAbsIntXYZ()
+        if r.expected.X != result.X || r.expected.Y != result.Y || r.expected.Z != result.Z {
+            t.Errorf("BlockXYZ%v expected AbsIntXYZ%v got AbsIntXYZ%v",
+                r.input, r.expected, result)
         }
     }
 }
