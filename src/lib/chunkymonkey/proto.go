@@ -92,9 +92,13 @@ type ClientRecvHandler interface {
     ClientRecvMobSpawn(entityID EntityID, mobType byte, position *XYZInteger, yaw byte, pitch byte, data []UnknownEntityExtra)
     ClientRecvUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32)
     ClientRecvEntityVelocity(entityID EntityID, x, y, z int16)
+    ClientRecvEntity(entityID EntityID)
+    ClientRecvEntityDestroy(entityID EntityID)
     ClientRecvUnknownX28(field1 int32, data []UnknownEntityExtra)
     ClientRecvPreChunk(position *ChunkXZ, mode bool)
     ClientRecvMapChunk(position *BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte)
+    ClientRecvBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte)
+    ClientRecvBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte)
 }
 
 // Common protocol helper functions
@@ -497,7 +501,7 @@ func clientReadSpawnPosition(reader io.Reader, handler ClientRecvHandler) (err o
 
     handler.ClientRecvSpawnPosition(&BlockXYZ{
         BlockCoord(packet.X),
-        BlockCoord(packet.Y),
+        BlockYCoord(packet.Y),
         BlockCoord(packet.Z),
     })
     return
@@ -708,9 +712,9 @@ func serverReadPlayerPositionLook(reader io.Reader, handler ServerRecvHandler) (
 func readPlayerDigging(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
         Status byte
-        X      int32
-        Y      byte
-        Z      int32
+        X      BlockCoord
+        Y      BlockYCoord
+        Z      BlockCoord
         Face   byte
     }
 
@@ -721,11 +725,7 @@ func readPlayerDigging(reader io.Reader, handler RecvHandler) (err os.Error) {
 
     handler.RecvPlayerDigging(
         DigStatus(packet.Status),
-        &BlockXYZ{
-            BlockCoord(packet.X),
-            BlockCoord(packet.Y),
-            BlockCoord(packet.Z),
-        },
+        &BlockXYZ{packet.X, packet.Y, packet.Z},
         Face(packet.Face))
     return
 }
@@ -734,9 +734,9 @@ func readPlayerDigging(reader io.Reader, handler RecvHandler) (err os.Error) {
 
 func readPlayerBlockPlacement(reader io.Reader, handler RecvHandler) (err os.Error) {
     var packet struct {
-        X         int32
-        Y         byte
-        Z         int32
+        X         BlockCoord
+        Y         BlockYCoord
+        Z         BlockCoord
         Direction byte
         ItemID    int16
     }
@@ -760,9 +760,9 @@ func readPlayerBlockPlacement(reader io.Reader, handler RecvHandler) (err os.Err
     handler.RecvPlayerBlockPlacement(
         packet.ItemID,
         &BlockXYZ{
-            BlockCoord(packet.X),
-            BlockCoord(packet.Y),
-            BlockCoord(packet.Z),
+            packet.X,
+            packet.Y,
+            packet.Z,
         },
         Face(packet.Direction),
         packetExtra.Amount,
@@ -968,7 +968,7 @@ func clientReadEntity(reader io.Reader, handler ClientRecvHandler) (err os.Error
         return
     }
 
-    // TODO pass this data to handler
+    handler.ClientRecvEntity(entityID)
 
     return
 }
@@ -994,7 +994,7 @@ func clientReadEntityDestroy(reader io.Reader, handler ClientRecvHandler) (err o
         return
     }
 
-    // TODO pass this data to handler
+    handler.ClientRecvEntityDestroy(entityID)
 
     return
 }
@@ -1233,7 +1233,7 @@ func clientReadMapChunk(reader io.Reader, handler ClientRecvHandler) (err os.Err
     }
 
     handler.ClientRecvMapChunk(
-        &BlockXYZ{packet.X, BlockCoord(packet.Y), packet.Z},
+        &BlockXYZ{packet.X, BlockYCoord(packet.Y), packet.Z},
         packet.SizeX, packet.SizeY, packet.SizeZ,
         data)
     return
@@ -1243,8 +1243,8 @@ func clientReadMapChunk(reader io.Reader, handler ClientRecvHandler) (err os.Err
 
 func clientReadBlockChangeMulti(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
-        ChunkX int32
-        ChunkZ int32
+        ChunkX ChunkCoord
+        ChunkZ ChunkCoord
         Count  int16
     }
 
@@ -1253,15 +1253,30 @@ func clientReadBlockChangeMulti(reader io.Reader, handler ClientRecvHandler) (er
         return
     }
 
-    coordArray := make([]int16, packet.Count)
-    blockTypeArray := make([]byte, packet.Count)
-    blockMetadataArray := make([]byte, packet.Count)
+    rawBlockLocs := make([]int16, packet.Count)
+    blockTypes := make([]BlockID, packet.Count)
+    blockMetadata := make([]byte, packet.Count)
 
-    err = binary.Read(reader, binary.BigEndian, coordArray)
-    err = binary.Read(reader, binary.BigEndian, blockTypeArray)
-    err = binary.Read(reader, binary.BigEndian, blockMetadataArray)
+    err = binary.Read(reader, binary.BigEndian, rawBlockLocs)
+    err = binary.Read(reader, binary.BigEndian, blockTypes)
+    err = binary.Read(reader, binary.BigEndian, blockMetadata)
 
-    // TODO pass values to handler
+    blockLocs := make([]SubChunkXYZ, packet.Count)
+    for rawLoc := range rawBlockLocs {
+        blockLocs = append(
+            blockLocs,
+            SubChunkXYZ{
+                X:  SubChunkCoord(rawLoc >> 12),
+                Y:  SubChunkCoord(rawLoc & 0xff),
+                Z:  SubChunkCoord((rawLoc >> 8) & 0xff),
+            })
+    }
+
+    handler.ClientRecvBlockChangeMulti(
+        &ChunkXZ{packet.ChunkX, packet.ChunkZ},
+        blockLocs,
+        blockTypes,
+        blockMetadata)
 
     return
 }
@@ -1271,18 +1286,18 @@ func clientReadBlockChangeMulti(reader io.Reader, handler ClientRecvHandler) (er
 func WriteBlockChange(writer io.Writer, blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) (err os.Error) {
     var packet = struct {
         PacketID      byte
-        X             int32
-        Y             byte
-        Z             int32
-        BlockType     byte
+        X             BlockCoord
+        Y             BlockYCoord
+        Z             BlockCoord
+        BlockType     BlockID
         BlockMetadata byte
     }{
         packetIDBlockChange,
-        int32(blockLoc.X),
-        byte(blockLoc.Y),
-        int32(blockLoc.Z),
-        byte(blockType),
-        byte(blockMetaData),
+        blockLoc.X,
+        blockLoc.Y,
+        blockLoc.Z,
+        blockType,
+        blockMetaData,
     }
     err = binary.Write(writer, binary.BigEndian, &packet)
     return
@@ -1290,10 +1305,10 @@ func WriteBlockChange(writer io.Writer, blockLoc *BlockXYZ, blockType BlockID, b
 
 func clientReadBlockChange(reader io.Reader, handler ClientRecvHandler) (err os.Error) {
     var packet struct {
-        X             int32
-        Y             byte
-        Z             int32
-        BlockType     byte
+        X             BlockCoord
+        Y             BlockYCoord
+        Z             BlockCoord
+        BlockType     BlockID
         BlockMetadata byte
     }
 
@@ -1302,7 +1317,10 @@ func clientReadBlockChange(reader io.Reader, handler ClientRecvHandler) (err os.
         return
     }
 
-    // TODO pass values to handler
+    handler.ClientRecvBlockChange(
+        &BlockXYZ{packet.X, packet.Y, packet.Z},
+        packet.BlockType,
+        packet.BlockMetadata)
 
     return
 }

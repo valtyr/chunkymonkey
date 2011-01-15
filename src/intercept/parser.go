@@ -120,6 +120,14 @@ func (p *MessageParser) ClientRecvEntityVelocity(entityID EntityID, x, y, z int1
         entityID, x, y, z)
 }
 
+func (p *MessageParser) ClientRecvEntity(entityID EntityID) {
+    p.printf("ClientRecvEntity(entityID=%d)", entityID)
+}
+
+func (p *MessageParser) ClientRecvEntityDestroy(entityID EntityID) {
+    p.printf("ClientRecvEntityDestroy(entityID=%d)", entityID)
+}
+
 func (p *MessageParser) ClientRecvUnknownX28(field1 int32, data []proto.UnknownEntityExtra) {
     p.printf("ClientRecvUnknownX28(field1=%d, data=%v)", field1, data)
 }
@@ -131,6 +139,16 @@ func (p *MessageParser) ClientRecvPreChunk(position *ChunkXZ, mode bool) {
 func (p *MessageParser) ClientRecvMapChunk(position *BlockXYZ, sizeX, sizeY, sizeZ byte, data []byte) {
     p.printf("ClientRecvMapChunk(position=%v, sizeX=%d, sizeY=%d, sizeZ=%d, len(data)=%d)",
         position, sizeX, sizeY, sizeZ, len(data))
+}
+
+func (p *MessageParser) ClientRecvBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte) {
+    p.printf("ClientRecvBlockChangeMulti(chunkLoc=%v, blockCoords=%v, blockTypes=%v, blockMetaData=%v)",
+        chunkLoc, blockCoords, blockTypes, blockMetaData)
+}
+
+func (p *MessageParser) ClientRecvBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) {
+    p.printf("ClientRecvBlockChange(blockLoc=%v, blockType=%d, blockMetaData=%d)",
+        blockLoc, blockType, blockMetaData)
 }
 
 // Parses messages from the client
