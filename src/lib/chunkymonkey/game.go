@@ -212,11 +212,9 @@ func NewGame(worldPath string) (game *Game) {
         mainQueue:    make(chan func(*Game), 256),
         players:      make(map[EntityID]*Player),
         items:        make(map[EntityID]*Item),
-        blockTypes:   make(map[BlockID]*Block),
+        blockTypes:   LoadStandardBlocks(),
     }
     chunkManager.game = game
-
-    LoadStandardBlocks(game.blockTypes)
 
     go game.mainLoop()
     go game.timer()

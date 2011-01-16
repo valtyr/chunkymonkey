@@ -104,7 +104,9 @@ type Block struct {
     transparency int8
 }
 
-func LoadStandardBlocks(b map[BlockID]*Block) {
+func LoadStandardBlocks() map[BlockID]*Block {
+    b := make(map[BlockID]*Block)
+
     newBlock := func(id BlockID, name string) {
         b[id] = &Block{
             name:         name,
@@ -223,4 +225,6 @@ func LoadStandardBlocks(b map[BlockID]*Block) {
     // Setup semi-transparent blocks
     setTrans(1, []BlockID{BlockIDLeaves})
     setTrans(3, []BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce})
+
+    return b
 }

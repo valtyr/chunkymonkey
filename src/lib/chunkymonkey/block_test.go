@@ -6,8 +6,7 @@ import (
 )
 
 func TestLoadStandardBlocks(t *testing.T) {
-    b := make(map[BlockID]*Block)
-    LoadStandardBlocks(b)
+    b := LoadStandardBlocks()
 
     type BlockTransTest struct {
         id                    BlockID
