@@ -61,7 +61,7 @@ func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetada
 
     // Tell players that the block was destroyed
     packet := &bytes.Buffer{}
-    proto.WriteBlockChange(packet, chunk.XZ.ToBlockXYZ(subLoc), BlockIDAir, 0)
+    proto.WriteBlockChange(packet, chunk.XZ.ToBlockXYZ(subLoc), blockType, blockMetadata)
     chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), chunk.XZ)
 
     return
