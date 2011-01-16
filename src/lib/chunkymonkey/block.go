@@ -213,16 +213,16 @@ func LoadStandardBlocks(b map[BlockID]*Block) {
         }
     }
     // Setup transparent blocks
-    setTrans(0, [...]BlockID{BlockIDAir, BlockIDSapling, BlockIDGlass,
+    setTrans(0, []BlockID{BlockIDAir, BlockIDSapling, BlockIDGlass,
         BlockIDYellowflower, BlockIDRedRose, BlockIDBrownMushroom,
         BlockIDRedMushroom, BlockIDFire, BlockIDMobSpawner, BlockIDWoodenStairs,
         BlockIDRedstoneWire, BlockIDCrops, BlockIDSignPost, BlockIDLadder,
         BlockIDMinecartTracks, BlockIDCobblestoneStairs, BlockIDWallSign,
         BlockIDLever, BlockIDIrondoor, BlockIDRedstoneTorchOff,
         BlockIDRedstoneTorchOn, BlockIDStoneButton, BlockIDSnow, BlockIDCactus,
-        BlockIDReed, BlockIDFence, BlockIDPortal}[:])
+        BlockIDReed, BlockIDFence, BlockIDPortal})
 
     // Setup semi-transparent blocks
-    setTrans(1, [...]BlockID{BlockIDLeaves}[:])
-    setTrans(3, [...]BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce}[:])
+    setTrans(1, []BlockID{BlockIDLeaves})
+    setTrans(3, []BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce})
 }
