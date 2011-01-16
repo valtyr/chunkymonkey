@@ -44,160 +44,160 @@ func (p *MessageParser) printf(format string, v ...interface{}) {
     log.Printf(p.logPrefix+format, v...)
 }
 
-func (p *MessageParser) RecvKeepAlive() {
+func (p *MessageParser) PacketKeepAlive() {
 }
 
-func (p *MessageParser) RecvChatMessage(message string) {
-    p.printf("RecvChatMessage(%s)", message)
+func (p *MessageParser) PacketChatMessage(message string) {
+    p.printf("PacketChatMessage(%s)", message)
 }
 
-func (p *MessageParser) RecvOnGround(onGround bool) {
-    p.printf("RecvOnGround(%v)", onGround)
+func (p *MessageParser) PacketOnGround(onGround bool) {
+    p.printf("PacketOnGround(%v)", onGround)
 }
 
-func (p *MessageParser) RecvPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
-    p.printf("RecvPlayerPosition(position=%v, stance=%v, onGround=%v)", position, stance, onGround)
+func (p *MessageParser) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
+    p.printf("PacketPlayerPosition(position=%v, stance=%v, onGround=%v)", position, stance, onGround)
 }
 
-func (p *MessageParser) RecvPlayerLook(look *LookDegrees, onGround bool) {
-    p.printf("RecvPlayerLook(look=%v, onGround=%v)", look, onGround)
+func (p *MessageParser) PacketPlayerLook(look *LookDegrees, onGround bool) {
+    p.printf("PacketPlayerLook(look=%v, onGround=%v)", look, onGround)
 }
 
-func (p *MessageParser) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
-    p.printf("RecvPlayerDigging(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
+func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
+    p.printf("PacketPlayerDigging(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) RecvPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
-    p.printf("RecvPlayerBlockPlacement(itemId=%d, blockLoc=%v, direction=%d, amount=%d, uses=%d)",
+func (p *MessageParser) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
+    p.printf("PacketPlayerBlockPlacement(itemId=%d, blockLoc=%v, direction=%d, amount=%d, uses=%d)",
         itemID, blockLoc, direction, amount, uses)
 }
 
-func (p *MessageParser) RecvHoldingChange(itemID ItemID) {
-    p.printf("RecvHoldingChange(%d)", itemID)
+func (p *MessageParser) PacketHoldingChange(itemID ItemID) {
+    p.printf("PacketHoldingChange(%d)", itemID)
 }
 
-func (p *MessageParser) RecvPlayerAnimation(animation PlayerAnimation) {
-    p.printf("RecvPlayerAnimation(%v)", animation)
+func (p *MessageParser) PacketPlayerAnimation(animation PlayerAnimation) {
+    p.printf("PacketPlayerAnimation(%v)", animation)
 }
 
-func (p *MessageParser) RecvDisconnect(reason string) {
-    p.printf("RecvDisconnect(%s)", reason)
+func (p *MessageParser) PacketDisconnect(reason string) {
+    p.printf("PacketDisconnect(%s)", reason)
 }
 
-func (p *MessageParser) ClientRecvLogin(entityID EntityID, str1 string, str2 string, mapSeed RandomSeed, dimension DimensionID) {
-    p.printf("ClientRecvLogin(entityID=%d, str1=%v, str2=%v, mapSeed=%d, dimension=%d)",
+func (p *MessageParser) ClientPacketLogin(entityID EntityID, str1 string, str2 string, mapSeed RandomSeed, dimension DimensionID) {
+    p.printf("PacketLogin(entityID=%d, str1=%v, str2=%v, mapSeed=%d, dimension=%d)",
         entityID, str1, str2, mapSeed, dimension)
 }
 
-func (p *MessageParser) ClientRecvTimeUpdate(time TimeOfDay) {
-    p.printf("ClientRecvTime(time=%d)", time)
+func (p *MessageParser) PacketTimeUpdate(time TimeOfDay) {
+    p.printf("PacketTime(time=%d)", time)
 }
 
-func (p *MessageParser) ClientRecvEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses) {
-    p.printf("ClientRecvEntityEquipment(entityID=%d, slot=%d, itemID=%d, uses=%d)",
+func (p *MessageParser) PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses) {
+    p.printf("PacketEntityEquipment(entityID=%d, slot=%d, itemID=%d, uses=%d)",
         entityID, slot, itemID, uses)
 }
 
-func (p *MessageParser) ClientRecvSpawnPosition(position *BlockXYZ) {
-    p.printf("ClientRecvSpawnPosition(position=%v)", position)
+func (p *MessageParser) PacketSpawnPosition(position *BlockXYZ) {
+    p.printf("PacketSpawnPosition(position=%v)", position)
 }
 
-func (p *MessageParser) ClientRecvUseEntity(user EntityID, target EntityID, leftClick bool) {
-    p.printf("ClientRecvUseEntity(user=%d, target=%d, leftClick=%v)", user, target, leftClick)
+func (p *MessageParser) PacketUseEntity(user EntityID, target EntityID, leftClick bool) {
+    p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%v)", user, target, leftClick)
 }
 
-func (p *MessageParser) ClientRecvUpdateHealth(health int16) {
-    p.printf("ClientRecvUpdateHealth(health=%d)", health)
+func (p *MessageParser) PacketUpdateHealth(health int16) {
+    p.printf("PacketUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) ClientRecvPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes) {
-    p.printf("ClientRecvPickupSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
+func (p *MessageParser) PacketPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes) {
+    p.printf("PacketPickupSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
         entityID, itemID, count, uses, location, yaw, pitch, roll)
 }
 
-func (p *MessageParser) ClientRecvItemCollect(collectedItem EntityID, collector EntityID) {
-    p.printf("ClientRecvItemCollect(collectedItem=%d, collector=%d)",
+func (p *MessageParser) PacketItemCollect(collectedItem EntityID, collector EntityID) {
+    p.printf("PacketItemCollect(collectedItem=%d, collector=%d)",
         collectedItem, collector)
 }
 
-func (p *MessageParser) ClientRecvEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []proto.UnknownEntityExtra) {
-    p.printf("ClientRecvEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
+func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []proto.UnknownEntityExtra) {
+    p.printf("PacketEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
         entityID, mobType, position, yaw, pitch, data)
 }
 
-func (p *MessageParser) ClientRecvUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32) {
-    p.printf("ClientRecvUnknownX19(field1=%d, field2=%v, field3=%d, field4=%d, field5=%d, field6=%d)",
+func (p *MessageParser) PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32) {
+    p.printf("PacketUnknownX19(field1=%d, field2=%v, field3=%d, field4=%d, field5=%d, field6=%d)",
         field1, field2, field3, field4, field5, field6)
 }
 
-func (p *MessageParser) ClientRecvEntityVelocity(entityID EntityID, velocity *Velocity) {
-    p.printf("ClientRecvEntityVelocity(entityID=%d, velocity=%v)",
+func (p *MessageParser) PacketEntityVelocity(entityID EntityID, velocity *Velocity) {
+    p.printf("PacketEntityVelocity(entityID=%d, velocity=%v)",
         entityID, velocity)
 }
 
-func (p *MessageParser) ClientRecvEntityDestroy(entityID EntityID) {
-    p.printf("ClientRecvEntityDestroy(entityID=%d)", entityID)
+func (p *MessageParser) PacketEntityDestroy(entityID EntityID) {
+    p.printf("PacketEntityDestroy(entityID=%d)", entityID)
 }
 
-func (p *MessageParser) ClientRecvEntity(entityID EntityID) {
-    p.printf("ClientRecvEntity(entityID=%d)", entityID)
+func (p *MessageParser) PacketEntity(entityID EntityID) {
+    p.printf("PacketEntity(entityID=%d)", entityID)
 }
 
-func (p *MessageParser) ClientRecvEntityRelMove(entityID EntityID, movement *RelMove) {
-    p.printf("ClientRecvEntityRelMove(entityID=%d, movement=%v)",
+func (p *MessageParser) PacketEntityRelMove(entityID EntityID, movement *RelMove) {
+    p.printf("PacketEntityRelMove(entityID=%d, movement=%v)",
         entityID, movement)
 }
 
-func (p *MessageParser) ClientRecvEntityLook(entityID EntityID, yaw, pitch AngleBytes) {
-    p.printf("ClientRecvEntityLook(entityID=%d, yaw=%d, pitch=%d)",
+func (p *MessageParser) PacketEntityLook(entityID EntityID, yaw, pitch AngleBytes) {
+    p.printf("PacketEntityLook(entityID=%d, yaw=%d, pitch=%d)",
         entityID, yaw, pitch)
 }
 
-func (p *MessageParser) ClientRecvEntityStatus(entityID EntityID, status EntityStatus) {
-    p.printf("ClientRecvEntityStatus(entityID=%d, status=%d",
+func (p *MessageParser) PacketEntityStatus(entityID EntityID, status EntityStatus) {
+    p.printf("PacketEntityStatus(entityID=%d, status=%d",
         entityID, status)
 }
 
-func (p *MessageParser) ClientRecvUnknownX28(field1 int32, data []proto.UnknownEntityExtra) {
-    p.printf("ClientRecvUnknownX28(field1=%d, data=%v)", field1, data)
+func (p *MessageParser) PacketUnknownX28(field1 int32, data []proto.UnknownEntityExtra) {
+    p.printf("PacketUnknownX28(field1=%d, data=%v)", field1, data)
 }
 
-func (p *MessageParser) ClientRecvPreChunk(position *ChunkXZ, mode ChunkLoadMode) {
-    p.printf("ClientRecvPreChunk(position=%v, mode=%d)", position, mode)
+func (p *MessageParser) PacketPreChunk(position *ChunkXZ, mode ChunkLoadMode) {
+    p.printf("PacketPreChunk(position=%v, mode=%d)", position, mode)
 }
 
-func (p *MessageParser) ClientRecvMapChunk(position *BlockXYZ, size *SubChunkSize, data []byte) {
-    p.printf("ClientRecvMapChunk(position=%v, size=%v, len(data)=%d)",
+func (p *MessageParser) PacketMapChunk(position *BlockXYZ, size *SubChunkSize, data []byte) {
+    p.printf("PacketMapChunk(position=%v, size=%v, len(data)=%d)",
         position, size, len(data))
 }
 
-func (p *MessageParser) ClientRecvBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte) {
-    p.printf("ClientRecvBlockChangeMulti(chunkLoc=%v, blockCoords=%v, blockTypes=%v, blockMetaData=%v)",
+func (p *MessageParser) PacketBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte) {
+    p.printf("PacketBlockChangeMulti(chunkLoc=%v, blockCoords=%v, blockTypes=%v, blockMetaData=%v)",
         chunkLoc, blockCoords, blockTypes, blockMetaData)
 }
 
-func (p *MessageParser) ClientRecvBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) {
-    p.printf("ClientRecvBlockChange(blockLoc=%v, blockType=%d, blockMetaData=%d)",
+func (p *MessageParser) PacketBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) {
+    p.printf("PacketBlockChange(blockLoc=%v, blockType=%d, blockMetaData=%d)",
         blockLoc, blockType, blockMetaData)
 }
 
-func (p *MessageParser) ClientRecvUnknownX36(field1 int32, field2 int16, field3 int32, field4, field5 byte) {
-    p.printf("RecvUnknownX36(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
+func (p *MessageParser) PacketUnknownX36(field1 int32, field2 int16, field3 int32, field4, field5 byte) {
+    p.printf("PacketUnknownX36(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
         field1, field2, field3, field4, field5)
 }
 
-func (p *MessageParser) ServerRecvWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
-    p.printf("ServerRecvWindowClick(windowID=%d, slot=%d, rightClick=%v, txID=%d, itemID=%d, amount=%d, uses=%d)",
+func (p *MessageParser) PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
+    p.printf("PacketWindowClick(windowID=%d, slot=%d, rightClick=%v, txID=%d, itemID=%d, amount=%d, uses=%d)",
         windowID, slot, rightClick, txID, itemID, amount, uses)
 }
 
-func (p *MessageParser) ClientRecvSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses) {
-    p.printf("ClientRecvSetSlot(windowID=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
+func (p *MessageParser) PacketSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses) {
+    p.printf("PacketSetSlot(windowID=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
         windowID, slot, itemID, amount, uses)
 }
 
-func (p *MessageParser) ClientRecvWindowItems(windowID WindowID, items []proto.WindowSlot) {
-    p.printf("ClientRecvWindowItems(windowID=%d, items=%v)",
+func (p *MessageParser) PacketWindowItems(windowID WindowID, items []proto.WindowSlot) {
+    p.printf("PacketWindowItems(windowID=%d, items=%v)",
         windowID, items)
 }
 

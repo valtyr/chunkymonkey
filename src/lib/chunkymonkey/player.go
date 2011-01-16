@@ -48,19 +48,19 @@ func (player *Player) start() {
     go player.TransmitLoop()
 }
 
-func (player *Player) RecvKeepAlive() {
+func (player *Player) PacketKeepAlive() {
 }
 
-func (player *Player) RecvChatMessage(message string) {
-    log.Printf("RecvChatMessage message=%s", message)
+func (player *Player) PacketChatMessage(message string) {
+    log.Printf("PacketChatMessage message=%s", message)
 
     player.game.Enqueue(func(game *Game) { game.SendChatMessage(message) })
 }
 
-func (player *Player) RecvOnGround(onGround bool) {
+func (player *Player) PacketOnGround(onGround bool) {
 }
 
-func (player *Player) RecvPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
+func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
     // TODO: Should keep track of when players enter/leave their mutual radius
     // of "awareness". I.e a client should receive a RemoveEntity packet when
     // the player walks out of range, and no longer receive WriteEntityTeleport
@@ -90,7 +90,7 @@ func (player *Player) RecvPlayerPosition(position *AbsXYZ, stance AbsCoord, onGr
     })
 }
 
-func (player *Player) RecvPlayerLook(look *LookDegrees, onGround bool) {
+func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
     player.game.Enqueue(func(game *Game) {
         // TODO input validation
         player.look = *look
@@ -101,7 +101,7 @@ func (player *Player) RecvPlayerLook(look *LookDegrees, onGround bool) {
     })
 }
 
-func (player *Player) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
+func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
     // TODO validate that the player is actually somewhere near the block
 
     if status == DigBlockBroke {
@@ -134,23 +134,23 @@ func (player *Player) RecvPlayerDigging(status DigStatus, blockLoc *BlockXYZ, fa
     }
 }
 
-func (player *Player) RecvPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
-    log.Printf("RecvPlayerBlockPlacement itemID=%d blockLoc=%v direction=%d, amount=%d, uses=%d",
+func (player *Player) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
+    log.Printf("PacketPlayerBlockPlacement itemID=%d blockLoc=%v direction=%d, amount=%d, uses=%d",
         itemID, *blockLoc, direction, amount, uses)
 }
 
-func (player *Player) RecvHoldingChange(itemID ItemID) {
-    log.Printf("RecvHoldingChange blockItemID=%d", itemID)
+func (player *Player) PacketHoldingChange(itemID ItemID) {
+    log.Printf("PacketHoldingChange blockItemID=%d", itemID)
 }
 
-func (player *Player) RecvPlayerAnimation(animation PlayerAnimation) {
+func (player *Player) PacketPlayerAnimation(animation PlayerAnimation) {
 }
 
-func (player *Player) ServerRecvWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
+func (player *Player) PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
 }
 
-func (player *Player) RecvDisconnect(reason string) {
-    log.Printf("RecvDisconnect reason=%s", reason)
+func (player *Player) PacketDisconnect(reason string) {
+    log.Printf("PacketDisconnect reason=%s", reason)
     player.game.Enqueue(func(game *Game) {
         game.RemovePlayer(player)
         close(player.txQueue)
