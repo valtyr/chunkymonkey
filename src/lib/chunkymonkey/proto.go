@@ -68,6 +68,7 @@ const (
 type PacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
+    PacketUseEntity(user EntityID, target EntityID, leftClick bool)
     PacketOnGround(onGround bool)
     PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool)
     PacketPlayerLook(look *LookDegrees, onGround bool)
@@ -91,7 +92,6 @@ type ClientPacketHandler interface {
     PacketTimeUpdate(time TimeOfDay)
     PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses)
     PacketSpawnPosition(position *BlockXYZ)
-    PacketUseEntity(user EntityID, target EntityID, leftClick bool)
     PacketUpdateHealth(health int16)
     PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes)
     PacketItemCollect(collectedItem EntityID, collector EntityID)
@@ -525,7 +525,7 @@ func readSpawnPosition(reader io.Reader, handler ClientPacketHandler) (err os.Er
 
 // packetIDUseEntity
 
-func readUseEntity(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+func readUseEntity(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         User      EntityID
         Target    EntityID
@@ -1599,6 +1599,7 @@ type clientPacketReaderMap map[byte]clientPacketHandler
 var commonReadFns = commonPacketReaderMap{
     packetIDKeepAlive:            readKeepAlive,
     packetIDChatMessage:          readChatMessage,
+    packetIDUseEntity:            readUseEntity,
     packetIDFlying:               readFlying,
     packetIDPlayerPosition:       readPlayerPosition,
     packetIDPlayerLook:           readPlayerLook,
@@ -1620,7 +1621,6 @@ var clientReadFns = clientPacketReaderMap{
     packetIDLogin:                clientReadLogin,
     packetIDTimeUpdate:           readTimeUpdate,
     packetIDSpawnPosition:        readSpawnPosition,
-    packetIDUseEntity:            readUseEntity,
     packetIDUpdateHealth:         readUpdateHealth,
     packetIDPlayerPositionLook:   readPlayerPositionLook,
     packetIDEntitySpawn:          readEntitySpawn,
