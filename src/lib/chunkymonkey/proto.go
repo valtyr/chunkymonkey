@@ -1371,7 +1371,7 @@ func readBlockChangeMulti(reader io.Reader, handler ClientPacketHandler) (err os
 
     rawBlockLocs := make([]int16, packet.Count)
     blockTypes := make([]BlockID, packet.Count)
-    // TODO check if blockMetadata is Count bytes or nibbles long
+    // blockMetadata array appears to represent one block per byte
     blockMetadata := make([]byte, packet.Count)
 
     err = binary.Read(reader, binary.BigEndian, rawBlockLocs)
@@ -1379,14 +1379,12 @@ func readBlockChangeMulti(reader io.Reader, handler ClientPacketHandler) (err os
     err = binary.Read(reader, binary.BigEndian, blockMetadata)
 
     blockLocs := make([]SubChunkXYZ, packet.Count)
-    for rawLoc := range rawBlockLocs {
-        blockLocs = append(
-            blockLocs,
-            SubChunkXYZ{
-                X:  SubChunkCoord(rawLoc >> 12),
-                Y:  SubChunkCoord(rawLoc & 0xff),
-                Z:  SubChunkCoord((rawLoc >> 8) & 0xff),
-            })
+    for index, rawLoc := range rawBlockLocs {
+        blockLocs[index] = SubChunkXYZ{
+            X:  SubChunkCoord(rawLoc >> 12),
+            Y:  SubChunkCoord(rawLoc & 0xff),
+            Z:  SubChunkCoord((rawLoc >> 8) & 0x0f),
+        }
     }
 
     handler.PacketBlockChangeMulti(

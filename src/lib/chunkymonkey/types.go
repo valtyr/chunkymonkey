@@ -67,7 +67,7 @@ const (
 // Window/inventory-related types and constants
 
 // ID specifying which slotted window, such as inventory
-type WindowID byte
+type WindowID int8
 
 type InvTypeID byte
 
