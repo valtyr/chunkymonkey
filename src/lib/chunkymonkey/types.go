@@ -23,6 +23,8 @@ const (
 // Item type ID
 type ItemID int16
 
+const ItemIDNull = ItemID(-1)
+
 // Number of times that an item has been used
 type ItemUses int16
 
@@ -45,7 +47,11 @@ type PlayerAnimation byte
 type BlockID byte
 
 // Block face (0-5)
-type Face byte
+type Face int8
+
+// Used when a block face is not appropriate to the situation, but block
+// location data passed (such as using an item not on a block).
+const FaceNull = Face(-1)
 
 // Action-related types and constants
 
@@ -61,11 +67,27 @@ const (
 // Window/inventory-related types and constants
 
 // ID specifying which slotted window, such as inventory
-// TODO get numeric constants for these
 type WindowID byte
+
+type InvTypeID byte
+
+const (
+    InvTypeIDChest     = InvTypeID(0)
+    InvTypeIDWorkbench = InvTypeID(1)
+    InvTypeIDFurnace   = InvTypeID(2)
+)
 
 // ID of the slow in inventory or other item-slotted window element
 type SlotID int16
+
+type PrgBarID int16
+
+const (
+    PrgBarIDFurnaceProgress = PrgBarID(0)
+    PrgBarIDFurnaceFire     = PrgBarID(1)
+)
+
+type PrgBarValue int16
 
 // Transaction ID
 type TxID int16
@@ -213,12 +235,18 @@ type SubChunkXYZ struct {
 
 // Coordinate of a block within the world
 type BlockCoord int32
-type BlockYCoord byte
+type BlockYCoord int8
 
 type BlockXYZ struct {
     X   BlockCoord
     Y   BlockYCoord
     Z   BlockCoord
+}
+
+// Test if a block location is not appropriate to the situation, but block
+// location data passed (such as using an item not on a block).
+func (b *BlockXYZ) IsNull() bool {
+    return b.Y == -1 && b.X == -1 && b.Z == -1
 }
 
 // Convert an (x, z) absolute coordinate pair to chunk coordinates

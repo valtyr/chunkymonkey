@@ -25,6 +25,7 @@ const (
     packetIDSpawnPosition        = 0x06
     packetIDUseEntity            = 0x07
     packetIDUpdateHealth         = 0x08
+    packetIDRespawn              = 0x09
     packetIDPlayer               = 0x0a
     packetIDPlayerPosition       = 0x0b
     packetIDPlayerLook           = 0x0c
@@ -52,9 +53,13 @@ const (
     packetIDBlockChangeMulti     = 0x34
     packetIDBlockChange          = 0x35
     packetIDUnknownX36           = 0x36
+    packetIDWindowOpen           = 0x64
+    packetIDWindowClose          = 0x65
     packetIDWindowClick          = 0x66
-    packetIDSetSlot              = 0x67
+    packetIDWindowSetSlot        = 0x67
     packetIDWindowItems          = 0x68
+    packetIDWindowProgressBar    = 0x69
+    packetIDWindowTransaction    = 0x6a
     packetIDDisconnect           = 0xff
 
     // Inventory types
@@ -69,11 +74,12 @@ type PacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
     PacketUseEntity(user EntityID, target EntityID, leftClick bool)
+    PacketRespawn()
     PacketPlayer(onGround bool)
     PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool)
     PacketPlayerLook(look *LookDegrees, onGround bool)
     PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
-    PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses)
+    PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses)
     PacketPlayerAnimation(animation PlayerAnimation)
     PacketDisconnect(reason string)
 }
@@ -82,6 +88,7 @@ type PacketHandler interface {
 type ServerPacketHandler interface {
     PacketHandler
     PacketHoldingChange(itemID ItemID)
+    PacketWindowClose(windowID WindowID)
     PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses)
 }
 
@@ -109,8 +116,11 @@ type ClientPacketHandler interface {
     PacketBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte)
     PacketBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte)
     PacketUnknownX36(field1 int32, field2 int16, field3 int32, field4, field5 byte)
-    PacketSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses)
+    PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte)
+    PacketWindowSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses)
     PacketWindowItems(windowID WindowID, items []WindowSlot)
+    PacketWindowProgressBar(windowID WindowID, prgBarID PrgBarID, value PrgBarValue)
+    PacketWindowTransaction(windowID WindowID, txID TxID, accepted bool)
 }
 
 // Common protocol helper functions
@@ -138,7 +148,7 @@ func readString(reader io.Reader) (s string, err os.Error) {
     return string(bs), err
 }
 
-func WriteString(writer io.Writer, s string) (err os.Error) {
+func writeString(writer io.Writer, s string) (err os.Error) {
     bs := []byte(s)
 
     err = binary.Write(writer, binary.BigEndian, int16(len(bs)))
@@ -336,13 +346,13 @@ func ServerWriteLogin(writer io.Writer, entityID EntityID) (err os.Error) {
     }
 
     // TODO unknown string
-    err = WriteString(writer, "")
+    err = writeString(writer, "")
     if err != nil {
         return
     }
 
     // TODO unknown string
-    err = WriteString(writer, "")
+    err = writeString(writer, "")
     if err != nil {
         return
     }
@@ -395,7 +405,7 @@ func ServerWriteHandshake(writer io.Writer, reply string) (err os.Error) {
         return
     }
 
-    return WriteString(writer, reply)
+    return writeString(writer, reply)
 }
 
 // packetIDChatMessage
@@ -406,7 +416,7 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
         return
     }
 
-    err = WriteString(writer, message)
+    err = writeString(writer, message)
     return
 }
 
@@ -553,6 +563,20 @@ func readUpdateHealth(reader io.Reader, handler ClientPacketHandler) (err os.Err
     }
 
     handler.PacketUpdateHealth(health)
+    return
+}
+
+// packetIDRespawn
+
+func WriteRespawn(writer io.Writer) os.Error {
+    var packetID byte
+
+    return binary.Write(writer, binary.BigEndian, &packetID)
+}
+
+func readRespawn(reader io.Reader, handler PacketHandler) (err os.Error) {
+    handler.PacketRespawn()
+
     return
 }
 
@@ -799,7 +823,7 @@ func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
 
 // packetIDHoldingChange
 
-func serverHoldingChange(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
+func readHoldingChange(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
     var packet struct {
         ItemID ItemID
     }
@@ -846,7 +870,7 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
         return
     }
 
-    err = WriteString(writer, name)
+    err = writeString(writer, name)
     if err != nil {
         return
     }
@@ -1439,9 +1463,88 @@ func readUnknownX36(reader io.Reader, handler ClientPacketHandler) (err os.Error
     return
 }
 
+// packetIDWindowOpen
+
+func WriteWindowOpen(writer io.Writer, windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte) (err os.Error) {
+    var packet = struct {
+        PacketID  byte
+        WindowID  WindowID
+        InvTypeID InvTypeID
+    }{
+        packetIDWindowOpen,
+        windowID,
+        invTypeID,
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    if err = writeString(writer, windowTitle); err != nil {
+        return
+    }
+
+    return binary.Write(writer, binary.BigEndian, numSlots)
+}
+
+func readWindowOpen(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        WindowID  WindowID
+        InvTypeID InvTypeID
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    windowTitle, err := readString(reader)
+    if err != nil {
+        return
+    }
+
+    var numSlots byte
+    if err = binary.Read(reader, binary.BigEndian, &numSlots); err != nil {
+        return
+    }
+
+    handler.PacketWindowOpen(packet.WindowID, packet.InvTypeID, windowTitle, numSlots)
+
+    return
+}
+
+// packetIDWindowClose
+
+func WriteWindowClose(writer io.Writer, windowID WindowID) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        WindowID WindowID
+    }{
+        packetIDWindowClose,
+        windowID,
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    return
+}
+
+func readWindowClose(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
+    var windowID WindowID
+
+    if err = binary.Read(reader, binary.BigEndian, &windowID); err != nil {
+        return
+    }
+
+    handler.PacketWindowClose(windowID)
+
+    return
+}
+
 // packetIDWindowClick
 
-func serverWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
+func readWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
     var packetStart struct {
         WindowID   WindowID
         Slot       SlotID
@@ -1479,9 +1582,9 @@ func serverWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Er
     return
 }
 
-// packetIDSetSlot
+// packetIDWindowSetSlot
 
-func readSetSlot(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+func readWindowSetSlot(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packetStart struct {
         WindowID WindowID
         Slot     SlotID
@@ -1505,7 +1608,7 @@ func readSetSlot(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
         }
     }
 
-    handler.PacketSetSlot(
+    handler.PacketWindowSetSlot(
         packetStart.WindowID,
         packetStart.Slot,
         packetStart.ItemID,
@@ -1563,6 +1666,74 @@ func readWindowItems(reader io.Reader, handler ClientPacketHandler) (err os.Erro
     return
 }
 
+// packetIDWindowProgressBar
+
+func WriteWindowProgressBar(writer io.Writer, windowID WindowID, prgBarID PrgBarID, value PrgBarValue) os.Error {
+    var packet = struct {
+        PacketID byte
+        WindowID WindowID
+        PrgBarID PrgBarID
+        Value    PrgBarValue
+    }{
+        packetIDWindowProgressBar,
+        windowID,
+        prgBarID,
+        value,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readWindowProgressBar(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        WindowID WindowID
+        PrgBarID PrgBarID
+        Value    PrgBarValue
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    handler.PacketWindowProgressBar(packet.WindowID, packet.PrgBarID, packet.Value)
+
+    return
+}
+
+// packetIDWindowTransaction
+
+func WriteWindowTransaction(writer io.Writer, windowID WindowID, txID TxID, accepted bool) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        WindowID WindowID
+        TxID     TxID
+        Accepted byte
+    }{
+        packetIDWindowTransaction,
+        windowID,
+        txID,
+        boolToByte(accepted),
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readWindowTransaction(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        WindowID WindowID
+        TxID     TxID
+        Accepted byte
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    handler.PacketWindowTransaction(packet.WindowID, packet.TxID, byteToBool(packet.Accepted))
+
+    return
+}
+
 // packetIDDisconnect
 
 func readDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
@@ -1578,7 +1749,7 @@ func readDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
 func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
     buf := &bytes.Buffer{}
     binary.Write(buf, binary.BigEndian, byte(packetIDDisconnect))
-    WriteString(buf, reason)
+    writeString(buf, reason)
     _, err = writer.Write(buf.Bytes())
     return
 }
@@ -1600,6 +1771,7 @@ var commonReadFns = commonPacketReaderMap{
     packetIDKeepAlive:            readKeepAlive,
     packetIDChatMessage:          readChatMessage,
     packetIDUseEntity:            readUseEntity,
+    packetIDRespawn:              readRespawn,
     packetIDPlayer:               readPlayer,
     packetIDPlayerPosition:       readPlayerPosition,
     packetIDPlayerLook:           readPlayerLook,
@@ -1612,8 +1784,9 @@ var commonReadFns = commonPacketReaderMap{
 // Client->server specific packet mapping
 var serverReadFns = serverPacketReaderMap{
     packetIDPlayerPositionLook: serverPlayerPositionLook,
-    packetIDWindowClick:        serverWindowClick,
-    packetIDHoldingChange:      serverHoldingChange,
+    packetIDWindowClick:        readWindowClick,
+    packetIDHoldingChange:      readHoldingChange,
+    packetIDWindowClose:        readWindowClose,
 }
 
 // Server->client specific packet mapping
@@ -1640,8 +1813,11 @@ var clientReadFns = clientPacketReaderMap{
     packetIDBlockChangeMulti:     readBlockChangeMulti,
     packetIDBlockChange:          readBlockChange,
     packetIDUnknownX36:           readUnknownX36,
-    packetIDSetSlot:              readSetSlot,
+    packetIDWindowOpen:           readWindowOpen,
+    packetIDWindowSetSlot:        readWindowSetSlot,
     packetIDWindowItems:          readWindowItems,
+    packetIDWindowProgressBar:    readWindowProgressBar,
+    packetIDWindowTransaction:    readWindowTransaction,
 }
 
 // A server should call this to receive a single packet from a client. It will

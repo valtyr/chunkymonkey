@@ -45,14 +45,19 @@ func (p *MessageParser) printf(format string, v ...interface{}) {
 }
 
 func (p *MessageParser) PacketKeepAlive() {
+    // Not logging this packet as it's a bit spammy
 }
 
 func (p *MessageParser) PacketChatMessage(message string) {
     p.printf("PacketChatMessage(%s)", message)
 }
 
+func (p *MessageParser) PacketRespawn() {
+    p.printf("PacketRespawn()")
+}
+
 func (p *MessageParser) PacketPlayer(onGround bool) {
-    p.printf("PacketPlayer(%v)", onGround)
+    // Not logging this packet as it's a bit spammy
 }
 
 func (p *MessageParser) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
@@ -67,9 +72,9 @@ func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ
     p.printf("PacketPlayerDigging(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
-    p.printf("PacketPlayerBlockPlacement(itemId=%d, blockLoc=%v, direction=%d, amount=%d, uses=%d)",
-        itemID, blockLoc, direction, amount, uses)
+func (p *MessageParser) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses) {
+    p.printf("PacketPlayerBlockPlacement(itemId=%d, blockLoc=%v, face=%d, amount=%d, uses=%d)",
+        itemID, blockLoc, face, amount, uses)
 }
 
 func (p *MessageParser) PacketHoldingChange(itemID ItemID) {
@@ -186,13 +191,31 @@ func (p *MessageParser) PacketUnknownX36(field1 int32, field2 int16, field3 int3
         field1, field2, field3, field4, field5)
 }
 
+func (p *MessageParser) PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte) {
+    p.printf("PacketWindowOpen(windowID=%d, invTypeID=%d, windowTitle=%v, numSlots=%d)",
+        windowID, invTypeID, windowTitle, numSlots)
+}
+
+func (p *MessageParser) PacketWindowClose(windowID WindowID) {
+    p.printf("PacketWindowClose(windowID=%d)", windowID)
+}
+
+func (p *MessageParser) PacketWindowProgressBar(windowID WindowID, prgBarID PrgBarID, value PrgBarValue) {
+    p.printf("PacketWindowProgressBar(windowID=%d, prgBarID=%d, value=%d)",
+        windowID, prgBarID, value)
+}
+
+func (p *MessageParser) PacketWindowTransaction(windowID WindowID, txID TxID, accepted bool) {
+    p.printf("PacketWindowTransaction(windowID=%d, txID=%d, accepted=%v)")
+}
+
 func (p *MessageParser) PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
     p.printf("PacketWindowClick(windowID=%d, slot=%d, rightClick=%v, txID=%d, itemID=%d, amount=%d, uses=%d)",
         windowID, slot, rightClick, txID, itemID, amount, uses)
 }
 
-func (p *MessageParser) PacketSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses) {
-    p.printf("PacketSetSlot(windowID=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
+func (p *MessageParser) PacketWindowSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses) {
+    p.printf("PacketWindowSetSlot(windowID=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
         windowID, slot, itemID, amount, uses)
 }
 

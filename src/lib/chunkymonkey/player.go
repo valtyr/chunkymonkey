@@ -52,12 +52,13 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-    log.Printf("PacketChatMessage message=%s", message)
-
     player.game.Enqueue(func(game *Game) { game.SendChatMessage(message) })
 }
 
 func (player *Player) PacketUseEntity(user EntityID, target EntityID, leftClick bool) {
+}
+
+func (player *Player) PacketRespawn() {
 }
 
 func (player *Player) PacketPlayer(onGround bool) {
@@ -137,23 +138,23 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
     }
 }
 
-func (player *Player) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, direction Face, amount ItemCount, uses ItemUses) {
-    log.Printf("PacketPlayerBlockPlacement itemID=%d blockLoc=%v direction=%d, amount=%d, uses=%d",
-        itemID, *blockLoc, direction, amount, uses)
+func (player *Player) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses) {
 }
 
 func (player *Player) PacketHoldingChange(itemID ItemID) {
-    log.Printf("PacketHoldingChange blockItemID=%d", itemID)
 }
 
 func (player *Player) PacketPlayerAnimation(animation PlayerAnimation) {
+}
+
+func (player *Player) PacketWindowClose(windowID WindowID) {
 }
 
 func (player *Player) PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
 }
 
 func (player *Player) PacketDisconnect(reason string) {
-    log.Printf("PacketDisconnect reason=%s", reason)
+    log.Printf("Player %s disconnected reason=%s", player.name, reason)
     player.game.Enqueue(func(game *Game) {
         game.RemovePlayer(player)
         close(player.txQueue)
