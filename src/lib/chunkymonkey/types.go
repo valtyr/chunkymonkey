@@ -42,6 +42,22 @@ type EntityStatus byte
 
 type PlayerAnimation byte
 
+type ObjTypeID int8
+
+const (
+    ObjTypeIDBoat = ObjTypeID(1)
+    ObjTypeIDMinecart = ObjTypeID(10)
+    ObjTypeIDStorageCart = ObjTypeID(11)
+    ObjTypeIDPoweredCart = ObjTypeID(12)
+    ObjTypeIDActivatedTNT = ObjTypeID(50)
+    ObjTypeIDArrow = ObjTypeID(60)
+    ObjTypeIDThrownSnowball = ObjTypeID(61)
+    ObjTypeIDThrownEgg = ObjTypeID(62)
+    ObjTypeIDFallingSand = ObjTypeID(70)
+    ObjTypeIDFallingGravel = ObjTypeID(71)
+    ObjTypeIDFishingFloat = ObjTypeID(90)
+)
+
 // Block-related types
 
 type BlockID byte

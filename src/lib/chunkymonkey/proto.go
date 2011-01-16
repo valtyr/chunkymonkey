@@ -37,6 +37,7 @@ const (
     packetIDNamedEntitySpawn     = 0x14
     packetIDItemSpawn            = 0x15
     packetIDItemCollect          = 0x16
+    packetIDObjectSpawn          = 0x17
     packetIDEntitySpawn          = 0x18
     packetIDUnknownX19           = 0x19
     packetIDEntityVelocity       = 0x1c
@@ -102,6 +103,7 @@ type ClientPacketHandler interface {
     PacketUpdateHealth(health int16)
     PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes)
     PacketItemCollect(collectedItem EntityID, collector EntityID)
+    PacketObjectSpawn(entityID EntityID, objType ObjTypeID, position *AbsIntXYZ)
     PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []UnknownEntityExtra)
     PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32)
     PacketEntityVelocity(entityID EntityID, velocity *Velocity)
@@ -979,6 +981,50 @@ func readItemCollect(reader io.Reader, handler ClientPacketHandler) (err os.Erro
     return
 }
 
+// packetIDObjectSpawn
+
+func WriteObjectSpawn(writer io.Writer, entityID EntityID, objType ObjTypeID, position *AbsIntXYZ) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+        ObjType ObjTypeID
+        X AbsIntCoord
+        Y AbsIntCoord
+        Z AbsIntCoord
+    }{
+        packetIDObjectSpawn,
+        entityID,
+        objType,
+        position.X,
+        position.Y,
+        position.Z,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+
+func readObjectSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        ObjType ObjTypeID
+        X AbsIntCoord
+        Y AbsIntCoord
+        Z AbsIntCoord
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    handler.PacketObjectSpawn(
+        packet.EntityID,
+        packet.ObjType,
+        &AbsIntXYZ{packet.X, packet.Y, packet.Z})
+
+    return
+}
+
 // packetIDEntitySpawn
 
 func readEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
@@ -1797,6 +1843,7 @@ var clientReadFns = clientPacketReaderMap{
     packetIDEntitySpawn:          readEntitySpawn,
     packetIDItemSpawn:            readItemSpawn,
     packetIDItemCollect:          readItemCollect,
+    packetIDObjectSpawn:          readObjectSpawn,
     packetIDUnknownX19:           readUnknownX19,
     packetIDEntityVelocity:       readEntityVelocity,
     packetIDEntityDestroy:        readEntityDestroy,

@@ -125,6 +125,11 @@ func (p *MessageParser) PacketItemCollect(collectedItem EntityID, collector Enti
         collectedItem, collector)
 }
 
+func (p *MessageParser) PacketObjectSpawn(entityID EntityID, objType ObjTypeID, position *AbsIntXYZ) {
+    p.printf("PacketObjectSpawn(entityID=%d, objType=%d, position=%v)",
+        entityID, objType, position)
+}
+
 func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []proto.UnknownEntityExtra) {
     p.printf("PacketEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
         entityID, mobType, position, yaw, pitch, data)
