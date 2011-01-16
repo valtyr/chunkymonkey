@@ -34,7 +34,7 @@ const (
     packetIDHoldingChange        = 0x10
     packetIDPlayerAnimation      = 0x12
     packetIDNamedEntitySpawn     = 0x14
-    packetIDPickupSpawn          = 0x15
+    packetIDItemSpawn            = 0x15
     packetIDItemCollect          = 0x16
     packetIDEntitySpawn          = 0x18
     packetIDUnknownX19           = 0x19
@@ -93,7 +93,7 @@ type ClientPacketHandler interface {
     PacketSpawnPosition(position *BlockXYZ)
     PacketUseEntity(user EntityID, target EntityID, leftClick bool)
     PacketUpdateHealth(health int16)
-    PacketPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes)
+    PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes)
     PacketItemCollect(collectedItem EntityID, collector EntityID)
     PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []UnknownEntityExtra)
     PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32)
@@ -871,9 +871,9 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
     return
 }
 
-// packetIDPickupSpawn
+// packetIDItemSpawn
 
-func WritePickupSpawn(writer io.Writer, entityID EntityID, itemType ItemID, amount ItemCount, position *AbsIntXYZ, orientation *OrientationBytes) os.Error {
+func WriteItemSpawn(writer io.Writer, entityID EntityID, itemType ItemID, amount ItemCount, position *AbsIntXYZ, orientation *OrientationBytes) os.Error {
     var packet = struct {
         PacketID byte
         EntityID EntityID
@@ -888,7 +888,7 @@ func WritePickupSpawn(writer io.Writer, entityID EntityID, itemType ItemID, amou
         Pitch AngleBytes
         Roll  AngleBytes
     }{
-        packetIDPickupSpawn,
+        packetIDItemSpawn,
         entityID,
         itemType,
         amount,
@@ -905,7 +905,7 @@ func WritePickupSpawn(writer io.Writer, entityID EntityID, itemType ItemID, amou
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readPickupSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+func readItemSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
         ItemID   ItemID
@@ -924,7 +924,7 @@ func readPickupSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Erro
         return
     }
 
-    handler.PacketPickupSpawn(
+    handler.PacketItemSpawn(
         packet.EntityID,
         packet.ItemID,
         packet.Count,
@@ -1617,13 +1617,14 @@ var serverReadFns = serverPacketReaderMap{
 
 // Server->client specific packet mapping
 var clientReadFns = clientPacketReaderMap{
+    packetIDLogin:                clientReadLogin,
     packetIDTimeUpdate:           readTimeUpdate,
     packetIDSpawnPosition:        readSpawnPosition,
     packetIDUseEntity:            readUseEntity,
     packetIDUpdateHealth:         readUpdateHealth,
     packetIDPlayerPositionLook:   readPlayerPositionLook,
     packetIDEntitySpawn:          readEntitySpawn,
-    packetIDPickupSpawn:          readPickupSpawn,
+    packetIDItemSpawn:            readItemSpawn,
     packetIDItemCollect:          readItemCollect,
     packetIDUnknownX19:           readUnknownX19,
     packetIDEntityVelocity:       readEntityVelocity,

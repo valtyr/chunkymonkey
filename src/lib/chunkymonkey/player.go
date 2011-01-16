@@ -127,7 +127,7 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
                 if blockType == BlockIDDirt || blockType == BlockIDGrass {
                     // TODO model the item's fall to the ground. Do we need
                     // update clients as to its final position?
-                    NewPickupItem(game, ItemID(BlockIDDirt), 1, blockLoc.ToAbsIntXYZ())
+                    NewItem(game, ItemID(BlockIDDirt), 1, blockLoc.ToAbsIntXYZ())
                 }
             }
         })

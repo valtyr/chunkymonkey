@@ -110,8 +110,8 @@ func (p *MessageParser) PacketUpdateHealth(health int16) {
     p.printf("PacketUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) PacketPickupSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes) {
-    p.printf("PacketPickupSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
+func (p *MessageParser) PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes) {
+    p.printf("PacketItemSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
         entityID, itemID, count, uses, location, yaw, pitch, roll)
 }
 
@@ -261,7 +261,7 @@ func (p *MessageParser) SCParse(reader io.Reader) {
         p.printf("ClientReadHandshake error: %v", err)
         return
     }
-    p.printf("ClientReadHandshake connectionHash=%v", connectionHash)
+    p.printf("ClientReadHandshake(connectionHash=%v)", connectionHash)
 
     for {
         err := proto.ClientReadPacket(reader, p)

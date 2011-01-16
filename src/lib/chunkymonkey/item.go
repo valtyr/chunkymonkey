@@ -1,6 +1,10 @@
 package chunkymonkey
 
 import (
+    "io"
+    "os"
+
+    "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
 
@@ -102,3 +106,29 @@ const (
     ItemIDCookedFish          = ItemID(350)
     ItemIDGoldRecord          = ItemID(2256)
 )
+
+type Item struct {
+    Entity
+    itemType    ItemID
+    count       ItemCount
+    position    AbsIntXYZ
+    orientation OrientationBytes
+}
+
+func NewItem(game *Game, itemType ItemID, count ItemCount, position AbsIntXYZ) {
+    item := &Item{
+        itemType: itemType,
+        count:    count,
+        position: position,
+        // TODO proper orientation
+        orientation: OrientationBytes{0, 0, 0},
+    }
+
+    game.Enqueue(func(game *Game) {
+        game.AddItem(item)
+    })
+}
+
+func (item *Item) SendSpawn(writer io.Writer) os.Error {
+    return proto.WriteItemSpawn(writer, item.EntityID, item.itemType, item.count, &item.position, &item.orientation)
+}
