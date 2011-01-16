@@ -1300,7 +1300,7 @@ func WriteMapChunk(writer io.Writer, chunkLoc *ChunkXZ, blocks, blockData, block
     var packet = struct {
         PacketID         byte
         X                BlockCoord
-        Y                BlockYCoord
+        Y                int16
         Z                BlockCoord
         SizeX            SubChunkSizeCoord
         SizeY            SubChunkSizeCoord
@@ -1309,7 +1309,7 @@ func WriteMapChunk(writer io.Writer, chunkLoc *ChunkXZ, blocks, blockData, block
     }{
         packetIDMapChunk,
         chunkCornerLoc.X,
-        chunkCornerLoc.Y,
+        int16(chunkCornerLoc.Y),
         chunkCornerLoc.Z,
         ChunkSizeX - 1,
         ChunkSizeY - 1,
@@ -1328,7 +1328,7 @@ func WriteMapChunk(writer io.Writer, chunkLoc *ChunkXZ, blocks, blockData, block
 func readMapChunk(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         X                BlockCoord
-        Y                BlockYCoord
+        Y                int16
         Z                BlockCoord
         SizeX            SubChunkSizeCoord
         SizeY            SubChunkSizeCoord
