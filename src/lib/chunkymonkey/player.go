@@ -60,7 +60,7 @@ func (player *Player) PacketChatMessage(message string) {
 func (player *Player) PacketUseEntity(user EntityID, target EntityID, leftClick bool) {
 }
 
-func (player *Player) PacketOnGround(onGround bool) {
+func (player *Player) PacketPlayer(onGround bool) {
 }
 
 func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {

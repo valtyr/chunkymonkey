@@ -51,8 +51,8 @@ func (p *MessageParser) PacketChatMessage(message string) {
     p.printf("PacketChatMessage(%s)", message)
 }
 
-func (p *MessageParser) PacketOnGround(onGround bool) {
-    p.printf("PacketOnGround(%v)", onGround)
+func (p *MessageParser) PacketPlayer(onGround bool) {
+    p.printf("PacketPlayer(%v)", onGround)
 }
 
 func (p *MessageParser) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {

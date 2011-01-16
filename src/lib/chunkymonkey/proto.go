@@ -25,7 +25,7 @@ const (
     packetIDSpawnPosition        = 0x06
     packetIDUseEntity            = 0x07
     packetIDUpdateHealth         = 0x08
-    packetIDFlying               = 0x0a
+    packetIDPlayer               = 0x0a
     packetIDPlayerPosition       = 0x0b
     packetIDPlayerLook           = 0x0c
     packetIDPlayerPositionLook   = 0x0d
@@ -69,7 +69,7 @@ type PacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
     PacketUseEntity(user EntityID, target EntityID, leftClick bool)
-    PacketOnGround(onGround bool)
+    PacketPlayer(onGround bool)
     PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool)
     PacketPlayerLook(look *LookDegrees, onGround bool)
     PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
@@ -556,9 +556,9 @@ func readUpdateHealth(reader io.Reader, handler ClientPacketHandler) (err os.Err
     return
 }
 
-// packetIDFlying
+// packetIDPlayer
 
-func readFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readPlayer(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         OnGround byte
     }
@@ -568,7 +568,7 @@ func readFlying(reader io.Reader, handler PacketHandler) (err os.Error) {
         return
     }
 
-    handler.PacketOnGround(byteToBool(packet.OnGround))
+    handler.PacketPlayer(byteToBool(packet.OnGround))
     return
 }
 
@@ -1600,7 +1600,7 @@ var commonReadFns = commonPacketReaderMap{
     packetIDKeepAlive:            readKeepAlive,
     packetIDChatMessage:          readChatMessage,
     packetIDUseEntity:            readUseEntity,
-    packetIDFlying:               readFlying,
+    packetIDPlayer:               readPlayer,
     packetIDPlayerPosition:       readPlayerPosition,
     packetIDPlayerLook:           readPlayerLook,
     packetIDPlayerDigging:        readPlayerDigging,
