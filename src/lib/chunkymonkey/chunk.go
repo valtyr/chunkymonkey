@@ -32,7 +32,7 @@ func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, err bool) {
     } else {
         err = false
 
-        index = int32(subLoc.Y + (subLoc.Z * ChunkSizeY) + (subLoc.X * ChunkSizeY * ChunkSizeZ))
+        index = int32(subLoc.Y) + (int32(subLoc.Z) * ChunkSizeY) + (int32(subLoc.X) * ChunkSizeY * ChunkSizeZ)
 
         if index%2 == 0 {
             // Low nibble
