@@ -34,7 +34,7 @@ func TestLoadStandardBlocks(t *testing.T) {
         block := b[r.id]
         if r.expected_transparency != block.transparency {
             t.Errorf("block #%d (%s) expected transparency %d, got %d",
-                block.id, block.name, r.expected_transparency, block.transparency)
+                r.id, block.name, r.expected_transparency, block.transparency)
         }
     }
 }

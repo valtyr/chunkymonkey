@@ -100,7 +100,6 @@ const (
 )
 
 type Block struct {
-    id           BlockID
     name         string
     transparency int8
 }
@@ -108,7 +107,6 @@ type Block struct {
 func LoadStandardBlocks(b map[BlockID]*Block) {
     newBlock := func(id BlockID, name string) {
         b[id] = &Block{
-            id:           id,
             name:         name,
             transparency: -1,
         }
