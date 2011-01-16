@@ -100,15 +100,15 @@ const (
 )
 
 type Block struct {
-    id           BlockID
     name         string
     transparency int8
 }
 
-func LoadStandardBlocks(b map[BlockID]*Block) {
+func LoadStandardBlocks() map[BlockID]*Block {
+    b := make(map[BlockID]*Block)
+
     newBlock := func(id BlockID, name string) {
         b[id] = &Block{
-            id:           id,
             name:         name,
             transparency: -1,
         }
@@ -213,16 +213,18 @@ func LoadStandardBlocks(b map[BlockID]*Block) {
         }
     }
     // Setup transparent blocks
-    setTrans(0, [...]BlockID{BlockIDAir, BlockIDSapling, BlockIDGlass,
+    setTrans(0, []BlockID{BlockIDAir, BlockIDSapling, BlockIDGlass,
         BlockIDYellowflower, BlockIDRedRose, BlockIDBrownMushroom,
         BlockIDRedMushroom, BlockIDFire, BlockIDMobSpawner, BlockIDWoodenStairs,
         BlockIDRedstoneWire, BlockIDCrops, BlockIDSignPost, BlockIDLadder,
         BlockIDMinecartTracks, BlockIDCobblestoneStairs, BlockIDWallSign,
         BlockIDLever, BlockIDIrondoor, BlockIDRedstoneTorchOff,
         BlockIDRedstoneTorchOn, BlockIDStoneButton, BlockIDSnow, BlockIDCactus,
-        BlockIDReed, BlockIDFence, BlockIDPortal}[:])
+        BlockIDReed, BlockIDFence, BlockIDPortal})
 
     // Setup semi-transparent blocks
-    setTrans(1, [...]BlockID{BlockIDLeaves}[:])
-    setTrans(3, [...]BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce}[:])
+    setTrans(1, []BlockID{BlockIDLeaves})
+    setTrans(3, []BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce})
+
+    return b
 }
