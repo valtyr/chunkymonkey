@@ -45,17 +45,17 @@ type PlayerAnimation byte
 type ObjTypeID int8
 
 const (
-    ObjTypeIDBoat = ObjTypeID(1)
-    ObjTypeIDMinecart = ObjTypeID(10)
-    ObjTypeIDStorageCart = ObjTypeID(11)
-    ObjTypeIDPoweredCart = ObjTypeID(12)
-    ObjTypeIDActivatedTNT = ObjTypeID(50)
-    ObjTypeIDArrow = ObjTypeID(60)
+    ObjTypeIDBoat           = ObjTypeID(1)
+    ObjTypeIDMinecart       = ObjTypeID(10)
+    ObjTypeIDStorageCart    = ObjTypeID(11)
+    ObjTypeIDPoweredCart    = ObjTypeID(12)
+    ObjTypeIDActivatedTNT   = ObjTypeID(50)
+    ObjTypeIDArrow          = ObjTypeID(60)
     ObjTypeIDThrownSnowball = ObjTypeID(61)
-    ObjTypeIDThrownEgg = ObjTypeID(62)
-    ObjTypeIDFallingSand = ObjTypeID(70)
-    ObjTypeIDFallingGravel = ObjTypeID(71)
-    ObjTypeIDFishingFloat = ObjTypeID(90)
+    ObjTypeIDThrownEgg      = ObjTypeID(62)
+    ObjTypeIDFallingSand    = ObjTypeID(70)
+    ObjTypeIDFallingGravel  = ObjTypeID(71)
+    ObjTypeIDFishingFloat   = ObjTypeID(90)
 )
 
 // Block-related types
@@ -275,8 +275,8 @@ func (abs *AbsXYZ) ToChunkXZ() (chunkXz *ChunkXZ) {
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
 func (abs *AbsIntXYZ) ToChunkXZ() *ChunkXZ {
-    chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeX * PixelsPerBlock)
-    chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeZ * PixelsPerBlock)
+    chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeX*PixelsPerBlock)
+    chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeZ*PixelsPerBlock)
 
     return &ChunkXZ{
         ChunkCoord(chunkX),

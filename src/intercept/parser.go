@@ -163,6 +163,11 @@ func (p *MessageParser) PacketEntityLook(entityID EntityID, yaw, pitch AngleByte
         entityID, yaw, pitch)
 }
 
+func (p *MessageParser) PacketEntityTeleport(entityID EntityID, position *AbsIntXYZ, look *LookBytes) {
+    p.printf("PacketEntityTeleport(entityID=%d, position=%v, look=%v",
+        entityID, position, look)
+}
+
 func (p *MessageParser) PacketEntityStatus(entityID EntityID, status EntityStatus) {
     p.printf("PacketEntityStatus(entityID=%d, status=%d",
         entityID, status)

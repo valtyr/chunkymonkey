@@ -39,14 +39,14 @@ func TestAbsIntXYZ_ToChunkXZ(t *testing.T) {
 
     var tests = []Test{
         {AbsIntXYZ{0, 0, 0}, ChunkXZ{0, 0}},
-        {AbsIntXYZ{8*32, 0, 8*32}, ChunkXZ{0, 0}},
-        {AbsIntXYZ{15*32, 0, 15*32}, ChunkXZ{0, 0}},
-        {AbsIntXYZ{16*32, 0, 16*32}, ChunkXZ{1, 1}},
-        {AbsIntXYZ{31*32 + 31, 0, 31*32 +31}, ChunkXZ{1, 1}},
-        {AbsIntXYZ{32*32, 0, 32*32}, ChunkXZ{2, 2}},
-        {AbsIntXYZ{0, 0, 32*32}, ChunkXZ{0, 2}},
-        {AbsIntXYZ{0, 0, -16*32}, ChunkXZ{0, -1}},
-        {AbsIntXYZ{0, 0, -1*32}, ChunkXZ{0, -1}},
+        {AbsIntXYZ{8 * 32, 0, 8 * 32}, ChunkXZ{0, 0}},
+        {AbsIntXYZ{15 * 32, 0, 15 * 32}, ChunkXZ{0, 0}},
+        {AbsIntXYZ{16 * 32, 0, 16 * 32}, ChunkXZ{1, 1}},
+        {AbsIntXYZ{31*32 + 31, 0, 31*32 + 31}, ChunkXZ{1, 1}},
+        {AbsIntXYZ{32 * 32, 0, 32 * 32}, ChunkXZ{2, 2}},
+        {AbsIntXYZ{0, 0, 32 * 32}, ChunkXZ{0, 2}},
+        {AbsIntXYZ{0, 0, -16 * 32}, ChunkXZ{0, -1}},
+        {AbsIntXYZ{0, 0, -1 * 32}, ChunkXZ{0, -1}},
         {AbsIntXYZ{0, 0, -1}, ChunkXZ{0, -1}},
     }
 

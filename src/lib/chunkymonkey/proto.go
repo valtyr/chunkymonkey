@@ -111,6 +111,7 @@ type ClientPacketHandler interface {
     PacketEntity(entityID EntityID)
     PacketEntityRelMove(entityID EntityID, movement *RelMove)
     PacketEntityLook(entityID EntityID, yaw, pitch AngleBytes)
+    PacketEntityTeleport(entityID EntityID, position *AbsIntXYZ, look *LookBytes)
     PacketEntityStatus(entityID EntityID, status EntityStatus)
     PacketUnknownX28(field1 int32, data []UnknownEntityExtra)
     PacketPreChunk(position *ChunkXZ, mode ChunkLoadMode)
@@ -987,10 +988,10 @@ func WriteObjectSpawn(writer io.Writer, entityID EntityID, objType ObjTypeID, po
     var packet = struct {
         PacketID byte
         EntityID EntityID
-        ObjType ObjTypeID
-        X AbsIntCoord
-        Y AbsIntCoord
-        Z AbsIntCoord
+        ObjType  ObjTypeID
+        X        AbsIntCoord
+        Y        AbsIntCoord
+        Z        AbsIntCoord
     }{
         packetIDObjectSpawn,
         entityID,
@@ -1007,10 +1008,10 @@ func WriteObjectSpawn(writer io.Writer, entityID EntityID, objType ObjTypeID, po
 func readObjectSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
-        ObjType ObjTypeID
-        X AbsIntCoord
-        Y AbsIntCoord
-        Z AbsIntCoord
+        ObjType  ObjTypeID
+        X        AbsIntCoord
+        Y        AbsIntCoord
+        Z        AbsIntCoord
     }
 
     if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
@@ -1287,6 +1288,35 @@ func WriteEntityTeleport(writer io.Writer, entityID EntityID, position *AbsIntXY
         look.Pitch,
     }
     return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readEntityTeleport(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        X        AbsIntCoord
+        Y        AbsIntCoord
+        Z        AbsIntCoord
+        Yaw      AngleBytes
+        Pitch    AngleBytes
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    handler.PacketEntityTeleport(
+        packet.EntityID,
+        &AbsIntXYZ{
+            packet.X,
+            packet.Y,
+            packet.Z,
+        },
+        &LookBytes{
+            packet.Yaw,
+            packet.Pitch,
+        })
+
+    return
 }
 
 // packetIDEntityStatus
@@ -1887,6 +1917,7 @@ var clientReadFns = clientPacketReaderMap{
     packetIDEntityRelMove:        readEntityRelMove,
     packetIDEntityLook:           readEntityLook,
     packetIDEntityLookAndRelMove: readEntityLookAndRelMove,
+    packetIDEntityTeleport:       readEntityTeleport,
     packetIDEntityStatus:         readEntityStatus,
     packetIDUnknownX28:           readUnknownX28,
     packetIDPreChunk:             readPreChunk,
