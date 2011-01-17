@@ -111,5 +111,8 @@ func main() {
     localaddr := flag.Arg(0)
     remoteaddr := flag.Arg(1)
 
+    // It's nice to have high time precision when looking at packets
+    log.SetFlags(log.Ldate|log.Ltime|log.Lmicroseconds)
+
     serve(localaddr, remoteaddr)
 }
