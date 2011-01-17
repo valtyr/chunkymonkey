@@ -222,7 +222,7 @@ func NewGame(worldPath string) (game *Game) {
 }
 
 // Return a channel to iterate over all players within a chunk's radius
-func (game *Game) PlayersInRadius(loc ChunkXZ) (c chan *Player) {
+func (game *Game) PlayersInRadius(loc *ChunkXZ) (c chan *Player) {
     // We return any player whose chunk position is within these bounds:
     minX := loc.X - ChunkRadius
     minZ := loc.Z - ChunkRadius
@@ -249,7 +249,7 @@ func (game *Game) PlayersInPlayerRadius(player *Player) chan *Player {
 }
 
 // Transmit a packet to all players in chunk radius
-func (game *Game) MulticastChunkPacket(packet []byte, loc ChunkXZ) {
+func (game *Game) MulticastChunkPacket(packet []byte, loc *ChunkXZ) {
     for receiver := range game.PlayersInRadius(loc) {
         receiver.TransmitPacket(packet)
     }

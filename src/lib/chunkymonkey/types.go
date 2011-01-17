@@ -266,18 +266,21 @@ func (b *BlockXYZ) IsNull() bool {
 }
 
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
-func (abs *AbsXYZ) ToChunkXZ() (chunkXz ChunkXZ) {
-    return ChunkXZ{
+func (abs *AbsXYZ) ToChunkXZ() (chunkXz *ChunkXZ) {
+    return &ChunkXZ{
         ChunkCoord(abs.X / ChunkSizeX),
         ChunkCoord(abs.Z / ChunkSizeZ),
     }
 }
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
-func (abs *AbsIntXYZ) ToChunkXZ() ChunkXZ {
-    return ChunkXZ{
-        PixelsPerBlock * ChunkCoord(abs.X/ChunkSizeX),
-        PixelsPerBlock * ChunkCoord(abs.Z/ChunkSizeZ),
+func (abs *AbsIntXYZ) ToChunkXZ() *ChunkXZ {
+    chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeX * PixelsPerBlock)
+    chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeZ * PixelsPerBlock)
+
+    return &ChunkXZ{
+        ChunkCoord(chunkX),
+        ChunkCoord(chunkZ),
     }
 }
 
@@ -293,20 +296,20 @@ func coordDivMod(num, denom int32) (div, mod int32) {
 
 // Convert an (x, z) block coordinate pair to chunk coordinates and the
 // coordinates of the block within the chunk
-func (blockLoc *BlockXYZ) ToChunkLocal() (chunkLoc ChunkXZ, subLoc SubChunkXYZ) {
+func (blockLoc *BlockXYZ) ToChunkLocal() (chunkLoc *ChunkXZ, subLoc *SubChunkXYZ) {
     chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeX)
     chunkZ, subZ := coordDivMod(int32(blockLoc.Z), ChunkSizeZ)
 
-    chunkLoc = ChunkXZ{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
-    subLoc = SubChunkXYZ{SubChunkCoord(subX), SubChunkCoord(blockLoc.Y), SubChunkCoord(subZ)}
+    chunkLoc = &ChunkXZ{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
+    subLoc = &SubChunkXYZ{SubChunkCoord(subX), SubChunkCoord(blockLoc.Y), SubChunkCoord(subZ)}
     return
 }
 
-func (blockLoc *BlockXYZ) ToAbsIntXYZ() AbsIntXYZ {
-    return AbsIntXYZ{
-        AbsIntCoord(blockLoc.X * PixelsPerBlock),
-        AbsIntCoord(blockLoc.Y * PixelsPerBlock),
-        AbsIntCoord(blockLoc.Z * PixelsPerBlock),
+func (blockLoc *BlockXYZ) ToAbsIntXYZ() *AbsIntXYZ {
+    return &AbsIntXYZ{
+        AbsIntCoord(blockLoc.X) * PixelsPerBlock,
+        AbsIntCoord(blockLoc.Y) * PixelsPerBlock,
+        AbsIntCoord(blockLoc.Z) * PixelsPerBlock,
     }
 }
 

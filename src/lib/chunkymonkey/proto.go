@@ -1089,6 +1089,22 @@ func readUnknownX19(reader io.Reader, handler ClientPacketHandler) (err os.Error
 
 // packetIDEntityVelocity
 
+func WriteEntityVelocity(writer io.Writer, entityID EntityID, velocity *Velocity) (err os.Error) {
+    var packet = struct {
+        packetID byte
+        EntityID EntityID
+        X, Y, Z  VelocityComponent
+    }{
+        packetIDEntityVelocity,
+        entityID,
+        velocity.X,
+        velocity.Y,
+        velocity.Z,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
 func readEntityVelocity(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
@@ -1149,6 +1165,26 @@ func readEntityDestroy(reader io.Reader, handler ClientPacketHandler) (err os.Er
 }
 
 // packetIDEntityRelMove
+
+func WriteEntityRelMove(writer io.Writer, entityID EntityID, movement *RelMove) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+        X, Y, Z  RelMoveCoord
+    }{
+        packetIDEntityRelMove,
+        entityID,
+        movement.X,
+        movement.Y,
+        movement.Z,
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    return
+}
 
 func readEntityRelMove(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {

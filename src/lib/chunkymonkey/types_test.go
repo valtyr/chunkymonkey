@@ -31,6 +31,34 @@ func TestLookDegrees_ToLookBytes(t *testing.T) {
     }
 }
 
+func TestAbsIntXYZ_ToChunkXZ(t *testing.T) {
+    type Test struct {
+        input    AbsIntXYZ
+        expected ChunkXZ
+    }
+
+    var tests = []Test{
+        {AbsIntXYZ{0, 0, 0}, ChunkXZ{0, 0}},
+        {AbsIntXYZ{8*32, 0, 8*32}, ChunkXZ{0, 0}},
+        {AbsIntXYZ{15*32, 0, 15*32}, ChunkXZ{0, 0}},
+        {AbsIntXYZ{16*32, 0, 16*32}, ChunkXZ{1, 1}},
+        {AbsIntXYZ{31*32 + 31, 0, 31*32 +31}, ChunkXZ{1, 1}},
+        {AbsIntXYZ{32*32, 0, 32*32}, ChunkXZ{2, 2}},
+        {AbsIntXYZ{0, 0, 32*32}, ChunkXZ{0, 2}},
+        {AbsIntXYZ{0, 0, -16*32}, ChunkXZ{0, -1}},
+        {AbsIntXYZ{0, 0, -1*32}, ChunkXZ{0, -1}},
+        {AbsIntXYZ{0, 0, -1}, ChunkXZ{0, -1}},
+    }
+
+    for _, r := range tests {
+        result := r.input.ToChunkXZ()
+        if r.expected.X != result.X || r.expected.Z != result.Z {
+            t.Errorf("AbsIntXYZ%v expected ChunkXZ%v got ChunkXZ%v",
+                r.input, r.expected, result)
+        }
+    }
+}
+
 func TestCoordDivMod(t *testing.T) {
     type CoordDivModTest struct {
         expected_div, expected_mod int32
@@ -96,6 +124,10 @@ func TestBlockXYZ_ToAbsIntXYZ(t *testing.T) {
         {BlockXYZ{0, 0, -1}, AbsIntXYZ{0, 0, -32}},
         {BlockXYZ{1, 0, 0}, AbsIntXYZ{32, 0, 0}},
         {BlockXYZ{-1, 0, 0}, AbsIntXYZ{-32, 0, 0}},
+        {BlockXYZ{0, 1, 0}, AbsIntXYZ{0, 32, 0}},
+        {BlockXYZ{0, 10, 0}, AbsIntXYZ{0, 320, 0}},
+        {BlockXYZ{0, 63, 0}, AbsIntXYZ{0, 2016, 0}},
+        {BlockXYZ{0, 64, 0}, AbsIntXYZ{0, 2048, 0}},
     }
 
     for _, r := range tests {

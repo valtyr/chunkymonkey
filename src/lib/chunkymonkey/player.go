@@ -121,17 +121,19 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
                 return
             }
 
-            blockType, err := chunk.GetBlock(&subLoc)
+            blockType, err := chunk.GetBlock(subLoc)
             if err {
                 return
             }
 
-            if !chunk.SetBlock(&subLoc, BlockIDAir, 0) {
+            if !chunk.SetBlock(subLoc, BlockIDAir, 0) {
                 // Experimental code - we spawn earth blocks if earth/grass was dug out
-                if blockType == BlockIDDirt || blockType == BlockIDGrass {
+                if blockType == BlockIDDirt || blockType == BlockIDGrass ||
+                    blockType == BlockIDSand || blockType == BlockIDStone ||
+                    blockType == BlockIDCobblestone {
                     // TODO model the item's fall to the ground. Do we need
                     // update clients as to its final position?
-                    NewItem(game, ItemID(BlockIDDirt), 1, blockLoc.ToAbsIntXYZ())
+                    NewItem(game, ItemID(blockType), 1, blockLoc.ToAbsIntXYZ())
                 }
             }
         })
@@ -194,11 +196,11 @@ func (player *Player) TransmitLoop() {
 func (player *Player) sendChunks(writer io.Writer) {
     playerChunkLoc := player.position.ToChunkXZ()
 
-    for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
+    for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
         proto.WritePreChunk(writer, &chunk.XZ, ChunkInit)
     }
 
-    for chunk := range player.game.chunkManager.ChunksInRadius(&playerChunkLoc) {
+    for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
         chunk.SendChunkData(writer)
     }
 }

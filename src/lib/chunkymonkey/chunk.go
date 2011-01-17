@@ -62,7 +62,7 @@ func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetada
     // Tell players that the block was destroyed
     packet := &bytes.Buffer{}
     proto.WriteBlockChange(packet, chunk.XZ.ToBlockXYZ(subLoc), blockType, blockMetadata)
-    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), chunk.XZ)
+    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.XZ)
 
     return
 }
@@ -142,13 +142,13 @@ func base36Encode(n int32) (s string) {
     return
 }
 
-func (mgr *ChunkManager) chunkPath(loc ChunkXZ) string {
+func (mgr *ChunkManager) chunkPath(loc *ChunkXZ) string {
     return path.Join(mgr.worldPath, base36Encode(int32(loc.X&63)), base36Encode(int32(loc.Z&63)),
         "c."+base36Encode(int32(loc.X))+"."+base36Encode(int32(loc.Z))+".dat")
 }
 
 // Get a chunk at given coordinates
-func (mgr *ChunkManager) Get(loc ChunkXZ) (chunk *Chunk) {
+func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk *Chunk) {
     // FIXME this function looks subject to race conditions with itself
     key := uint64(loc.X)<<32 | uint64(uint32(loc.Z))
     chunk, ok := mgr.chunks[key]
@@ -180,7 +180,7 @@ func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan *Chunk) {
         for z := loc.Z - ChunkRadius; z <= loc.Z+ChunkRadius; z++ {
             for x := loc.X - ChunkRadius; x <= loc.X+ChunkRadius; x++ {
                 curChunkXZ.X, curChunkXZ.Z = x, z
-                c <- mgr.Get(curChunkXZ)
+                c <- mgr.Get(&curChunkXZ)
             }
         }
         close(c)
@@ -191,5 +191,5 @@ func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan *Chunk) {
 // Return a channel to iterate over all chunks within a player's radius
 func (mgr *ChunkManager) ChunksInPlayerRadius(player *Player) chan *Chunk {
     playerChunkXZ := player.position.ToChunkXZ()
-    return mgr.ChunksInRadius(&playerChunkXZ)
+    return mgr.ChunksInRadius(playerChunkXZ)
 }
