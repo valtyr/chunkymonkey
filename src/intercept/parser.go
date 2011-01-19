@@ -99,9 +99,9 @@ func (p *MessageParser) PacketDisconnect(reason string) {
     p.printf("PacketDisconnect(%s)", reason)
 }
 
-func (p *MessageParser) ClientPacketLogin(entityID EntityID, str1 string, str2 string, mapSeed RandomSeed, dimension DimensionID) {
-    p.printf("PacketLogin(entityID=%d, str1=%v, str2=%v, mapSeed=%d, dimension=%d)",
-        entityID, str1, str2, mapSeed, dimension)
+func (p *MessageParser) ClientPacketLogin(entityID EntityID, mapSeed RandomSeed, dimension DimensionID) {
+    p.printf("PacketLogin(entityID=%d, mapSeed=%d, dimension=%d)",
+        entityID, mapSeed, dimension)
 }
 
 func (p *MessageParser) PacketTimeUpdate(time TimeOfDay) {

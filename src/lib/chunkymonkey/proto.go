@@ -101,7 +101,7 @@ type ServerPacketHandler interface {
 // Clients to the protocol must implement this interface to receive packets
 type ClientPacketHandler interface {
     PacketHandler
-    ClientPacketLogin(entityID EntityID, str1 string, str2 string, mapSeed RandomSeed, dimension DimensionID)
+    ClientPacketLogin(entityID EntityID, mapSeed RandomSeed, dimension DimensionID)
     PacketTimeUpdate(time TimeOfDay)
     PacketNamedEntitySpawn(entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID)
     PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses)
@@ -268,32 +268,14 @@ func readKeepAlive(reader io.Reader, handler PacketHandler) (err os.Error) {
 
 // packetIDLogin
 
-func ServerReadLogin(reader io.Reader) (username, password string, err os.Error) {
-    var packetStart struct {
-        PacketID byte
-        Version  int32
-    }
-
-    err = binary.Read(reader, binary.BigEndian, &packetStart)
-    if err != nil {
+func commonReadLogin(reader io.Reader) (versionOrEntityID int32, str1, str2 string, mapSeed RandomSeed, dimension DimensionID, err os.Error) {
+    if err = binary.Read(reader, binary.BigEndian, &versionOrEntityID); err != nil {
         return
     }
-    if packetStart.PacketID != packetIDLogin {
-        err = os.NewError(fmt.Sprintf("serverLogin: invalid packet ID %#x", packetStart.PacketID))
+    if str1, err = readString(reader); err != nil {
         return
     }
-    if packetStart.Version != protocolVersion {
-        err = os.NewError(fmt.Sprintf("serverLogin: unsupported protocol version %#x", packetStart.Version))
-        return
-    }
-
-    username, err = readString(reader)
-    if err != nil {
-        return
-    }
-
-    password, err = readString(reader)
-    if err != nil {
+    if str2, err = readString(reader); err != nil {
         return
     }
 
@@ -301,72 +283,59 @@ func ServerReadLogin(reader io.Reader) (username, password string, err os.Error)
         MapSeed   RandomSeed
         Dimension DimensionID
     }
+    if err = binary.Read(reader, binary.BigEndian, &packetEnd); err != nil {
+        return
+    }
 
-    err = binary.Read(reader, binary.BigEndian, &packetEnd)
+    mapSeed = packetEnd.MapSeed
+    dimension = packetEnd.Dimension
 
+    return
+}
+
+func ServerReadLogin(reader io.Reader) (username, password string, err os.Error) {
+    var packetID byte
+    if err = binary.Read(reader, binary.BigEndian, &packetID); err != nil {
+        return
+    }
+    if packetID != packetIDLogin {
+        err = os.NewError(fmt.Sprintf("serverLogin: invalid packet ID %#x", packetID))
+        return
+    }
+
+    version, username, password, _, _, err := commonReadLogin(reader)
+    if err != nil {
+        return
+    }
+
+    if version != protocolVersion {
+        err = os.NewError(fmt.Sprintf("serverLogin: unsupported protocol version %#x", version))
+        return
+    }
     return
 }
 
 func clientReadLogin(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
-    var entityID EntityID
-
-    err = binary.Read(reader, binary.BigEndian, &entityID)
+    entityIDInt32, _, _, mapSeed, dimension, err := commonReadLogin(reader)
     if err != nil {
         return
     }
 
-    str1, err := readString(reader)
-    if err != nil {
-        return
-    }
-
-    str2, err := readString(reader)
-    if err != nil {
-        return
-    }
-
-    var packetEnd struct {
-        MapSeed   RandomSeed
-        Dimension DimensionID
-    }
-
-    err = binary.Read(reader, binary.BigEndian, &packetEnd)
-    if err != nil {
-        return
-    }
-
-    handler.ClientPacketLogin(
-        entityID,
-        str1,
-        str2,
-        packetEnd.MapSeed,
-        packetEnd.Dimension)
+    handler.ClientPacketLogin(EntityID(entityIDInt32), mapSeed, dimension)
 
     return
 }
 
-func ServerWriteLogin(writer io.Writer, entityID EntityID) (err os.Error) {
-    var packetStart = struct {
-        PacketID byte
-        EntityID EntityID
-    }{
-        packetIDLogin,
-        entityID,
-    }
-    err = binary.Write(writer, binary.BigEndian, &packetStart)
-    if err != nil {
+func commonWriteLogin(writer io.Writer, str1, str2 string, entityID EntityID, mapSeed RandomSeed, dimension DimensionID) (err os.Error) {
+    if err = binary.Write(writer, binary.BigEndian, entityID); err != nil {
         return
     }
 
-    // TODO unknown string
-    err = writeString(writer, "")
-    if err != nil {
+    // These strings are currently unused
+    if err = writeString(writer, str1); err != nil {
         return
     }
-
-    // TODO unknown string
-    err = writeString(writer, "")
-    if err != nil {
+    if err = writeString(writer, str2); err != nil {
         return
     }
 
@@ -374,12 +343,26 @@ func ServerWriteLogin(writer io.Writer, entityID EntityID) (err os.Error) {
         MapSeed   RandomSeed
         Dimension DimensionID
     }{
-        // TODO proper map seed as a parameter
-        0,
-        // TODO proper dimension as a parameter
-        0,
+        mapSeed,
+        dimension,
     }
     return binary.Write(writer, binary.BigEndian, &packetEnd)
+}
+
+func ServerWriteLogin(writer io.Writer, entityID EntityID, mapSeed RandomSeed, dimension DimensionID) (err os.Error) {
+    if err = binary.Write(writer, binary.BigEndian, byte(packetIDLogin)); err != nil {
+        return
+    }
+
+    return commonWriteLogin(writer, "", "", entityID, mapSeed, dimension)
+}
+
+func ClientWriteLogin(writer io.Writer, username, password string) (err os.Error) {
+    if err = binary.Write(writer, binary.BigEndian, byte(packetIDLogin)); err != nil {
+        return
+    }
+
+    return commonWriteLogin(writer, username, password, protocolVersion, 0, 0)
 }
 
 // packetIDHandshake

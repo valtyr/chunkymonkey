@@ -37,7 +37,8 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
 
     game.Enqueue(func(game *Game) {
         game.AddPlayer(player)
-        proto.ServerWriteLogin(conn, player.Entity.EntityID)
+        // TODO pass proper map seed and dimension
+        proto.ServerWriteLogin(conn, player.Entity.EntityID, 0, DimensionNormal)
         player.start()
         player.postLogin()
     })
