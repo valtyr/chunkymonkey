@@ -42,6 +42,13 @@ type EntityStatus byte
 
 type PlayerAnimation byte
 
+type EntityAction byte
+
+const (
+    EntityActionCrouch   = EntityAction(1)
+    EntityActionUncrouch = EntityAction(2)
+)
+
 type ObjTypeID int8
 
 const (
@@ -56,6 +63,25 @@ const (
     ObjTypeIDFallingSand    = ObjTypeID(70)
     ObjTypeIDFallingGravel  = ObjTypeID(71)
     ObjTypeIDFishingFloat   = ObjTypeID(90)
+)
+
+type PaintingTypeID int32
+
+type InstrumentID byte
+
+const (
+    InstrumentIDDoubleBass = InstrumentID(1)
+    InstrumentIDSnareDrum  = InstrumentID(2)
+    InstrumentIDSticks     = InstrumentID(3)
+    InstrumentIDBassDrum   = InstrumentID(4)
+    InstrumentIDHarp       = InstrumentID(5)
+)
+
+type NotePitch byte
+
+const (
+    NotePitchMin = NotePitch(0)
+    NotePitchMax = NotePitch(24)
 )
 
 // Block-related types

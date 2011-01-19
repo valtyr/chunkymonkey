@@ -34,12 +34,13 @@ const (
     packetIDPlayerBlockPlacement = 0x0f
     packetIDHoldingChange        = 0x10
     packetIDPlayerAnimation      = 0x12
+    packetIDEntityAction         = 0x13
     packetIDNamedEntitySpawn     = 0x14
     packetIDItemSpawn            = 0x15
     packetIDItemCollect          = 0x16
     packetIDObjectSpawn          = 0x17
     packetIDEntitySpawn          = 0x18
-    packetIDUnknownX19           = 0x19
+    packetIDPaintingSpawn        = 0x19
     packetIDEntityVelocity       = 0x1c
     packetIDEntity               = 0x1e
     packetIDEntityDestroy        = 0x1d
@@ -48,12 +49,13 @@ const (
     packetIDEntityLookAndRelMove = 0x21
     packetIDEntityTeleport       = 0x22
     packetIDEntityStatus         = 0x26
-    packetIDUnknownX28           = 0x28
+    packetIDEntityMetadata       = 0x28
     packetIDPreChunk             = 0x32
     packetIDMapChunk             = 0x33
     packetIDBlockChangeMulti     = 0x34
     packetIDBlockChange          = 0x35
-    packetIDUnknownX36           = 0x36
+    packetIDNoteBlockPlay        = 0x36
+    packetIDExplosion            = 0x3c
     packetIDWindowOpen           = 0x64
     packetIDWindowClose          = 0x65
     packetIDWindowClick          = 0x66
@@ -74,6 +76,7 @@ const (
 type PacketHandler interface {
     PacketKeepAlive()
     PacketChatMessage(message string)
+    PacketEntityAction(entityID EntityID, action EntityAction)
     PacketUseEntity(user EntityID, target EntityID, leftClick bool)
     PacketRespawn()
     PacketPlayer(onGround bool)
@@ -98,14 +101,15 @@ type ClientPacketHandler interface {
     PacketHandler
     ClientPacketLogin(entityID EntityID, str1 string, str2 string, mapSeed RandomSeed, dimension DimensionID)
     PacketTimeUpdate(time TimeOfDay)
+    PacketNamedEntitySpawn(entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID)
     PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses)
     PacketSpawnPosition(position *BlockXYZ)
     PacketUpdateHealth(health int16)
     PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes)
     PacketItemCollect(collectedItem EntityID, collector EntityID)
     PacketObjectSpawn(entityID EntityID, objType ObjTypeID, position *AbsIntXYZ)
-    PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []UnknownEntityExtra)
-    PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32)
+    PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []EntityMetadata)
+    PacketPaintingSpawn(entityID EntityID, title string, position *BlockXYZ, paintingType PaintingTypeID)
     PacketEntityVelocity(entityID EntityID, velocity *Velocity)
     PacketEntityDestroy(entityID EntityID)
     PacketEntity(entityID EntityID)
@@ -113,12 +117,17 @@ type ClientPacketHandler interface {
     PacketEntityLook(entityID EntityID, yaw, pitch AngleBytes)
     PacketEntityTeleport(entityID EntityID, position *AbsIntXYZ, look *LookBytes)
     PacketEntityStatus(entityID EntityID, status EntityStatus)
-    PacketUnknownX28(field1 int32, data []UnknownEntityExtra)
+    PacketEntityMetadata(entityID EntityID, metadata []EntityMetadata)
+
     PacketPreChunk(position *ChunkXZ, mode ChunkLoadMode)
     PacketMapChunk(position *BlockXYZ, size *SubChunkSize, data []byte)
     PacketBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte)
     PacketBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte)
-    PacketUnknownX36(field1 int32, field2 int16, field3 int32, field4, field5 byte)
+    PacketNoteBlockPlay(position *BlockXYZ, instrument InstrumentID, pitch NotePitch)
+
+    // NOTE method signature likely to change
+    PacketExplosion(position *AbsXYZ, power float32, blockOffsets []ExplosionOffsetXYZ)
+
     PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte)
     PacketWindowSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses)
     PacketWindowItems(windowID WindowID, items []WindowSlot)
@@ -169,17 +178,16 @@ type WindowSlot struct {
     Uses   ItemUses
 }
 
-type UnknownEntityExtra struct {
+type EntityMetadata struct {
     Field1 byte
     Field2 byte
     Field3 interface{}
 }
 
-// Reads extra data from the end of certain packets, whose meaning isn't known
-// yet. Currently all this code does is read and discard bytes.
+// Reads entity metadata from the end of certain packets. Most of the meaning
+// of the packets isn't yet known.
 // TODO update to pull useful data out as it becomes understood
-// http://pastebin.com/HHW52Awn
-func readUnknownExtra(reader io.Reader) (data []UnknownEntityExtra, err os.Error) {
+func readEntityMetadataField(reader io.Reader) (data []EntityMetadata, err os.Error) {
     var entryType byte
 
     var field1, field2 byte
@@ -225,7 +233,7 @@ func readUnknownExtra(reader io.Reader) (data []UnknownEntityExtra, err os.Error
             field3 = position
         }
 
-        data = append(data, UnknownEntityExtra{field1, field2, field3})
+        data = append(data, EntityMetadata{field1, field2, field3})
 
         if err != nil {
             return
@@ -857,6 +865,38 @@ func readPlayerAnimation(reader io.Reader, handler PacketHandler) (err os.Error)
     return
 }
 
+// packetIDEntityAction
+
+func WriteEntityAction(writer io.Writer, entityID EntityID, action EntityAction) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+        Action   EntityAction
+    }{
+        packetIDEntityAction,
+        entityID,
+        action,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+
+func readEntityAction(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var packet struct {
+        EntityID EntityID
+        Action   EntityAction
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    handler.PacketEntityAction(packet.EntityID, packet.Action)
+
+    return
+}
+
 // packetIDNamedEntitySpawn
 
 func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID) (err os.Error) {
@@ -895,6 +935,34 @@ func WriteNamedEntitySpawn(writer io.Writer, entityID EntityID, name string, pos
     }
 
     err = binary.Write(writer, binary.BigEndian, &packetFinish)
+    return
+}
+
+func readNamedEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var entityID EntityID
+
+    if err = binary.Read(reader, binary.BigEndian, &entityID); err != nil {
+        return
+    }
+
+    var name string
+    if name, err = readString(reader); err != nil {
+        return
+    }
+
+    var packetEnd struct {
+        X, Y, Z     AbsIntCoord
+        Yaw, Pitch  AngleBytes
+        CurrentItem ItemID
+    }
+
+    handler.PacketNamedEntitySpawn(
+        entityID,
+        name,
+        &AbsIntXYZ{packetEnd.X, packetEnd.Y, packetEnd.Z},
+        &LookBytes{packetEnd.Yaw, packetEnd.Pitch},
+        packetEnd.CurrentItem)
+
     return
 }
 
@@ -1044,7 +1112,7 @@ func readEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os.Erro
         return
     }
 
-    data, err := readUnknownExtra(reader)
+    metadata, err := readEntityMetadataField(reader)
     if err != nil {
         return
     }
@@ -1052,28 +1120,48 @@ func readEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os.Erro
     handler.PacketEntitySpawn(
         EntityID(packet.EntityID), packet.MobType,
         &AbsIntXYZ{packet.X, packet.Y, packet.Z},
-        packet.Yaw, packet.Pitch, data)
+        packet.Yaw, packet.Pitch, metadata)
 
     return err
 }
 
-// packetIDUnknownX19
+// packetIDPaintingSpawn
 
-// TODO determine what this packet is
-func readUnknownX19(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
-    var Field1 int32
-    err = binary.Read(reader, binary.BigEndian, &Field1)
-    if err != nil {
+func WritePaintingSpawn(writer io.Writer, entityID EntityID, title string, position *BlockXYZ, paintingType PaintingTypeID) (err os.Error) {
+    if err = binary.Write(writer, binary.BigEndian, &entityID); err != nil {
         return
     }
 
-    Field2, err := readString(reader)
+    if err = writeString(writer, title); err != nil {
+        return
+    }
+
+    var packetEnd = struct {
+        X, Y, Z      BlockCoord
+        PaintingType PaintingTypeID
+    }{
+        position.X, BlockCoord(position.Y), position.Z,
+        paintingType,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packetEnd)
+}
+
+func readPaintingSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var entityID EntityID
+
+    if err = binary.Read(reader, binary.BigEndian, &entityID); err != nil {
+        return
+    }
+
+    title, err := readString(reader)
     if err != nil {
         return
     }
 
     var packetEnd struct {
-        Field3, Field4, Field5, Field6 int32
+        X, Y, Z      BlockCoord
+        PaintingType PaintingTypeID
     }
 
     err = binary.Read(reader, binary.BigEndian, &packetEnd)
@@ -1081,9 +1169,11 @@ func readUnknownX19(reader io.Reader, handler ClientPacketHandler) (err os.Error
         return
     }
 
-    handler.PacketUnknownX19(
-        Field1, Field2,
-        packetEnd.Field3, packetEnd.Field4, packetEnd.Field5, packetEnd.Field6)
+    handler.PacketPaintingSpawn(
+        entityID,
+        title,
+        &BlockXYZ{packetEnd.X, BlockYCoord(packetEnd.Y), packetEnd.Z},
+        packetEnd.PaintingType)
 
     return
 }
@@ -1125,6 +1215,18 @@ func readEntityVelocity(reader io.Reader, handler ClientPacketHandler) (err os.E
 }
 
 // packetIDEntity
+
+func WriteEntity(writer io.Writer, entityID EntityID) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+    }{
+        packetIDEntity,
+        entityID,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
 
 func readEntity(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var entityID EntityID
@@ -1243,6 +1345,23 @@ func readEntityLook(reader io.Reader, handler ClientPacketHandler) (err os.Error
 
 // packetIDEntityLookAndRelMove
 
+func WriteEntityLookAndRelMove(writer io.Writer, entityID EntityID, movement *RelMove, look *LookBytes) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+        X, Y, Z  RelMoveCoord
+        Yaw      AngleBytes
+        Pitch    AngleBytes
+    }{
+        packetIDEntityLookAndRelMove,
+        entityID,
+        movement.X, movement.Y, movement.Z,
+        look.Yaw, look.Pitch,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
 func readEntityLookAndRelMove(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
@@ -1321,6 +1440,20 @@ func readEntityTeleport(reader io.Reader, handler ClientPacketHandler) (err os.E
 
 // packetIDEntityStatus
 
+func WriteEntityStatus(writer io.Writer, entityID EntityID, status EntityStatus) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+        Status   EntityStatus
+    }{
+        packetIDEntityStatus,
+        entityID,
+        status,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
 func readEntityStatus(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
@@ -1337,22 +1470,21 @@ func readEntityStatus(reader io.Reader, handler ClientPacketHandler) (err os.Err
     return
 }
 
-// packetIDUnknownX28
+// packetEntityMetadata
 
-func readUnknownX28(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
-    var field1 int32
+func readEntityMetadata(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var entityID EntityID
 
-    err = binary.Read(reader, binary.BigEndian, &field1)
+    if err = binary.Read(reader, binary.BigEndian, &entityID); err != nil {
+        return
+    }
+
+    metadata, err := readEntityMetadataField(reader)
     if err != nil {
         return
     }
 
-    data, err := readUnknownExtra(reader)
-    if err != nil {
-        return
-    }
-
-    handler.PacketUnknownX28(field1, data)
+    handler.PacketEntityMetadata(entityID, metadata)
 
     return
 }
@@ -1552,23 +1684,104 @@ func readBlockChange(reader io.Reader, handler ClientPacketHandler) (err os.Erro
     return
 }
 
-// packetIDUnknownX36
+// packetIDNoteBlockPlay
 
-func readUnknownX36(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
-    var packet struct {
-        Field1         int32
-        Field2         int16
-        Field3         int32
-        Field4, Field5 byte
+func WriteNoteBlockPlay(writer io.Writer, position *BlockXYZ, instrument InstrumentID, pitch NotePitch) (err os.Error) {
+    var packet = struct {
+        PacketID   byte
+        X          BlockCoord
+        Y          BlockYCoord
+        Z          BlockCoord
+        Instrument InstrumentID
+        Pitch      NotePitch
+    }{
+        packetIDNoteBlockPlay,
+        position.X, position.Y, position.Z,
+        instrument,
+        pitch,
     }
 
-    err = binary.Read(reader, binary.BigEndian, &packet)
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
 
-    if err != nil {
+func readNoteBlockPlay(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        X          BlockCoord
+        Y          BlockYCoord
+        Z          BlockCoord
+        Instrument InstrumentID
+        Pitch      NotePitch
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
         return
     }
 
-    handler.PacketUnknownX36(packet.Field1, packet.Field2, packet.Field3, packet.Field4, packet.Field5)
+    handler.PacketNoteBlockPlay(
+        &BlockXYZ{packet.X, packet.Y, packet.Z},
+        packet.Instrument,
+        packet.Pitch)
+
+    return
+}
+
+// packetIDExplosion
+
+// TODO WriteExplosion when the packet is better understood.
+// TODO introduce better types for ExplosionOffsetXYZ and the floats in the
+// packet structure when the packet is better understood.
+
+type ExplosionOffsetXYZ struct {
+    X, Y, Z int8
+}
+
+func WriteExplosion(writer io.Writer, position *AbsXYZ, power float32, blockOffsets []ExplosionOffsetXYZ) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        // NOTE AbsCoord is just a guess for now
+        X, Y, Z AbsCoord
+        // NOTE Power isn't known to be a good name for this field
+        Power     float32
+        NumBlocks int32
+    }{
+        packetIDExplosion,
+        position.X, position.Y, position.Z,
+        power,
+        int32(len(blockOffsets)),
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    return binary.Write(writer, binary.BigEndian, blockOffsets)
+}
+
+func readExplosion(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        // NOTE AbsCoord is just a guess for now
+        X, Y, Z AbsCoord
+        // NOTE Power isn't known to be a good name for this field
+        Power     float32
+        NumBlocks int32
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    // TODO put sensible size limits on how big arrays read from network could
+    // be, both here and in other places
+    blockOffsets := make([]ExplosionOffsetXYZ, packet.NumBlocks)
+
+    if err = binary.Read(reader, binary.BigEndian, blockOffsets); err != nil {
+        return
+    }
+
+    handler.PacketExplosion(
+        &AbsXYZ{packet.X, packet.Y, packet.Z},
+        packet.Power,
+        blockOffsets)
 
     return
 }
@@ -1654,6 +1867,41 @@ func readWindowClose(reader io.Reader, handler ServerPacketHandler) (err os.Erro
 
 // packetIDWindowClick
 
+func WriteWindowClick(writer io.Writer, windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) (err os.Error) {
+    var packet = struct {
+        PacketID   byte
+        WindowID   WindowID
+        Slot       SlotID
+        RightClick byte
+        TxID       TxID
+        ItemID     ItemID
+    }{
+        packetIDWindowClick,
+        windowID,
+        slot,
+        boolToByte(rightClick),
+        txID,
+        itemID,
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    if itemID != -1 {
+        var packetEnd = struct {
+            Amount ItemCount
+            Uses   ItemUses
+        }{
+            amount,
+            uses,
+        }
+        err = binary.Write(writer, binary.BigEndian, &packetEnd)
+    }
+
+    return
+}
+
 func readWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
     var packetStart struct {
         WindowID   WindowID
@@ -1693,6 +1941,37 @@ func readWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Erro
 }
 
 // packetIDWindowSetSlot
+
+func WriteWindowSetSlot(writer io.Writer, windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        WindowID WindowID
+        Slot     SlotID
+        ItemID   ItemID
+    }{
+        packetIDWindowSetSlot,
+        windowID,
+        slot,
+        itemID,
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    if itemID != -1 {
+        var packetEnd = struct {
+            Amount ItemCount
+            Uses   ItemUses
+        }{
+            amount,
+            uses,
+        }
+        err = binary.Write(writer, binary.BigEndian, &packetEnd)
+    }
+
+    return err
+}
 
 func readWindowSetSlot(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packetStart struct {
@@ -1880,6 +2159,7 @@ type clientPacketReaderMap map[byte]clientPacketHandler
 var commonReadFns = commonPacketReaderMap{
     packetIDKeepAlive:            readKeepAlive,
     packetIDChatMessage:          readChatMessage,
+    packetIDEntityAction:         readEntityAction,
     packetIDUseEntity:            readUseEntity,
     packetIDRespawn:              readRespawn,
     packetIDPlayer:               readPlayer,
@@ -1910,7 +2190,7 @@ var clientReadFns = clientPacketReaderMap{
     packetIDItemSpawn:            readItemSpawn,
     packetIDItemCollect:          readItemCollect,
     packetIDObjectSpawn:          readObjectSpawn,
-    packetIDUnknownX19:           readUnknownX19,
+    packetIDPaintingSpawn:        readPaintingSpawn,
     packetIDEntityVelocity:       readEntityVelocity,
     packetIDEntityDestroy:        readEntityDestroy,
     packetIDEntity:               readEntity,
@@ -1919,12 +2199,13 @@ var clientReadFns = clientPacketReaderMap{
     packetIDEntityLookAndRelMove: readEntityLookAndRelMove,
     packetIDEntityTeleport:       readEntityTeleport,
     packetIDEntityStatus:         readEntityStatus,
-    packetIDUnknownX28:           readUnknownX28,
+    packetIDEntityMetadata:       readEntityMetadata,
     packetIDPreChunk:             readPreChunk,
     packetIDMapChunk:             readMapChunk,
     packetIDBlockChangeMulti:     readBlockChangeMulti,
     packetIDBlockChange:          readBlockChange,
-    packetIDUnknownX36:           readUnknownX36,
+    packetIDNoteBlockPlay:        readNoteBlockPlay,
+    packetIDExplosion:            readExplosion,
     packetIDWindowOpen:           readWindowOpen,
     packetIDWindowSetSlot:        readWindowSetSlot,
     packetIDWindowItems:          readWindowItems,

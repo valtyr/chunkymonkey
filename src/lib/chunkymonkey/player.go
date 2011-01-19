@@ -55,6 +55,9 @@ func (player *Player) PacketChatMessage(message string) {
     player.game.Enqueue(func(game *Game) { game.SendChatMessage(message) })
 }
 
+func (player *Player) PacketEntityAction(entityID EntityID, action EntityAction) {
+}
+
 func (player *Player) PacketUseEntity(user EntityID, target EntityID, leftClick bool) {
 }
 

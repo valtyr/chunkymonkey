@@ -85,6 +85,11 @@ func (p *MessageParser) PacketPlayerAnimation(animation PlayerAnimation) {
     p.printf("PacketPlayerAnimation(%v)", animation)
 }
 
+func (p *MessageParser) PacketEntityAction(entityID EntityID, action EntityAction) {
+    p.printf("PacketEntityAction(entityID=%d, action=%d)",
+        entityID, action)
+}
+
 func (p *MessageParser) PacketDisconnect(reason string) {
     p.printf("PacketDisconnect(%s)", reason)
 }
@@ -115,6 +120,11 @@ func (p *MessageParser) PacketUpdateHealth(health int16) {
     p.printf("PacketUpdateHealth(health=%d)", health)
 }
 
+func (p *MessageParser) PacketNamedEntitySpawn(entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID) {
+    p.printf("PacketNamedEntitySpawn(entityID=%d, name=%v, position=%v, look=%v, currentItem=%d)",
+        entityID, name, position, look, currentItem)
+}
+
 func (p *MessageParser) PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes) {
     p.printf("PacketItemSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
         entityID, itemID, count, uses, location, yaw, pitch, roll)
@@ -130,14 +140,19 @@ func (p *MessageParser) PacketObjectSpawn(entityID EntityID, objType ObjTypeID, 
         entityID, objType, position)
 }
 
-func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []proto.UnknownEntityExtra) {
-    p.printf("PacketEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, data=%v)",
-        entityID, mobType, position, yaw, pitch, data)
+func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, metadata []proto.EntityMetadata) {
+    p.printf("PacketEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, metadata=%v)",
+        entityID, mobType, position, yaw, pitch, metadata)
 }
 
 func (p *MessageParser) PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32) {
     p.printf("PacketUnknownX19(field1=%d, field2=%v, field3=%d, field4=%d, field5=%d, field6=%d)",
         field1, field2, field3, field4, field5, field6)
+}
+
+func (p *MessageParser) PacketPaintingSpawn(entityID EntityID, title string, position *BlockXYZ, paintingType PaintingTypeID) {
+    p.printf("PacketPaintingSpawn(entityID=%d, title=%s, position=%v, paintingType=%d)",
+        entityID, title, position, position, paintingType)
 }
 
 func (p *MessageParser) PacketEntityVelocity(entityID EntityID, velocity *Velocity) {
@@ -173,8 +188,8 @@ func (p *MessageParser) PacketEntityStatus(entityID EntityID, status EntityStatu
         entityID, status)
 }
 
-func (p *MessageParser) PacketUnknownX28(field1 int32, data []proto.UnknownEntityExtra) {
-    p.printf("PacketUnknownX28(field1=%d, data=%v)", field1, data)
+func (p *MessageParser) PacketEntityMetadata(entityID EntityID, metadata []proto.EntityMetadata) {
+    p.printf("PacketEntityMetadata(entityID=%d, metadata=%v)", entityID, metadata)
 }
 
 func (p *MessageParser) PacketPreChunk(position *ChunkXZ, mode ChunkLoadMode) {
@@ -196,9 +211,14 @@ func (p *MessageParser) PacketBlockChange(blockLoc *BlockXYZ, blockType BlockID,
         blockLoc, blockType, blockMetaData)
 }
 
-func (p *MessageParser) PacketUnknownX36(field1 int32, field2 int16, field3 int32, field4, field5 byte) {
-    p.printf("PacketUnknownX36(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
-        field1, field2, field3, field4, field5)
+func (p *MessageParser) PacketNoteBlockPlay(position *BlockXYZ, instrument InstrumentID, pitch NotePitch) {
+    p.printf("PacketNoteBlockPlay(position=%v, instrument=%d, pitch=%d)",
+        position, instrument, pitch)
+}
+
+func (p *MessageParser) PacketExplosion(position *AbsXYZ, power float32, blockOffsets []proto.ExplosionOffsetXYZ) {
+    p.printf("PacketExplosion(position=%v, power=%f, blockOffsets=%v)",
+        position, power, blockOffsets)
 }
 
 func (p *MessageParser) PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte) {
