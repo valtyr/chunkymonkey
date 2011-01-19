@@ -42,8 +42,8 @@ const (
     packetIDEntitySpawn          = 0x18
     packetIDPaintingSpawn        = 0x19
     packetIDEntityVelocity       = 0x1c
-    packetIDEntity               = 0x1e
     packetIDEntityDestroy        = 0x1d
+    packetIDEntity               = 0x1e
     packetIDEntityRelMove        = 0x1f
     packetIDEntityLook           = 0x20
     packetIDEntityLookAndRelMove = 0x21
@@ -63,6 +63,7 @@ const (
     packetIDWindowItems          = 0x68
     packetIDWindowProgressBar    = 0x69
     packetIDWindowTransaction    = 0x6a
+    packetIDSignUpdate           = 0x82
     packetIDDisconnect           = 0xff
 
     // Inventory types
@@ -85,6 +86,7 @@ type PacketHandler interface {
     PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
     PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses)
     PacketPlayerAnimation(animation PlayerAnimation)
+    PacketSignUpdate(position *BlockXYZ, lines [4]string)
     PacketDisconnect(reason string)
 }
 
@@ -1214,6 +1216,32 @@ func readEntityVelocity(reader io.Reader, handler ClientPacketHandler) (err os.E
     return
 }
 
+// packetIDEntityDestroy
+
+func WriteEntityDestroy(writer io.Writer, entityID EntityID) os.Error {
+    var packet = struct {
+        PacketID byte
+        EntityID EntityID
+    }{
+        packetIDEntityDestroy,
+        entityID,
+    }
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readEntityDestroy(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var entityID EntityID
+
+    err = binary.Read(reader, binary.BigEndian, &entityID)
+    if err != nil {
+        return
+    }
+
+    handler.PacketEntityDestroy(entityID)
+
+    return
+}
+
 // packetIDEntity
 
 func WriteEntity(writer io.Writer, entityID EntityID) (err os.Error) {
@@ -1237,32 +1265,6 @@ func readEntity(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     }
 
     handler.PacketEntity(entityID)
-
-    return
-}
-
-// packetIDEntityDestroy
-
-func WriteEntityDestroy(writer io.Writer, entityID EntityID) os.Error {
-    var packet = struct {
-        PacketID byte
-        EntityID EntityID
-    }{
-        packetIDEntityDestroy,
-        entityID,
-    }
-    return binary.Write(writer, binary.BigEndian, &packet)
-}
-
-func readEntityDestroy(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
-    var entityID EntityID
-
-    err = binary.Read(reader, binary.BigEndian, &entityID)
-    if err != nil {
-        return
-    }
-
-    handler.PacketEntityDestroy(entityID)
 
     return
 }
@@ -2153,6 +2155,58 @@ func readWindowTransaction(reader io.Reader, handler ClientPacketHandler) (err o
     }
 
     handler.PacketWindowTransaction(packet.WindowID, packet.TxID, byteToBool(packet.Accepted))
+
+    return
+}
+
+// packetIDSignUpdate
+
+func WriteSignUpdate(writer io.Writer, position *BlockXYZ, lines [4]string) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        X        BlockCoord
+        Y        BlockYCoord
+        Z        BlockCoord
+    }{
+        packetIDSignUpdate,
+        position.X, position.Y, position.Z,
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    for _, line := range lines {
+        if err = writeString(writer, line); err != nil {
+            return
+        }
+    }
+
+    return
+}
+
+func readSignUpdate(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var packet struct {
+        X   BlockCoord
+        Y   BlockYCoord
+        Z   BlockCoord
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    var lines [4]string
+
+    for i := 0; i < len(lines); i++ {
+        if lines[i], err = readString(reader); err != nil {
+            return
+        }
+    }
+
+    handler.PacketSignUpdate(
+        &BlockXYZ{packet.X, packet.Y, packet.Z},
+        lines)
 
     return
 }

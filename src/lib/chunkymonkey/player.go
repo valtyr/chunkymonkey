@@ -158,6 +158,9 @@ func (player *Player) PacketWindowClose(windowID WindowID) {
 func (player *Player) PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
 }
 
+func (player *Player) PacketSignUpdate(position *BlockXYZ, lines [4]string) {
+}
+
 func (player *Player) PacketDisconnect(reason string) {
     log.Printf("Player %s disconnected reason=%s", player.name, reason)
     player.game.Enqueue(func(game *Game) {

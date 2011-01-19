@@ -90,6 +90,11 @@ func (p *MessageParser) PacketEntityAction(entityID EntityID, action EntityActio
         entityID, action)
 }
 
+func (p *MessageParser) PacketSignUpdate(position *BlockXYZ, lines [4]string) {
+    p.printf("PacketSignUpdate(position=%v, lines=%v)",
+        position, lines)
+}
+
 func (p *MessageParser) PacketDisconnect(reason string) {
     p.printf("PacketDisconnect(%s)", reason)
 }
