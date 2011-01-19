@@ -2009,6 +2009,40 @@ func readWindowSetSlot(reader io.Reader, handler ClientPacketHandler) (err os.Er
 
 // packetIDWindowItems
 
+func WriteWindowItems(writer io.Writer, windowID WindowID, items []WindowSlot) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        WindowID WindowID
+        Count    int16
+    }{
+        packetIDWindowItems,
+        windowID,
+        int16(len(items)),
+    }
+
+    if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    for _, slot := range items {
+        if err = binary.Write(writer, binary.BigEndian, slot.ItemID); err != nil {
+            return
+        }
+
+        if slot.ItemID != -1 {
+            var itemInfo struct {
+                Amount ItemCount
+                Uses   ItemUses
+            }
+            if err = binary.Write(writer, binary.BigEndian, &itemInfo); err != nil {
+                return
+            }
+        }
+    }
+
+    return
+}
+
 func readWindowItems(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packetStart struct {
         WindowID WindowID
