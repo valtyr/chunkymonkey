@@ -531,6 +531,8 @@ func readSpawnPosition(reader io.Reader, handler ClientPacketHandler) (err os.Er
 
 // packetIDUseEntity
 
+// TODO WriteUseEntity
+
 func readUseEntity(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         User      EntityID
@@ -549,6 +551,8 @@ func readUseEntity(reader io.Reader, handler PacketHandler) (err os.Error) {
 }
 
 // packetIDUpdateHealth
+
+// TODO WriteUpdateHealth
 
 func readUpdateHealth(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var health int16
@@ -577,6 +581,8 @@ func readRespawn(reader io.Reader, handler PacketHandler) (err os.Error) {
 }
 
 // packetIDPlayer
+
+// TODO WritePlayer
 
 func readPlayer(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
@@ -640,6 +646,8 @@ func readPlayerPosition(reader io.Reader, handler PacketHandler) (err os.Error) 
 
 // packetIDPlayerLook
 
+// TODO WritePlayerLook
+
 func readPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         Yaw      AngleDegrees
@@ -660,6 +668,10 @@ func readPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
         byteToBool(packet.OnGround))
     return
 }
+
+// packetIDPlayerPositionLook
+
+// TODO WritePlayerPositionLook
 
 func readPlayerPositionLook(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
@@ -696,6 +708,8 @@ func readPlayerPositionLook(reader io.Reader, handler ClientPacketHandler) (err 
 }
 
 // packetIDPlayerPositionLook
+
+// TODO client versions, factor out common code
 
 func ServerWritePlayerPositionLook(writer io.Writer, position *AbsXYZ, look *LookDegrees, stance AbsCoord, onGround bool) os.Error {
     var packet = struct {
@@ -756,6 +770,8 @@ func serverPlayerPositionLook(reader io.Reader, handler ServerPacketHandler) (er
 
 // packetIDPlayerDigging
 
+// TODO WritePlayerDigging
+
 func readPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         Status DigStatus
@@ -778,6 +794,8 @@ func readPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
 }
 
 // packetIDPlayerBlockPlacement
+
+// TODO WritePlayerBlockPlacement
 
 func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
@@ -819,6 +837,8 @@ func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
 
 // packetIDHoldingChange
 
+// TODO WriteHoldingChange
+
 func readHoldingChange(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
     var packet struct {
         ItemID ItemID
@@ -834,6 +854,8 @@ func readHoldingChange(reader io.Reader, handler ServerPacketHandler) (err os.Er
 }
 
 // packetIDPlayerAnimation
+
+// TODO WritePlayerAnimation
 
 func readPlayerAnimation(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
@@ -1019,6 +1041,8 @@ func readItemSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error)
 
 // packetIDItemCollect
 
+// TODO WriteItemCollect
+
 func readItemCollect(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         CollectedItem EntityID
@@ -1057,7 +1081,6 @@ func WriteObjectSpawn(writer io.Writer, entityID EntityID, objType ObjTypeID, po
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-
 func readObjectSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         EntityID EntityID
@@ -1080,6 +1103,8 @@ func readObjectSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Erro
 }
 
 // packetIDEntitySpawn
+
+// TODO WriteEntitySpawn
 
 func readEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
@@ -1457,6 +1482,8 @@ func readEntityStatus(reader io.Reader, handler ClientPacketHandler) (err os.Err
 
 // packetEntityMetadata
 
+// TODO WriteEntityMetadata
+
 func readEntityMetadata(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var entityID EntityID
 
@@ -1585,6 +1612,8 @@ func readMapChunk(reader io.Reader, handler ClientPacketHandler) (err os.Error) 
 }
 
 // packetIDBlockChangeMulti
+
+// TODO WriteBlockChangeMulti
 
 func readBlockChangeMulti(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
@@ -2196,6 +2225,14 @@ func readSignUpdate(reader io.Reader, handler PacketHandler) (err os.Error) {
 
 // packetIDDisconnect
 
+func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
+    buf := &bytes.Buffer{}
+    binary.Write(buf, binary.BigEndian, byte(packetIDDisconnect))
+    writeString(buf, reason)
+    _, err = writer.Write(buf.Bytes())
+    return
+}
+
 func readDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
     reason, err := readString(reader)
     if err != nil {
@@ -2203,14 +2240,6 @@ func readDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
     }
 
     handler.PacketDisconnect(reason)
-    return
-}
-
-func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
-    buf := &bytes.Buffer{}
-    binary.Write(buf, binary.BigEndian, byte(packetIDDisconnect))
-    writeString(buf, reason)
-    _, err = writer.Write(buf.Bytes())
     return
 }
 
@@ -2239,6 +2268,7 @@ var commonReadFns = commonPacketReaderMap{
     packetIDPlayerDigging:        readPlayerDigging,
     packetIDPlayerBlockPlacement: readPlayerBlockPlacement,
     packetIDPlayerAnimation:      readPlayerAnimation,
+    packetIDSignUpdate:           readSignUpdate,
     packetIDDisconnect:           readDisconnect,
 }
 
@@ -2254,10 +2284,12 @@ var serverReadFns = serverPacketReaderMap{
 var clientReadFns = clientPacketReaderMap{
     packetIDLogin:                clientReadLogin,
     packetIDTimeUpdate:           readTimeUpdate,
+    packetIDEntityEquipment:      readEntityEquipment,
     packetIDSpawnPosition:        readSpawnPosition,
     packetIDUpdateHealth:         readUpdateHealth,
     packetIDPlayerPositionLook:   readPlayerPositionLook,
     packetIDEntitySpawn:          readEntitySpawn,
+    packetIDNamedEntitySpawn:     readNamedEntitySpawn,
     packetIDItemSpawn:            readItemSpawn,
     packetIDItemCollect:          readItemCollect,
     packetIDObjectSpawn:          readObjectSpawn,
