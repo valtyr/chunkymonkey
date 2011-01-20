@@ -150,7 +150,7 @@ func (player *Player) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockX
 func (player *Player) PacketHoldingChange(itemID ItemID) {
 }
 
-func (player *Player) PacketPlayerAnimation(animation PlayerAnimation) {
+func (player *Player) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
 }
 
 func (player *Player) PacketWindowClose(windowID WindowID) {

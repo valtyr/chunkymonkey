@@ -40,7 +40,16 @@ type EntityMobType byte
 
 type EntityStatus byte
 
-type PlayerAnimation byte
+type EntityAnimation byte
+
+const (
+    EntityAnimationNone     = EntityAnimation(0)
+    EntityAnimationSwingArm = EntityAnimation(1)
+    EntityAnimationDamage   = EntityAnimation(2)
+    EntityAnimationUnknown1 = EntityAnimation(102)
+    EntityAnimationCrouch   = EntityAnimation(104)
+    EntityAnimationUncrouch = EntityAnimation(105)
+)
 
 type EntityAction byte
 

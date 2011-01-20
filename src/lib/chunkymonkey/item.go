@@ -130,7 +130,8 @@ func NewItem(game *Game, itemType ItemID, count ItemCount, position *AbsIntXYZ) 
 }
 
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
-    err = proto.WriteItemSpawn(writer, item.EntityID, item.itemType, item.count, &item.position, &item.orientation)
+    // TODO pass uses value instead of 0
+    err = proto.WriteItemSpawn(writer, item.EntityID, item.itemType, item.count, 0, &item.position, &item.orientation)
     if err != nil {
         return
     }

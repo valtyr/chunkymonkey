@@ -81,8 +81,8 @@ func (p *MessageParser) PacketHoldingChange(itemID ItemID) {
     p.printf("PacketHoldingChange(%d)", itemID)
 }
 
-func (p *MessageParser) PacketPlayerAnimation(animation PlayerAnimation) {
-    p.printf("PacketPlayerAnimation(%v)", animation)
+func (p *MessageParser) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
+    p.printf("PacketEntityAnimation(%v)", animation)
 }
 
 func (p *MessageParser) PacketEntityAction(entityID EntityID, action EntityAction) {
