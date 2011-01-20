@@ -78,11 +78,11 @@ func (p *MessageParser) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *Bloc
 }
 
 func (p *MessageParser) PacketHoldingChange(itemID ItemID) {
-    p.printf("PacketHoldingChange(%d)", itemID)
+    p.printf("PacketHoldingChange(itemID=%d)", itemID)
 }
 
 func (p *MessageParser) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
-    p.printf("PacketEntityAnimation(%v)", animation)
+    p.printf("PacketEntityAnimation(entityID=%d, animation=%v)", entityID, animation)
 }
 
 func (p *MessageParser) PacketEntityAction(entityID EntityID, action EntityAction) {
@@ -91,8 +91,9 @@ func (p *MessageParser) PacketEntityAction(entityID EntityID, action EntityActio
 }
 
 func (p *MessageParser) PacketSignUpdate(position *BlockXYZ, lines [4]string) {
-    p.printf("PacketSignUpdate(position=%v, lines=%v)",
-        position, lines)
+    p.printf("PacketSignUpdate(position=%v, lines=[%q, %q, %q, %q])",
+        position,
+        lines[0], lines[1], lines[2], lines[3])
 }
 
 func (p *MessageParser) PacketDisconnect(reason string) {
@@ -126,7 +127,7 @@ func (p *MessageParser) PacketUpdateHealth(health int16) {
 }
 
 func (p *MessageParser) PacketNamedEntitySpawn(entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID) {
-    p.printf("PacketNamedEntitySpawn(entityID=%d, name=%v, position=%v, look=%v, currentItem=%d)",
+    p.printf("PacketNamedEntitySpawn(entityID=%d, name=%q, position=%v, look=%v, currentItem=%d)",
         entityID, name, position, look, currentItem)
 }
 
@@ -151,7 +152,7 @@ func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobTy
 }
 
 func (p *MessageParser) PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32) {
-    p.printf("PacketUnknownX19(field1=%d, field2=%v, field3=%d, field4=%d, field5=%d, field6=%d)",
+    p.printf("PacketUnknownX19(field1=%d, field2=%q, field3=%d, field4=%d, field5=%d, field6=%d)",
         field1, field2, field3, field4, field5, field6)
 }
 
@@ -227,7 +228,7 @@ func (p *MessageParser) PacketExplosion(position *AbsXYZ, power float32, blockOf
 }
 
 func (p *MessageParser) PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte) {
-    p.printf("PacketWindowOpen(windowID=%d, invTypeID=%d, windowTitle=%v, numSlots=%d)",
+    p.printf("PacketWindowOpen(windowID=%d, invTypeID=%d, windowTitle=%q, numSlots=%d)",
         windowID, invTypeID, windowTitle, numSlots)
 }
 
