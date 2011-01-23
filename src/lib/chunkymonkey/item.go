@@ -84,7 +84,7 @@ const (
     ItemIDLavabucket          = ItemID(327)
     ItemIDMinecart            = ItemID(328)
     ItemIDSaddle              = ItemID(329)
-    ItemIDIrondoor            = ItemID(330)
+    ItemIDIronDoor            = ItemID(330)
     ItemIDRedstone            = ItemID(331)
     ItemIDSnowball            = ItemID(332)
     ItemIDBoat                = ItemID(333)

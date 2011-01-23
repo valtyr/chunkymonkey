@@ -28,7 +28,7 @@ const (
     BlockIDSponge              = BlockID(19)
     BlockIDGlass               = BlockID(20)
     BlockIDWool                = BlockID(35)
-    BlockIDYellowflower        = BlockID(37)
+    BlockIDYellowFlower        = BlockID(37)
     BlockIDRedRose             = BlockID(38)
     BlockIDBrownMushroom       = BlockID(39)
     BlockIDRedMushroom         = BlockID(40)
@@ -62,7 +62,7 @@ const (
     BlockIDWallSign            = BlockID(68)
     BlockIDLever               = BlockID(69)
     BlockIDStonePressurePlate  = BlockID(70)
-    BlockIDIrondoor            = BlockID(71)
+    BlockIDIronDoor            = BlockID(71)
     BlockIDWoodenPressurePlate = BlockID(72)
     BlockIDRedstoneOre         = BlockID(73)
     BlockIDGlowingRedstoneOre  = BlockID(74)
@@ -97,6 +97,7 @@ type BlockType struct {
     destructable bool
     // Items, up to one of which will potentially spawn when block destroyed
     droppedItems []BlockDropItem
+    IsSolid      bool
 }
 
 // Returns true if the block should be destroyed
@@ -138,6 +139,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
             name:         name,
             transparency: -1,
             destructable: true,
+            IsSolid:      true,
         }
     }
 
@@ -163,7 +165,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
     newBlock(BlockIDSponge, "sponge")
     newBlock(BlockIDGlass, "glass")
     newBlock(BlockIDWool, "wool")
-    newBlock(BlockIDYellowflower, "yellow flower")
+    newBlock(BlockIDYellowFlower, "yellow flower")
     newBlock(BlockIDRedRose, "red rose")
     newBlock(BlockIDBrownMushroom, "brown mushroom")
     newBlock(BlockIDRedMushroom, "red mushroom")
@@ -197,7 +199,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
     newBlock(BlockIDWallSign, "wall sign")
     newBlock(BlockIDLever, "lever")
     newBlock(BlockIDStonePressurePlate, "stone pressure plate")
-    newBlock(BlockIDIrondoor, "irondoor")
+    newBlock(BlockIDIronDoor, "irondoor")
     newBlock(BlockIDWoodenPressurePlate, "wooden pressure plate")
     newBlock(BlockIDRedstoneOre, "redstone ore")
     newBlock(BlockIDGlowingRedstoneOre, "glowing redstone ore")
@@ -226,17 +228,32 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
     }
     // Setup transparent blocks
     setTrans(0, []BlockID{BlockIDAir, BlockIDSapling, BlockIDGlass,
-        BlockIDYellowflower, BlockIDRedRose, BlockIDBrownMushroom,
+        BlockIDYellowFlower, BlockIDRedRose, BlockIDBrownMushroom,
         BlockIDRedMushroom, BlockIDFire, BlockIDMobSpawner, BlockIDWoodenStairs,
         BlockIDRedstoneWire, BlockIDCrops, BlockIDSignPost, BlockIDLadder,
         BlockIDMinecartTracks, BlockIDCobblestoneStairs, BlockIDWallSign,
-        BlockIDLever, BlockIDIrondoor, BlockIDRedstoneTorchOff,
+        BlockIDLever, BlockIDIronDoor, BlockIDRedstoneTorchOff,
         BlockIDRedstoneTorchOn, BlockIDStoneButton, BlockIDSnow, BlockIDCactus,
         BlockIDSugarCane, BlockIDFence, BlockIDPortal})
 
     // Setup semi-transparent blocks
     setTrans(1, []BlockID{BlockIDLeaves})
     setTrans(3, []BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce})
+
+    // Setup non-solid blocks
+    nonSolid := []BlockID {
+        BlockIDAir, BlockIDSapling, BlockIDWater, BlockIDStationaryWater,
+        BlockIDLava, BlockIDStationaryLava, BlockIDYellowFlower,
+        BlockIDRedRose, BlockIDBrownMushroom, BlockIDRedMushroom, BlockIDTorch,
+        BlockIDFire, BlockIDRedstoneWire, BlockIDCrops, BlockIDSignPost,
+        BlockIDLadder, BlockIDMinecartTracks, BlockIDWallSign, BlockIDLever,
+        BlockIDStonePressurePlate, BlockIDIronDoor, BlockIDWoodenPressurePlate,
+        BlockIDRedstoneTorchOff, BlockIDRedstoneTorchOn, BlockIDStoneButton,
+        BlockIDSugarCane, BlockIDPortal,
+    }
+    for _, blockID := range nonSolid {
+        b[blockID].IsSolid = false
+    }
 
     // Setup behaviour of blocks when destroyed
     setMinedDropsSameItem := func(blockTypes []BlockID) {
@@ -250,6 +267,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
                 })
         }
     }
+
     type Drop struct {
         minedBlockType  BlockID
         droppedItemType ItemID
@@ -280,7 +298,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
     setMinedDropsSameItem([]BlockID{
         BlockIDDirt, BlockIDCobblestone, BlockIDPlank, BlockIDSapling,
         BlockIDSand, BlockIDGoldOre, BlockIDIronOre, BlockIDLog, BlockIDSponge,
-        BlockIDWool, BlockIDYellowflower, BlockIDRedRose, BlockIDBrownMushroom,
+        BlockIDWool, BlockIDYellowFlower, BlockIDRedRose, BlockIDBrownMushroom,
         BlockIDRedMushroom, BlockIDGoldBlock, BlockIDIronBlock,
         BlockIDStoneSlab, BlockIDBrick, BlockIDMossStone, BlockIDObsidian,
         BlockIDTorch, BlockIDWoodenStairs, BlockIDChest, BlockIDDiamondBlock,
@@ -302,7 +320,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
         Drop{BlockIDSignPost, ItemIDSign},
         Drop{BlockIDWoodenDoor, ItemIDWoodendoor},
         Drop{BlockIDWallSign, ItemIDSign},
-        Drop{BlockIDIrondoor, ItemIDIrondoor},
+        Drop{BlockIDIronDoor, ItemIDIronDoor},
         Drop{BlockIDSnow, ItemID(BlockIDDirt)},
         Drop{BlockIDSugarCane, ItemIDSugarCane},
         Drop{BlockIDGlowstone, ItemIDGlowstoneDust},
