@@ -241,7 +241,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
     setTrans(3, []BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce})
 
     // Setup non-solid blocks
-    nonSolid := []BlockID {
+    nonSolid := []BlockID{
         BlockIDAir, BlockIDSapling, BlockIDWater, BlockIDStationaryWater,
         BlockIDLava, BlockIDStationaryLava, BlockIDYellowFlower,
         BlockIDRedRose, BlockIDBrownMushroom, BlockIDRedMushroom, BlockIDTorch,
