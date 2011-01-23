@@ -112,7 +112,7 @@ const (
     DigStarted    = DigStatus(0)
     DigDigging    = DigStatus(1)
     DigStopped    = DigStatus(2)
-    DestroyBlockBroke = DigStatus(3)
+    DigBlockBroke = DigStatus(3)
 )
 
 // Window/inventory-related types and constants
