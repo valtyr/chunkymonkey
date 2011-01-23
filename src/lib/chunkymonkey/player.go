@@ -112,7 +112,7 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
     // TODO validate that the player is actually somewhere near the block
 
-    if status == DigBlockBroke {
+    if status == DestroyBlockBroke {
         // TODO validate that the player has dug long enough to stop speed
         // hacking (based on block type and tool used - non-trivial).
 
@@ -125,7 +125,7 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
                 return
             }
 
-            chunk.DigBlock(subLoc)
+            chunk.DestroyBlock(subLoc)
         })
     }
 }

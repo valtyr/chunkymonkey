@@ -62,25 +62,22 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockT
     return
 }
 
-func (chunk *Chunk) DigBlock(subLoc *SubChunkXYZ) (err bool) {
+func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (err bool) {
     index, shift, err := blockIndex(subLoc)
     if err {
         return
     }
 
-    blockType := BlockID(chunk.Blocks[index])
+    blockTypeID := BlockID(chunk.Blocks[index])
     blockLoc := chunk.XZ.ToBlockXYZ(subLoc)
 
-    // Experimental code - we spawn earth blocks if earth/grass was dug out
-    if blockType == BlockIDDirt || blockType == BlockIDGrass ||
-        blockType == BlockIDSand || blockType == BlockIDStone ||
-        blockType == BlockIDCobblestone {
-        // TODO model the item's fall to the ground. This will involve physics
-        // modelling for falling, and eventually water flow
-        NewItem(chunk.mgr.game, ItemID(blockType), 1, blockLoc.ToAbsIntXYZ())
+    if blockType, ok := chunk.mgr.game.blockTypes[blockTypeID]; ok {
+        if blockType.Destroy(chunk.mgr.game, blockLoc) {
+            chunk.setBlock(blockLoc, index, shift, BlockIDAir, 0)
+        }
+    } else {
+        log.Printf("Attempted to destroy unknown block ID %d", blockTypeID)
     }
-
-    chunk.setBlock(blockLoc, index, shift, BlockIDAir, 0)
 
     return
 }

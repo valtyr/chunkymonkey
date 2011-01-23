@@ -9,6 +9,7 @@ import (
 )
 
 const (
+    // TODO add in new items from Beta 1.2
     ItemIDIronSpade           = ItemID(256)
     ItemIDIronPickaxe         = ItemID(257)
     ItemIDIronAxe             = ItemID(258)
@@ -91,7 +92,7 @@ const (
     ItemIDMilkBucket          = ItemID(335)
     ItemIDClayBrick           = ItemID(336)
     ItemIDClayBalls           = ItemID(337)
-    ItemIDReed                = ItemID(338)
+    ItemIDSugarCane           = ItemID(338)
     ItemIDPaper               = ItemID(339)
     ItemIDBook                = ItemID(340)
     ItemIDSlimeBall           = ItemID(341)
@@ -101,7 +102,7 @@ const (
     ItemIDCompass             = ItemID(345)
     ItemIDFishingRod          = ItemID(346)
     ItemIDWatch               = ItemID(347)
-    ItemIDLightstoneDust      = ItemID(348)
+    ItemIDGlowstoneDust       = ItemID(348)
     ItemIDRawFish             = ItemID(349)
     ItemIDCookedFish          = ItemID(350)
     ItemIDGoldRecord          = ItemID(2256)

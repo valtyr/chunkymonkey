@@ -5,12 +5,13 @@ import (
 )
 
 const (
+    // TODO add in new blocks from Beta 1.2
     BlockIDAir                 = BlockID(0)
     BlockIDStone               = BlockID(1)
     BlockIDGrass               = BlockID(2)
     BlockIDDirt                = BlockID(3)
     BlockIDCobblestone         = BlockID(4)
-    BlockIDWood                = BlockID(5)
+    BlockIDPlank               = BlockID(5)
     BlockIDSapling             = BlockID(6)
     BlockIDBedrock             = BlockID(7)
     BlockIDWater               = BlockID(8)
@@ -26,34 +27,19 @@ const (
     BlockIDLeaves              = BlockID(18)
     BlockIDSponge              = BlockID(19)
     BlockIDGlass               = BlockID(20)
-    BlockIDRedCloth            = BlockID(21)
-    BlockIDOrangeCloth         = BlockID(22)
-    BlockIDYellowCloth         = BlockID(23)
-    BlockIDLimeCloth           = BlockID(24)
-    BlockIDGreenCloth          = BlockID(25)
-    BlockIDAquagreenCloth      = BlockID(26)
-    BlockIDCyanCloth           = BlockID(27)
-    BlockIDBlueCloth           = BlockID(28)
-    BlockIDPurpleCloth         = BlockID(29)
-    BlockIDIndigoCloth         = BlockID(30)
-    BlockIDVioletCloth         = BlockID(31)
-    BlockIDMagentaCloth        = BlockID(32)
-    BlockIDPinkCloth           = BlockID(33)
-    BlockIDBlackCloth          = BlockID(34)
-    BlockIDGrayCloth           = BlockID(35)
-    BlockIDWhiteCloth          = BlockID(36)
+    BlockIDWool                = BlockID(35)
     BlockIDYellowflower        = BlockID(37)
     BlockIDRedRose             = BlockID(38)
     BlockIDBrownMushroom       = BlockID(39)
     BlockIDRedMushroom         = BlockID(40)
     BlockIDGoldBlock           = BlockID(41)
     BlockIDIronBlock           = BlockID(42)
-    BlockIDDoubleStep          = BlockID(43)
-    BlockIDStep                = BlockID(44)
+    BlockIDDoubleStoneSlab     = BlockID(43)
+    BlockIDStoneSlab           = BlockID(44)
     BlockIDBrick               = BlockID(45)
     BlockIDTNT                 = BlockID(46)
     BlockIDBookshelf           = BlockID(47)
-    BlockIDMossyCobblestone    = BlockID(48)
+    BlockIDMossStone           = BlockID(48)
     BlockIDObsidian            = BlockID(49)
     BlockIDTorch               = BlockID(50)
     BlockIDFire                = BlockID(51)
@@ -65,11 +51,11 @@ const (
     BlockIDDiamondBlock        = BlockID(57)
     BlockIDWorkbench           = BlockID(58)
     BlockIDCrops               = BlockID(59)
-    BlockIDSoil                = BlockID(60)
+    BlockIDFarmland            = BlockID(60)
     BlockIDFurnace             = BlockID(61)
     BlockIDBurningFurnace      = BlockID(62)
     BlockIDSignPost            = BlockID(63)
-    BlockIDWoodenoor           = BlockID(64)
+    BlockIDWoodenDoor          = BlockID(64)
     BlockIDLadder              = BlockID(65)
     BlockIDMinecartTracks      = BlockID(66)
     BlockIDCobblestoneStairs   = BlockID(67)
@@ -88,29 +74,70 @@ const (
     BlockIDSnowBlock           = BlockID(80)
     BlockIDCactus              = BlockID(81)
     BlockIDClay                = BlockID(82)
-    BlockIDReed                = BlockID(83)
+    BlockIDSugarCane           = BlockID(83)
     BlockIDJukebox             = BlockID(84)
     BlockIDFence               = BlockID(85)
     BlockIDPumpkin             = BlockID(86)
-    BlockIDNetherstone         = BlockID(87)
-    BlockIDSlowSand            = BlockID(88)
-    BlockIDLightstone          = BlockID(89)
+    BlockIDNetherrack          = BlockID(87)
+    BlockIDSoulSand            = BlockID(88)
+    BlockIDGlowstone           = BlockID(89)
     BlockIDPortal              = BlockID(90)
     BlockIDJackOLantern        = BlockID(91)
 )
 
-type Block struct {
-    name         string
-    transparency int8
+type BlockDropItem struct {
+    droppedItem ItemID
+    probability byte // Probabilities specified as a percentage
+    quantity    ItemCount
 }
 
-func LoadStandardBlocks() map[BlockID]*Block {
-    b := make(map[BlockID]*Block)
+type BlockType struct {
+    name         string
+    transparency int8
+    destructable bool
+    // Items, up to one of which will potentially spawn when block destroyed
+    droppedItems []BlockDropItem
+}
+
+// Returns true if the block should be destroyed
+// Currently this function must be called within the Game's goroutine.
+func (blockType *BlockType) Destroy(game *Game, blockLoc *BlockXYZ) bool {
+    if len(blockType.droppedItems) > 0 {
+        // Possibly drop item(s)
+        r := byte(game.rand.Intn(100))
+        for _, dropItem := range blockType.droppedItems {
+            if dropItem.probability > r {
+                // TODO model the item's fall to the ground. This will involve physics
+                // modelling for falling, and eventually water flow. This
+                // simulation will need to live in a game loop
+                for i := dropItem.quantity; i > 0; i-- {
+                    position := blockLoc.ToAbsIntXYZ()
+                    position.IAdd(
+                        AbsIntCoord(game.rand.Int31n(PixelsPerBlock)),
+                        AbsIntCoord(0),
+                        AbsIntCoord(game.rand.Int31n(PixelsPerBlock)),
+                    )
+                    NewItem(
+                        game, dropItem.droppedItem, 1,
+                        position)
+                }
+                break
+            }
+            r -= dropItem.probability
+        }
+    }
+
+    return blockType.destructable
+}
+
+func LoadStandardBlockTypes() map[BlockID]*BlockType {
+    b := make(map[BlockID]*BlockType)
 
     newBlock := func(id BlockID, name string) {
-        b[id] = &Block{
+        b[id] = &BlockType{
             name:         name,
             transparency: -1,
+            destructable: true,
         }
     }
 
@@ -119,7 +146,7 @@ func LoadStandardBlocks() map[BlockID]*Block {
     newBlock(BlockIDGrass, "grass")
     newBlock(BlockIDDirt, "dirt")
     newBlock(BlockIDCobblestone, "cobblestone")
-    newBlock(BlockIDWood, "wood")
+    newBlock(BlockIDPlank, "wood")
     newBlock(BlockIDSapling, "sapling")
     newBlock(BlockIDBedrock, "bedrock")
     newBlock(BlockIDWater, "water")
@@ -135,34 +162,19 @@ func LoadStandardBlocks() map[BlockID]*Block {
     newBlock(BlockIDLeaves, "leaves")
     newBlock(BlockIDSponge, "sponge")
     newBlock(BlockIDGlass, "glass")
-    newBlock(BlockIDRedCloth, "red cloth")
-    newBlock(BlockIDOrangeCloth, "orange cloth")
-    newBlock(BlockIDYellowCloth, "yellow cloth")
-    newBlock(BlockIDLimeCloth, "lime cloth")
-    newBlock(BlockIDGreenCloth, "green cloth")
-    newBlock(BlockIDAquagreenCloth, "aquagreen cloth")
-    newBlock(BlockIDCyanCloth, "cyan cloth")
-    newBlock(BlockIDBlueCloth, "blue cloth")
-    newBlock(BlockIDPurpleCloth, "purple cloth")
-    newBlock(BlockIDIndigoCloth, "indigo cloth")
-    newBlock(BlockIDVioletCloth, "violet cloth")
-    newBlock(BlockIDMagentaCloth, "magenta cloth")
-    newBlock(BlockIDPinkCloth, "Pink Cloth")
-    newBlock(BlockIDBlackCloth, "Black Cloth")
-    newBlock(BlockIDGrayCloth, "Gray Cloth")
-    newBlock(BlockIDWhiteCloth, "white cloth")
-    newBlock(BlockIDYellowflower, "yellowflower")
+    newBlock(BlockIDWool, "wool")
+    newBlock(BlockIDYellowflower, "yellow flower")
     newBlock(BlockIDRedRose, "red rose")
     newBlock(BlockIDBrownMushroom, "brown mushroom")
     newBlock(BlockIDRedMushroom, "red mushroom")
     newBlock(BlockIDGoldBlock, "gold block")
     newBlock(BlockIDIronBlock, "iron block")
-    newBlock(BlockIDDoubleStep, "double step")
-    newBlock(BlockIDStep, "step")
+    newBlock(BlockIDDoubleStoneSlab, "double stone slab")
+    newBlock(BlockIDStoneSlab, "stone slab")
     newBlock(BlockIDBrick, "brick")
-    newBlock(BlockIDTNT, "t n t")
+    newBlock(BlockIDTNT, "TNT")
     newBlock(BlockIDBookshelf, "bookshelf")
-    newBlock(BlockIDMossyCobblestone, "mossy cobblestone")
+    newBlock(BlockIDMossStone, "moss stone")
     newBlock(BlockIDObsidian, "obsidian")
     newBlock(BlockIDTorch, "torch")
     newBlock(BlockIDFire, "fire")
@@ -174,11 +186,11 @@ func LoadStandardBlocks() map[BlockID]*Block {
     newBlock(BlockIDDiamondBlock, "diamond block")
     newBlock(BlockIDWorkbench, "workbench")
     newBlock(BlockIDCrops, "crops")
-    newBlock(BlockIDSoil, "soil")
+    newBlock(BlockIDFarmland, "soil")
     newBlock(BlockIDFurnace, "furnace")
     newBlock(BlockIDBurningFurnace, "burning furnace")
     newBlock(BlockIDSignPost, "sign post")
-    newBlock(BlockIDWoodenoor, "wooden door")
+    newBlock(BlockIDWoodenDoor, "wooden door")
     newBlock(BlockIDLadder, "ladder")
     newBlock(BlockIDMinecartTracks, "minecart tracks")
     newBlock(BlockIDCobblestoneStairs, "cobblestone stairs")
@@ -197,13 +209,13 @@ func LoadStandardBlocks() map[BlockID]*Block {
     newBlock(BlockIDSnowBlock, "snow block")
     newBlock(BlockIDCactus, "cactus")
     newBlock(BlockIDClay, "clay")
-    newBlock(BlockIDReed, "reed")
+    newBlock(BlockIDSugarCane, "sugar cane")
     newBlock(BlockIDJukebox, "jukebox")
     newBlock(BlockIDFence, "fence")
     newBlock(BlockIDPumpkin, "pumpkin")
-    newBlock(BlockIDNetherstone, "netherstone")
-    newBlock(BlockIDSlowSand, "slow sand")
-    newBlock(BlockIDLightstone, "lightstone")
+    newBlock(BlockIDNetherrack, "netherrack")
+    newBlock(BlockIDSoulSand, "soul sand")
+    newBlock(BlockIDGlowstone, "glowstone")
     newBlock(BlockIDPortal, "portal")
     newBlock(BlockIDJackOLantern, "jack o lantern")
 
@@ -220,11 +232,100 @@ func LoadStandardBlocks() map[BlockID]*Block {
         BlockIDMinecartTracks, BlockIDCobblestoneStairs, BlockIDWallSign,
         BlockIDLever, BlockIDIrondoor, BlockIDRedstoneTorchOff,
         BlockIDRedstoneTorchOn, BlockIDStoneButton, BlockIDSnow, BlockIDCactus,
-        BlockIDReed, BlockIDFence, BlockIDPortal})
+        BlockIDSugarCane, BlockIDFence, BlockIDPortal})
 
     // Setup semi-transparent blocks
     setTrans(1, []BlockID{BlockIDLeaves})
     setTrans(3, []BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce})
+
+    // Setup behaviour of blocks when destroyed
+    setMinedDropsSameItem := func(blockTypes []BlockID) {
+        for _, blockType := range blockTypes {
+            b[blockType].droppedItems = append(
+                b[blockType].droppedItems,
+                BlockDropItem{
+                    ItemID(blockType),
+                    100,
+                    1,
+                })
+        }
+    }
+    type Drop struct {
+        minedBlockType  BlockID
+        droppedItemType ItemID
+    }
+    setMinedDropBlock := func(drops []Drop) {
+        for _, drop := range drops {
+            b[drop.minedBlockType].droppedItems = append(
+                b[drop.minedBlockType].droppedItems,
+                BlockDropItem{
+                    drop.droppedItemType,
+                    100,
+                    1,
+                })
+        }
+    }
+
+    b[BlockIDBedrock].destructable = false
+
+    // TODO crops are more complicated, and need code to look at their metadata
+    // to decide what to drop.
+    // TODO ice blocks are more complicated as to what they do when destroyed
+
+    // TODO data about tool usage
+
+    // TODO what item ID drops for redstone torches (on vs off state)
+
+    // Blocks that drop the same ItemID as BlockID 100% of the time
+    setMinedDropsSameItem([]BlockID{
+        BlockIDDirt, BlockIDCobblestone, BlockIDPlank, BlockIDSapling,
+        BlockIDSand, BlockIDGoldOre, BlockIDIronOre, BlockIDLog, BlockIDSponge,
+        BlockIDWool, BlockIDYellowflower, BlockIDRedRose, BlockIDBrownMushroom,
+        BlockIDRedMushroom, BlockIDGoldBlock, BlockIDIronBlock,
+        BlockIDStoneSlab, BlockIDBrick, BlockIDMossStone, BlockIDObsidian,
+        BlockIDTorch, BlockIDWoodenStairs, BlockIDChest, BlockIDDiamondBlock,
+        BlockIDWorkbench, BlockIDLadder, BlockIDMinecartTracks,
+        BlockIDCobblestoneStairs, BlockIDLever, BlockIDStonePressurePlate,
+        BlockIDWoodenPressurePlate, BlockIDStoneButton, BlockIDCactus,
+        BlockIDClay, BlockIDJukebox, BlockIDFence, BlockIDPumpkin,
+        BlockIDNetherrack, BlockIDSoulSand, BlockIDGlowstone,
+        BlockIDJackOLantern,
+    })
+    // Blocks that drop a single different item 100% of the time
+    setMinedDropBlock([]Drop{
+        Drop{BlockIDStone, ItemID(BlockIDCobblestone)},
+        Drop{BlockIDGrass, ItemID(BlockIDDirt)},
+        Drop{BlockIDCoalOre, ItemIDCoal},
+        Drop{BlockIDDoubleStoneSlab, ItemID(BlockIDStoneSlab)},
+        Drop{BlockIDDiamondOre, ItemIDDiamond},
+        Drop{BlockIDFarmland, ItemID(BlockIDDirt)},
+        Drop{BlockIDSignPost, ItemIDSign},
+        Drop{BlockIDWoodenDoor, ItemIDWoodendoor},
+        Drop{BlockIDWallSign, ItemIDSign},
+        Drop{BlockIDIrondoor, ItemIDIrondoor},
+        Drop{BlockIDSnow, ItemID(BlockIDDirt)},
+        Drop{BlockIDSugarCane, ItemIDSugarCane},
+        Drop{BlockIDGlowstone, ItemIDGlowstoneDust},
+    })
+    // Blocks that drop things with varying probability (or one of several
+    // items)
+    b[BlockIDGravel].droppedItems = []BlockDropItem{
+        BlockDropItem{ItemIDFlint, 10, 1},
+        BlockDropItem{ItemID(BlockIDGravel), 90, 1},
+    }
+    b[BlockIDLeaves].droppedItems = []BlockDropItem{
+        // TODO get more accurate probability of sapling drop
+        BlockDropItem{ItemID(BlockIDSapling), 5, 1},
+    }
+    b[BlockIDRedstoneOre].droppedItems = []BlockDropItem{
+        // TODO find probabilities of dropping 4 vs 5 items
+        BlockDropItem{ItemIDRedstone, 50, 4},
+        BlockDropItem{ItemIDRedstone, 50, 5},
+    }
+    b[BlockIDGlowingRedstoneOre].droppedItems = b[BlockIDRedstoneOre].droppedItems
+    b[BlockIDSnowBlock].droppedItems = []BlockDropItem{
+        BlockDropItem{ItemIDSnowball, 100, 4},
+    }
 
     return b
 }

@@ -112,7 +112,7 @@ const (
     DigStarted    = DigStatus(0)
     DigDigging    = DigStatus(1)
     DigStopped    = DigStatus(2)
-    DigBlockBroke = DigStatus(3)
+    DestroyBlockBroke = DigStatus(3)
 )
 
 // Window/inventory-related types and constants
@@ -317,6 +317,12 @@ func (abs *AbsIntXYZ) ToChunkXZ() *ChunkXZ {
         ChunkCoord(chunkX),
         ChunkCoord(chunkZ),
     }
+}
+
+func (abs *AbsIntXYZ) IAdd(dx, dy, dz AbsIntCoord) {
+    abs.X += dx
+    abs.Y += dy
+    abs.Z += dz
 }
 
 func coordDivMod(num, denom int32) (div, mod int32) {

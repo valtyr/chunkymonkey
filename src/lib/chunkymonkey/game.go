@@ -7,6 +7,7 @@ import (
     "net"
     "os"
     "path"
+    "rand"
     "time"
 
     "nbt/nbt"
@@ -45,7 +46,8 @@ type Game struct {
     players       map[EntityID]*Player
     items         map[EntityID]*Item
     time          TimeOfDay
-    blockTypes    map[BlockID]*Block
+    blockTypes    map[BlockID]*BlockType
+    rand          *rand.Rand
 }
 
 func (game *Game) Login(conn net.Conn) {
@@ -212,7 +214,8 @@ func NewGame(worldPath string) (game *Game) {
         mainQueue:    make(chan func(*Game), 256),
         players:      make(map[EntityID]*Player),
         items:        make(map[EntityID]*Item),
-        blockTypes:   LoadStandardBlocks(),
+        blockTypes:   LoadStandardBlockTypes(),
+        rand:         rand.New(rand.NewSource(1)), // TODO use a better random seed
     }
     chunkManager.game = game
 
