@@ -46,12 +46,7 @@ func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, err bool) {
 }
 
 // Sets a block and its data. Returns true if the block was not changed.
-func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetadata byte) (err bool) {
-    index, shift, err := blockIndex(subLoc)
-    if err {
-        return
-    }
-
+func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockType BlockID, blockMetadata byte) {
     chunk.Blocks[index] = byte(blockType)
 
     mask := byte(0x0f) << shift
@@ -59,23 +54,34 @@ func (chunk *Chunk) SetBlock(subLoc *SubChunkXYZ, blockType BlockID, blockMetada
     twoBlockData = ((blockMetadata << shift) & mask) | (twoBlockData & ^mask)
     chunk.BlockData[index/2] = twoBlockData
 
-    // Tell players that the block was destroyed
+    // Tell players that the block changed
     packet := &bytes.Buffer{}
-    proto.WriteBlockChange(packet, chunk.XZ.ToBlockXYZ(subLoc), blockType, blockMetadata)
+    proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
     chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.XZ)
 
     return
 }
 
-// Returns information about the block at the given location. err is true if
-// subLoc is outside of the chunk.
-func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, err bool) {
-    index, _, err := blockIndex(subLoc)
+func (chunk *Chunk) DigBlock(subLoc *SubChunkXYZ) (err bool) {
+    index, shift, err := blockIndex(subLoc)
     if err {
         return
     }
 
-    blockType = BlockID(chunk.Blocks[index])
+    blockType := BlockID(chunk.Blocks[index])
+    blockLoc := chunk.XZ.ToBlockXYZ(subLoc)
+
+    // Experimental code - we spawn earth blocks if earth/grass was dug out
+    if blockType == BlockIDDirt || blockType == BlockIDGrass ||
+        blockType == BlockIDSand || blockType == BlockIDStone ||
+        blockType == BlockIDCobblestone {
+        // TODO model the item's fall to the ground. This will involve physics
+        // modelling for falling, and eventually water flow
+        NewItem(chunk.mgr.game, ItemID(blockType), 1, blockLoc.ToAbsIntXYZ())
+    }
+
+    chunk.setBlock(blockLoc, index, shift, BlockIDAir, 0)
+
     return
 }
 

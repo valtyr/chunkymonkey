@@ -125,21 +125,7 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
                 return
             }
 
-            blockType, err := chunk.GetBlock(subLoc)
-            if err {
-                return
-            }
-
-            if !chunk.SetBlock(subLoc, BlockIDAir, 0) {
-                // Experimental code - we spawn earth blocks if earth/grass was dug out
-                if blockType == BlockIDDirt || blockType == BlockIDGrass ||
-                    blockType == BlockIDSand || blockType == BlockIDStone ||
-                    blockType == BlockIDCobblestone {
-                    // TODO model the item's fall to the ground. Do we need
-                    // update clients as to its final position?
-                    NewItem(game, ItemID(blockType), 1, blockLoc.ToAbsIntXYZ())
-                }
-            }
+            chunk.DigBlock(subLoc)
         })
     }
 }
