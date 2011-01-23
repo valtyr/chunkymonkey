@@ -107,16 +107,16 @@ type ClientPacketHandler interface {
     PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses)
     PacketSpawnPosition(position *BlockXYZ)
     PacketUpdateHealth(health int16)
-    PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes)
+    PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, orientation *OrientationBytes)
     PacketItemCollect(collectedItem EntityID, collector EntityID)
     PacketObjectSpawn(entityID EntityID, objType ObjTypeID, position *AbsIntXYZ)
-    PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []EntityMetadata)
+    PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, look *LookBytes, data []EntityMetadata)
     PacketPaintingSpawn(entityID EntityID, title string, position *BlockXYZ, paintingType PaintingTypeID)
     PacketEntityVelocity(entityID EntityID, velocity *Velocity)
     PacketEntityDestroy(entityID EntityID)
     PacketEntity(entityID EntityID)
     PacketEntityRelMove(entityID EntityID, movement *RelMove)
-    PacketEntityLook(entityID EntityID, yaw, pitch AngleBytes)
+    PacketEntityLook(entityID EntityID, look *LookBytes)
     PacketEntityTeleport(entityID EntityID, position *AbsIntXYZ, look *LookBytes)
     PacketEntityStatus(entityID EntityID, status EntityStatus)
     PacketEntityMetadata(entityID EntityID, metadata []EntityMetadata)
@@ -1181,9 +1181,7 @@ func readItemSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Error)
         packet.Count,
         packet.Uses,
         &AbsIntXYZ{packet.X, packet.Y, packet.Z},
-        packet.Yaw,
-        packet.Pitch,
-        packet.Roll)
+        &OrientationBytes{packet.Yaw, packet.Pitch, packet.Roll})
 
     return
 }
@@ -1265,7 +1263,7 @@ func readObjectSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Erro
 
 // packetIDEntitySpawn
 
-func WriteEntitySpawn(writer io.Writer, entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, data []EntityMetadata) (err os.Error) {
+func WriteEntitySpawn(writer io.Writer, entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, look *LookBytes, data []EntityMetadata) (err os.Error) {
     var packet = struct {
         PacketID byte
         EntityID EntityID
@@ -1280,8 +1278,7 @@ func WriteEntitySpawn(writer io.Writer, entityID EntityID, mobType EntityMobType
         entityID,
         mobType,
         position.X, position.Y, position.Z,
-        yaw,
-        pitch,
+        look.Yaw, look.Pitch,
     }
 
     if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
@@ -1315,7 +1312,8 @@ func readEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os.Erro
     handler.PacketEntitySpawn(
         EntityID(packet.EntityID), packet.MobType,
         &AbsIntXYZ{packet.X, packet.Y, packet.Z},
-        packet.Yaw, packet.Pitch, metadata)
+        &LookBytes{packet.Yaw, packet.Pitch},
+        metadata)
 
     return err
 }
@@ -1533,7 +1531,7 @@ func readEntityLook(reader io.Reader, handler ClientPacketHandler) (err os.Error
 
     handler.PacketEntityLook(
         packet.EntityID,
-        packet.Yaw, packet.Pitch)
+        &LookBytes{packet.Yaw, packet.Pitch})
 
     return
 }
@@ -1576,7 +1574,7 @@ func readEntityLookAndRelMove(reader io.Reader, handler ClientPacketHandler) (er
 
     handler.PacketEntityLook(
         packet.EntityID,
-        packet.Yaw, packet.Pitch)
+        &LookBytes{packet.Yaw, packet.Pitch})
 
     return
 }

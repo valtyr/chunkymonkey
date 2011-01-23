@@ -131,9 +131,9 @@ func (p *MessageParser) PacketNamedEntitySpawn(entityID EntityID, name string, p
         entityID, name, position, look, currentItem)
 }
 
-func (p *MessageParser) PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, yaw, pitch, roll AngleBytes) {
-    p.printf("PacketItemSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, yaw=%d, pitch=%d, roll=%d)",
-        entityID, itemID, count, uses, location, yaw, pitch, roll)
+func (p *MessageParser) PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, orientation *OrientationBytes) {
+    p.printf("PacketItemSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, orientation=%v)",
+        entityID, itemID, count, uses, location, orientation)
 }
 
 func (p *MessageParser) PacketItemCollect(collectedItem EntityID, collector EntityID) {
@@ -146,9 +146,9 @@ func (p *MessageParser) PacketObjectSpawn(entityID EntityID, objType ObjTypeID, 
         entityID, objType, position)
 }
 
-func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, yaw AngleBytes, pitch AngleBytes, metadata []proto.EntityMetadata) {
-    p.printf("PacketEntitySpawn(entityID=%d, mobType=%d, position=%v, yaw=%d, pitch=%d, metadata=%v)",
-        entityID, mobType, position, yaw, pitch, metadata)
+func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, look *LookBytes, metadata []proto.EntityMetadata) {
+    p.printf("PacketEntitySpawn(entityID=%d, mobType=%d, position=%v, look=%v, metadata=%v)",
+        entityID, mobType, position, look, metadata)
 }
 
 func (p *MessageParser) PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32) {
@@ -179,9 +179,9 @@ func (p *MessageParser) PacketEntityRelMove(entityID EntityID, movement *RelMove
         entityID, movement)
 }
 
-func (p *MessageParser) PacketEntityLook(entityID EntityID, yaw, pitch AngleBytes) {
-    p.printf("PacketEntityLook(entityID=%d, yaw=%d, pitch=%d)",
-        entityID, yaw, pitch)
+func (p *MessageParser) PacketEntityLook(entityID EntityID, look *LookBytes) {
+    p.printf("PacketEntityLook(entityID=%d, look=%v)",
+        entityID, look)
 }
 
 func (p *MessageParser) PacketEntityTeleport(entityID EntityID, position *AbsIntXYZ, look *LookBytes) {
