@@ -113,14 +113,16 @@ type Item struct {
     itemType    ItemID
     count       ItemCount
     position    AbsIntXYZ
+    velocity    Velocity
     orientation OrientationBytes
 }
 
-func NewItem(game *Game, itemType ItemID, count ItemCount, position *AbsIntXYZ) {
+func NewItem(game *Game, itemType ItemID, count ItemCount, position *AbsIntXYZ, velocity *Velocity) {
     item := &Item{
         itemType: itemType,
         count:    count,
         position: *position,
+        velocity: *velocity,
         // TODO proper orientation
         orientation: OrientationBytes{0, 0, 0},
     }
@@ -139,7 +141,7 @@ func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
 
     // TODO perform physics on the item and send updates
     // TODO send packetIDEntity periodically
-    err = proto.WriteEntityVelocity(writer, item.EntityID, &Velocity{0, 0, 0})
+    err = proto.WriteEntityVelocity(writer, item.EntityID, &item.velocity)
     if err != nil {
         return
     }

@@ -8,6 +8,11 @@ import (
 
 type TimeOfDay int64
 
+const (
+    DayTicksPerDay = TimeOfDay(24000)
+    DayTicksPerSecond = TimeOfDay(20)
+)
+
 type RandomSeed int64
 
 // Which 'world'?
@@ -151,7 +156,16 @@ type Velocity struct {
     X, Y, Z VelocityComponent
 }
 
-type RelMoveCoord byte
+// Velocity measured in blocks/tick
+type VelocityFloatComponent float32
+
+type VelocityFloat struct {
+    X, Y, Z VelocityFloatComponent
+}
+
+// Relative movement, using same units as AbsIntCoord, but in byte form so
+// constrained
+type RelMoveCoord int8
 
 type RelMove struct {
     X, Y, Z RelMoveCoord

@@ -25,12 +25,12 @@ type Chunk struct {
     HeightMap  []byte
 }
 
-func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, err bool) {
+func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, ok bool) {
     if subLoc.X < 0 || subLoc.Y < 0 || subLoc.Z < 0 || subLoc.X >= ChunkSizeX || subLoc.Y >= ChunkSizeY || subLoc.Z >= ChunkSizeZ {
-        err = true
+        ok = false
         index = 0
     } else {
-        err = false
+        ok = true
 
         index = int32(subLoc.Y) + (int32(subLoc.Z) * ChunkSizeY) + (int32(subLoc.X) * ChunkSizeY * ChunkSizeZ)
 
@@ -62,9 +62,20 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockT
     return
 }
 
-func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (err bool) {
-    index, shift, err := blockIndex(subLoc)
-    if err {
+func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool) {
+    index, _, ok := blockIndex(subLoc)
+    if !ok {
+        return
+    }
+
+    blockType = BlockID(chunk.Blocks[index])
+
+    return
+}
+
+func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
+    index, shift, ok := blockIndex(subLoc)
+    if !ok {
         return
     }
 
@@ -77,6 +88,7 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (err bool) {
         }
     } else {
         log.Printf("Attempted to destroy unknown block ID %d", blockTypeID)
+        ok = false
     }
 
     return

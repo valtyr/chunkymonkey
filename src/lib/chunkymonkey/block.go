@@ -120,7 +120,7 @@ func (blockType *BlockType) Destroy(game *Game, blockLoc *BlockXYZ) bool {
                     )
                     NewItem(
                         game, dropItem.droppedItem, 1,
-                        position)
+                        position, &Velocity{0, 0, 0})
                 }
                 break
             }

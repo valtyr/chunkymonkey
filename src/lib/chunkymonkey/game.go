@@ -19,6 +19,15 @@ import (
 // The player's starting position is loaded from level.dat for now
 var StartPosition AbsXYZ
 
+const (
+    ticksPerSecond = 5
+    dayTicksPerTick = DayTicksPerSecond / ticksPerSecond
+    nanosecondsInSecond = 1e9
+
+    gravityBlocksPerSecond2 = 42.0
+    gravityBlocksPerTick2 = gravityBlocksPerSecond2 / ticksPerSecond
+)
+
 func loadStartPosition(worldPath string) {
     file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
     if err != nil {
@@ -182,7 +191,7 @@ func (game *Game) mainLoop() {
 }
 
 func (game *Game) timer() {
-    ticker := time.NewTicker(1000000000) // 1 sec
+    ticker := time.NewTicker(nanosecondsInSecond / ticksPerSecond)
     for {
         <-ticker.C
         game.Enqueue(func(game *Game) { game.tick() })
@@ -193,16 +202,23 @@ func (game *Game) sendTimeUpdate() {
     buf := &bytes.Buffer{}
     proto.ServerWriteTimeUpdate(buf, game.time)
 
-    // The "keep-alive" packet to client sent here as well, as there seems no
-    // particular reason to send time and keep-alive separately for now.
+    // The "keep-alive" packet to client(s) sent here as well, as there seems
+    // no particular reason to send time and keep-alive separately for now.
     proto.WriteKeepAlive(buf)
 
     game.MulticastPacket(buf.Bytes(), nil)
 }
 
+func (game *Game) physicsTick() {
+    // TODO flowing water movement of items
+}
+
 func (game *Game) tick() {
-    game.time += 20
-    game.sendTimeUpdate()
+    game.time = (game.time + dayTicksPerTick) % DayTicksPerDay
+    if game.time % DayTicksPerSecond == 0 {
+        game.sendTimeUpdate()
+    }
+    game.physicsTick()
 }
 
 func NewGame(worldPath string) (game *Game) {
