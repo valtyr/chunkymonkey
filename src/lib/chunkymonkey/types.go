@@ -9,7 +9,7 @@ import (
 type TimeOfDay int64
 
 const (
-    DayTicksPerDay = TimeOfDay(24000)
+    DayTicksPerDay    = TimeOfDay(24000)
     DayTicksPerSecond = TimeOfDay(20)
 )
 
@@ -150,17 +150,25 @@ type TxID int16
 
 // Movement-related types and constants
 
+// VelocityComponent in millipixels / tick
 type VelocityComponent int16
+
+func VelocityComponentConstrained(v int32) VelocityComponent {
+    if v > VelocityComponentMax {
+        return VelocityComponentMax
+    } else if v < VelocityComponentMin {
+        return VelocityComponentMin
+    }
+    return VelocityComponent(v)
+}
+
+const (
+    VelocityComponentMax = 28800
+    VelocityComponentMin = -28800
+)
 
 type Velocity struct {
     X, Y, Z VelocityComponent
-}
-
-// Velocity measured in blocks/tick
-type VelocityFloatComponent float32
-
-type VelocityFloat struct {
-    X, Y, Z VelocityFloatComponent
 }
 
 // Relative movement, using same units as AbsIntCoord, but in byte form so
@@ -227,6 +235,10 @@ const (
 
     // Sometimes it is useful to convert block coordinates to pixels
     PixelsPerBlock = 32
+
+    // Millipixels are used in velocity values
+    MilliPixelsPerPixel = 1000
+    MilliPixelsPerBlock = PixelsPerBlock * MilliPixelsPerPixel
 )
 
 // Specifies exact world distance in blocks (floating point)

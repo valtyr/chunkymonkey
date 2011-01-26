@@ -20,12 +20,9 @@ import (
 var StartPosition AbsXYZ
 
 const (
-    ticksPerSecond = 5
-    dayTicksPerTick = DayTicksPerSecond / ticksPerSecond
+    ticksPerSecond      = 5
+    dayTicksPerTick     = DayTicksPerSecond / ticksPerSecond
     nanosecondsInSecond = 1e9
-
-    gravityBlocksPerSecond2 = 42.0
-    gravityBlocksPerTick2 = gravityBlocksPerSecond2 / ticksPerSecond
 )
 
 func loadStartPosition(worldPath string) {
@@ -206,16 +203,40 @@ func (game *Game) sendTimeUpdate() {
     // no particular reason to send time and keep-alive separately for now.
     proto.WriteKeepAlive(buf)
 
+    // Send entity position updates
+    // TODO send only to players in range
+    for _, item := range game.items {
+        item.SendUpdate(buf)
+    }
+
     game.MulticastPacket(buf.Bytes(), nil)
 }
 
 func (game *Game) physicsTick() {
     // TODO flowing water movement of items
+
+    destroyedEntityIDs := []EntityID{}
+
+    for _, item := range game.items {
+        if item.PhysicsTick() {
+            destroyedEntityIDs = append(destroyedEntityIDs, item.Entity.EntityID)
+        }
+    }
+
+    if len(destroyedEntityIDs) > 0 {
+        buf := &bytes.Buffer{}
+        for _, entityID := range destroyedEntityIDs {
+            proto.WriteEntityDestroy(buf, entityID)
+            game.items[entityID] = nil, false
+        }
+        // TODO send only to players in range
+        game.MulticastPacket(buf.Bytes(), nil)
+    }
 }
 
 func (game *Game) tick() {
     game.time = (game.time + dayTicksPerTick) % DayTicksPerDay
-    if game.time % DayTicksPerSecond == 0 {
+    if game.time%DayTicksPerSecond == 0 {
         game.sendTimeUpdate()
     }
     game.physicsTick()
