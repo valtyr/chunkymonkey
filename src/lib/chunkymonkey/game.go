@@ -13,6 +13,7 @@ import (
     "nbt/nbt"
     "chunkymonkey/proto"
     "chunkymonkey/record"
+    "chunkymonkey/serverAuth"
     .   "chunkymonkey/types"
 )
 
@@ -48,6 +49,7 @@ type Game struct {
     time          TimeOfDay
     blockTypes    map[BlockID]*BlockType
     rand          *rand.Rand
+    serverId      string
 }
 
 func (game *Game) Login(conn net.Conn) {
@@ -59,7 +61,32 @@ func (game *Game) Login(conn net.Conn) {
         return
     }
     log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
-    proto.ServerWriteHandshake(conn, "-")
+
+    err = proto.ServerWriteHandshake(conn, game.serverId)
+    if err != nil {
+        log.Print("serverReadLogin: ", err.String())
+        proto.WriteDisconnect(conn, err.String())
+        conn.Close()
+        return
+    }
+
+    if len(game.serverId) > 1 {
+        var authenticated bool
+        authenticated, err = serverAuth.CheckUserAuth(game.serverId, username)
+        if !authenticated || err != nil {
+            var reason string
+            if err != nil {
+                reason = "Authentication check failed: " + err.String()
+            } else {
+                reason = "Failed authentication"
+            }
+            log.Print("Client ", conn.RemoteAddr(), " ", reason)
+            proto.WriteDisconnect(conn, reason)
+            conn.Close()
+            return
+        }
+        log.Print("Client ", conn.RemoteAddr(), " passed minecraft.net authentication")
+    }
 
     _, _, err = proto.ServerReadLogin(conn)
     if err != nil {
@@ -267,8 +294,9 @@ func NewGame(worldPath string) (game *Game) {
         players:      make(map[EntityID]*Player),
         items:        make(map[EntityID]*Item),
         blockTypes:   LoadStandardBlockTypes(),
-        rand:         rand.New(rand.NewSource(1)), // TODO use a better random seed
+        rand:         rand.New(rand.NewSource(time.UTC().Seconds())),
     }
+    game.serverId = fmt.Sprintf("%x", game.rand.Int63())
     chunkManager.game = game
 
     go game.mainLoop()

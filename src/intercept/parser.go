@@ -315,12 +315,12 @@ func (p *MessageParser) SCParse(reader io.Reader) {
 
     p.logPrefix = "(S->C) "
 
-    connectionHash, err := proto.ClientReadHandshake(reader)
+    serverId, err := proto.ClientReadHandshake(reader)
     if err != nil {
         p.printf("ClientReadHandshake error: %v", err)
         return
     }
-    p.printf("ClientReadHandshake(connectionHash=%v)", connectionHash)
+    p.printf("ClientReadHandshake(serverId=%v)", serverId)
 
     for {
         err := proto.ClientReadPacket(reader, p)

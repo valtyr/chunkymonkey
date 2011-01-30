@@ -404,7 +404,7 @@ func ServerReadHandshake(reader io.Reader) (username string, err os.Error) {
     return readString(reader)
 }
 
-func ClientReadHandshake(reader io.Reader) (connectionHash string, err os.Error) {
+func ClientReadHandshake(reader io.Reader) (serverId string, err os.Error) {
     var packetID byte
     err = binary.Read(reader, binary.BigEndian, &packetID)
     if err != nil {
