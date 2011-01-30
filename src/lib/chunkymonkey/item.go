@@ -4,6 +4,7 @@ import (
     "io"
     "os"
 
+    "chunkymonkey/physics"
     "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
@@ -112,20 +113,18 @@ type Item struct {
     Entity
     itemType    ItemID
     count       ItemCount
-    position    AbsIntXYZ
-    velocity    Velocity
+    physObj     physics.PointObject
     orientation OrientationBytes
 }
 
-func NewItem(game *Game, itemType ItemID, count ItemCount, position *AbsIntXYZ, velocity *Velocity) {
+func NewItem(game *Game, itemType ItemID, count ItemCount, position *AbsXYZ, velocity *AbsVelocity) {
     item := &Item{
         itemType: itemType,
         count:    count,
-        position: *position,
-        velocity: *velocity,
         // TODO proper orientation
         orientation: OrientationBytes{0, 0, 0},
     }
+    item.physObj.Init(position, velocity)
 
     game.Enqueue(func(game *Game) {
         game.AddItem(item)
@@ -134,12 +133,14 @@ func NewItem(game *Game, itemType ItemID, count ItemCount, position *AbsIntXYZ, 
 
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
     // TODO pass uses value instead of 0
-    err = proto.WriteItemSpawn(writer, item.EntityID, item.itemType, item.count, 0, &item.position, &item.orientation)
+    err = proto.WriteItemSpawn(
+        writer, item.EntityID, item.itemType, item.count, 0,
+        &item.physObj.LastSentPosition, &item.orientation)
     if err != nil {
         return
     }
 
-    err = proto.WriteEntityVelocity(writer, item.EntityID, &item.velocity)
+    err = proto.WriteEntityVelocity(writer, item.EntityID, &item.physObj.LastSentVelocity)
     if err != nil {
         return
     }
@@ -151,69 +152,12 @@ func (item *Item) SendUpdate(writer io.Writer) (err os.Error) {
     if err = proto.WriteEntity(writer, item.Entity.EntityID); err != nil {
         return
     }
-    // TODO don't send movement/velocity packets when item hasn't moved
-    // TODO optimise bandwidth to use WriteEntityRelMove when possible
-    if err = proto.WriteEntityTeleport(writer, item.Entity.EntityID, &item.position, &LookBytes{0, 0}); err != nil {
-        return
-    }
-    if err = proto.WriteEntityVelocity(writer, item.Entity.EntityID, &item.velocity); err != nil {
-        return
-    }
+
+    err = item.physObj.SendUpdate(writer, item.Entity.EntityID, &LookBytes{0, 0})
 
     return
 }
 
-const (
-    // Guestimated gravity value. Unknown how accurate this is.
-    gravityBlocksPerSecond2 = 3.0
-
-    gravityMilliPixelsPerTick2 = (MilliPixelsPerBlock * gravityBlocksPerSecond2) / ticksPerSecond
-
-    // Air resistance, as a denominator of a velocity component
-    airResistance = 5
-)
-
-func (item *Item) PhysicsTick() (itemDestroyed bool) {
-    itemDestroyed = false
-
-    var vx, vy, vz int32
-    vx = int32(item.velocity.X)
-    vy = int32(item.velocity.Y)
-    vz = int32(item.velocity.Z)
-
-    vy -= gravityMilliPixelsPerTick2
-
-    // TODO rethink air resistance. it does pretty much nothing to counter
-    // gravity
-    vx -= vx / airResistance
-    vy -= vy / airResistance
-    vz -= vz / airResistance
-
-    // Scrub out any residual slow velocity so that things can come to a stop
-    if vx > -airResistance && vx < airResistance {
-        vx = 0
-    }
-    if vy > -airResistance && vy < airResistance {
-        vy = 0
-    }
-    if vz > -airResistance && vz < airResistance {
-        vz = 0
-    }
-
-    item.velocity.X = VelocityComponentConstrained(vx)
-    item.velocity.Y = VelocityComponentConstrained(vy)
-    item.velocity.Z = VelocityComponentConstrained(vz)
-
-    // TODO project the velocity in block space to see if we hit anything
-    // solid, and stop the item's velocity if so
-
-    item.position.X += AbsIntCoord(item.velocity.X / MilliPixelsPerPixel)
-    item.position.Y += AbsIntCoord(item.velocity.Y / MilliPixelsPerPixel)
-    item.position.Z += AbsIntCoord(item.velocity.Z / MilliPixelsPerPixel)
-
-    // Destroy item if fallen out the bottom of the world
-    if item.position.Y < 0 {
-        itemDestroyed = true
-    }
-    return
+func (item *Item) PhysicsTick(blockSolid physics.BlockSolidFn) (itemDestroyed bool) {
+    return item.physObj.Tick(blockSolid)
 }

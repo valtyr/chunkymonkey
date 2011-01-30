@@ -51,6 +51,7 @@ func TestLoadStandardBlocksSolidity(t *testing.T) {
         Test{BlockIDStone, true},
         Test{BlockIDDirt, true},
         Test{BlockIDFence, true},
+        Test{BlockIDWorkbench, true},
 
         // Some should be non-solid
         Test{BlockIDWater, false},

@@ -19,12 +19,6 @@ import (
 // The player's starting position is loaded from level.dat for now
 var StartPosition AbsXYZ
 
-const (
-    ticksPerSecond      = 5
-    dayTicksPerTick     = DayTicksPerSecond / ticksPerSecond
-    nanosecondsInSecond = 1e9
-)
-
 func loadStartPosition(worldPath string) {
     file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
     if err != nil {
@@ -157,7 +151,7 @@ func (game *Game) AddItem(item *Item) {
         log.Print("AddItem", err.String())
         return
     }
-    game.MulticastChunkPacket(buf.Bytes(), item.position.ToChunkXZ())
+    game.MulticastChunkPacket(buf.Bytes(), item.physObj.Position.ToChunkXZ())
 }
 
 func (game *Game) MulticastPacket(packet []byte, except *Player) {
@@ -188,7 +182,7 @@ func (game *Game) mainLoop() {
 }
 
 func (game *Game) timer() {
-    ticker := time.NewTicker(nanosecondsInSecond / ticksPerSecond)
+    ticker := time.NewTicker(NanosecondsInSecond / TicksPerSecond)
     for {
         <-ticker.C
         game.Enqueue(func(game *Game) { game.tick() })
@@ -217,8 +211,29 @@ func (game *Game) physicsTick() {
 
     destroyedEntityIDs := []EntityID{}
 
+    blockSolid := func(blockLoc *BlockXYZ) bool {
+        chunkLoc, subLoc := blockLoc.ToChunkLocal()
+        chunk := game.chunkManager.Get(chunkLoc)
+
+        if chunk == nil {
+            // Object fell off the side of the world
+            return false
+        }
+
+        blockTypeID, _ := chunk.GetBlock(subLoc)
+        log.Print(blockTypeID)
+
+        blockType, ok := game.blockTypes[blockTypeID]
+        if !ok {
+            log.Print("game.physicsTick/blockSolid found unknown block type ID", blockTypeID)
+            return true
+        }
+
+        return blockType.IsSolid
+    }
+
     for _, item := range game.items {
-        if item.PhysicsTick() {
+        if item.PhysicsTick(blockSolid) {
             destroyedEntityIDs = append(destroyedEntityIDs, item.Entity.EntityID)
         }
     }
@@ -235,7 +250,7 @@ func (game *Game) physicsTick() {
 }
 
 func (game *Game) tick() {
-    game.time = (game.time + dayTicksPerTick) % DayTicksPerDay
+    game.time = (game.time + DayTicksPerTick) % DayTicksPerDay
     if game.time%DayTicksPerSecond == 0 {
         game.sendTimeUpdate()
     }

@@ -31,6 +31,33 @@ func TestLookDegrees_ToLookBytes(t *testing.T) {
     }
 }
 
+func TestAbsXYZ_ToBlockXYZ(t *testing.T) {
+    type Test struct {
+        pos AbsXYZ
+        exp BlockXYZ
+    }
+
+    var tests = []Test{
+        // Simple positive tests
+        {AbsXYZ{0.0, 0.0, 0.0}, BlockXYZ{0, 0, 0}},
+        {AbsXYZ{0.1, 0.2, 0.3}, BlockXYZ{0, 0, 0}},
+        {AbsXYZ{1.0, 2.0, 3.0}, BlockXYZ{1, 2, 3}},
+
+        // Negative tests
+        {AbsXYZ{-0.1, -0.2, -0.3}, BlockXYZ{-1, -1, -1}},
+        {AbsXYZ{-1.0, -2.0, -3.0}, BlockXYZ{-1, -2, -3}},
+        {AbsXYZ{-1.5, -2.5, -3.5}, BlockXYZ{-2, -3, -4}},
+    }
+
+    for _, r := range tests {
+        result := r.pos.ToBlockXYZ()
+        if r.exp.X != result.X || r.exp.Y != result.Y || r.exp.Z != result.Z {
+            t.Errorf("AbsXYZ%v.ToBlockXYZ() expected BlockXYZ%v got BlockXYZ%v",
+                r.pos, r.exp, result)
+        }
+    }
+}
+
 func TestAbsIntXYZ_ToChunkXZ(t *testing.T) {
     type Test struct {
         input    AbsIntXYZ

@@ -13,6 +13,16 @@ const (
     DayTicksPerSecond = TimeOfDay(20)
 )
 
+// 1 "TickTime" is the duration of a server "tick". This value is intended for
+// use in sub-tick physics calculations.
+type TickTime float64
+
+const (
+    TicksPerSecond      = 5
+    DayTicksPerTick     = DayTicksPerSecond / TicksPerSecond
+    NanosecondsInSecond = 1e9
+)
+
 type RandomSeed int64
 
 // Which 'world'?
@@ -153,22 +163,42 @@ type TxID int16
 // VelocityComponent in millipixels / tick
 type VelocityComponent int16
 
-func VelocityComponentConstrained(v int32) VelocityComponent {
-    if v > VelocityComponentMax {
-        return VelocityComponentMax
-    } else if v < VelocityComponentMin {
-        return VelocityComponentMin
-    }
-    return VelocityComponent(v)
-}
-
 const (
     VelocityComponentMax = 28800
     VelocityComponentMin = -28800
+
+    MaxVelocityBlocksPerTick = VelocityComponentMax / AbsVelocityCoord(MilliPixelsPerBlock)
+    MinVelocityBlocksPerTick = VelocityComponentMin / AbsVelocityCoord(MilliPixelsPerBlock)
 )
 
 type Velocity struct {
     X, Y, Z VelocityComponent
+}
+
+type AbsVelocityCoord AbsCoord
+
+func (v AbsVelocityCoord) ToVelocityComponent() VelocityComponent {
+    return VelocityComponent(v * MilliPixelsPerBlock)
+}
+
+type AbsVelocity struct {
+    X, Y, Z AbsVelocityCoord
+}
+
+func (v *AbsVelocity) ToVelocity() *Velocity {
+    return &Velocity{
+        v.X.ToVelocityComponent(),
+        v.Y.ToVelocityComponent(),
+        v.Z.ToVelocityComponent(),
+    }
+}
+
+func (v *AbsVelocityCoord) Constrain() {
+    if *v > MaxVelocityBlocksPerTick {
+        *v = MaxVelocityBlocksPerTick
+    } else if *v < MinVelocityBlocksPerTick {
+        *v = MinVelocityBlocksPerTick
+    }
 }
 
 // Relative movement, using same units as AbsIntCoord, but in byte form so
@@ -200,6 +230,7 @@ func (d *AngleDegrees) ToAngleBytes() AngleBytes {
 }
 
 type LookDegrees struct {
+    // Pitch is -ve when looking above the horizontal, and +ve below
     Yaw, Pitch AngleDegrees
 }
 
@@ -248,6 +279,12 @@ type AbsXYZ struct {
     X, Y, Z AbsCoord
 }
 
+func (p *AbsXYZ) ApplyVelocity(dt TickTime, v *AbsVelocity) {
+    p.X += AbsCoord(float64(v.X) * float64(dt))
+    p.Y += AbsCoord(float64(v.Y) * float64(dt))
+    p.Z += AbsCoord(float64(v.Z) * float64(dt))
+}
+
 func (p *AbsXYZ) ToAbsIntXYZ() *AbsIntXYZ {
     return &AbsIntXYZ{
         AbsIntCoord(p.X * PixelsPerBlock),
@@ -258,9 +295,9 @@ func (p *AbsXYZ) ToAbsIntXYZ() *AbsIntXYZ {
 
 func (p *AbsXYZ) ToBlockXYZ() *BlockXYZ {
     return &BlockXYZ{
-        BlockCoord(p.X),
-        BlockYCoord(p.Y),
-        BlockCoord(p.Z),
+        BlockCoord(math.Floor(float64(p.X))),
+        BlockYCoord(math.Floor(float64(p.Y))),
+        BlockCoord(math.Floor(float64(p.Z))),
     }
 }
 
@@ -269,6 +306,14 @@ type AbsIntCoord int32
 
 type AbsIntXYZ struct {
     X, Y, Z AbsIntCoord
+}
+
+func (p *AbsIntXYZ) ToBlockXYZ() *BlockXYZ {
+    return &BlockXYZ{
+        BlockCoord(p.X / PixelsPerBlock),
+        BlockYCoord(p.Y / PixelsPerBlock),
+        BlockCoord(p.Z / PixelsPerBlock),
+    }
 }
 
 // Coordinate of a chunk in the world (block / 16)
@@ -377,6 +422,14 @@ func (blockLoc *BlockXYZ) ToAbsIntXYZ() *AbsIntXYZ {
         AbsIntCoord(blockLoc.X) * PixelsPerBlock,
         AbsIntCoord(blockLoc.Y) * PixelsPerBlock,
         AbsIntCoord(blockLoc.Z) * PixelsPerBlock,
+    }
+}
+
+func (blockLoc *BlockXYZ) ToAbsXYZ() *AbsXYZ {
+    return &AbsXYZ{
+        AbsCoord(blockLoc.X),
+        AbsCoord(blockLoc.Y),
+        AbsCoord(blockLoc.Z),
     }
 }
 
