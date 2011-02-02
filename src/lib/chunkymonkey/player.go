@@ -1,16 +1,27 @@
 package chunkymonkey
 
 import (
-    "os"
+    "bytes"
+    "expvar"
     "io"
     "log"
-    "net"
     "math"
-    "bytes"
+    "net"
+    "os"
 
     "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
+
+var (
+    expVarPlayerConnectionCount    *expvar.Int
+    expVarPlayerDisconnectionCount *expvar.Int
+)
+
+func init() {
+    expVarPlayerConnectionCount = expvar.NewInt("player-connection-count")
+    expVarPlayerDisconnectionCount = expvar.NewInt("player-disconnection-count")
+}
 
 type Player struct {
     Entity
@@ -45,6 +56,7 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
 }
 
 func (player *Player) start() {
+    expVarPlayerConnectionCount.Add(1)
     go player.ReceiveLoop()
     go player.TransmitLoop()
 }
@@ -164,6 +176,7 @@ func (player *Player) ReceiveLoop() {
             if err != os.EOF {
                 log.Print("ReceiveLoop failed: ", err.String())
             }
+            expVarPlayerDisconnectionCount.Add(1)
             return
         }
     }
