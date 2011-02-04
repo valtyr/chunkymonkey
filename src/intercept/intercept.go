@@ -76,7 +76,7 @@ func serveConn(clientConn net.Conn, remoteaddr string) {
 func serve(localaddr, remoteaddr string) (err os.Error) {
     listener, err := net.Listen("tcp", localaddr)
     if err != nil {
-        log.Exit("Listen: ", err.String())
+        log.Fatal("Listen: ", err.String())
         return
     }
 

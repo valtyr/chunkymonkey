@@ -173,14 +173,14 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk *Chunk) {
 
     file, err := os.Open(mgr.chunkPath(loc), os.O_RDONLY, 0)
     if err != nil {
-        log.Exit("ChunkManager.Get: ", err.String())
+        log.Fatalf("ChunkManager.Get: %s", err.String())
     }
 
     chunk, err = loadChunk(file)
     chunk.mgr = mgr
     file.Close()
     if err != nil {
-        log.Exit("ChunkManager.loadChunk: ", err.String())
+        log.Fatalf("ChunkManager.loadChunk: %s", err.String())
     }
 
     mgr.chunks[key] = chunk

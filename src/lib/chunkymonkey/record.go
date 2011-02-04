@@ -135,7 +135,7 @@ func WrapConn(raw net.Conn) (wrapped net.Conn) {
     if *record != "" {
         file, err := os.Open(*record, os.O_CREAT|os.O_TRUNC|os.O_WRONLY, 0644)
         if err != nil {
-            log.Exit("WrapConn: ", err.String())
+            log.Fatal("WrapConn: ", err.String())
         }
 
         return &recorder{raw, file, time.Nanoseconds()}
@@ -145,7 +145,7 @@ func WrapConn(raw net.Conn) (wrapped net.Conn) {
     if connections == 1 && *replay != "" {
         file, err := os.Open(*replay, os.O_RDONLY, 0)
         if err != nil {
-            log.Exit("WrapConn: ", err.String())
+            log.Fatal("WrapConn: ", err.String())
         }
 
         return &replayer{raw, file, time.Nanoseconds()}

@@ -23,13 +23,13 @@ var StartPosition AbsXYZ
 func loadStartPosition(worldPath string) {
     file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
     if err != nil {
-        log.Exit("loadStartPosition: ", err.String())
+        log.Fatalf("loadStartPosition: %s", err.String())
     }
 
     level, err := nbt.Read(file)
     file.Close()
     if err != nil {
-        log.Exit("loadStartPosition: ", err.String())
+        log.Fatalf("loadStartPosition: %s", err.String())
     }
 
     pos := level.Lookup("/Data/Player/Pos")
@@ -102,7 +102,7 @@ func (game *Game) Login(conn net.Conn) {
 func (game *Game) Serve(addr string) {
     listener, e := net.Listen("tcp", addr)
     if e != nil {
-        log.Exit("Listen: ", e.String())
+        log.Fatalf("Listen: %s", e.String())
     }
     log.Print("Listening on ", addr)
 
