@@ -106,20 +106,22 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
 // Returns true if the block should be destroyed
 // Currently this function must be called within the Game's goroutine.
-func (blockType *BlockType) Destroy(game *Game, blockLoc *BlockXYZ) bool {
+func (blockType *BlockType) Destroy(chunk *Chunk, blockLoc *BlockXYZ) bool {
     if len(blockType.droppedItems) > 0 {
         // Possibly drop item(s)
-        r := byte(game.rand.Intn(100))
+        r := byte(chunk.rand.Intn(100))
         for _, dropItem := range blockType.droppedItems {
             if dropItem.probability > r {
                 for i := dropItem.quantity; i > 0; i-- {
                     position := blockLoc.ToAbsXYZ()
-                    position.X += AbsCoord(blockItemSpawnFromEdge + game.rand.Float64()*(1-2*blockItemSpawnFromEdge))
+                    position.X += AbsCoord(blockItemSpawnFromEdge + chunk.rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     position.Y += AbsCoord(blockItemSpawnFromEdge)
-                    position.Z += AbsCoord(blockItemSpawnFromEdge + game.rand.Float64()*(1-2*blockItemSpawnFromEdge))
-                    NewItem(
-                        game, dropItem.droppedItem, 1,
-                        position, &AbsVelocity{0, 0, 0})
+                    position.Z += AbsCoord(blockItemSpawnFromEdge + chunk.rand.Float64()*(1-2*blockItemSpawnFromEdge))
+                    chunk.AddItem(
+                        NewItem(
+                            dropItem.droppedItem, 1,
+                            position,
+                            &AbsVelocity{0, 0, 0}))
                 }
                 break
             }

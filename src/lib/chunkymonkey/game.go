@@ -45,7 +45,6 @@ type Game struct {
     mainQueue     chan func(*Game)
     entityManager EntityManager
     players       map[EntityID]*Player
-    items         map[EntityID]*Item
     time          TimeOfDay
     blockTypes    map[BlockID]*BlockType
     rand          *rand.Rand
@@ -55,7 +54,7 @@ type Game struct {
 func (game *Game) Login(conn net.Conn) {
     username, err := proto.ServerReadHandshake(conn)
     if err != nil {
-        log.Print("serverReadHandshake: ", err.String())
+        log.Print("ServerReadHandshake: ", err.String())
         proto.WriteDisconnect(conn, err.String())
         conn.Close()
         return
@@ -64,13 +63,15 @@ func (game *Game) Login(conn net.Conn) {
 
     err = proto.ServerWriteHandshake(conn, game.serverId)
     if err != nil {
-        log.Print("serverReadLogin: ", err.String())
+        log.Print("ServerWriteHandshake: ", err.String())
         proto.WriteDisconnect(conn, err.String())
         conn.Close()
         return
     }
 
-    if len(game.serverId) > 1 {
+    // TODO put authentication into a seperate module behind an interface so
+    // that authentication is pluggable
+    if game.serverId != "-" {
         var authenticated bool
         authenticated, err = serverAuth.CheckUserAuth(game.serverId, username)
         if !authenticated || err != nil {
@@ -90,7 +91,7 @@ func (game *Game) Login(conn net.Conn) {
 
     _, _, err = proto.ServerReadLogin(conn)
     if err != nil {
-        log.Print("serverReadLogin: ", err.String())
+        log.Print("ServerReadLogin: ", err.String())
         proto.WriteDisconnect(conn, err.String())
         conn.Close()
         return
@@ -167,20 +168,6 @@ func (game *Game) RemovePlayer(player *Player) {
     game.SendChatMessage(fmt.Sprintf("%s has left", player.name))
 }
 
-func (game *Game) AddItem(item *Item) {
-    game.entityManager.AddEntity(&item.Entity)
-    game.items[item.Entity.EntityID] = item
-
-    // Spawn new item for players
-    buf := &bytes.Buffer{}
-    err := item.SendSpawn(buf)
-    if err != nil {
-        log.Print("AddItem", err.String())
-        return
-    }
-    game.MulticastChunkPacket(buf.Bytes(), item.physObj.Position.ToChunkXZ())
-}
-
 func (game *Game) MulticastPacket(packet []byte, except *Player) {
     for _, player := range game.players {
         if player == except {
@@ -224,55 +211,21 @@ func (game *Game) sendTimeUpdate() {
     // no particular reason to send time and keep-alive separately for now.
     proto.WriteKeepAlive(buf)
 
-    // Send entity position updates
-    // TODO send only to players in range
-    for _, item := range game.items {
-        item.SendUpdate(buf)
-    }
-
     game.MulticastPacket(buf.Bytes(), nil)
+
+    // Get chunks to send various updates
+    for _, chunk := range game.chunkManager.chunks {
+        chunk.Enqueue(func(chunk *Chunk) {
+            chunk.SendUpdate()
+        })
+    }
 }
 
 func (game *Game) physicsTick() {
-    // TODO flowing water movement of items
-
-    destroyedEntityIDs := []EntityID{}
-
-    blockSolid := func(blockLoc *BlockXYZ) bool {
-        chunkLoc, subLoc := blockLoc.ToChunkLocal()
-        chunk := game.chunkManager.Get(chunkLoc)
-
-        if chunk == nil {
-            // Object fell off the side of the world
-            return false
-        }
-
-        blockTypeID, _ := chunk.GetBlock(subLoc)
-        log.Print(blockTypeID)
-
-        blockType, ok := game.blockTypes[blockTypeID]
-        if !ok {
-            log.Print("game.physicsTick/blockSolid found unknown block type ID", blockTypeID)
-            return true
-        }
-
-        return blockType.IsSolid
-    }
-
-    for _, item := range game.items {
-        if item.PhysicsTick(blockSolid) {
-            destroyedEntityIDs = append(destroyedEntityIDs, item.Entity.EntityID)
-        }
-    }
-
-    if len(destroyedEntityIDs) > 0 {
-        buf := &bytes.Buffer{}
-        for _, entityID := range destroyedEntityIDs {
-            proto.WriteEntityDestroy(buf, entityID)
-            game.items[entityID] = nil, false
-        }
-        // TODO send only to players in range
-        game.MulticastPacket(buf.Bytes(), nil)
+    for _, chunk := range game.chunkManager.chunks {
+        chunk.Enqueue(func(chunk *Chunk) {
+            chunk.PhysicsTick()
+        })
     }
 }
 
@@ -292,11 +245,11 @@ func NewGame(worldPath string) (game *Game) {
         chunkManager: chunkManager,
         mainQueue:    make(chan func(*Game), 256),
         players:      make(map[EntityID]*Player),
-        items:        make(map[EntityID]*Item),
         blockTypes:   LoadStandardBlockTypes(),
         rand:         rand.New(rand.NewSource(time.UTC().Seconds())),
     }
     game.serverId = fmt.Sprintf("%x", game.rand.Int63())
+    //game.serverId = "-"
     chunkManager.game = game
 
     go game.mainLoop()

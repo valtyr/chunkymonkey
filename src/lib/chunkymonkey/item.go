@@ -117,18 +117,15 @@ type Item struct {
     orientation OrientationBytes
 }
 
-func NewItem(game *Game, itemType ItemID, count ItemCount, position *AbsXYZ, velocity *AbsVelocity) {
-    item := &Item{
+func NewItem(itemType ItemID, count ItemCount, position *AbsXYZ, velocity *AbsVelocity) (item *Item) {
+    item = &Item{
         itemType: itemType,
         count:    count,
         // TODO proper orientation
         orientation: OrientationBytes{0, 0, 0},
     }
     item.physObj.Init(position, velocity)
-
-    game.Enqueue(func(game *Game) {
-        game.AddItem(item)
-    })
+    return
 }
 
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {

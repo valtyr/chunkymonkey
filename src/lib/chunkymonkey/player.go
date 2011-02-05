@@ -3,7 +3,6 @@ package chunkymonkey
 import (
     "bytes"
     "expvar"
-    "io"
     "log"
     "math"
     "net"
@@ -137,7 +136,9 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
                 return
             }
 
-            chunk.DestroyBlock(subLoc)
+            chunk.Enqueue(func(chunk *Chunk) {
+                chunk.DestroyBlock(subLoc)
+            })
         })
     }
 }
@@ -199,15 +200,34 @@ func (player *Player) TransmitLoop() {
     }
 }
 
-func (player *Player) sendChunks(writer io.Writer) {
+// Blocks until all chunks have been transmitted
+func (player *Player) sendChunks() {
+    // TODO more optimal chunk loading algorithm. Chunks near the player should
+    // be sent first.
+
     playerChunkLoc := player.position.ToChunkXZ()
 
+    finish := make(chan bool, ChunkRadius * ChunkRadius)
+    buf := &bytes.Buffer{}
     for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
-        proto.WritePreChunk(writer, &chunk.XZ, ChunkInit)
+        proto.WritePreChunk(buf, &chunk.XZ, ChunkInit)
+    }
+    player.TransmitPacket(buf.Bytes())
+
+    chunkCount := 0
+    for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
+        chunkCount++
+        chunk.Enqueue(func(chunk *Chunk) {
+            buf := &bytes.Buffer{}
+            chunk.SendChunkData(buf)
+            player.TransmitPacket(buf.Bytes())
+            finish <- true
+        })
     }
 
-    for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
-        chunk.SendChunkData(writer)
+    // Wait for all chunks to have been sent
+    for ; chunkCount > 0; chunkCount-- {
+        _ = <-finish
     }
 }
 
@@ -219,9 +239,10 @@ func (player *Player) TransmitPacket(packet []byte) {
 }
 
 func (player *Player) postLogin() {
+    player.sendChunks()
+
     buf := &bytes.Buffer{}
     proto.WriteSpawnPosition(buf, player.position.ToBlockXYZ())
-    player.sendChunks(buf)
     proto.ServerWritePlayerPositionLook(buf, &player.position, &player.look,
         player.position.Y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())

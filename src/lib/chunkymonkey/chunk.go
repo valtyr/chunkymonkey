@@ -5,17 +5,20 @@ package chunkymonkey
 import (
     "bytes"
     "io"
-    "os"
     "log"
+    "os"
     "path"
+    "rand"
+    "time"
 
-    "nbt/nbt"
     "chunkymonkey/proto"
     .   "chunkymonkey/types"
+    "nbt/nbt"
 )
 
 // A chunk is slice of the world map
 type Chunk struct {
+    mainQueue  chan func(*Chunk)
     mgr        *ChunkManager
     XZ         ChunkXZ
     Blocks     []byte
@@ -23,6 +26,8 @@ type Chunk struct {
     BlockLight []byte
     SkyLight   []byte
     HeightMap  []byte
+    items      map[EntityID]*Item
+    rand       *rand.Rand
 }
 
 func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, ok bool) {
@@ -62,6 +67,30 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockT
     return
 }
 
+// This is the only method that's safe to call from outside the chunk's own
+// goroutine. Everything else must be called via this function.
+func (chunk *Chunk) Enqueue(f func(*Chunk)) {
+    chunk.mainQueue <- f
+}
+
+func (chunk *Chunk) mainLoop() {
+    for {
+        f := <-chunk.mainQueue
+        f(chunk)
+    }
+}
+
+func (chunk *Chunk) SendUpdate() {
+    // TODO send only to players in range
+    buf := &bytes.Buffer{}
+    for _, item := range chunk.items {
+        item.SendUpdate(buf)
+    }
+    chunk.mgr.game.Enqueue(func(game *Game) {
+        game.MulticastPacket(buf.Bytes(), nil)
+    })
+}
+
 func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool) {
     index, _, ok := blockIndex(subLoc)
     if !ok {
@@ -83,7 +112,7 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
     blockLoc := chunk.XZ.ToBlockXYZ(subLoc)
 
     if blockType, ok := chunk.mgr.game.blockTypes[blockTypeID]; ok {
-        if blockType.Destroy(chunk.mgr.game, blockLoc) {
+        if blockType.Destroy(chunk, blockLoc) {
             chunk.setBlock(blockLoc, index, shift, BlockIDAir, 0)
         }
     } else {
@@ -92,6 +121,60 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
     }
 
     return
+}
+
+func (chunk *Chunk) AddItem(item *Item) {
+    chunk.mgr.game.entityManager.AddEntity(&item.Entity)
+    chunk.items[item.Entity.EntityID] = item
+
+    // Spawn new item for players
+    buf := &bytes.Buffer{}
+    err := item.SendSpawn(buf)
+    if err != nil {
+        log.Print("AddItem", err.String())
+        return
+    }
+    chunk.mgr.game.MulticastChunkPacket(buf.Bytes(), item.physObj.Position.ToChunkXZ())
+}
+
+func (chunk *Chunk) PhysicsTick() {
+    destroyedEntityIDs := []EntityID{}
+
+    blockSolid := func(blockLoc *BlockXYZ) bool {
+        chunkLoc, subLoc := blockLoc.ToChunkLocal()
+        chunk := chunk.mgr.Get(chunkLoc)
+
+        if chunk == nil {
+            // Object fell off the side of the world
+            return false
+        }
+
+        blockTypeID, _ := chunk.GetBlock(subLoc)
+
+        blockType, ok := chunk.mgr.game.blockTypes[blockTypeID]
+        if !ok {
+            log.Print("game.physicsTick/blockSolid found unknown block type ID", blockTypeID)
+            return true
+        }
+
+        return blockType.IsSolid
+    }
+
+    for _, item := range chunk.items {
+        if item.PhysicsTick(blockSolid) {
+            destroyedEntityIDs = append(destroyedEntityIDs, item.Entity.EntityID)
+        }
+    }
+
+    if len(destroyedEntityIDs) > 0 {
+        buf := &bytes.Buffer{}
+        for _, entityID := range destroyedEntityIDs {
+            proto.WriteEntityDestroy(buf, entityID)
+            chunk.items[entityID] = nil, false
+        }
+        // TODO send only to players in range
+        chunk.mgr.game.MulticastPacket(buf.Bytes(), nil)
+    }
 }
 
 // Send chunk data down network connection
@@ -107,6 +190,7 @@ func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
     }
 
     chunk = &Chunk{
+        mainQueue:  make(chan func(*Chunk), 256),
         XZ: ChunkXZ{
             X:  ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
             Z:  ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
@@ -116,7 +200,12 @@ func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
         SkyLight:   level.Lookup("/Level/SkyLight").(*nbt.ByteArray).Value,
         BlockLight: level.Lookup("/Level/BlockLight").(*nbt.ByteArray).Value,
         HeightMap:  level.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value,
+        rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
+        items:      make(map[EntityID]*Item),
     }
+
+    go chunk.mainLoop()
+
     return
 }
 

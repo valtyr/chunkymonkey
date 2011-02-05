@@ -100,6 +100,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityID EntityID, look *Lo
 func (obj *PointObject) Tick(blockSolid BlockSolidFn) (destroyed bool) {
     // TODO this algorithm can probably be sped up a bit, but initially trying
     // to keep things simple and more or less correct
+    // TODO flowing water movement of items
 
     p := &obj.Position
     v := &obj.Velocity
