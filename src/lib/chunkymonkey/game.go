@@ -280,8 +280,8 @@ func (game *Game) PlayersInRadius(loc *ChunkXZ) (c chan IPlayer) {
     // We return any player whose chunk position is within these bounds:
     minX := loc.X - ChunkRadius
     minZ := loc.Z - ChunkRadius
-    maxX := loc.X + ChunkRadius + 1
-    maxZ := loc.X + ChunkRadius + 1
+    maxX := loc.X + ChunkRadius
+    maxZ := loc.X + ChunkRadius
 
     c = make(chan IPlayer)
     go func() {
