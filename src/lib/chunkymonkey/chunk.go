@@ -370,12 +370,3 @@ func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan IChunk) {
     }()
     return
 }
-
-// Return a channel to iterate over all chunks within a player's radius
-func (mgr *ChunkManager) ChunksInPlayerRadius(player IPlayer) chan IChunk {
-    locChan := make(chan *ChunkXZ)
-    player.Enqueue(func(player IPlayer) {
-        locChan <- player.GetChunkPosition()
-    })
-    return mgr.ChunksInRadius(<-locChan)
-}
