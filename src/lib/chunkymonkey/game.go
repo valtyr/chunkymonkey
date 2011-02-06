@@ -286,6 +286,7 @@ func (game *Game) PlayersInRadius(loc *ChunkXZ) (c chan IPlayer) {
     c = make(chan IPlayer)
     go func() {
         for _, player := range game.players {
+            // FIXME this reads player position from the wrong goroutine
             p := player.GetChunkPosition()
             if p.X >= minX && p.X <= maxX && p.Z >= minZ && p.Z <= maxZ {
                 c <- player
