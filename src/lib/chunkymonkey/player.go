@@ -8,6 +8,7 @@ import (
     "math"
     "net"
     "os"
+    "sync"
 
     .   "chunkymonkey/entity"
     .   "chunkymonkey/interfaces"
@@ -36,6 +37,7 @@ type Player struct {
 
     mainQueue   chan func(IPlayer)
     txQueue     chan []byte
+    lock        sync.Mutex
 }
 
 const StanceNormal = 1.62
@@ -92,6 +94,10 @@ func (player *Player) start() {
     go player.mainLoop()
 }
 
+// Start of packet handling code
+// Note: any packet handlers that could change the player state must use
+// player.lock
+
 func (player *Player) PacketKeepAlive() {
 }
 
@@ -112,42 +118,49 @@ func (player *Player) PacketPlayer(onGround bool) {
 }
 
 func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
+    player.lock.Lock()
+    defer player.lock.Unlock()
+
+    var delta = AbsXYZ{position.X - player.position.X,
+        position.Y - player.position.Y,
+        position.Z - player.position.Z}
+    distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
+    if distance > 10 {
+        log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
+            position.X, position.Y, position.Z)
+        return
+    }
+    player.position = *position
+
     // TODO: Should keep track of when players enter/leave their mutual radius
     // of "awareness". I.e a client should receive a RemoveEntity packet when
     // the player walks out of range, and no longer receive WriteEntityTeleport
     // packets for them. The converse should happen when players come in range
     // of each other.
 
+    buf := &bytes.Buffer{}
+    proto.WriteEntityTeleport(
+        buf,
+        player.EntityID,
+        player.position.ToAbsIntXYZ(),
+        player.look.ToLookBytes())
+
     player.game.Enqueue(func(game IGame) {
-        var delta = AbsXYZ{position.X - player.position.X,
-            position.Y - player.position.Y,
-            position.Z - player.position.Z}
-        distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
-        if distance > 10 {
-            log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
-                position.X, position.Y, position.Z)
-            return
-        }
-
-        player.position = *position
-
-        buf := &bytes.Buffer{}
-        proto.WriteEntityTeleport(
-            buf,
-            player.EntityID,
-            player.position.ToAbsIntXYZ(),
-            player.look.ToLookBytes())
         game.MulticastPacket(buf.Bytes(), player)
     })
 }
 
 func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
-    player.game.Enqueue(func(game IGame) {
-        // TODO input validation
-        player.look = *look
+    player.lock.Lock()
+    defer player.lock.Unlock()
 
-        buf := &bytes.Buffer{}
-        proto.WriteEntityLook(buf, player.EntityID, look.ToLookBytes())
+    // TODO input validation
+    player.look = *look
+
+    buf := &bytes.Buffer{}
+    proto.WriteEntityLook(buf, player.EntityID, look.ToLookBytes())
+
+    player.game.Enqueue(func(game IGame) {
         game.MulticastPacket(buf.Bytes(), player)
     })
 }
@@ -215,11 +228,19 @@ func (player *Player) receiveLoop() {
     }
 }
 
+// End of packet handling code
+
+func (player *Player) runQueuedCall(f func(IPlayer)) {
+    player.lock.Lock()
+    defer player.lock.Unlock()
+    f(player)
+}
+
 func (player *Player) mainLoop() {
     for {
         select {
         case f := <-player.mainQueue:
-            f(player)
+            player.runQueuedCall(f)
         case bs := <-player.txQueue:
             if bs == nil {
                 return // txQueue closed
