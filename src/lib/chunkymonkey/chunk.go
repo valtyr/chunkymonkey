@@ -12,6 +12,7 @@ import (
     "time"
 
     "chunkymonkey/proto"
+    .    "chunkymonkey/interfaces"
     cmitem "chunkymonkey/item"
     .   "chunkymonkey/types"
     "nbt/nbt"
@@ -19,9 +20,9 @@ import (
 
 // A chunk is slice of the world map
 type Chunk struct {
-    mainQueue  chan func(*Chunk)
+    mainQueue  chan func(IChunk)
     mgr        *ChunkManager
-    Loc        ChunkXZ
+    loc        ChunkXZ
     blocks     []byte
     blockData  []byte
     blockLight []byte
@@ -33,9 +34,9 @@ type Chunk struct {
 
 func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, blockLight, heightMap []byte) (chunk *Chunk) {
     chunk = &Chunk{
-        mainQueue:  make(chan func(*Chunk), 256),
+        mainQueue:  make(chan func(IChunk), 256),
         mgr:        mgr,
-        Loc:        *loc,
+        loc:        *loc,
         blocks:     blocks,
         blockData:  blockData,
         skyLight:   skyLight,
@@ -80,14 +81,18 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockT
     // Tell players that the block changed
     packet := &bytes.Buffer{}
     proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
-    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.Loc)
+    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.loc)
 
     return
 }
 
+func (chunk *Chunk) GetLoc() *ChunkXZ {
+    return &chunk.loc
+}
+
 // This is the only method that's safe to call from outside the chunk's own
 // goroutine. Everything else must be called via this function.
-func (chunk *Chunk) Enqueue(f func(*Chunk)) {
+func (chunk *Chunk) Enqueue(f func(IChunk)) {
     chunk.mainQueue <- f
 }
 
@@ -104,7 +109,7 @@ func (chunk *Chunk) SendUpdate() {
     for _, item := range chunk.items {
         item.SendUpdate(buf)
     }
-    chunk.mgr.game.Enqueue(func(game *Game) {
+    chunk.mgr.game.Enqueue(func(game IGame) {
         game.MulticastPacket(buf.Bytes(), nil)
     })
 }
@@ -127,9 +132,9 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
     }
 
     blockTypeID := BlockID(chunk.blocks[index])
-    blockLoc := chunk.Loc.ToBlockXYZ(subLoc)
+    blockLoc := chunk.loc.ToBlockXYZ(subLoc)
 
-    if blockType, ok := chunk.mgr.game.blockTypes[blockTypeID]; ok {
+    if blockType, ok := chunk.mgr.blockTypes[blockTypeID]; ok {
         if blockType.Destroy(chunk, blockLoc) {
             chunk.setBlock(blockLoc, index, shift, BlockIDAir, 0)
         }
@@ -142,17 +147,19 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
 }
 
 func (chunk *Chunk) AddItem(item *cmitem.Item) {
-    chunk.mgr.game.entityManager.AddEntity(&item.Entity)
-    chunk.items[item.Entity.EntityID] = item
+    chunk.mgr.game.Enqueue(func(game IGame) {
+        game.AddEntity(&item.Entity)
+        chunk.items[item.Entity.EntityID] = item
 
-    // Spawn new item for players
-    buf := &bytes.Buffer{}
-    err := item.SendSpawn(buf)
-    if err != nil {
-        log.Print("AddItem", err.String())
-        return
-    }
-    chunk.mgr.game.MulticastChunkPacket(buf.Bytes(), &chunk.Loc)
+        // Spawn new item for players
+        buf := &bytes.Buffer{}
+        err := item.SendSpawn(buf)
+        if err != nil {
+            log.Print("AddItem", err.String())
+            return
+        }
+        game.MulticastChunkPacket(buf.Bytes(), &chunk.loc)
+    })
 }
 
 func (chunk *Chunk) PhysicsTick() {
@@ -160,16 +167,20 @@ func (chunk *Chunk) PhysicsTick() {
 
     blockSolid := func(blockLoc *BlockXYZ) bool {
         chunkLoc, subLoc := blockLoc.ToChunkLocal()
-        chunk := chunk.mgr.Get(chunkLoc)
+        // FIXME this should run in the main game's goroutine (or shortcut if
+        // this chunk is the same chunk)
+        block_chunk := chunk.mgr.Get(chunkLoc)
 
         if chunk == nil {
             // Object fell off the side of the world
             return false
         }
 
-        blockTypeID, _ := chunk.GetBlock(subLoc)
+        // FIXME this should run in the remote chunk's goroutine (we can only
+        // get away with it when chunk is the same chunk
+        blockTypeID, _ := block_chunk.GetBlock(subLoc)
 
-        blockType, ok := chunk.mgr.game.blockTypes[blockTypeID]
+        blockType, ok := chunk.mgr.blockTypes[blockTypeID]
         if !ok {
             log.Print("game.physicsTick/blockSolid found unknown block type ID", blockTypeID)
             return true
@@ -197,14 +208,15 @@ func (chunk *Chunk) PhysicsTick() {
 
 // Send chunk data down network connection
 func (chunk *Chunk) SendChunkData(writer io.Writer) (err os.Error) {
-    return proto.WriteMapChunk(writer, &chunk.Loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
+    return proto.WriteMapChunk(writer, &chunk.loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
 }
 
 // ChunkManager contains all chunks and can look them up
 type ChunkManager struct {
-    game      *Game
-    worldPath string
-    chunks    map[uint64]*Chunk
+    game       IGame
+    blockTypes map[BlockID]*BlockType
+    worldPath  string
+    chunks     map[uint64]*Chunk
 }
 
 func NewChunkManager(worldPath string) *ChunkManager {
@@ -266,7 +278,7 @@ func (mgr *ChunkManager) loadChunk(reader io.Reader) (chunk *Chunk, err os.Error
 }
 
 // Get a chunk at given coordinates
-func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk *Chunk) {
+func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk IChunk) {
     // FIXME this function looks subject to race conditions with itself
     key := uint64(loc.X)<<32 | uint64(uint32(loc.Z))
     chunk, ok := mgr.chunks[key]
@@ -278,20 +290,22 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk *Chunk) {
     if err != nil {
         log.Fatalf("ChunkManager.Get: %s", err.String())
     }
+    defer file.Close()
 
-    chunk, err = mgr.loadChunk(file)
-    file.Close()
+    loaded_chunk, err := mgr.loadChunk(file)
+
     if err != nil {
         log.Fatalf("ChunkManager.loadChunk: %s", err.String())
     }
 
-    mgr.chunks[key] = chunk
+    mgr.chunks[key] = loaded_chunk
+    chunk = loaded_chunk
     return
 }
 
 // Return a channel to iterate over all chunks within a chunk's radius
-func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan *Chunk) {
-    c = make(chan *Chunk)
+func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan IChunk) {
+    c = make(chan IChunk)
     go func() {
         curChunkXZ := ChunkXZ{0, 0}
         for z := loc.Z - ChunkRadius; z <= loc.Z+ChunkRadius; z++ {
@@ -306,7 +320,10 @@ func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan *Chunk) {
 }
 
 // Return a channel to iterate over all chunks within a player's radius
-func (mgr *ChunkManager) ChunksInPlayerRadius(player *Player) chan *Chunk {
-    playerChunkXZ := player.position.ToChunkXZ()
-    return mgr.ChunksInRadius(playerChunkXZ)
+func (mgr *ChunkManager) ChunksInPlayerRadius(player IPlayer) chan IChunk {
+    locChan := make(chan *ChunkXZ)
+    player.Enqueue(func(player IPlayer) {
+        locChan<-player.GetChunkPosition()
+    })
+    return mgr.ChunksInRadius(<-locChan)
 }

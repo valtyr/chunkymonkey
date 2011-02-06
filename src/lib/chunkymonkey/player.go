@@ -1,14 +1,16 @@
-package chunkymonkey
+package player
 
 import (
     "bytes"
     "expvar"
     "log"
+    "io"
     "math"
     "net"
     "os"
 
-    "chunkymonkey/entity"
+    .   "chunkymonkey/entity"
+    .   "chunkymonkey/interfaces"
     "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
@@ -24,29 +26,31 @@ func init() {
 }
 
 type Player struct {
-    entity.Entity
-    game        *Game
+    Entity
+    game        IGame
     conn        net.Conn
     name        string
     position    AbsXYZ
     look        LookDegrees
     currentItem ItemID
+
+    mainQueue   chan func(IPlayer)
     txQueue     chan []byte
 }
 
 const StanceNormal = 1.62
 
-func StartPlayer(game *Game, conn net.Conn, name string) {
+func StartPlayer(game IGame, conn net.Conn, name string) {
     player := &Player{
         game:     game,
         conn:     conn,
         name:     name,
-        position: StartPosition,
+        position: *game.GetStartPosition(),
         look:     LookDegrees{0, 0},
         txQueue:  make(chan []byte, 128),
     }
 
-    game.Enqueue(func(game *Game) {
+    game.Enqueue(func(game IGame) {
         game.AddPlayer(player)
         // TODO pass proper map seed and dimension
         proto.ServerWriteLogin(conn, player.Entity.EntityID, 0, DimensionNormal)
@@ -55,17 +59,43 @@ func StartPlayer(game *Game, conn net.Conn, name string) {
     })
 }
 
+func (player *Player) GetEntity() *Entity {
+    return &player.Entity
+}
+
+func (player *Player) GetChunkPosition() *ChunkXZ {
+    return player.position.ToChunkXZ()
+}
+
+func (player *Player) GetName() string {
+    return player.name
+}
+
+func (player *Player) Enqueue(f func(IPlayer)) {
+    player.mainQueue <- f
+}
+
+func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
+    return proto.WriteNamedEntitySpawn(
+        writer,
+        player.Entity.EntityID, player.name,
+        player.position.ToAbsIntXYZ(),
+        player.look.ToLookBytes(),
+        player.currentItem,
+    )
+}
+
 func (player *Player) start() {
     expVarPlayerConnectionCount.Add(1)
-    go player.ReceiveLoop()
-    go player.TransmitLoop()
+    go player.receiveLoop()
+    go player.mainLoop()
 }
 
 func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-    player.game.Enqueue(func(game *Game) { game.SendChatMessage(message) })
+    player.game.Enqueue(func(game IGame) { game.SendChatMessage(message) })
 }
 
 func (player *Player) PacketEntityAction(entityID EntityID, action EntityAction) {
@@ -87,7 +117,7 @@ func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, on
     // packets for them. The converse should happen when players come in range
     // of each other.
 
-    player.game.Enqueue(func(game *Game) {
+    player.game.Enqueue(func(game IGame) {
         var delta = AbsXYZ{position.X - player.position.X,
             position.Y - player.position.Y,
             position.Z - player.position.Z}
@@ -111,7 +141,7 @@ func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, on
 }
 
 func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
-    player.game.Enqueue(func(game *Game) {
+    player.game.Enqueue(func(game IGame) {
         // TODO input validation
         player.look = *look
 
@@ -128,16 +158,16 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
         // TODO validate that the player has dug long enough to stop speed
         // hacking (based on block type and tool used - non-trivial).
 
-        player.game.Enqueue(func(game *Game) {
+        player.game.Enqueue(func(game IGame) {
             chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
-            chunk := game.chunkManager.Get(chunkLoc)
+            chunk := game.GetChunkManager().Get(chunkLoc)
 
             if chunk == nil {
                 return
             }
 
-            chunk.Enqueue(func(chunk *Chunk) {
+            chunk.Enqueue(func(chunk IChunk) {
                 chunk.DestroyBlock(subLoc)
             })
         })
@@ -164,14 +194,14 @@ func (player *Player) PacketSignUpdate(position *BlockXYZ, lines [4]string) {
 
 func (player *Player) PacketDisconnect(reason string) {
     log.Printf("Player %s disconnected reason=%s", player.name, reason)
-    player.game.Enqueue(func(game *Game) {
+    player.game.Enqueue(func(game IGame) {
         game.RemovePlayer(player)
         close(player.txQueue)
         player.conn.Close()
     })
 }
 
-func (player *Player) ReceiveLoop() {
+func (player *Player) receiveLoop() {
     for {
         err := proto.ServerReadPacket(player.conn, player)
         if err != nil {
@@ -184,7 +214,8 @@ func (player *Player) ReceiveLoop() {
     }
 }
 
-func (player *Player) TransmitLoop() {
+func (player *Player) mainLoop() {
+    // TODO FIXME pull from mainQueue as well
     for {
         bs := <-player.txQueue
         if bs == nil {
@@ -201,7 +232,16 @@ func (player *Player) TransmitLoop() {
     }
 }
 
-// Blocks until all chunks have been transmitted
+func (player *Player) TransmitPacket(packet []byte) {
+    if packet == nil {
+        return // skip empty packets
+    }
+    player.txQueue <- packet
+}
+
+// Blocks until all chunks have been transmitted. Note that this must currently
+// be called from within the game loop
+// TODO reduce the overhead placed on the game loop to a minimum
 func (player *Player) sendChunks() {
     // TODO more optimal chunk loading algorithm. Chunks near the player should
     // be sent first.
@@ -210,15 +250,15 @@ func (player *Player) sendChunks() {
 
     finish := make(chan bool, ChunkRadius * ChunkRadius)
     buf := &bytes.Buffer{}
-    for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
-        proto.WritePreChunk(buf, &chunk.Loc, ChunkInit)
+    for chunk := range player.game.GetChunkManager().ChunksInRadius(playerChunkLoc) {
+        proto.WritePreChunk(buf, chunk.GetLoc(), ChunkInit)
     }
     player.TransmitPacket(buf.Bytes())
 
     chunkCount := 0
-    for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
+    for chunk := range player.game.GetChunkManager().ChunksInRadius(playerChunkLoc) {
         chunkCount++
-        chunk.Enqueue(func(chunk *Chunk) {
+        chunk.Enqueue(func(chunk IChunk) {
             buf := &bytes.Buffer{}
             chunk.SendChunkData(buf)
             player.TransmitPacket(buf.Bytes())
@@ -232,13 +272,9 @@ func (player *Player) sendChunks() {
     }
 }
 
-func (player *Player) TransmitPacket(packet []byte) {
-    if packet == nil {
-        return // skip empty packets
-    }
-    player.txQueue <- packet
-}
-
+// Blocks until all chunks have been transmitted. Note that this must currently
+// be called from within the game loop
+// TODO reduce the overhead placed on the game loop to a minimum
 func (player *Player) postLogin() {
     player.sendChunks()
 
