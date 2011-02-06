@@ -167,18 +167,30 @@ func (chunk *Chunk) PhysicsTick() {
 
     blockSolid := func(blockLoc *BlockXYZ) bool {
         chunkLoc, subLoc := blockLoc.ToChunkLocal()
-        // FIXME this should run in the main game's goroutine (or shortcut if
-        // this chunk is the same chunk)
-        block_chunk := chunk.mgr.Get(chunkLoc)
+        var blockTypeID BlockID
+        if chunkLoc.X == chunk.loc.X && chunkLoc.Z == chunk.loc.Z {
+            // The item is asking about this chunk
+            blockTypeID, _ = chunk.GetBlock(subLoc)
+        } else {
+            // The item is asking about a seperate chunk
 
-        if chunk == nil {
-            // Object fell off the side of the world
-            return false
+            blockTypeIDChan := make(chan BlockID)
+            chunk.mgr.game.Enqueue(func(game IGame) {
+                blockChunk := chunk.mgr.Get(chunkLoc)
+
+                if chunk == nil {
+                    // Object fell off the side of the world
+                    blockTypeIDChan <- BlockIDAir
+                    return
+                }
+
+                blockChunk.Enqueue(func(blockChunk IChunk) {
+                    blockTypeID, _ = blockChunk.GetBlock(subLoc)
+                    blockTypeIDChan <- blockTypeID
+                })
+            })
+            blockTypeID = <-blockTypeIDChan
         }
-
-        // FIXME this should run in the remote chunk's goroutine (we can only
-        // get away with it when chunk is the same chunk
-        blockTypeID, _ := block_chunk.GetBlock(subLoc)
 
         blockType, ok := chunk.mgr.blockTypes[blockTypeID]
         if !ok {

@@ -42,12 +42,13 @@ const StanceNormal = 1.62
 
 func StartPlayer(game IGame, conn net.Conn, name string) {
     player := &Player{
-        game:     game,
-        conn:     conn,
-        name:     name,
-        position: *game.GetStartPosition(),
-        look:     LookDegrees{0, 0},
-        txQueue:  make(chan []byte, 128),
+        game:      game,
+        conn:      conn,
+        name:      name,
+        position:  *game.GetStartPosition(),
+        look:      LookDegrees{0, 0},
+        mainQueue: make(chan func(IPlayer), 128),
+        txQueue:   make(chan []byte, 128),
     }
 
     game.Enqueue(func(game IGame) {
@@ -215,19 +216,22 @@ func (player *Player) receiveLoop() {
 }
 
 func (player *Player) mainLoop() {
-    // TODO FIXME pull from mainQueue as well
     for {
-        bs := <-player.txQueue
-        if bs == nil {
-            return // txQueue closed
-        }
-
-        _, err := player.conn.Write(bs)
-        if err != nil {
-            if err != os.EOF {
-                log.Print("TransmitLoop failed: ", err.String())
+        select {
+        case f := <-player.mainQueue:
+            f(player)
+        case bs := <-player.txQueue:
+            if bs == nil {
+                return // txQueue closed
             }
-            return
+
+            _, err := player.conn.Write(bs)
+            if err != nil {
+                if err != os.EOF {
+                    log.Print("TransmitLoop failed: ", err.String())
+                }
+                return
+            }
         }
     }
 }
