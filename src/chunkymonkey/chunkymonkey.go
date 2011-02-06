@@ -1,7 +1,7 @@
 package main
 
 import (
-    _ "expvar"
+    _   "expvar"
     "flag"
     "http"
     "log"

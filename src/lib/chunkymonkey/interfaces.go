@@ -6,13 +6,13 @@ import (
 
     "chunkymonkey/entity"
     "chunkymonkey/physics"
-    . "chunkymonkey/types"
+    .   "chunkymonkey/types"
 )
 
 type IPlayer interface {
     // Safe to call from outside of player's own goroutine.
     GetEntity() *entity.Entity // Only the game mainloop may modify the return value
-    GetName() string // Do not modify return value
+    GetName() string           // Do not modify return value
 
     TransmitPacket(packet []byte)
     Enqueue(f func(IPlayer))
@@ -58,7 +58,7 @@ type IChunkManager interface {
 
 type IGame interface {
     // Safe to call from outside of Enqueue:
-    GetStartPosition() *AbsXYZ // Do not modify return value
+    GetStartPosition() *AbsXYZ      // Do not modify return value
     GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
 
     Enqueue(f func(IGame))

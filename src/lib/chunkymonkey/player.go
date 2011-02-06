@@ -35,9 +35,9 @@ type Player struct {
     look        LookDegrees
     currentItem ItemID
 
-    mainQueue   chan func(IPlayer)
-    txQueue     chan []byte
-    lock        sync.Mutex
+    mainQueue chan func(IPlayer)
+    txQueue   chan []byte
+    lock      sync.Mutex
 }
 
 const StanceNormal = 1.62
@@ -273,7 +273,7 @@ func (player *Player) sendChunks() {
 
     playerChunkLoc := player.position.ToChunkXZ()
 
-    finish := make(chan bool, ChunkRadius * ChunkRadius)
+    finish := make(chan bool, ChunkRadius*ChunkRadius)
     buf := &bytes.Buffer{}
     for chunk := range player.game.GetChunkManager().ChunksInRadius(playerChunkLoc) {
         proto.WritePreChunk(buf, chunk.GetLoc(), ChunkInit)

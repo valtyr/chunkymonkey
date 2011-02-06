@@ -215,7 +215,7 @@ func (obj *PointObject) updateVelocity() (stopped bool) {
     v := &obj.Velocity
 
     if !obj.onGround {
-        v.Y -= gravityBlocksPerTick2 * AbsVelocityCoord(1.0 + float64(obj.remainder))
+        v.Y -= gravityBlocksPerTick2 * AbsVelocityCoord(1.0+float64(obj.remainder))
     }
 
     stopped = true

@@ -9,9 +9,9 @@ func CheckUserAuth(serverId, user string) (authenticated bool, err os.Error) {
     authenticated = false
 
     url := "http://www.minecraft.net/game/checkserver.jsp?" + http.EncodeQuery(
-        map[string][]string {
+        map[string][]string{
             "serverId": {serverId},
-            "user": {user},
+            "user":     {user},
         },
     )
 
@@ -28,7 +28,7 @@ func CheckUserAuth(serverId, user string) (authenticated bool, err os.Error) {
 
         for err == nil && bufferPos < 3 {
             numBytesRead, err = response.Body.Read(buf[bufferPos:])
-            if err != nil && err != os.EOF{
+            if err != nil && err != os.EOF {
                 return
             }
             bufferPos += numBytesRead

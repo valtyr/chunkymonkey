@@ -38,11 +38,11 @@ func NewGame(worldPath string) (game *Game) {
     chunkManager := NewChunkManager(worldPath)
 
     game = &Game{
-        chunkManager:  chunkManager,
-        mainQueue:     make(chan func(IGame), 256),
-        players:       make(map[EntityID]IPlayer),
-        blockTypes:    LoadStandardBlockTypes(),
-        rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
+        chunkManager: chunkManager,
+        mainQueue:    make(chan func(IGame), 256),
+        players:      make(map[EntityID]IPlayer),
+        blockTypes:   LoadStandardBlockTypes(),
+        rand:         rand.New(rand.NewSource(time.UTC().Seconds())),
     }
     game.loadStartPosition(worldPath)
     game.serverId = fmt.Sprintf("%x", game.rand.Int63())
@@ -55,7 +55,7 @@ func NewGame(worldPath string) (game *Game) {
     return
 }
 
-func (game *Game)loadStartPosition(worldPath string) {
+func (game *Game) loadStartPosition(worldPath string) {
     file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
     if err != nil {
         log.Fatalf("loadStartPosition: %s", err.String())

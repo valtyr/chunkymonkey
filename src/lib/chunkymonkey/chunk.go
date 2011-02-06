@@ -315,8 +315,8 @@ func (mgr *ChunkManager) loadChunk(reader io.Reader) (chunk *Chunk, err os.Error
 
     chunk = newChunk(
         &ChunkXZ{
-            X: ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
-            Z: ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
+            X:  ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
+            Z:  ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
         },
         mgr,
         level.Lookup("/Level/Blocks").(*nbt.ByteArray).Value,
@@ -375,7 +375,7 @@ func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan IChunk) {
 func (mgr *ChunkManager) ChunksInPlayerRadius(player IPlayer) chan IChunk {
     locChan := make(chan *ChunkXZ)
     player.Enqueue(func(player IPlayer) {
-        locChan<-player.GetChunkPosition()
+        locChan <- player.GetChunkPosition()
     })
     return mgr.ChunksInRadius(<-locChan)
 }

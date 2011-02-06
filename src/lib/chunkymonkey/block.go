@@ -2,7 +2,7 @@ package chunkymonkey
 
 import (
     cmitem "chunkymonkey/item"
-    .   "chunkymonkey/types"
+    .      "chunkymonkey/types"
 )
 
 const (
