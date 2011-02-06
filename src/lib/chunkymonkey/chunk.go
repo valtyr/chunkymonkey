@@ -20,14 +20,31 @@ import (
 type Chunk struct {
     mainQueue  chan func(*Chunk)
     mgr        *ChunkManager
-    XZ         ChunkXZ
-    Blocks     []byte
-    BlockData  []byte
-    BlockLight []byte
-    SkyLight   []byte
-    HeightMap  []byte
+    Loc        ChunkXZ
+    blocks     []byte
+    blockData  []byte
+    blockLight []byte
+    skyLight   []byte
+    heightMap  []byte
     items      map[EntityID]*Item
     rand       *rand.Rand
+}
+
+func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, blockLight, heightMap []byte) (chunk *Chunk) {
+    chunk = &Chunk{
+        mainQueue:  make(chan func(*Chunk), 256),
+        mgr:        mgr,
+        Loc:        *loc,
+        blocks:     blocks,
+        blockData:  blockData,
+        skyLight:   skyLight,
+        blockLight: blockLight,
+        heightMap:  heightMap,
+        rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
+        items:      make(map[EntityID]*Item),
+    }
+    go chunk.mainLoop()
+    return
 }
 
 func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, ok bool) {
@@ -52,17 +69,17 @@ func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, ok bool) {
 
 // Sets a block and its data. Returns true if the block was not changed.
 func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockType BlockID, blockMetadata byte) {
-    chunk.Blocks[index] = byte(blockType)
+    chunk.blocks[index] = byte(blockType)
 
     mask := byte(0x0f) << shift
-    twoBlockData := chunk.BlockData[index/2]
+    twoBlockData := chunk.blockData[index/2]
     twoBlockData = ((blockMetadata << shift) & mask) | (twoBlockData & ^mask)
-    chunk.BlockData[index/2] = twoBlockData
+    chunk.blockData[index/2] = twoBlockData
 
     // Tell players that the block changed
     packet := &bytes.Buffer{}
     proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
-    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.XZ)
+    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.Loc)
 
     return
 }
@@ -97,7 +114,7 @@ func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool) {
         return
     }
 
-    blockType = BlockID(chunk.Blocks[index])
+    blockType = BlockID(chunk.blocks[index])
 
     return
 }
@@ -108,8 +125,8 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
         return
     }
 
-    blockTypeID := BlockID(chunk.Blocks[index])
-    blockLoc := chunk.XZ.ToBlockXYZ(subLoc)
+    blockTypeID := BlockID(chunk.blocks[index])
+    blockLoc := chunk.Loc.ToBlockXYZ(subLoc)
 
     if blockType, ok := chunk.mgr.game.blockTypes[blockTypeID]; ok {
         if blockType.Destroy(chunk, blockLoc) {
@@ -179,34 +196,7 @@ func (chunk *Chunk) PhysicsTick() {
 
 // Send chunk data down network connection
 func (chunk *Chunk) SendChunkData(writer io.Writer) (err os.Error) {
-    return proto.WriteMapChunk(writer, &chunk.XZ, chunk.Blocks, chunk.BlockData, chunk.BlockLight, chunk.SkyLight)
-}
-
-// Load a chunk from its NBT representation
-func loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
-    level, err := nbt.Read(reader)
-    if err != nil {
-        return
-    }
-
-    chunk = &Chunk{
-        mainQueue:  make(chan func(*Chunk), 256),
-        XZ: ChunkXZ{
-            X:  ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
-            Z:  ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
-        },
-        Blocks:     level.Lookup("/Level/Blocks").(*nbt.ByteArray).Value,
-        BlockData:  level.Lookup("/Level/Data").(*nbt.ByteArray).Value,
-        SkyLight:   level.Lookup("/Level/SkyLight").(*nbt.ByteArray).Value,
-        BlockLight: level.Lookup("/Level/BlockLight").(*nbt.ByteArray).Value,
-        HeightMap:  level.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value,
-        rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
-        items:      make(map[EntityID]*Item),
-    }
-
-    go chunk.mainLoop()
-
-    return
+    return proto.WriteMapChunk(writer, &chunk.Loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
 }
 
 // ChunkManager contains all chunks and can look them up
@@ -251,6 +241,29 @@ func (mgr *ChunkManager) chunkPath(loc *ChunkXZ) string {
         "c."+base36Encode(int32(loc.X))+"."+base36Encode(int32(loc.Z))+".dat")
 }
 
+// Load a chunk from its NBT representation
+func (mgr *ChunkManager) loadChunk(reader io.Reader) (chunk *Chunk, err os.Error) {
+    level, err := nbt.Read(reader)
+    if err != nil {
+        return
+    }
+
+    chunk = newChunk(
+        &ChunkXZ{
+            X: ChunkCoord(level.Lookup("/Level/xPos").(*nbt.Int).Value),
+            Z: ChunkCoord(level.Lookup("/Level/zPos").(*nbt.Int).Value),
+        },
+        mgr,
+        level.Lookup("/Level/Blocks").(*nbt.ByteArray).Value,
+        level.Lookup("/Level/Data").(*nbt.ByteArray).Value,
+        level.Lookup("/Level/SkyLight").(*nbt.ByteArray).Value,
+        level.Lookup("/Level/BlockLight").(*nbt.ByteArray).Value,
+        level.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value,
+    )
+
+    return
+}
+
 // Get a chunk at given coordinates
 func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk *Chunk) {
     // FIXME this function looks subject to race conditions with itself
@@ -265,8 +278,7 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk *Chunk) {
         log.Fatalf("ChunkManager.Get: %s", err.String())
     }
 
-    chunk, err = loadChunk(file)
-    chunk.mgr = mgr
+    chunk, err = mgr.loadChunk(file)
     file.Close()
     if err != nil {
         log.Fatalf("ChunkManager.loadChunk: %s", err.String())

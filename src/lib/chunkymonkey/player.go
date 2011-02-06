@@ -210,7 +210,7 @@ func (player *Player) sendChunks() {
     finish := make(chan bool, ChunkRadius * ChunkRadius)
     buf := &bytes.Buffer{}
     for chunk := range player.game.chunkManager.ChunksInRadius(playerChunkLoc) {
-        proto.WritePreChunk(buf, &chunk.XZ, ChunkInit)
+        proto.WritePreChunk(buf, &chunk.Loc, ChunkInit)
     }
     player.TransmitPacket(buf.Bytes())
 
