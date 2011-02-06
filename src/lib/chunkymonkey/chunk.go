@@ -12,8 +12,7 @@ import (
     "time"
 
     "chunkymonkey/proto"
-    .    "chunkymonkey/interfaces"
-    cmitem "chunkymonkey/item"
+    .   "chunkymonkey/interfaces"
     .   "chunkymonkey/types"
     "nbt/nbt"
 )
@@ -28,7 +27,7 @@ type Chunk struct {
     blockLight []byte
     skyLight   []byte
     heightMap  []byte
-    items      map[EntityID]*cmitem.Item
+    items      map[EntityID]IItem
     rand       *rand.Rand
 }
 
@@ -43,7 +42,7 @@ func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, bloc
         blockLight: blockLight,
         heightMap:  heightMap,
         rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
-        items:      make(map[EntityID]*cmitem.Item),
+        items:      make(map[EntityID]IItem),
     }
     go chunk.mainLoop()
     return
@@ -103,6 +102,11 @@ func (chunk *Chunk) mainLoop() {
     }
 }
 
+// Tells the chunk to take posession of the item.
+func (chunk *Chunk) TransferItem(item IItem) {
+    chunk.items[item.GetEntity().EntityID] = item
+}
+
 func (chunk *Chunk) SendUpdate() {
     // TODO send only to players in range
     buf := &bytes.Buffer{}
@@ -146,10 +150,11 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
     return
 }
 
-func (chunk *Chunk) AddItem(item *cmitem.Item) {
+func (chunk *Chunk) AddItem(item IItem) {
     chunk.mgr.game.Enqueue(func(game IGame) {
-        game.AddEntity(&item.Entity)
-        chunk.items[item.Entity.EntityID] = item
+        entity := item.GetEntity()
+        game.AddEntity(entity)
+        chunk.items[entity.EntityID] = item
 
         // Spawn new item for players
         buf := &bytes.Buffer{}
@@ -163,9 +168,7 @@ func (chunk *Chunk) AddItem(item *cmitem.Item) {
 }
 
 func (chunk *Chunk) PhysicsTick() {
-    destroyedEntityIDs := []EntityID{}
-
-    blockSolid := func(blockLoc *BlockXYZ) bool {
+    blockQuery := func(blockLoc *BlockXYZ) (isSolid bool, isWithinChunk bool) {
         chunkLoc, subLoc := blockLoc.ToChunkLocal()
         var blockTypeID BlockID
         if chunkLoc.X == chunk.loc.X && chunkLoc.Z == chunk.loc.Z {
@@ -173,38 +176,75 @@ func (chunk *Chunk) PhysicsTick() {
             blockTypeID, _ = chunk.GetBlock(subLoc)
         } else {
             // The item is asking about a seperate chunk
+            isWithinChunk = false
 
-            blockTypeIDChan := make(chan BlockID)
+            blockTypeIDChan := make(chan int)
             chunk.mgr.game.Enqueue(func(game IGame) {
                 blockChunk := chunk.mgr.Get(chunkLoc)
 
                 if chunk == nil {
                     // Object fell off the side of the world
-                    blockTypeIDChan <- BlockIDAir
+                    blockTypeIDChan <- -1
                     return
                 }
 
                 blockChunk.Enqueue(func(blockChunk IChunk) {
                     blockTypeID, _ = blockChunk.GetBlock(subLoc)
-                    blockTypeIDChan <- blockTypeID
+                    blockTypeIDChan <- int(blockTypeID)
                 })
             })
-            blockTypeID = <-blockTypeIDChan
+            blockTypeIDRaw := <-blockTypeIDChan
+            if blockTypeIDRaw < 0 {
+                // Continuation of object falling off the side of the world
+                isSolid = false
+                return
+            }
+            blockTypeID = BlockID(blockTypeIDRaw)
         }
 
         blockType, ok := chunk.mgr.blockTypes[blockTypeID]
         if !ok {
-            log.Print("game.physicsTick/blockSolid found unknown block type ID", blockTypeID)
-            return true
+            log.Print("game.physicsTick/blockQuery found unknown block type ID", blockTypeID)
+            // Assume this unknown block is solid
+            isSolid = true
+        } else {
+            isSolid = blockType.IsSolid
         }
-
-        return blockType.IsSolid
+        return
     }
 
+    destroyedEntityIDs := []EntityID{}
+    leftItems := []IItem{}
+
     for _, item := range chunk.items {
-        if item.PhysicsTick(blockSolid) {
-            destroyedEntityIDs = append(destroyedEntityIDs, item.Entity.EntityID)
+        if item.Tick(blockQuery) {
+            if item.GetPosition().Y <= 0 {
+                // Item fell out of the world
+                destroyedEntityIDs = append(
+                    destroyedEntityIDs, item.GetEntity().EntityID)
+            } else {
+                leftItems = append(leftItems, item)
+            }
         }
+    }
+
+    if len(leftItems) > 0 {
+        // Remove items from this chunk
+        for _, item := range leftItems {
+            chunk.items[item.GetEntity().EntityID] = nil, false
+        }
+
+        // Send items to new chunk
+        chunk.mgr.game.Enqueue(func(game IGame) {
+            mgr := game.GetChunkManager()
+            for _, item := range leftItems {
+                chunkLoc := item.GetPosition().ToChunkXZ()
+                blockChunk := mgr.Get(chunkLoc)
+                blockChunk.Enqueue(func(blockChunk IChunk) {
+                    blockChunk.AddItem(item)
+                })
+            }
+        })
     }
 
     if len(destroyedEntityIDs) > 0 {

@@ -38,12 +38,13 @@ type PointObject struct {
     LastSentVelocity Velocity
 
     // Used in physical modelling
-    Position AbsXYZ
-    Velocity AbsVelocity
-    onGround bool
+    Position  AbsXYZ
+    Velocity  AbsVelocity
+    onGround  bool
+    remainder TickTime
 }
 
-type BlockSolidFn func(*BlockXYZ) bool
+type BlockQueryFn func(*BlockXYZ) (isSolid bool, isWithinChunk bool)
 
 func (obj *PointObject) Init(position *AbsXYZ, velocity *AbsVelocity) {
     obj.LastSentPosition = *position.ToAbsIntXYZ()
@@ -97,7 +98,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityID EntityID, look *Lo
     return
 }
 
-func (obj *PointObject) Tick(blockSolid BlockSolidFn) (destroyed bool) {
+func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
     // TODO this algorithm can probably be sped up a bit, but initially trying
     // to keep things simple and more or less correct
     // TODO flowing water movement of items
@@ -115,6 +116,7 @@ func (obj *PointObject) Tick(blockSolid BlockSolidFn) (destroyed bool) {
 
     if stopped {
         // The object isn't moving, we're done
+        obj.remainder = 0.0
         return
     }
 
@@ -134,7 +136,7 @@ func (obj *PointObject) Tick(blockSolid BlockSolidFn) (destroyed bool) {
     var dt TickTime
 
     t0 = 0.0
-    t1 = 1.0
+    t1 = 1.0 + obj.remainder
     dt = 0
 
     var move blockAxisMove
@@ -165,9 +167,15 @@ func (obj *PointObject) Tick(blockSolid BlockSolidFn) (destroyed bool) {
 
             // Examine the block being entered
             blockLoc := obj.nextBlockToEnter(move)
+            // FIXME deal better with the case where the block goes over the
+            // top (Y > 128) - BlockYCoord is an int8, so it'll overflow
+            if blockLoc.Y < 0 {
+                break
+            }
 
             // Is it solid?
-            if blockSolid(blockLoc) {
+            isSolid, isWithinChunk := blockQuery(blockLoc)
+            if isSolid {
                 // Collision - cancel axis movement
                 switch move {
                 case blockAxisMoveX:
@@ -188,14 +196,18 @@ func (obj *PointObject) Tick(blockSolid BlockSolidFn) (destroyed bool) {
                 // would otherwise be *approximately* sufficient to reach the
                 // block boundary.
                 p.ApplyVelocity(dt+1e-4, v)
+                if !isWithinChunk {
+                    // Object has left the chunk, finish early
+                    break
+                }
             }
         }
     }
 
-    // Destroy object if fallen out the bottom of the world
     if p.Y < 0 {
-        destroyed = true
+        leftBlock = true
     }
+    obj.remainder = t1 - t
     return
 }
 
@@ -203,7 +215,7 @@ func (obj *PointObject) updateVelocity() (stopped bool) {
     v := &obj.Velocity
 
     if !obj.onGround {
-        v.Y -= gravityBlocksPerTick2
+        v.Y -= gravityBlocksPerTick2 * AbsVelocityCoord(1.0 + float64(obj.remainder))
     }
 
     stopped = true

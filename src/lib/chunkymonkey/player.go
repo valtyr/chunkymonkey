@@ -95,8 +95,8 @@ func (player *Player) start() {
 }
 
 // Start of packet handling code
-// Note: any packet handlers that could change the player state must use
-// player.lock
+// Note: any packet handlers that could change the player state or read a
+// changeable state must use player.lock
 
 func (player *Player) PacketKeepAlive() {
 }

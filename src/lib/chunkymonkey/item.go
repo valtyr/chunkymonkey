@@ -129,6 +129,14 @@ func NewItem(itemType ItemID, count ItemCount, position *AbsXYZ, velocity *AbsVe
     return
 }
 
+func (item *Item) GetEntity() *entity.Entity {
+    return &item.Entity
+}
+
+func (item *Item) GetPosition() *AbsXYZ {
+    return &item.physObj.Position
+}
+
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
     // TODO pass uses value instead of 0
     err = proto.WriteItemSpawn(
@@ -156,6 +164,6 @@ func (item *Item) SendUpdate(writer io.Writer) (err os.Error) {
     return
 }
 
-func (item *Item) PhysicsTick(blockSolid physics.BlockSolidFn) (itemDestroyed bool) {
-    return item.physObj.Tick(blockSolid)
+func (item *Item) Tick(blockQuery physics.BlockQueryFn) (leftBlock bool) {
+    return item.physObj.Tick(blockQuery)
 }

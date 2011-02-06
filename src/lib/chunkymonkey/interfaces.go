@@ -5,6 +5,7 @@ import (
     "os"
 
     "chunkymonkey/entity"
+    "chunkymonkey/physics"
     . "chunkymonkey/types"
 )
 
@@ -21,6 +22,18 @@ type IPlayer interface {
     GetChunkPosition() *ChunkXZ
 }
 
+type IItem interface {
+    // Safe to call from outside of chunk's own goroutine
+    GetEntity() *entity.Entity // Only the game mainloop may modify the return value
+
+    // Item methods must be called from the goroutine of their parent chunk.
+    // Note that items move between chunks.
+    GetPosition() *AbsXYZ
+    SendSpawn(writer io.Writer) (err os.Error)
+    SendUpdate(writer io.Writer) (err os.Error)
+    Tick(blockQuery physics.BlockQueryFn) (leftBlock bool)
+}
+
 type IChunk interface {
     // Safe to call from outside of Enqueue:
     GetLoc() *ChunkXZ // Do not modify return value
@@ -28,6 +41,8 @@ type IChunk interface {
     Enqueue(f func(IChunk))
 
     // Must be called from within Enqueue:
+    AddItem(item IItem)
+    TransferItem(item IItem)
     DestroyBlock(subLoc *SubChunkXYZ) (ok bool)
     SendChunkData(writer io.Writer) (err os.Error)
     GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool)
