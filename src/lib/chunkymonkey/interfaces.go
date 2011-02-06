@@ -13,13 +13,14 @@ type IPlayer interface {
     // Safe to call from outside of player's own goroutine.
     GetEntity() *entity.Entity // Only the game mainloop may modify the return value
     GetName() string           // Do not modify return value
+    LockedGetChunkPosition() *ChunkXZ
 
     TransmitPacket(packet []byte)
     Enqueue(f func(IPlayer))
 
-    // Must be called from within Enqueue:
+    // Must be called from within Enqueue or WithLock:
     SendSpawn(writer io.Writer) (err os.Error)
-    GetChunkPosition() *ChunkXZ
+    IsWithin(p1, p2 *ChunkXZ) bool
 }
 
 type IItem interface {

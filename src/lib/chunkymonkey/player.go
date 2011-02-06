@@ -66,8 +66,16 @@ func (player *Player) GetEntity() *Entity {
     return &player.Entity
 }
 
-func (player *Player) GetChunkPosition() *ChunkXZ {
+func (player *Player) LockedGetChunkPosition() *ChunkXZ {
+    player.lock.Lock()
+    defer player.lock.Unlock()
     return player.position.ToChunkXZ()
+}
+
+func (player *Player) IsWithin(p1, p2 *ChunkXZ) bool {
+    p := player.position.ToChunkXZ()
+    return (p.X >= p1.X && p.X <= p2.X &&
+        p.Z >= p1.Z && p.Z <= p2.Z)
 }
 
 func (player *Player) GetName() string {

@@ -157,37 +157,38 @@ func (game *Game) AddEntity(entity *Entity) {
 // Add a player to the game
 // This function sends spawn messages to all players in range.  It also spawns
 // all existing players so the new player can see them.
-func (game *Game) AddPlayer(player IPlayer) {
-    entity := player.GetEntity()
+func (game *Game) AddPlayer(newPlayer IPlayer) {
+    entity := newPlayer.GetEntity()
     game.AddEntity(entity)
-    game.players[entity.EntityID] = player
-    name := player.GetName()
+    game.players[entity.EntityID] = newPlayer
+    name := newPlayer.GetName()
     game.SendChatMessage(fmt.Sprintf("%s has joined", name))
 
     // Spawn new player for existing players
-    player.Enqueue(func(player IPlayer) {
+    newPlayer.Enqueue(func(newPlayer IPlayer) {
         buf := &bytes.Buffer{}
-        if err := player.SendSpawn(buf); err != nil {
+        if err := newPlayer.SendSpawn(buf); err != nil {
             return
         }
         game.Enqueue(func(game IGame) {
-            game.MulticastRadiusPacket(buf.Bytes(), player)
+            game.MulticastRadiusPacket(buf.Bytes(), newPlayer)
         })
     })
 
     // Spawn existing players for new player
-    for existing := range game.PlayersInPlayerRadius(player) {
-        if existing == player {
-            continue
+    p1, p2 := getChunkRadius(newPlayer.LockedGetChunkPosition())
+    for _, existing := range game.players {
+        if existing != newPlayer {
+            existing.Enqueue(func(existing IPlayer) {
+                if existing.IsWithin(p1, p2) {
+                    buf := &bytes.Buffer{}
+                    if err := existing.SendSpawn(buf); err != nil {
+                        return
+                    }
+                    newPlayer.TransmitPacket(buf.Bytes())
+                }
+            })
         }
-
-        existing.Enqueue(func(player IPlayer) {
-            buf := &bytes.Buffer{}
-            if err := player.SendSpawn(buf); err != nil {
-                return
-            }
-            player.TransmitPacket(buf.Bytes())
-        })
     }
 }
 
@@ -275,48 +276,43 @@ func (game *Game) tick() {
     game.physicsTick()
 }
 
-// Return a channel to iterate over all players within a chunk's radius
-func (game *Game) PlayersInRadius(loc *ChunkXZ) (c chan IPlayer) {
-    // We return any player whose chunk position is within these bounds:
-    minX := loc.X - ChunkRadius
-    minZ := loc.Z - ChunkRadius
-    maxX := loc.X + ChunkRadius
-    maxZ := loc.X + ChunkRadius
-
-    c = make(chan IPlayer)
-    go func() {
-        for _, player := range game.players {
-            // FIXME this reads player position from the wrong goroutine
-            p := player.GetChunkPosition()
-            if p.X >= minX && p.X <= maxX && p.Z >= minZ && p.Z <= maxZ {
-                c <- player
-            }
-        }
-        close(c)
-    }()
-    return
-}
-
-// Return a channel to iterate over all players within a chunk's radius
-func (game *Game) PlayersInPlayerRadius(player IPlayer) chan IPlayer {
-    pos := player.GetChunkPosition()
-    return game.PlayersInRadius(pos)
-}
-
 // Transmit a packet to all players in chunk radius
 func (game *Game) MulticastChunkPacket(packet []byte, loc *ChunkXZ) {
-    for receiver := range game.PlayersInRadius(loc) {
-        receiver.TransmitPacket(packet)
+    p1, p2 := getChunkRadius(loc)
+
+    for _, receiver := range game.players {
+        receiver.Enqueue(func(receiver IPlayer) {
+            if receiver.IsWithin(p1, p2) {
+                receiver.TransmitPacket(packet)
+            }
+        })
     }
 }
 
-// Transmit a packet to all players in radius (except the player itself)
+// Transmit a packet to all players near the sender (except the sender itself)
 func (game *Game) MulticastRadiusPacket(packet []byte, sender IPlayer) {
-    for receiver := range game.PlayersInPlayerRadius(sender) {
-        if receiver == sender {
-            continue
-        }
+    p1, p2 := getChunkRadius(sender.LockedGetChunkPosition())
 
-        receiver.TransmitPacket(packet)
+    for _, receiver := range game.players {
+        if receiver != sender {
+            receiver.Enqueue(func(receiver IPlayer) {
+                if receiver.IsWithin(p1, p2) {
+                    receiver.TransmitPacket(packet)
+                }
+            })
+        }
     }
+}
+
+func getChunkRadius(loc *ChunkXZ) (p1, p2 *ChunkXZ) {
+
+    p1 = &ChunkXZ{
+        loc.X - ChunkRadius,
+        loc.Z - ChunkRadius,
+    }
+    p2 = &ChunkXZ{
+        loc.X + ChunkRadius,
+        loc.Z + ChunkRadius,
+    }
+    return
 }
