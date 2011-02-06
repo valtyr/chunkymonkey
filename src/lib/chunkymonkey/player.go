@@ -8,6 +8,7 @@ import (
     "net"
     "os"
 
+    "chunkymonkey/entity"
     "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
@@ -23,7 +24,7 @@ func init() {
 }
 
 type Player struct {
-    Entity
+    entity.Entity
     game        *Game
     conn        net.Conn
     name        string

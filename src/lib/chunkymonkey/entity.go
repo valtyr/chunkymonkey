@@ -1,4 +1,4 @@
-package chunkymonkey
+package entity
 
 import (
     .   "chunkymonkey/types"

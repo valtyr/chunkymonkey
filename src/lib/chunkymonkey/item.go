@@ -1,9 +1,10 @@
-package chunkymonkey
+package item
 
 import (
     "io"
     "os"
 
+    "chunkymonkey/entity"
     "chunkymonkey/physics"
     "chunkymonkey/proto"
     .   "chunkymonkey/types"
@@ -110,7 +111,7 @@ const (
 )
 
 type Item struct {
-    Entity
+    entity.Entity
     itemType    ItemID
     count       ItemCount
     physObj     physics.PointObject

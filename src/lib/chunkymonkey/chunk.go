@@ -12,6 +12,7 @@ import (
     "time"
 
     "chunkymonkey/proto"
+    cmitem "chunkymonkey/item"
     .   "chunkymonkey/types"
     "nbt/nbt"
 )
@@ -26,7 +27,7 @@ type Chunk struct {
     blockLight []byte
     skyLight   []byte
     heightMap  []byte
-    items      map[EntityID]*Item
+    items      map[EntityID]*cmitem.Item
     rand       *rand.Rand
 }
 
@@ -41,7 +42,7 @@ func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, bloc
         blockLight: blockLight,
         heightMap:  heightMap,
         rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
-        items:      make(map[EntityID]*Item),
+        items:      make(map[EntityID]*cmitem.Item),
     }
     go chunk.mainLoop()
     return
@@ -140,7 +141,7 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
     return
 }
 
-func (chunk *Chunk) AddItem(item *Item) {
+func (chunk *Chunk) AddItem(item *cmitem.Item) {
     chunk.mgr.game.entityManager.AddEntity(&item.Entity)
     chunk.items[item.Entity.EntityID] = item
 
@@ -151,7 +152,7 @@ func (chunk *Chunk) AddItem(item *Item) {
         log.Print("AddItem", err.String())
         return
     }
-    chunk.mgr.game.MulticastChunkPacket(buf.Bytes(), item.physObj.Position.ToChunkXZ())
+    chunk.mgr.game.MulticastChunkPacket(buf.Bytes(), &chunk.Loc)
 }
 
 func (chunk *Chunk) PhysicsTick() {

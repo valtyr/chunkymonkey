@@ -11,6 +11,7 @@ import (
     "time"
 
     "nbt/nbt"
+    "chunkymonkey/entity"
     "chunkymonkey/proto"
     "chunkymonkey/record"
     "chunkymonkey/serverAuth"
@@ -43,7 +44,7 @@ func loadStartPosition(worldPath string) {
 type Game struct {
     chunkManager  *ChunkManager
     mainQueue     chan func(*Game)
-    entityManager EntityManager
+    entityManager entity.EntityManager
     players       map[EntityID]*Player
     time          TimeOfDay
     blockTypes    map[BlockID]*BlockType

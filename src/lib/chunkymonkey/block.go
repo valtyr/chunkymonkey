@@ -1,6 +1,7 @@
 package chunkymonkey
 
 import (
+    cmitem "chunkymonkey/item"
     .   "chunkymonkey/types"
 )
 
@@ -118,7 +119,7 @@ func (blockType *BlockType) Destroy(chunk *Chunk, blockLoc *BlockXYZ) bool {
                     position.Y += AbsCoord(blockItemSpawnFromEdge)
                     position.Z += AbsCoord(blockItemSpawnFromEdge + chunk.rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     chunk.AddItem(
-                        NewItem(
+                        cmitem.NewItem(
                             dropItem.droppedItem, 1,
                             position,
                             &AbsVelocity{0, 0, 0}))
@@ -314,22 +315,22 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
     setMinedDropBlock([]Drop{
         Drop{BlockIDStone, ItemID(BlockIDCobblestone)},
         Drop{BlockIDGrass, ItemID(BlockIDDirt)},
-        Drop{BlockIDCoalOre, ItemIDCoal},
+        Drop{BlockIDCoalOre, cmitem.ItemIDCoal},
         Drop{BlockIDDoubleStoneSlab, ItemID(BlockIDStoneSlab)},
-        Drop{BlockIDDiamondOre, ItemIDDiamond},
+        Drop{BlockIDDiamondOre, cmitem.ItemIDDiamond},
         Drop{BlockIDFarmland, ItemID(BlockIDDirt)},
-        Drop{BlockIDSignPost, ItemIDSign},
-        Drop{BlockIDWoodenDoor, ItemIDWoodendoor},
-        Drop{BlockIDWallSign, ItemIDSign},
-        Drop{BlockIDIronDoor, ItemIDIronDoor},
+        Drop{BlockIDSignPost, cmitem.ItemIDSign},
+        Drop{BlockIDWoodenDoor, cmitem.ItemIDWoodendoor},
+        Drop{BlockIDWallSign, cmitem.ItemIDSign},
+        Drop{BlockIDIronDoor, cmitem.ItemIDIronDoor},
         Drop{BlockIDSnow, ItemID(BlockIDDirt)},
-        Drop{BlockIDSugarCane, ItemIDSugarCane},
-        Drop{BlockIDGlowstone, ItemIDGlowstoneDust},
+        Drop{BlockIDSugarCane, cmitem.ItemIDSugarCane},
+        Drop{BlockIDGlowstone, cmitem.ItemIDGlowstoneDust},
     })
     // Blocks that drop things with varying probability (or one of several
     // items)
     b[BlockIDGravel].droppedItems = []BlockDropItem{
-        BlockDropItem{ItemIDFlint, 10, 1},
+        BlockDropItem{cmitem.ItemIDFlint, 10, 1},
         BlockDropItem{ItemID(BlockIDGravel), 90, 1},
     }
     b[BlockIDLeaves].droppedItems = []BlockDropItem{
@@ -338,12 +339,12 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
     }
     b[BlockIDRedstoneOre].droppedItems = []BlockDropItem{
         // TODO find probabilities of dropping 4 vs 5 items
-        BlockDropItem{ItemIDRedstone, 50, 4},
-        BlockDropItem{ItemIDRedstone, 50, 5},
+        BlockDropItem{cmitem.ItemIDRedstone, 50, 4},
+        BlockDropItem{cmitem.ItemIDRedstone, 50, 5},
     }
     b[BlockIDGlowingRedstoneOre].droppedItems = b[BlockIDRedstoneOre].droppedItems
     b[BlockIDSnowBlock].droppedItems = []BlockDropItem{
-        BlockDropItem{ItemIDSnowball, 100, 4},
+        BlockDropItem{cmitem.ItemIDSnowball, 100, 4},
     }
 
     return b
