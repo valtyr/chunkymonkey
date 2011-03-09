@@ -10,7 +10,7 @@ import (
     "rand"
     "time"
 
-    "nbt/nbt"
+    "nbt"
     .   "chunkymonkey/entity"
     .   "chunkymonkey/interfaces"
     "chunkymonkey/player"
@@ -263,7 +263,7 @@ func (game *Game) sendTimeUpdate() {
 func (game *Game) physicsTick() {
     for _, chunk := range game.chunkManager.chunks {
         chunk.Enqueue(func(chunk IChunk) {
-            chunk.PhysicsTick()
+            chunk.Tick()
         })
     }
 }

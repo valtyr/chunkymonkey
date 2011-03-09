@@ -253,13 +253,81 @@ type OrientationBytes struct {
     Yaw, Pitch, Roll AngleBytes
 }
 
+// Cardinal directions
+type ChunkSideDir int
+
+const (
+    ChunkSideEast  = 0
+    ChunkSideSouth = 1
+    ChunkSideWest  = 2
+    ChunkSideNorth = 3
+)
+
+func (d ChunkSideDir) GetDXz() (dx, dz ChunkCoord) {
+    switch d {
+    case ChunkSideEast:
+        dx = 0
+        dz = 1
+    case ChunkSideSouth:
+        dx = 1
+        dz = 0
+    case ChunkSideWest:
+        dx = 0
+        dz = -1
+    case ChunkSideNorth:
+        dx = -1
+        dz = 0
+    }
+    return
+}
+
+func (d ChunkSideDir) GetOpposite() ChunkSideDir {
+    switch d {
+    case ChunkSideEast:
+        return ChunkSideWest
+    case ChunkSideSouth:
+        return ChunkSideNorth
+    case ChunkSideWest:
+        return ChunkSideEast
+    case ChunkSideNorth:
+        return ChunkSideSouth
+    }
+    // Should not happen (should we panic on this?)
+    return ChunkSideNorth
+}
+
+// Returns the direction that (dx,dz) is in. Exactly one of dx and dz must be
+// -1 or 1, and the other must be 0, otherwide ok will return as false.
+func DXzToDir(dx, dz int32) (dir ChunkSideDir, ok bool) {
+    ok = true
+    if dz == 0 {
+        if dx == -1 {
+            dir = ChunkSideNorth
+        } else if dx == 1 {
+            dir = ChunkSideSouth
+        } else {
+            ok = false
+        }
+    } else if dx == 0 {
+        if dz == -1 {
+            dir = ChunkSideWest
+        } else if dz == 1 {
+            dir = ChunkSideEast
+        } else {
+            ok = false
+        }
+    } else {
+        ok = false
+    }
+    return
+}
+
 // Location-related types and constants
 
 const (
     // Chunk coordinates can be converted to block coordinates
-    ChunkSizeX = 16
+    ChunkSizeH = 16
     ChunkSizeY = 128
-    ChunkSizeZ = 16
 
     // The area within which a client receives updates
     ChunkRadius = 10
@@ -326,18 +394,18 @@ type ChunkXZ struct {
 // Returns the world BlockXYZ position of the (0, 0, 0) block in the chunk
 func (chunkLoc *ChunkXZ) GetChunkCornerBlockXY() *BlockXYZ {
     return &BlockXYZ{
-        BlockCoord(chunkLoc.X) * ChunkSizeX,
+        BlockCoord(chunkLoc.X) * ChunkSizeH,
         0,
-        BlockCoord(chunkLoc.Z) * ChunkSizeZ,
+        BlockCoord(chunkLoc.Z) * ChunkSizeH,
     }
 }
 
 // Convert a position within a chunk to a block position within the world
 func (chunkLoc *ChunkXZ) ToBlockXYZ(subLoc *SubChunkXYZ) *BlockXYZ {
     return &BlockXYZ{
-        BlockCoord(chunkLoc.X)*ChunkSizeX + BlockCoord(subLoc.X),
+        BlockCoord(chunkLoc.X)*ChunkSizeH + BlockCoord(subLoc.X),
         BlockYCoord(subLoc.Y),
-        BlockCoord(chunkLoc.Z)*ChunkSizeZ + BlockCoord(subLoc.Z),
+        BlockCoord(chunkLoc.Z)*ChunkSizeH + BlockCoord(subLoc.Z),
     }
 }
 
@@ -374,15 +442,15 @@ func (b *BlockXYZ) IsNull() bool {
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
 func (abs *AbsXYZ) ToChunkXZ() (chunkXz *ChunkXZ) {
     return &ChunkXZ{
-        ChunkCoord(abs.X / ChunkSizeX),
-        ChunkCoord(abs.Z / ChunkSizeZ),
+        ChunkCoord(abs.X / ChunkSizeH),
+        ChunkCoord(abs.Z / ChunkSizeH),
     }
 }
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
 func (abs *AbsIntXYZ) ToChunkXZ() *ChunkXZ {
-    chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeX*PixelsPerBlock)
-    chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeZ*PixelsPerBlock)
+    chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeH*PixelsPerBlock)
+    chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeH*PixelsPerBlock)
 
     return &ChunkXZ{
         ChunkCoord(chunkX),
@@ -409,8 +477,8 @@ func coordDivMod(num, denom int32) (div, mod int32) {
 // Convert an (x, z) block coordinate pair to chunk coordinates and the
 // coordinates of the block within the chunk
 func (blockLoc *BlockXYZ) ToChunkLocal() (chunkLoc *ChunkXZ, subLoc *SubChunkXYZ) {
-    chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeX)
-    chunkZ, subZ := coordDivMod(int32(blockLoc.Z), ChunkSizeZ)
+    chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeH)
+    chunkZ, subZ := coordDivMod(int32(blockLoc.Z), ChunkSizeH)
 
     chunkLoc = &ChunkXZ{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
     subLoc = &SubChunkXYZ{SubChunkCoord(subX), SubChunkCoord(blockLoc.Y), SubChunkCoord(subZ)}

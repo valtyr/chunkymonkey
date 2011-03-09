@@ -18,7 +18,7 @@ type IPlayer interface {
     TransmitPacket(packet []byte)
     Enqueue(f func(IPlayer))
 
-    // Must be called from within Enqueue or WithLock:
+    // Must be called from within Enqueue
     SendSpawn(writer io.Writer) (err os.Error)
     IsWithin(p1, p2 *ChunkXZ) bool
 }
@@ -41,14 +41,16 @@ type IChunk interface {
 
     Enqueue(f func(IChunk))
 
-    // Must be called from within Enqueue:
+    // All the following methods must be called from within Enqueue:
     AddItem(item IItem)
+    // Tells the chunk to take posession of the item.
     TransferItem(item IItem)
     DestroyBlock(subLoc *SubChunkXYZ) (ok bool)
+    // Send chunk data down network connection for client(s)
     SendChunkData(writer io.Writer) (err os.Error)
     GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool)
     SendUpdate()
-    PhysicsTick()
+    Tick()
 }
 
 type IChunkManager interface {

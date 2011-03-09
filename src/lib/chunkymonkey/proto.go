@@ -1764,9 +1764,9 @@ func WriteMapChunk(writer io.Writer, chunkLoc *ChunkXZ, blocks, blockData, block
         chunkCornerLoc.X,
         int16(chunkCornerLoc.Y),
         chunkCornerLoc.Z,
-        ChunkSizeX - 1,
+        ChunkSizeH - 1,
         ChunkSizeY - 1,
-        ChunkSizeZ - 1,
+        ChunkSizeH - 1,
         int32(len(bs)),
     }
 

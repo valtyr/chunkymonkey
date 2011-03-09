@@ -14,7 +14,7 @@ import (
     "chunkymonkey/proto"
     .   "chunkymonkey/interfaces"
     .   "chunkymonkey/types"
-    "nbt/nbt"
+    "nbt"
 )
 
 // A chunk is slice of the world map
@@ -29,6 +29,7 @@ type Chunk struct {
     heightMap  []byte
     items      map[EntityID]IItem
     rand       *rand.Rand
+    neighbours neighboursCache
 }
 
 func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, blockLight, heightMap []byte) (chunk *Chunk) {
@@ -44,18 +45,19 @@ func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, bloc
         rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
         items:      make(map[EntityID]IItem),
     }
+    chunk.neighbours.init()
     go chunk.mainLoop()
     return
 }
 
 func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, ok bool) {
-    if subLoc.X < 0 || subLoc.Y < 0 || subLoc.Z < 0 || subLoc.X >= ChunkSizeX || subLoc.Y >= ChunkSizeY || subLoc.Z >= ChunkSizeZ {
+    if subLoc.X < 0 || subLoc.Y < 0 || subLoc.Z < 0 || subLoc.X >= ChunkSizeH || subLoc.Y >= ChunkSizeY || subLoc.Z >= ChunkSizeH {
         ok = false
         index = 0
     } else {
         ok = true
 
-        index = int32(subLoc.Y) + (int32(subLoc.Z) * ChunkSizeY) + (int32(subLoc.X) * ChunkSizeY * ChunkSizeZ)
+        index = int32(subLoc.Y) + (int32(subLoc.Z) * ChunkSizeY) + (int32(subLoc.X) * ChunkSizeY * ChunkSizeH)
 
         if index%2 == 0 {
             // Low nibble
@@ -69,7 +71,7 @@ func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, ok bool) {
 }
 
 // Sets a block and its data. Returns true if the block was not changed.
-func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockType BlockID, blockMetadata byte) {
+func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, subLoc *SubChunkXYZ, index int32, shift byte, blockType BlockID, blockMetadata byte) {
     chunk.blocks[index] = byte(blockType)
 
     mask := byte(0x0f) << shift
@@ -82,6 +84,9 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, index int32, shift byte, blockT
     proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
     chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.loc)
 
+    // Update neighbour caches of this change
+    chunk.neighbours.setBlock(subLoc, blockType)
+
     return
 }
 
@@ -89,8 +94,6 @@ func (chunk *Chunk) GetLoc() *ChunkXZ {
     return &chunk.loc
 }
 
-// This is the only method that's safe to call from outside the chunk's own
-// goroutine. Everything else must be called via this function.
 func (chunk *Chunk) Enqueue(f func(IChunk)) {
     chunk.mainQueue <- f
 }
@@ -102,7 +105,6 @@ func (chunk *Chunk) mainLoop() {
     }
 }
 
-// Tells the chunk to take posession of the item.
 func (chunk *Chunk) TransferItem(item IItem) {
     chunk.items[item.GetEntity().EntityID] = item
 }
@@ -140,7 +142,7 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
 
     if blockType, ok := chunk.mgr.blockTypes[blockTypeID]; ok {
         if blockType.Destroy(chunk, blockLoc) {
-            chunk.setBlock(blockLoc, index, shift, BlockIDAir, 0)
+            chunk.setBlock(blockLoc, subLoc, index, shift, BlockIDAir, 0)
         }
     } else {
         log.Printf("Attempted to destroy unknown block ID %d", blockTypeID)
@@ -167,46 +169,55 @@ func (chunk *Chunk) AddItem(item IItem) {
     })
 }
 
-func (chunk *Chunk) PhysicsTick() {
+func (chunk *Chunk) Tick() {
+    // Update neighbouring chunks of block changes in this chunk
+    chunk.neighbours.flush()
+
     blockQuery := func(blockLoc *BlockXYZ) (isSolid bool, isWithinChunk bool) {
         chunkLoc, subLoc := blockLoc.ToChunkLocal()
+
+        // If we are in doubt, we assume that the block asked about is solid
+        // (this way items don't fly off the side of the map needlessly)
+        isSolid = true
+
         var blockTypeID BlockID
         if chunkLoc.X == chunk.loc.X && chunkLoc.Z == chunk.loc.Z {
             // The item is asking about this chunk
             blockTypeID, _ = chunk.GetBlock(subLoc)
+            isWithinChunk = true
         } else {
             // The item is asking about a seperate chunk
             isWithinChunk = false
 
-            blockTypeIDChan := make(chan int)
-            chunk.mgr.game.Enqueue(func(game IGame) {
-                blockChunk := chunk.mgr.Get(chunkLoc)
+            dir, isNeighbour := DXzToDir(
+                int32(chunk.loc.X-chunkLoc.X),
+                int32(chunk.loc.Z-chunkLoc.Z))
 
-                if chunk == nil {
-                    // Object fell off the side of the world
-                    blockTypeIDChan <- -1
-                    return
-                }
-
-                blockChunk.Enqueue(func(blockChunk IChunk) {
-                    blockTypeID, _ = blockChunk.GetBlock(subLoc)
-                    blockTypeIDChan <- int(blockTypeID)
-                })
-            })
-            blockTypeIDRaw := <-blockTypeIDChan
-            if blockTypeIDRaw < 0 {
-                // Continuation of object falling off the side of the world
-                isSolid = false
+            if !isNeighbour {
+                // This shouldn't happen, the physics code should not request
+                // block info more than one block past this chunk.
                 return
             }
-            blockTypeID = BlockID(blockTypeIDRaw)
+
+            sideCache := chunk.neighbours.sideCache[dir]
+            if sideCache == nil {
+                // To the best of our knowledge, this chunk doesn't exist or
+                // isn't loaded.
+                return
+            }
+
+            var ok bool
+            blockTypeID, ok = sideCache.GetCachedBlock(subLoc)
+            if !ok {
+                return
+            }
         }
 
         blockType, ok := chunk.mgr.blockTypes[blockTypeID]
         if !ok {
-            log.Print("game.physicsTick/blockQuery found unknown block type ID", blockTypeID)
-            // Assume this unknown block is solid
-            isSolid = true
+            log.Printf(
+                    "game.physicsTick/blockQuery found unknown block type ID %d at %+v",
+                    blockTypeID, blockLoc)
         } else {
             isSolid = blockType.IsSolid
         }
@@ -258,9 +269,55 @@ func (chunk *Chunk) PhysicsTick() {
     }
 }
 
-// Send chunk data down network connection
 func (chunk *Chunk) SendChunkData(writer io.Writer) (err os.Error) {
     return proto.WriteMapChunk(writer, &chunk.loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
+}
+
+// Used in chunk side caching code:
+func getSideBlockIndex(side ChunkSideDir, subLoc *SubChunkXYZ) (index int, ok bool) {
+    var h, h2, y SubChunkCoord
+
+    if y >= ChunkSizeY {
+        ok = false
+        return
+    }
+
+    switch side {
+    case ChunkSideEast, ChunkSideWest:
+        h = subLoc.X
+    case ChunkSideNorth, ChunkSideSouth:
+        h = subLoc.X
+    }
+
+    if h >= ChunkSizeH {
+        ok = false
+        return
+    }
+
+    switch side {
+    case ChunkSideWest, ChunkSideNorth:
+        if h2 != 0 {
+            ok = false
+            return
+        }
+    case ChunkSideEast, ChunkSideSouth:
+        if h2 != (ChunkSizeH - 1) {
+            ok = false
+            return
+        }
+    }
+
+    ok = true
+
+    y = subLoc.Y
+
+    index = (int(h) * ChunkSizeH) + int(y)
+
+    return
+}
+
+func (chunk *Chunk) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk) {
+    chunk.neighbours.sideCacheSetNeighbour(side, neighbour, chunk.blocks)
 }
 
 // ChunkManager contains all chunks and can look them up
@@ -325,16 +382,20 @@ func (mgr *ChunkManager) loadChunk(reader io.Reader) (chunk *Chunk, err os.Error
         level.Lookup("/Level/BlockLight").(*nbt.ByteArray).Value,
         level.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value,
     )
-
     return
 }
 
+func chunkKey(loc *ChunkXZ) uint64 {
+    return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
+}
+
 // Get a chunk at given coordinates
-func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk IChunk) {
-    // FIXME this function looks subject to race conditions with itself
-    key := uint64(loc.X)<<32 | uint64(uint32(loc.Z))
+func (mgr *ChunkManager) Get(loc *ChunkXZ) (c IChunk) {
+    var chunk *Chunk
+    key := chunkKey(loc)
     chunk, ok := mgr.chunks[key]
     if ok {
+        c = chunk
         return
     }
 
@@ -344,14 +405,41 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (chunk IChunk) {
     }
     defer file.Close()
 
-    loaded_chunk, err := mgr.loadChunk(file)
+    chunk, err = mgr.loadChunk(file)
 
     if err != nil {
         log.Fatalf("ChunkManager.loadChunk: %s", err.String())
+        return
     }
 
-    mgr.chunks[key] = loaded_chunk
-    chunk = loaded_chunk
+    c = chunk
+
+    // Notify neighbouring chunk(s) (if any) that this chunk is now active, and
+    // notify this chunk of its active neighbours
+    linkNeighbours := func(from ChunkSideDir) {
+        dx, dz := from.GetDXz()
+        loc := ChunkXZ{
+            X:  loc.X + dx,
+            Z:  loc.Z + dz,
+        }
+        neighbour, exists := mgr.chunks[chunkKey(&loc)]
+        if exists {
+            to := from.GetOpposite()
+            chunk.Enqueue(func(_ IChunk) {
+                chunk.sideCacheSetNeighbour(from, neighbour)
+            })
+            neighbour.Enqueue(func(_ IChunk) {
+                neighbour.sideCacheSetNeighbour(to, chunk)
+            })
+        }
+    }
+    // TODO corresponding unlinking when a chunk is unloaded
+    linkNeighbours(ChunkSideEast)
+    linkNeighbours(ChunkSideSouth)
+    linkNeighbours(ChunkSideWest)
+    linkNeighbours(ChunkSideNorth)
+
+    mgr.chunks[key] = chunk
     return
 }
 
