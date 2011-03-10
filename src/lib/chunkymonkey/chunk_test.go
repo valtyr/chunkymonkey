@@ -1,4 +1,4 @@
-package chunkymonkey
+package chunk
 
 import (
     "testing"

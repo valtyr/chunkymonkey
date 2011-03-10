@@ -139,6 +139,14 @@ func (blockType *BlockType) IsSolid() bool {
     return blockType.isSolid
 }
 
+func (blockType *BlockType) GetName() string {
+    return blockType.name
+}
+
+func (blockType *BlockType) GetTransparency() int8 {
+    return blockType.transparency
+}
+
 func LoadStandardBlockTypes() map[BlockID]IBlockType {
     b := make(map[BlockID]*BlockType)
 

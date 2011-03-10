@@ -39,6 +39,8 @@ type IItem interface {
 type IBlockType interface {
     Destroy(chunk IChunk, blockLoc *BlockXYZ) bool
     IsSolid() bool
+    GetName() string
+    GetTransparency() int8
 }
 
 type IChunk interface {

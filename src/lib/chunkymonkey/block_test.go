@@ -1,4 +1,4 @@
-package chunkymonkey
+package block
 
 import (
     "testing"
@@ -31,9 +31,9 @@ func TestLoadStandardBlocksOpacity(t *testing.T) {
 
     for _, r := range BlockTransTests {
         block := b[r.id]
-        if r.expected_transparency != block.transparency {
+        if r.expected_transparency != block.GetTransparency() {
             t.Errorf("block #%d (%s) expected transparency %d, got %d",
-                r.id, block.name, r.expected_transparency, block.transparency)
+                r.id, block.GetName(), r.expected_transparency, block.GetTransparency())
         }
     }
 }
@@ -61,9 +61,9 @@ func TestLoadStandardBlocksSolidity(t *testing.T) {
 
     for _, r := range tests {
         block := b[r.id]
-        if r.expected_solid != block.IsSolid {
+        if r.expected_solid != block.IsSolid() {
             t.Errorf("block #%d (%s) expected IsSolid %t, got %t",
-                r.id, block.name, r.expected_solid, block.IsSolid)
+                r.id, block.GetName(), r.expected_solid, block.IsSolid())
         }
     }
 }
