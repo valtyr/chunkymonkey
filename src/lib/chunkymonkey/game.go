@@ -10,7 +10,7 @@ import (
     "rand"
     "time"
 
-    "nbt/nbt"
+    "nbt"
     .   "chunkymonkey/entity"
     .   "chunkymonkey/interfaces"
     "chunkymonkey/player"

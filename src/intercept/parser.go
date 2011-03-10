@@ -81,6 +81,10 @@ func (p *MessageParser) PacketHoldingChange(itemID ItemID) {
     p.printf("PacketHoldingChange(itemID=%d)", itemID)
 }
 
+func (p *MessageParser) PacketUseBed(flag bool, bedLoc *BlockXYZ) {
+    p.printf("PacketUseBed(flag=%v, bedLoc=%v)", flag, bedLoc)
+}
+
 func (p *MessageParser) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
     p.printf("PacketEntityAnimation(entityID=%d, animation=%v)", entityID, animation)
 }
@@ -151,14 +155,16 @@ func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobTy
         entityID, mobType, position, look, metadata)
 }
 
-func (p *MessageParser) PacketUnknownX19(field1 int32, field2 string, field3, field4, field5, field6 int32) {
-    p.printf("PacketUnknownX19(field1=%d, field2=%q, field3=%d, field4=%d, field5=%d, field6=%d)",
-        field1, field2, field3, field4, field5, field6)
-}
-
 func (p *MessageParser) PacketPaintingSpawn(entityID EntityID, title string, position *BlockXYZ, paintingType PaintingTypeID) {
     p.printf("PacketPaintingSpawn(entityID=%d, title=%s, position=%v, paintingType=%d)",
         entityID, title, position, position, paintingType)
+}
+
+func (p *MessageParser) PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool) {
+    p.printf(
+            "PacketUnknown0x1b(field1=%v, field2=%v, field3=%v, field4=%v, field5=%v, field6=%v)",
+            field1, field2, field3, field4, field5, field6)
+
 }
 
 func (p *MessageParser) PacketEntityVelocity(entityID EntityID, velocity *Velocity) {

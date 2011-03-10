@@ -8,7 +8,7 @@ import (
     "net"
     "os"
 
-    "chunkymonkey/chunkymonkey"
+    "chunkymonkey"
 )
 
 var addr = flag.String(

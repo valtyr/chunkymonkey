@@ -14,7 +14,7 @@ import (
     "chunkymonkey/proto"
     .   "chunkymonkey/interfaces"
     .   "chunkymonkey/types"
-    "nbt/nbt"
+    "nbt"
 )
 
 // A chunk is slice of the world map

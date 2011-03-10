@@ -13,7 +13,7 @@ import (
 
 const (
     // Currently only this protocol version is supported
-    protocolVersion = 8
+    protocolVersion = 9
 
     // Packet type IDs
     packetIDKeepAlive            = 0x00
@@ -33,6 +33,7 @@ const (
     packetIDPlayerDigging        = 0x0e
     packetIDPlayerBlockPlacement = 0x0f
     packetIDHoldingChange        = 0x10
+    packetIDUseBed               = 0x11
     packetIDEntityAnimation      = 0x12
     packetIDEntityAction         = 0x13
     packetIDNamedEntitySpawn     = 0x14
@@ -41,6 +42,7 @@ const (
     packetIDObjectSpawn          = 0x17
     packetIDEntitySpawn          = 0x18
     packetIDPaintingSpawn        = 0x19
+    packetIDUnknown0x1b          = 0x1b
     packetIDEntityVelocity       = 0x1c
     packetIDEntityDestroy        = 0x1d
     packetIDEntity               = 0x1e
@@ -85,6 +87,7 @@ type PacketHandler interface {
     PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face)
     PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses)
     PacketEntityAnimation(entityID EntityID, animation EntityAnimation)
+    PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool)
     PacketSignUpdate(position *BlockXYZ, lines [4]string)
     PacketDisconnect(reason string)
 }
@@ -103,6 +106,7 @@ type ClientPacketHandler interface {
     PacketHandler
     ClientPacketLogin(entityID EntityID, mapSeed RandomSeed, dimension DimensionID)
     PacketTimeUpdate(time TimeOfDay)
+    PacketUseBed(flag bool, bedLoc *BlockXYZ)
     PacketNamedEntitySpawn(entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID)
     PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses)
     PacketSpawnPosition(position *BlockXYZ)
@@ -992,6 +996,43 @@ func readHoldingChange(reader io.Reader, handler ServerPacketHandler) (err os.Er
     return
 }
 
+// packetIDUseBed
+
+func WriteUseBed(writer io.Writer, flag bool, bedLoc *BlockXYZ) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        Flag     byte
+        X        BlockCoord
+        Y        BlockYCoord
+        Z        BlockCoord
+    }{
+        packetIDUseBed,
+        boolToByte(flag),
+        bedLoc.X,
+        bedLoc.Y,
+        bedLoc.Z,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readUseBed(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        Flag     byte
+        X        BlockCoord
+        Y        BlockYCoord
+        Z        BlockCoord
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        handler.PacketUseBed(
+                byteToBool(packet.Flag),
+                &BlockXYZ{packet.X, packet.Y, packet.Z})
+    }
+
+    return
+}
+
 // packetIDEntityAnimation
 
 func WriteEntityAnimation(writer io.Writer, entityID EntityID, animation EntityAnimation) (err os.Error) {
@@ -1367,6 +1408,25 @@ func readPaintingSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Er
         title,
         &BlockXYZ{packetEnd.X, BlockYCoord(packetEnd.Y), packetEnd.Z},
         packetEnd.PaintingType)
+
+    return
+}
+
+// packetIDUnknown0x1b
+
+func readUnknown0x1b(reader io.Reader, handler PacketHandler) (err os.Error) {
+    var packet struct {
+        field1, field2, field3, field4 float32
+        field5, field6 byte
+    }
+
+    if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+        return
+    }
+
+    handler.PacketUnknown0x1b(
+            packet.field1, packet.field2, packet.field3, packet.field4,
+            byteToBool(packet.field5), byteToBool(packet.field6))
 
     return
 }
@@ -2514,11 +2574,12 @@ var clientReadFns = clientPacketReaderMap{
     packetIDSpawnPosition:        readSpawnPosition,
     packetIDUpdateHealth:         readUpdateHealth,
     packetIDPlayerPositionLook:   readPlayerPositionLook,
-    packetIDEntitySpawn:          readEntitySpawn,
+    packetIDUseBed:               readUseBed,
     packetIDNamedEntitySpawn:     readNamedEntitySpawn,
     packetIDItemSpawn:            readItemSpawn,
     packetIDItemCollect:          readItemCollect,
     packetIDObjectSpawn:          readObjectSpawn,
+    packetIDEntitySpawn:          readEntitySpawn,
     packetIDPaintingSpawn:        readPaintingSpawn,
     packetIDEntityVelocity:       readEntityVelocity,
     packetIDEntityDestroy:        readEntityDestroy,
