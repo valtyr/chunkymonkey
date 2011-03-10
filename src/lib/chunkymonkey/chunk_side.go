@@ -8,26 +8,27 @@ import (
 // Encapsulates logic for looking up block data from neighbouring chunks, and
 // for updating neighbouring chunks.
 type neighboursCache struct {
-    sideCache   [4]*chunkSideCache   // Caches neighbouring blocks.
-    sideUpdater [4]*neighbourUpdater // Updates neighbours' caches.
+    sideCache   [4]chunkSideCache   // Caches neighbouring blocks.
+    sideUpdater [4]neighbourUpdater // Updates neighbours' caches.
 }
 
 func (n *neighboursCache) init() {
     for i, _ := range n.sideCache {
-        n.sideCache[i] = NewChunkSideCache(ChunkSideDir(i))
+        n.sideCache[i].init(ChunkSideDir(i))
+        n.sideUpdater[i].init(ChunkSideDir(i))
     }
 }
 
 func (n *neighboursCache) setBlock(subLoc *SubChunkXYZ, blockType BlockID) {
-    if subLoc.X == 0 && n.sideUpdater[ChunkSideNorth] != nil {
+    if subLoc.X == 0 {
         n.sideUpdater[ChunkSideNorth].blockChanged(subLoc, blockType)
-    } else if subLoc.X == ChunkSizeH-1 && n.sideUpdater[ChunkSideSouth] != nil {
+    } else if subLoc.X == ChunkSizeH-1 {
         n.sideUpdater[ChunkSideSouth].blockChanged(subLoc, blockType)
     }
 
-    if subLoc.Z == 0 && n.sideUpdater[ChunkSideWest] != nil {
+    if subLoc.Z == 0 {
         n.sideUpdater[ChunkSideWest].blockChanged(subLoc, blockType)
-    } else if subLoc.Z == ChunkSizeH-1 && n.sideUpdater[ChunkSideEast] != nil {
+    } else if subLoc.Z == ChunkSizeH-1 {
         n.sideUpdater[ChunkSideEast].blockChanged(subLoc, blockType)
     }
 }
@@ -39,15 +40,18 @@ func (n *neighboursCache) flush() {
 }
 
 func (n *neighboursCache) sideCacheUpdate(side ChunkSideDir, update *chunkSideCacheUpdate) {
-    update.updateCache(n.sideCache[side])
+    update.updateCache(&n.sideCache[side])
 }
 
 func (n *neighboursCache) sideCacheFullUpdate(side ChunkSideDir, blocks sideBlockData) {
     n.sideCache[side].blocks = blocks
+    n.sideCache[side].active = true
 }
 
 func (n *neighboursCache) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk, blocks []byte) {
-    n.sideUpdater[side] = newNeighbourUpdater(side, neighbour)
+    n.sideUpdater[side].neighbour = neighbour
+
+    // Construct and send a full side cache update.
 
     var subLoc SubChunkXYZ
     var h *SubChunkCoord
@@ -83,19 +87,42 @@ func (n *neighboursCache) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Ch
     })
 }
 
+func (n *neighboursCache) GetCachedBlock(dx, dz ChunkCoord, subLoc *SubChunkXYZ) (ok bool, blockTypeID BlockID) {
+    dir, isNeighbour := DXzToDir(int32(dx), int32(dz))
+    ok = false
+
+    if !isNeighbour {
+        // Do not have information except about directly adjacent neighbours.
+        return
+    }
+
+    sideCache := n.sideCache[dir]
+    if !sideCache.active {
+        // We don't have any information about the neighbouring chunk.
+        return
+    }
+
+    blockTypeID, ok = sideCache.GetCachedBlock(subLoc)
+    if !ok {
+        return
+    }
+    ok = true
+
+    return
+}
+
 type sideBlockData [ChunkSizeH * ChunkSizeY]byte
 
 // Contains a cache of the blocks on the side of a neighbouring chunk.
 type chunkSideCache struct {
     side   ChunkSideDir
+    active bool // Has data been received from the chunk yet?
     blocks sideBlockData
 }
 
-func NewChunkSideCache(side ChunkSideDir) (cache *chunkSideCache) {
-    cache = &chunkSideCache{
-        side: side,
-    }
-    return
+func (cache *chunkSideCache) init(side ChunkSideDir) {
+    cache.side = side
+    cache.active = false
 }
 
 func (cache *chunkSideCache) GetCachedBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool) {
@@ -133,28 +160,28 @@ type neighbourUpdater struct {
     neighbour *Chunk
 }
 
-func newNeighbourUpdater(side ChunkSideDir, neighbour *Chunk) (cache *neighbourUpdater) {
-    cache = &neighbourUpdater{
-        side:      side,
-        changes:   nil,
-        neighbour: neighbour,
-    }
-    return
+func (updater *neighbourUpdater) init(side ChunkSideDir) {
+    updater.side = side
+    updater.changes = nil
+    updater.neighbour = nil
 }
 
-func (updater *neighbourUpdater) blockChanged(subLoc *SubChunkXYZ, blockType BlockID) (ok bool) {
+func (updater *neighbourUpdater) blockChanged(subLoc *SubChunkXYZ, blockType BlockID) {
+    if updater.neighbour == nil {
+        // Don't remember changes to send if the neighbouring chunk is not present.
+        return
+    }
+
     index, ok := getSideBlockIndex(updater.side, subLoc)
     if !ok {
         return
     }
 
     updater.changes = append(updater.changes, blockChange{int16(index), blockType})
-
-    return
 }
 
 func (updater *neighbourUpdater) flush() {
-    if len(updater.changes) > 0 {
+    if len(updater.changes) > 0 && updater.neighbour != nil {
         update := &chunkSideCacheUpdate{
             changes: updater.changes,
         }

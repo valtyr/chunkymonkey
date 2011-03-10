@@ -187,32 +187,19 @@ func (chunk *Chunk) Tick() {
 
         var blockTypeID BlockID
         if chunkLoc.X == chunk.loc.X && chunkLoc.Z == chunk.loc.Z {
-            // The item is asking about this chunk
+            // The item is asking about this chunk.
             blockTypeID, _ = chunk.GetBlock(subLoc)
             isWithinChunk = true
         } else {
-            // The item is asking about a seperate chunk
+            // The item is asking about a separate chunk.
             isWithinChunk = false
 
-            dir, isNeighbour := DXzToDir(
-                int32(chunk.loc.X-chunkLoc.X),
-                int32(chunk.loc.Z-chunkLoc.Z))
-
-            if !isNeighbour {
-                // This shouldn't happen, the physics code should not request
-                // block info more than one block past this chunk.
-                return
-            }
-
-            sideCache := chunk.neighbours.sideCache[dir]
-            if sideCache == nil {
-                // To the best of our knowledge, this chunk doesn't exist or
-                // isn't loaded.
-                return
-            }
-
             var ok bool
-            blockTypeID, ok = sideCache.GetCachedBlock(subLoc)
+            ok, blockTypeID = chunk.neighbours.GetCachedBlock(
+                chunk.loc.X-chunkLoc.X,
+                chunk.loc.Z-chunkLoc.Z,
+                subLoc)
+
             if !ok {
                 return
             }
