@@ -205,6 +205,9 @@ func (player *Player) PacketHoldingChange(itemID ItemID) {
 func (player *Player) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
 }
 
+func (player *Player) PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool) {
+}
+
 func (player *Player) PacketWindowClose(windowID WindowID) {
 }
 
