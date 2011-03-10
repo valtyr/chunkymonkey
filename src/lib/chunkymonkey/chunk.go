@@ -1,6 +1,6 @@
 // Map chunks
 
-package chunkymonkey
+package chunk
 
 import (
     "bytes"
@@ -11,6 +11,7 @@ import (
     "rand"
     "time"
 
+    "chunkymonkey/block"
     "chunkymonkey/proto"
     .   "chunkymonkey/interfaces"
     .   "chunkymonkey/types"
@@ -142,7 +143,7 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
 
     if blockType, ok := chunk.mgr.blockTypes[blockTypeID]; ok {
         if blockType.Destroy(chunk, blockLoc) {
-            chunk.setBlock(blockLoc, subLoc, index, shift, BlockIDAir, 0)
+            chunk.setBlock(blockLoc, subLoc, index, shift, block.BlockIDAir, 0)
         }
     } else {
         log.Printf("Attempted to destroy unknown block ID %d", blockTypeID)
@@ -150,6 +151,10 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
     }
 
     return
+}
+
+func (chunk *Chunk) GetRand() *rand.Rand {
+    return chunk.rand
 }
 
 func (chunk *Chunk) AddItem(item IItem) {
@@ -216,10 +221,10 @@ func (chunk *Chunk) Tick() {
         blockType, ok := chunk.mgr.blockTypes[blockTypeID]
         if !ok {
             log.Printf(
-                    "game.physicsTick/blockQuery found unknown block type ID %d at %+v",
-                    blockTypeID, blockLoc)
+                "game.physicsTick/blockQuery found unknown block type ID %d at %+v",
+                blockTypeID, blockLoc)
         } else {
-            isSolid = blockType.IsSolid
+            isSolid = blockType.IsSolid()
         }
         return
     }
@@ -323,15 +328,17 @@ func (chunk *Chunk) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk) {
 // ChunkManager contains all chunks and can look them up
 type ChunkManager struct {
     game       IGame
-    blockTypes map[BlockID]*BlockType
+    blockTypes map[BlockID]IBlockType
     worldPath  string
     chunks     map[uint64]*Chunk
 }
 
-func NewChunkManager(worldPath string) *ChunkManager {
+func NewChunkManager(worldPath string, game IGame) *ChunkManager {
     return &ChunkManager{
-        worldPath: worldPath,
-        chunks:    make(map[uint64]*Chunk),
+        worldPath:  worldPath,
+        chunks:     make(map[uint64]*Chunk),
+        game:       game,
+        blockTypes: game.GetBlockTypes(),
     }
 }
 
@@ -443,9 +450,20 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (c IChunk) {
     return
 }
 
+func (mgr *ChunkManager) ChunksActive() <-chan IChunk {
+    c := make(chan IChunk)
+    go func() {
+        for _, chunk := range mgr.chunks {
+            c <- chunk
+        }
+        close(c)
+    }()
+    return c
+}
+
 // Return a channel to iterate over all chunks within a chunk's radius
-func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan IChunk) {
-    c = make(chan IChunk)
+func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) <-chan IChunk {
+    c := make(chan IChunk)
     go func() {
         curChunkXZ := ChunkXZ{0, 0}
         for z := loc.Z - ChunkRadius; z <= loc.Z+ChunkRadius; z++ {
@@ -456,5 +474,5 @@ func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) (c chan IChunk) {
         }
         close(c)
     }()
-    return
+    return c
 }

@@ -11,6 +11,8 @@ import (
     "time"
 
     "nbt"
+    "chunkymonkey/block"
+    "chunkymonkey/chunk"
     .   "chunkymonkey/entity"
     .   "chunkymonkey/interfaces"
     "chunkymonkey/player"
@@ -21,12 +23,12 @@ import (
 )
 
 type Game struct {
-    chunkManager  *ChunkManager
+    chunkManager  *chunk.ChunkManager
     mainQueue     chan func(IGame)
     entityManager EntityManager
     players       map[EntityID]IPlayer
     time          TimeOfDay
-    blockTypes    map[BlockID]*BlockType
+    blockTypes    map[BlockID]IBlockType
     rand          *rand.Rand
     serverId      string
 
@@ -35,20 +37,16 @@ type Game struct {
 }
 
 func NewGame(worldPath string) (game *Game) {
-    chunkManager := NewChunkManager(worldPath)
-
     game = &Game{
-        chunkManager: chunkManager,
-        mainQueue:    make(chan func(IGame), 256),
-        players:      make(map[EntityID]IPlayer),
-        blockTypes:   LoadStandardBlockTypes(),
-        rand:         rand.New(rand.NewSource(time.UTC().Seconds())),
+        mainQueue:  make(chan func(IGame), 256),
+        players:    make(map[EntityID]IPlayer),
+        blockTypes: block.LoadStandardBlockTypes(),
+        rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
     }
+    game.chunkManager = chunk.NewChunkManager(worldPath, game)
     game.loadStartPosition(worldPath)
     game.serverId = fmt.Sprintf("%x", game.rand.Int63())
     //game.serverId = "-"
-    chunkManager.game = game
-    chunkManager.blockTypes = game.blockTypes
 
     go game.mainLoop()
     go game.timer()
@@ -144,6 +142,10 @@ func (game *Game) Serve(addr string) {
 
 func (game *Game) GetStartPosition() *AbsXYZ {
     return &game.startPosition
+}
+
+func (game *Game) GetBlockTypes() map[BlockID]IBlockType {
+    return game.blockTypes
 }
 
 func (game *Game) GetChunkManager() IChunkManager {
@@ -253,7 +255,7 @@ func (game *Game) sendTimeUpdate() {
     game.MulticastPacket(buf.Bytes(), nil)
 
     // Get chunks to send various updates
-    for _, chunk := range game.chunkManager.chunks {
+    for chunk := range game.chunkManager.ChunksActive() {
         chunk.Enqueue(func(chunk IChunk) {
             chunk.SendUpdate()
         })
@@ -261,7 +263,7 @@ func (game *Game) sendTimeUpdate() {
 }
 
 func (game *Game) physicsTick() {
-    for _, chunk := range game.chunkManager.chunks {
+    for chunk := range game.chunkManager.ChunksActive() {
         chunk.Enqueue(func(chunk IChunk) {
             chunk.Tick()
         })

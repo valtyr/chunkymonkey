@@ -1,6 +1,7 @@
-package chunkymonkey
+package block
 
 import (
+    .      "chunkymonkey/interfaces"
     cmitem "chunkymonkey/item"
     .      "chunkymonkey/types"
 )
@@ -98,7 +99,7 @@ type BlockType struct {
     destructable bool
     // Items, up to one of which will potentially spawn when block destroyed
     droppedItems []BlockDropItem
-    IsSolid      bool
+    isSolid      bool
 }
 
 // The distance from the edge of a block that items spawn at in fractional
@@ -106,18 +107,19 @@ type BlockType struct {
 const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
 // Returns true if the block should be destroyed
-// Currently this function must be called within the Game's goroutine.
-func (blockType *BlockType) Destroy(chunk *Chunk, blockLoc *BlockXYZ) bool {
+// This must be called within the Chunk's goroutine.
+func (blockType *BlockType) Destroy(chunk IChunk, blockLoc *BlockXYZ) bool {
     if len(blockType.droppedItems) > 0 {
+        rand := chunk.GetRand()
         // Possibly drop item(s)
-        r := byte(chunk.rand.Intn(100))
+        r := byte(rand.Intn(100))
         for _, dropItem := range blockType.droppedItems {
             if dropItem.probability > r {
                 for i := dropItem.quantity; i > 0; i-- {
                     position := blockLoc.ToAbsXYZ()
-                    position.X += AbsCoord(blockItemSpawnFromEdge + chunk.rand.Float64()*(1-2*blockItemSpawnFromEdge))
+                    position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     position.Y += AbsCoord(blockItemSpawnFromEdge)
-                    position.Z += AbsCoord(blockItemSpawnFromEdge + chunk.rand.Float64()*(1-2*blockItemSpawnFromEdge))
+                    position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     chunk.AddItem(
                         cmitem.NewItem(
                             dropItem.droppedItem, 1,
@@ -133,7 +135,11 @@ func (blockType *BlockType) Destroy(chunk *Chunk, blockLoc *BlockXYZ) bool {
     return blockType.destructable
 }
 
-func LoadStandardBlockTypes() map[BlockID]*BlockType {
+func (blockType *BlockType) IsSolid() bool {
+    return blockType.isSolid
+}
+
+func LoadStandardBlockTypes() map[BlockID]IBlockType {
     b := make(map[BlockID]*BlockType)
 
     newBlock := func(id BlockID, name string) {
@@ -141,7 +147,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
             name:         name,
             transparency: -1,
             destructable: true,
-            IsSolid:      true,
+            isSolid:      true,
         }
     }
 
@@ -254,7 +260,7 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
         BlockIDSugarCane, BlockIDPortal,
     }
     for _, blockID := range nonSolid {
-        b[blockID].IsSolid = false
+        b[blockID].isSolid = false
     }
 
     // Setup behaviour of blocks when destroyed
@@ -347,5 +353,9 @@ func LoadStandardBlockTypes() map[BlockID]*BlockType {
         BlockDropItem{cmitem.ItemIDSnowball, 100, 4},
     }
 
-    return b
+    retval := make(map[BlockID]IBlockType)
+    for k, block := range b {
+        retval[k] = block
+    }
+    return retval
 }

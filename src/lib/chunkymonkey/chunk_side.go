@@ -1,4 +1,4 @@
-package chunkymonkey
+package chunk
 
 import (
     .   "chunkymonkey/interfaces"
@@ -56,13 +56,13 @@ func (n *neighboursCache) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Ch
         subLoc.X = 0
         h = &subLoc.Z
     case ChunkSideSouth:
-        subLoc.X = ChunkSizeH-1
+        subLoc.X = ChunkSizeH - 1
         h = &subLoc.Z
     case ChunkSideWest:
         subLoc.Z = 0
         h = &subLoc.X
     case ChunkSideEast:
-        subLoc.Z = ChunkSizeH-1
+        subLoc.Z = ChunkSizeH - 1
         h = &subLoc.X
     }
 

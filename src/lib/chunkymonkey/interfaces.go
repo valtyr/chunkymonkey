@@ -3,6 +3,7 @@ package interfaces
 import (
     "io"
     "os"
+    "rand"
 
     "chunkymonkey/entity"
     "chunkymonkey/physics"
@@ -35,12 +36,19 @@ type IItem interface {
     Tick(blockQuery physics.BlockQueryFn) (leftBlock bool)
 }
 
+type IBlockType interface {
+    Destroy(chunk IChunk, blockLoc *BlockXYZ) bool
+    IsSolid() bool
+}
+
 type IChunk interface {
     // Safe to call from outside of Enqueue:
     GetLoc() *ChunkXZ // Do not modify return value
 
     Enqueue(f func(IChunk))
 
+    // Intended for use by blocks/entities within the chunk.
+    GetRand() *rand.Rand
     // All the following methods must be called from within Enqueue:
     AddItem(item IItem)
     // Tells the chunk to take posession of the item.
@@ -56,13 +64,15 @@ type IChunk interface {
 type IChunkManager interface {
     // Must currently be called from with the owning IGame's Enqueue:
     Get(loc *ChunkXZ) (chunk IChunk)
-    ChunksInRadius(loc *ChunkXZ) (c chan IChunk)
+    ChunksInRadius(loc *ChunkXZ) <-chan IChunk
+    ChunksActive() <-chan IChunk
 }
 
 type IGame interface {
     // Safe to call from outside of Enqueue:
     GetStartPosition() *AbsXYZ      // Do not modify return value
     GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
+    GetBlockTypes() map[BlockID]IBlockType
 
     Enqueue(f func(IGame))
 
