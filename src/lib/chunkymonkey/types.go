@@ -125,9 +125,9 @@ type DigStatus byte
 
 const (
     DigStarted    = DigStatus(0)
-    DigDigging    = DigStatus(1)
-    DigStopped    = DigStatus(2)
-    DigBlockBroke = DigStatus(3)
+    DigBlockBroke = DigStatus(2)
+    // TODO Investigate what this value means:
+    DigDropItem   = DigStatus(4)
 )
 
 // Window/inventory-related types and constants
