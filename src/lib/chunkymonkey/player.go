@@ -55,10 +55,7 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 
     game.Enqueue(func(game IGame) {
         game.AddPlayer(player)
-        // TODO pass proper map seed and dimension
-        proto.ServerWriteLogin(conn, player.Entity.EntityID, 0, DimensionNormal)
         player.start()
-        player.postLogin()
     })
 }
 
@@ -248,6 +245,8 @@ func (player *Player) runQueuedCall(f func(IPlayer)) {
 }
 
 func (player *Player) mainLoop() {
+    go postLogin(player, player.position.Copy())
+
     for {
         select {
         case f := <-player.mainQueue:
@@ -275,48 +274,107 @@ func (player *Player) TransmitPacket(packet []byte) {
     player.txQueue <- packet
 }
 
-// Blocks until all chunks have been transmitted. Note that this must currently
-// be called from within the game loop
-// TODO reduce the overhead placed on the game loop to a minimum
-func (player *Player) sendChunks() {
-    // TODO more optimal chunk loading algorithm. Chunks near the player should
-    // be sent first.
+func chunkOrder(radius ChunkCoord, center *ChunkXZ) (locs []ChunkXZ) {
+    areaEdgeSize := radius*2 + 1
+    locs = make([]ChunkXZ, areaEdgeSize*areaEdgeSize)
+    locs[0] = *center
+    index := 1
+    for curRadius := ChunkCoord(1); curRadius <= radius; curRadius++ {
+        xMin := ChunkCoord(-curRadius + center.X)
+        xMax := ChunkCoord(curRadius + center.X)
+        zMin := ChunkCoord(-curRadius + center.Z)
+        zMax := ChunkCoord(curRadius + center.Z)
 
-    playerChunkLoc := player.position.ToChunkXZ()
+        // Northern and southern rows of chunks.
+        for x := xMin; x <= xMax; x++ {
+            locs[index] = ChunkXZ{x, zMin}
+            index++
+            locs[index] = ChunkXZ{x, zMax}
+            index++
+        }
 
-    finish := make(chan bool, ChunkRadius*ChunkRadius)
+        // Eastern and western columns (except for where they intersect the
+        // north and south rows).
+        for z := zMin + 1; z < zMax; z++ {
+            locs[index] = ChunkXZ{xMin, z}
+            index++
+            locs[index] = ChunkXZ{xMax, z}
+            index++
+        }
+    }
+    return
+}
+
+// Blocks until essential login packets have been transmitted.
+func postLogin(player *Player, playerPos *AbsXYZ) {
+    // TODO pass proper dimension
     buf := &bytes.Buffer{}
-    for chunk := range player.game.GetChunkManager().ChunksInRadius(playerChunkLoc) {
+    proto.ServerWriteLogin(buf, player.Entity.EntityID, 0, DimensionNormal)
+    player.TransmitPacket(buf.Bytes())
+
+    playerChunkLoc := playerPos.ToChunkXZ()
+
+    // Work out order to send chunks in. (Nearest to player first)
+    chunkLocOrder := chunkOrder(ChunkRadius, playerChunkLoc)
+
+    // Get all the chunks together that we're going to send.
+    chunksChan := make(chan []IChunk)
+    player.game.Enqueue(func(game IGame) {
+        chunks := make([]IChunk, 0, len(chunkLocOrder))
+        mgr := player.game.GetChunkManager()
+        for _, chunkLoc := range chunkLocOrder {
+            chunk := mgr.Get(&chunkLoc)
+            if chunk != nil {
+                chunks = append(chunks, chunk)
+            }
+        }
+        chunksChan <- chunks
+    })
+    chunks := <-chunksChan
+
+    // Warn client to allocate memory for the chunks we're sending.
+    buf = &bytes.Buffer{}
+    for _, chunk := range chunks {
         proto.WritePreChunk(buf, chunk.GetLoc(), ChunkInit)
     }
     player.TransmitPacket(buf.Bytes())
 
-    chunkCount := 0
-    for chunk := range player.game.GetChunkManager().ChunksInRadius(playerChunkLoc) {
-        chunkCount++
+    // Send the important chunks.
+    chunksSent := 0
+    waitChunks := &sync.WaitGroup{}
+    for _, chunk := range chunks {
+        chunkLoc := chunk.GetLoc()
+        dx := (chunkLoc.X - playerChunkLoc.X).Abs()
+        dz := (chunkLoc.Z - playerChunkLoc.Z).Abs()
+        if dx > MinChunkRadius || dz > MinChunkRadius {
+            // This chunk isn't important, wait until after other login data
+            // has been send before sending this and chunks following.
+            break
+        }
+        chunksSent++
         chunk.Enqueue(func(chunk IChunk) {
             buf := &bytes.Buffer{}
             chunk.SendChunkData(buf)
             player.TransmitPacket(buf.Bytes())
-            finish <- true
+            waitChunks.Done()
         })
     }
+    waitChunks.Add(chunksSent)
+    waitChunks.Wait()
 
-    // Wait for all chunks to have been sent
-    for ; chunkCount > 0; chunkCount-- {
-        _ = <-finish
-    }
-}
-
-// Blocks until all chunks have been transmitted. Note that this must currently
-// be called from within the game loop
-// TODO reduce the overhead placed on the game loop to a minimum
-func (player *Player) postLogin() {
-    player.sendChunks()
-
-    buf := &bytes.Buffer{}
-    proto.WriteSpawnPosition(buf, player.position.ToBlockXYZ())
-    proto.ServerWritePlayerPositionLook(buf, &player.position, &player.look,
+    // Send player start position etc.
+    buf = &bytes.Buffer{}
+    proto.WriteSpawnPosition(player.conn, player.position.ToBlockXYZ())
+    proto.ServerWritePlayerPositionLook(player.conn, &player.position, &player.look,
         player.position.Y+StanceNormal, false)
     player.TransmitPacket(buf.Bytes())
+
+    // Send the remaining chunks
+    for _, chunk := range chunks[chunksSent:] {
+        chunk.Enqueue(func(chunk IChunk) {
+            buf := &bytes.Buffer{}
+            chunk.SendChunkData(buf)
+            player.TransmitPacket(buf.Bytes())
+        })
+    }
 }

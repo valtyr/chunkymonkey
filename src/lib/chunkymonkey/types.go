@@ -329,8 +329,11 @@ const (
     ChunkSizeH = 16
     ChunkSizeY = 128
 
-    // The area within which a client receives updates
+    // The area within which a client receives updates.
     ChunkRadius = 10
+    // The radius in which all chunks must be sent before completing a client's
+    // login process.
+    MinChunkRadius = 2
 
     // Sometimes it is useful to convert block coordinates to pixels
     PixelsPerBlock = 32
@@ -345,6 +348,10 @@ type AbsCoord float64
 
 type AbsXYZ struct {
     X, Y, Z AbsCoord
+}
+
+func (p *AbsXYZ) Copy() *AbsXYZ {
+    return &AbsXYZ{p.X, p.Y, p.Z}
 }
 
 func (p *AbsXYZ) ApplyVelocity(dt TickTime, v *AbsVelocity) {
@@ -386,6 +393,13 @@ func (p *AbsIntXYZ) ToBlockXYZ() *BlockXYZ {
 
 // Coordinate of a chunk in the world (block / 16)
 type ChunkCoord int32
+
+func (c ChunkCoord) Abs() ChunkCoord {
+    if c < 0 {
+        return -c
+    }
+    return c
+}
 
 type ChunkXZ struct {
     X, Z ChunkCoord
