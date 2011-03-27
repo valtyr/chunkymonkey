@@ -423,6 +423,11 @@ func (chunkLoc *ChunkXZ) ToBlockXYZ(subLoc *SubChunkXYZ) *BlockXYZ {
     }
 }
 
+// Converts a chunk location into a key suitable for using in a hash.
+func (chunkLoc *ChunkXZ) ChunkKey() uint64 {
+    return uint64(chunkLoc.X)<<32 | uint64(uint32(chunkLoc.Z))
+}
+
 // Size of a sub-chunk
 type SubChunkSizeCoord byte
 

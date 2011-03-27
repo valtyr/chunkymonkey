@@ -9,6 +9,7 @@ import (
     "os"
     "path"
     "rand"
+    "sync"
     "time"
 
     "chunkymonkey/block"
@@ -31,21 +32,23 @@ type Chunk struct {
     items        map[EntityID]IItem
     rand         *rand.Rand
     neighbours   neighboursCache
-    cachedPacket []byte // Cached packet data for this block.
+    cachedPacket []byte                 // Cached packet data for this block.
+    subscribers  map[IPacketSender]bool // Subscribers getting updates from the chunk
 }
 
 func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, blockLight, heightMap []byte) (chunk *Chunk) {
     chunk = &Chunk{
-        mainQueue:  make(chan func(IChunk), 256),
-        mgr:        mgr,
-        loc:        *loc,
-        blocks:     blocks,
-        blockData:  blockData,
-        skyLight:   skyLight,
-        blockLight: blockLight,
-        heightMap:  heightMap,
-        rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
-        items:      make(map[EntityID]IItem),
+        mainQueue:   make(chan func(IChunk), 256),
+        mgr:         mgr,
+        loc:         *loc,
+        blocks:      blocks,
+        blockData:   blockData,
+        skyLight:    skyLight,
+        blockLight:  blockLight,
+        heightMap:   heightMap,
+        items:       make(map[EntityID]IItem),
+        rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
+        subscribers: make(map[IPacketSender]bool),
     }
     chunk.neighbours.init()
     go chunk.mainLoop()
@@ -111,19 +114,29 @@ func (chunk *Chunk) mainLoop() {
     }
 }
 
-func (chunk *Chunk) TransferItem(item IItem) {
-    chunk.items[item.GetEntity().EntityID] = item
+func (chunk *Chunk) GetRand() *rand.Rand {
+    return chunk.rand
 }
 
-func (chunk *Chunk) SendUpdate() {
-    // TODO send only to players in range
-    buf := &bytes.Buffer{}
-    for _, item := range chunk.items {
-        item.SendUpdate(buf)
-    }
+func (chunk *Chunk) AddItem(item IItem) {
+    wg := &sync.WaitGroup{}
+    wg.Add(1)
     chunk.mgr.game.Enqueue(func(game IGame) {
-        game.MulticastPacket(buf.Bytes(), nil)
+        entity := item.GetEntity()
+        game.AddEntity(entity)
+        chunk.items[entity.EntityID] = item
+        wg.Done()
     })
+    wg.Wait()
+
+    // Spawn new item for players
+    buf := &bytes.Buffer{}
+    item.SendSpawn(buf)
+    chunk.multicastSubscribers(buf.Bytes())
+}
+
+func (chunk *Chunk) TransferItem(item IItem) {
+    chunk.items[item.GetEntity().EntityID] = item
 }
 
 func (chunk *Chunk) GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool) {
@@ -156,27 +169,6 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXYZ) (ok bool) {
     }
 
     return
-}
-
-func (chunk *Chunk) GetRand() *rand.Rand {
-    return chunk.rand
-}
-
-func (chunk *Chunk) AddItem(item IItem) {
-    chunk.mgr.game.Enqueue(func(game IGame) {
-        entity := item.GetEntity()
-        game.AddEntity(entity)
-        chunk.items[entity.EntityID] = item
-
-        // Spawn new item for players
-        buf := &bytes.Buffer{}
-        err := item.SendSpawn(buf)
-        if err != nil {
-            log.Print("AddItem", err.String())
-            return
-        }
-        game.MulticastChunkPacket(buf.Bytes(), &chunk.loc)
-    })
 }
 
 func (chunk *Chunk) Tick() {
@@ -261,12 +253,33 @@ func (chunk *Chunk) Tick() {
             proto.WriteEntityDestroy(buf, entityID)
             chunk.items[entityID] = nil, false
         }
-        // TODO send only to players in range
-        chunk.mgr.game.MulticastPacket(buf.Bytes(), nil)
+        chunk.multicastSubscribers(buf.Bytes())
     }
 }
 
-func (chunk *Chunk) ChunkPacket() []byte {
+func (chunk *Chunk) AddSubscriber(subscriber IPacketSender) {
+    chunk.subscribers[subscriber] = true
+    subscriber.TransmitPacket(chunk.chunkPacket())
+
+    // Send spawns of all items in the chunk
+    buf := &bytes.Buffer{}
+    for _, item := range chunk.items {
+        item.SendSpawn(buf)
+    }
+    subscriber.TransmitPacket(buf.Bytes())
+}
+
+func (chunk *Chunk) RemoveSubscriber(subscriber IPacketSender) {
+    chunk.subscribers[subscriber] = false
+}
+
+func (chunk *Chunk) multicastSubscribers(packet []byte) {
+    for subscriber, _ := range chunk.subscribers {
+        subscriber.TransmitPacket(packet)
+    }
+}
+
+func (chunk *Chunk) chunkPacket() []byte {
     if chunk.cachedPacket == nil {
         buf := &bytes.Buffer{}
         proto.WriteMapChunk(buf, &chunk.loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
@@ -274,6 +287,14 @@ func (chunk *Chunk) ChunkPacket() []byte {
     }
 
     return chunk.cachedPacket
+}
+
+func (chunk *Chunk) SendUpdate() {
+    buf := &bytes.Buffer{}
+    for _, item := range chunk.items {
+        item.SendUpdate(buf)
+    }
+    chunk.multicastSubscribers(buf.Bytes())
 }
 
 // Used in chunk side caching code:
@@ -390,14 +411,10 @@ func (mgr *ChunkManager) loadChunk(reader io.Reader) (chunk *Chunk, err os.Error
     return
 }
 
-func chunkKey(loc *ChunkXZ) uint64 {
-    return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
-}
-
 // Get a chunk at given coordinates
 func (mgr *ChunkManager) Get(loc *ChunkXZ) (c IChunk) {
     var chunk *Chunk
-    key := chunkKey(loc)
+    key := loc.ChunkKey()
     chunk, ok := mgr.chunks[key]
     if ok {
         c = chunk
@@ -427,7 +444,7 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (c IChunk) {
             X:  loc.X + dx,
             Z:  loc.Z + dz,
         }
-        neighbour, exists := mgr.chunks[chunkKey(&loc)]
+        neighbour, exists := mgr.chunks[loc.ChunkKey()]
         if exists {
             to := from.GetOpposite()
             chunk.Enqueue(func(_ IChunk) {

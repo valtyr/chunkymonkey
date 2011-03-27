@@ -263,6 +263,8 @@ func (game *Game) sendTimeUpdate() {
 }
 
 func (game *Game) physicsTick() {
+    // TODO - consider using sync.Cond to broadcast ticks to chunks instead of
+    // channels
     for chunk := range game.chunkManager.ChunksActive() {
         chunk.Enqueue(func(chunk IChunk) {
             chunk.Tick()

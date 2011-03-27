@@ -10,16 +10,25 @@ import (
     .   "chunkymonkey/types"
 )
 
+// Subset of player methods used by chunks.
+type IPacketSender interface {
+    // Used to send a packet to some remote party. This may be called from any
+    // goroutine.
+    TransmitPacket(packet []byte)
+}
+
 type IPlayer interface {
+    IPacketSender
+
     // Safe to call from outside of player's own goroutine.
     GetEntity() *entity.Entity // Only the game mainloop may modify the return value
     GetName() string           // Do not modify return value
     LockedGetChunkPosition() *ChunkXZ
 
-    TransmitPacket(packet []byte)
     Enqueue(f func(IPlayer))
 
-    // Must be called from within Enqueue
+    // Everything below must be called from within Enqueue
+
     SendSpawn(writer io.Writer) (err os.Error)
     IsWithin(p1, p2 *ChunkXZ) bool
 }
@@ -49,18 +58,29 @@ type IChunk interface {
 
     Enqueue(f func(IChunk))
 
+    // Everything below must be called from within Enqueue
+
+    // Called from game loop to run physics etc. within the chunk for a single
+    // tick.
+    Tick()
+
     // Intended for use by blocks/entities within the chunk.
     GetRand() *rand.Rand
-    // All the following methods must be called from within Enqueue:
     AddItem(item IItem)
     // Tells the chunk to take posession of the item.
     TransferItem(item IItem)
-    DestroyBlock(subLoc *SubChunkXYZ) (ok bool)
-    // Get packet data for the chunk
-    ChunkPacket() []byte
     GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool)
+    DestroyBlock(subLoc *SubChunkXYZ) (ok bool)
+
+    // Register and unregister subscribers to receive information about the
+    // chunk. When added, a subscriber will immediately receive complete chunk
+    // information via their TransmitPacket method, and changes thereafter via
+    // the same mechanism.
+    AddSubscriber(subscriber IPacketSender)
+    RemoveSubscriber(subscriber IPacketSender)
+
+    // Get packet data for the chunk
     SendUpdate()
-    Tick()
 }
 
 type IChunkManager interface {
@@ -78,7 +98,8 @@ type IGame interface {
 
     Enqueue(f func(IGame))
 
-    // Must be called from within Enqueue:
+    // Everything below must be called from within Enqueue
+
     AddEntity(entity *entity.Entity)
     AddPlayer(player IPlayer)
     RemovePlayer(player IPlayer)

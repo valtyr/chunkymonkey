@@ -21,7 +21,7 @@ func init() {
 
 func CheckUserAuth(serverId, user string) (authenticated bool, err os.Error) {
     before := time.Nanoseconds()
-    defer func(){
+    defer func() {
         after := time.Nanoseconds()
         expVarServerAuthTimeNs.Add(after - before)
         if authenticated {
