@@ -20,17 +20,18 @@ import (
 
 // A chunk is slice of the world map
 type Chunk struct {
-    mainQueue  chan func(IChunk)
-    mgr        *ChunkManager
-    loc        ChunkXZ
-    blocks     []byte
-    blockData  []byte
-    blockLight []byte
-    skyLight   []byte
-    heightMap  []byte
-    items      map[EntityID]IItem
-    rand       *rand.Rand
-    neighbours neighboursCache
+    mainQueue    chan func(IChunk)
+    mgr          *ChunkManager
+    loc          ChunkXZ
+    blocks       []byte
+    blockData    []byte
+    blockLight   []byte
+    skyLight     []byte
+    heightMap    []byte
+    items        map[EntityID]IItem
+    rand         *rand.Rand
+    neighbours   neighboursCache
+    cachedPacket []byte // Cached packet data for this block.
 }
 
 func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, blockLight, heightMap []byte) (chunk *Chunk) {
@@ -73,6 +74,10 @@ func blockIndex(subLoc *SubChunkXYZ) (index int32, shift byte, ok bool) {
 
 // Sets a block and its data. Returns true if the block was not changed.
 func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, subLoc *SubChunkXYZ, index int32, shift byte, blockType BlockID, blockMetadata byte) {
+
+    // Invalidate cached packet
+    chunk.cachedPacket = nil
+
     chunk.blocks[index] = byte(blockType)
 
     mask := byte(0x0f) << shift
@@ -261,8 +266,14 @@ func (chunk *Chunk) Tick() {
     }
 }
 
-func (chunk *Chunk) SendChunkData(writer io.Writer) (err os.Error) {
-    return proto.WriteMapChunk(writer, &chunk.loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
+func (chunk *Chunk) ChunkPacket() []byte {
+    if chunk.cachedPacket == nil {
+        buf := &bytes.Buffer{}
+        proto.WriteMapChunk(buf, &chunk.loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
+        chunk.cachedPacket = buf.Bytes()
+    }
+
+    return chunk.cachedPacket
 }
 
 // Used in chunk side caching code:

@@ -56,8 +56,8 @@ type IChunk interface {
     // Tells the chunk to take posession of the item.
     TransferItem(item IItem)
     DestroyBlock(subLoc *SubChunkXYZ) (ok bool)
-    // Send chunk data down network connection for client(s)
-    SendChunkData(writer io.Writer) (err os.Error)
+    // Get packet data for the chunk
+    ChunkPacket() []byte
     GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool)
     SendUpdate()
     Tick()

@@ -353,9 +353,7 @@ func postLogin(player *Player, playerPos *AbsXYZ) {
         }
         chunksSent++
         chunk.Enqueue(func(chunk IChunk) {
-            buf := &bytes.Buffer{}
-            chunk.SendChunkData(buf)
-            player.TransmitPacket(buf.Bytes())
+            player.TransmitPacket(chunk.ChunkPacket())
             waitChunks.Done()
         })
     }
@@ -372,9 +370,7 @@ func postLogin(player *Player, playerPos *AbsXYZ) {
     // Send the remaining chunks
     for _, chunk := range chunks[chunksSent:] {
         chunk.Enqueue(func(chunk IChunk) {
-            buf := &bytes.Buffer{}
-            chunk.SendChunkData(buf)
-            player.TransmitPacket(buf.Bytes())
+            player.TransmitPacket(chunk.ChunkPacket())
         })
     }
 }
