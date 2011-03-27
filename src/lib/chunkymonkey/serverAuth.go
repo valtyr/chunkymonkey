@@ -1,11 +1,36 @@
 package serverAuth
 
 import (
+    "expvar"
     "http"
     "os"
+    "time"
 )
 
+var (
+    expVarServerAuthSuccessCount *expvar.Int
+    expVarServerAuthFailCount    *expvar.Int
+    expVarServerAuthTimeNs       *expvar.Int
+)
+
+func init() {
+    expVarServerAuthSuccessCount = expvar.NewInt("server-auth-success-count")
+    expVarServerAuthFailCount = expvar.NewInt("server-auth-fail-count")
+    expVarServerAuthTimeNs = expvar.NewInt("server-auth-time-ns")
+}
+
 func CheckUserAuth(serverId, user string) (authenticated bool, err os.Error) {
+    before := time.Nanoseconds()
+    defer func(){
+        after := time.Nanoseconds()
+        expVarServerAuthTimeNs.Add(after - before)
+        if authenticated {
+            expVarServerAuthSuccessCount.Add(1)
+        } else {
+            expVarServerAuthFailCount.Add(1)
+        }
+    }()
+
     authenticated = false
 
     url := "http://www.minecraft.net/game/checkserver.jsp?" + http.EncodeQuery(
