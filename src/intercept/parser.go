@@ -162,8 +162,8 @@ func (p *MessageParser) PacketPaintingSpawn(entityID EntityID, title string, pos
 
 func (p *MessageParser) PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool) {
     p.printf(
-            "PacketUnknown0x1b(field1=%v, field2=%v, field3=%v, field4=%v, field5=%v, field6=%v)",
-            field1, field2, field3, field4, field5, field6)
+        "PacketUnknown0x1b(field1=%v, field2=%v, field3=%v, field4=%v, field5=%v, field6=%v)",
+        field1, field2, field3, field4, field5, field6)
 
 }
 

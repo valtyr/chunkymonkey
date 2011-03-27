@@ -127,7 +127,7 @@ const (
     DigStarted    = DigStatus(0)
     DigBlockBroke = DigStatus(2)
     // TODO Investigate what this value means:
-    DigDropItem   = DigStatus(4)
+    DigDropItem = DigStatus(4)
 )
 
 // Window/inventory-related types and constants

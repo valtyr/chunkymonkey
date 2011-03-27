@@ -1018,16 +1018,16 @@ func WriteUseBed(writer io.Writer, flag bool, bedLoc *BlockXYZ) (err os.Error) {
 
 func readUseBed(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
-        Flag     byte
-        X        BlockCoord
-        Y        BlockYCoord
-        Z        BlockCoord
+        Flag byte
+        X    BlockCoord
+        Y    BlockYCoord
+        Z    BlockCoord
     }
 
     if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
         handler.PacketUseBed(
-                byteToBool(packet.Flag),
-                &BlockXYZ{packet.X, packet.Y, packet.Z})
+            byteToBool(packet.Flag),
+            &BlockXYZ{packet.X, packet.Y, packet.Z})
     }
 
     return
@@ -1417,7 +1417,7 @@ func readPaintingSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Er
 func readUnknown0x1b(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         field1, field2, field3, field4 float32
-        field5, field6 byte
+        field5, field6                 byte
     }
 
     if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
@@ -1425,8 +1425,8 @@ func readUnknown0x1b(reader io.Reader, handler PacketHandler) (err os.Error) {
     }
 
     handler.PacketUnknown0x1b(
-            packet.field1, packet.field2, packet.field3, packet.field4,
-            byteToBool(packet.field5), byteToBool(packet.field6))
+        packet.field1, packet.field2, packet.field3, packet.field4,
+        byteToBool(packet.field5), byteToBool(packet.field6))
 
     return
 }
