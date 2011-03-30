@@ -270,7 +270,7 @@ func (chunk *Chunk) AddSubscriber(subscriber IPacketSender) {
 }
 
 func (chunk *Chunk) RemoveSubscriber(subscriber IPacketSender) {
-    chunk.subscribers[subscriber] = false
+    chunk.subscribers[subscriber] = false, false
 }
 
 func (chunk *Chunk) multicastSubscribers(packet []byte) {
