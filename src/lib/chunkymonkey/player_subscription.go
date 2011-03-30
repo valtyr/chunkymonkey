@@ -14,12 +14,12 @@ import (
 // TODO implement the movement add/remove tracking
 type chunkSubscriptions struct {
     player *Player
-    chunks map[IChunk]bool
+    chunks map[uint64]IChunk // Map from ChunkKeys to chunks
 }
 
 func (cs *chunkSubscriptions) init(player *Player) {
     cs.player = player
-    cs.chunks = make(map[IChunk]bool)
+    cs.chunks = make(map[uint64]IChunk)
 }
 
 // Subscribes to all chunks in MinChunkRadius, then calls nearbySent(), then
@@ -48,7 +48,7 @@ func (cs *chunkSubscriptions) subscribeFresh(nearbySent func()) {
 
     // Remember the chunks that we're going to be subscribed to.
     for _, chunk := range chunks {
-        cs.chunks[chunk] = true
+        cs.chunks[chunk.GetLoc().ChunkKey()] = chunk
     }
 
     // Send all chunks in the background.
@@ -69,7 +69,7 @@ func (cs *chunkSubscriptions) subscribeFresh(nearbySent func()) {
             dz := (chunkLoc.Z - playerChunkLoc.Z).Abs()
             if dx > MinChunkRadius || dz > MinChunkRadius {
                 // This chunk isn't important, wait until after other login data
-                // has been send before sending this and chunks following.
+                // has been sent before sending this and chunks following.
                 break
             }
             chunksSent++
@@ -95,7 +95,7 @@ func (cs *chunkSubscriptions) subscribeFresh(nearbySent func()) {
 
 // Removes all subscriptions to chunks.
 func (cs *chunkSubscriptions) clear() {
-    for chunk := range cs.chunks {
+    for _, chunk := range cs.chunks {
         chunk.RemoveSubscriber(cs.player)
     }
 }
