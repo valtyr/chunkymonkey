@@ -13,7 +13,7 @@ import (
 
 const (
     // Currently only this protocol version is supported
-    protocolVersion = 9
+    protocolVersion = 10
 
     // Packet type IDs
     packetIDKeepAlive            = 0x00
@@ -33,7 +33,7 @@ const (
     packetIDPlayerDigging        = 0x0e
     packetIDPlayerBlockPlacement = 0x0f
     packetIDHoldingChange        = 0x10
-    packetIDUseBed               = 0x11
+    packetIDBedUse               = 0x11
     packetIDEntityAnimation      = 0x12
     packetIDEntityAction         = 0x13
     packetIDNamedEntitySpawn     = 0x14
@@ -58,6 +58,7 @@ const (
     packetIDBlockChange          = 0x35
     packetIDNoteBlockPlay        = 0x36
     packetIDExplosion            = 0x3c
+    packetIDBedInvalid           = 0x46
     packetIDWindowOpen           = 0x64
     packetIDWindowClose          = 0x65
     packetIDWindowClick          = 0x66
@@ -106,7 +107,7 @@ type ClientPacketHandler interface {
     PacketHandler
     ClientPacketLogin(entityID EntityID, mapSeed RandomSeed, dimension DimensionID)
     PacketTimeUpdate(time TimeOfDay)
-    PacketUseBed(flag bool, bedLoc *BlockXYZ)
+    PacketBedUse(flag bool, bedLoc *BlockXYZ)
     PacketNamedEntitySpawn(entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID)
     PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses)
     PacketSpawnPosition(position *BlockXYZ)
@@ -133,6 +134,8 @@ type ClientPacketHandler interface {
 
     // NOTE method signature likely to change
     PacketExplosion(position *AbsXYZ, power float32, blockOffsets []ExplosionOffsetXYZ)
+
+    PacketBedInvalid(field1 byte)
 
     PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte)
     PacketWindowSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses)
@@ -996,9 +999,9 @@ func readHoldingChange(reader io.Reader, handler ServerPacketHandler) (err os.Er
     return
 }
 
-// packetIDUseBed
+// packetIDBedUse
 
-func WriteUseBed(writer io.Writer, flag bool, bedLoc *BlockXYZ) (err os.Error) {
+func WriteBedUse(writer io.Writer, flag bool, bedLoc *BlockXYZ) (err os.Error) {
     var packet = struct {
         PacketID byte
         Flag     byte
@@ -1006,7 +1009,7 @@ func WriteUseBed(writer io.Writer, flag bool, bedLoc *BlockXYZ) (err os.Error) {
         Y        BlockYCoord
         Z        BlockCoord
     }{
-        packetIDUseBed,
+        packetIDBedUse,
         boolToByte(flag),
         bedLoc.X,
         bedLoc.Y,
@@ -1016,7 +1019,7 @@ func WriteUseBed(writer io.Writer, flag bool, bedLoc *BlockXYZ) (err os.Error) {
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readUseBed(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+func readBedUse(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     var packet struct {
         Flag byte
         X    BlockCoord
@@ -1025,7 +1028,7 @@ func readUseBed(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
     }
 
     if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
-        handler.PacketUseBed(
+        handler.PacketBedUse(
             byteToBool(packet.Flag),
             &BlockXYZ{packet.X, packet.Y, packet.Z})
     }
@@ -2086,6 +2089,31 @@ func readExplosion(reader io.Reader, handler ClientPacketHandler) (err os.Error)
     return
 }
 
+// packetIDBedInvalid
+
+// TODO Revise this when packet better understood.
+func WriteBedInvalid(writer io.Writer, field1 byte) (err os.Error) {
+    var packet = struct {
+        PacketID byte
+        Field1   byte
+    }{
+        packetIDBedInvalid,
+        field1,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readBedInvalid(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var field1 byte
+    if err = binary.Read(reader, binary.BigEndian, &field1); err != nil {
+        return
+    }
+
+    handler.PacketBedInvalid(field1)
+    return
+}
+
 // packetIDWindowOpen
 
 func WriteWindowOpen(writer io.Writer, windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte) (err os.Error) {
@@ -2574,7 +2602,7 @@ var clientReadFns = clientPacketReaderMap{
     packetIDSpawnPosition:        readSpawnPosition,
     packetIDUpdateHealth:         readUpdateHealth,
     packetIDPlayerPositionLook:   readPlayerPositionLook,
-    packetIDUseBed:               readUseBed,
+    packetIDBedUse:               readBedUse,
     packetIDNamedEntitySpawn:     readNamedEntitySpawn,
     packetIDItemSpawn:            readItemSpawn,
     packetIDItemCollect:          readItemCollect,
@@ -2596,6 +2624,7 @@ var clientReadFns = clientPacketReaderMap{
     packetIDBlockChange:          readBlockChange,
     packetIDNoteBlockPlay:        readNoteBlockPlay,
     packetIDExplosion:            readExplosion,
+    packetIDBedInvalid:           readBedInvalid,
     packetIDWindowOpen:           readWindowOpen,
     packetIDWindowSetSlot:        readWindowSetSlot,
     packetIDWindowItems:          readWindowItems,

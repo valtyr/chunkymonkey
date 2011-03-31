@@ -81,8 +81,8 @@ func (p *MessageParser) PacketHoldingChange(itemID ItemID) {
     p.printf("PacketHoldingChange(itemID=%d)", itemID)
 }
 
-func (p *MessageParser) PacketUseBed(flag bool, bedLoc *BlockXYZ) {
-    p.printf("PacketUseBed(flag=%v, bedLoc=%v)", flag, bedLoc)
+func (p *MessageParser) PacketBedUse(flag bool, bedLoc *BlockXYZ) {
+    p.printf("PacketBedUse(flag=%v, bedLoc=%v)", flag, bedLoc)
 }
 
 func (p *MessageParser) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
@@ -231,6 +231,10 @@ func (p *MessageParser) PacketNoteBlockPlay(position *BlockXYZ, instrument Instr
 func (p *MessageParser) PacketExplosion(position *AbsXYZ, power float32, blockOffsets []proto.ExplosionOffsetXYZ) {
     p.printf("PacketExplosion(position=%v, power=%f, blockOffsets=%v)",
         position, power, blockOffsets)
+}
+
+func (p *MessageParser) PacketBedInvalid(field1 byte) {
+    p.printf("PacketBedInvalid(field1=%t)", field1)
 }
 
 func (p *MessageParser) PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte) {
