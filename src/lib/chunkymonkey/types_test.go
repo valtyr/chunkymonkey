@@ -31,6 +31,31 @@ func TestLookDegrees_ToLookBytes(t *testing.T) {
     }
 }
 
+func TestAbsXYZ_UpdateChunkXZ(t *testing.T) {
+    type Test struct {
+        input    AbsXYZ
+        expected ChunkXZ
+    }
+    var tests = []Test{
+        {AbsXYZ{0, 0, 0}, ChunkXZ{0, 0}},
+        {AbsXYZ{0, 0, 16}, ChunkXZ{0, 1}},
+        {AbsXYZ{16, 0, 0}, ChunkXZ{1, 0}},
+        {AbsXYZ{0, 0, -16}, ChunkXZ{0, -1}},
+        {AbsXYZ{-16, 0, 0}, ChunkXZ{-1, 0}},
+        {AbsXYZ{-1, 0, -1}, ChunkXZ{-1, -1}},
+    }
+
+    for _, test := range tests {
+        input, expected := test.input, test.expected
+        var result ChunkXZ
+        input.UpdateChunkXZ(&result)
+        if expected.X != result.X || expected.Z != result.Z {
+            t.Errorf("AbsXYZ%+v.UpdateChunkXZ() expected ChunkXZ%+v got ChunkXZ%+v",
+                input, expected, result)
+        }
+    }
+}
+
 func TestAbsXYZ_ToBlockXYZ(t *testing.T) {
     type Test struct {
         pos AbsXYZ
@@ -134,6 +159,32 @@ func TestChunkXZ_GetChunkCornerBlockXY(t *testing.T) {
         result := r.input.GetChunkCornerBlockXY()
         if r.expected.X != result.X || r.expected.Y != result.Y || r.expected.Z != result.Z {
             t.Errorf("ChunkXZ%v expected BlockXYZ%v got BlockXYZ%v",
+                r.input, r.expected, result)
+        }
+    }
+}
+
+func TestChunkXZ_ChunkKey(t *testing.T) {
+    type Test struct {
+        input    ChunkXZ
+        expected uint64
+    }
+
+    var tests = []Test{
+        {ChunkXZ{0, 0}, 0},
+        {ChunkXZ{0, 1}, 0x0000000000000001},
+        {ChunkXZ{1, 0}, 0x0000000100000000},
+        {ChunkXZ{0, -1}, 0x00000000ffffffff},
+        {ChunkXZ{-1, 0}, 0xffffffff00000000},
+        {ChunkXZ{0, 10}, 0x000000000000000a},
+        {ChunkXZ{10, 0}, 0x0000000a00000000},
+        {ChunkXZ{10, 11}, 0x0000000a0000000b},
+    }
+
+    for _, r := range tests {
+        result := r.input.ChunkKey()
+        if r.expected != result {
+            t.Errorf("ChunkXZ%+v.ChunkKey() expected %d got %d",
                 r.input, r.expected, result)
         }
     }
