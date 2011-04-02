@@ -262,15 +262,22 @@ func (chunk *Chunk) AddSubscriber(subscriber IPacketSender) {
     subscriber.TransmitPacket(chunk.chunkPacket())
 
     // Send spawns of all items in the chunk
-    buf := &bytes.Buffer{}
-    for _, item := range chunk.items {
-        item.SendSpawn(buf)
+    if len(chunk.items) > 0 {
+        buf := &bytes.Buffer{}
+        for _, item := range chunk.items {
+            item.SendSpawn(buf)
+        }
+        subscriber.TransmitPacket(buf.Bytes())
     }
-    subscriber.TransmitPacket(buf.Bytes())
 }
 
-func (chunk *Chunk) RemoveSubscriber(subscriber IPacketSender) {
+func (chunk *Chunk) RemoveSubscriber(subscriber IPacketSender, sendPacket bool) {
     chunk.subscribers[subscriber] = false, false
+    if sendPacket {
+        buf := &bytes.Buffer{}
+        proto.WritePreChunk(buf, &chunk.loc, ChunkUnload)
+        subscriber.TransmitPacket(buf.Bytes())
+    }
 }
 
 func (chunk *Chunk) multicastSubscribers(packet []byte) {
@@ -423,15 +430,16 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (c IChunk) {
 
     file, err := os.Open(mgr.chunkPath(loc), os.O_RDONLY, 0)
     if err != nil {
-        log.Fatalf("ChunkManager.Get: %s", err.String())
+        log.Printf("ChunkManager.Get: %s", err.String())
+        return nil
     }
     defer file.Close()
 
     chunk, err = mgr.loadChunk(file)
 
     if err != nil {
-        log.Fatalf("ChunkManager.loadChunk: %s", err.String())
-        return
+        log.Printf("ChunkManager.loadChunk: %s", err.String())
+        return nil
     }
 
     c = chunk

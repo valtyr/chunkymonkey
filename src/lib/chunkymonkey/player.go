@@ -143,6 +143,7 @@ func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, on
         return
     }
     player.position = *position
+    player.chunkSubs.move(position, nil)
 
     // TODO: Should keep track of when players enter/leave their mutual radius
     // of "awareness". I.e a client should receive a RemoveEntity packet when
@@ -298,5 +299,5 @@ func (player *Player) postLogin() {
         player.TransmitPacket(buf.Bytes())
     }
 
-    player.chunkSubs.subscribeFresh(nearbySent)
+    player.chunkSubs.move(&player.position, nearbySent)
 }

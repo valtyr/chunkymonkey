@@ -72,12 +72,14 @@ type IChunk interface {
     GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool)
     DestroyBlock(subLoc *SubChunkXYZ) (ok bool)
 
-    // Register and unregister subscribers to receive information about the
-    // chunk. When added, a subscriber will immediately receive complete chunk
-    // information via their TransmitPacket method, and changes thereafter via
-    // the same mechanism.
+    // Register subscribers to receive information about the chunk. When added,
+    // a subscriber will immediately receive complete chunk information via
+    // their TransmitPacket method, and changes thereafter via the same
+    // mechanism.
     AddSubscriber(subscriber IPacketSender)
-    RemoveSubscriber(subscriber IPacketSender)
+    // Removes a previously registered subscriber to updates from the chunk. If
+    // sendPacket is true, then an unload-chunk packet is sent.
+    RemoveSubscriber(subscriber IPacketSender, sendPacket bool)
 
     // Get packet data for the chunk
     SendUpdate()

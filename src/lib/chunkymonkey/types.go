@@ -354,6 +354,12 @@ func (p *AbsXYZ) Copy() *AbsXYZ {
     return &AbsXYZ{p.X, p.Y, p.Z}
 }
 
+// Updates a ChunkXZ with the chunk position that the AbsXYZ is within.
+func (p *AbsXYZ) UpdateChunkXZ(chunkLoc *ChunkXZ) {
+    chunkLoc.X = ChunkCoord(math.Floor(float64(p.X / ChunkSizeH)))
+    chunkLoc.Z = ChunkCoord(math.Floor(float64(p.Z / ChunkSizeH)))
+}
+
 func (p *AbsXYZ) ApplyVelocity(dt TickTime, v *AbsVelocity) {
     p.X += AbsCoord(float64(v.X) * float64(dt))
     p.Y += AbsCoord(float64(v.Y) * float64(dt))
