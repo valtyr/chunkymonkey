@@ -15,8 +15,8 @@ import (
 type chunkSubscriptions struct {
     player        *Player
     chunks        map[uint64]IChunk // Map from ChunkKeys to chunks
-    curChunk      ChunkXZ // Current chunk that the player is on.
-    curChunkValid bool // States if curChunkValid is valid.
+    curChunk      ChunkXZ           // Current chunk that the player is on.
+    curChunkValid bool              // States if curChunkValid is valid.
 }
 
 func (cs *chunkSubscriptions) init(player *Player) {
