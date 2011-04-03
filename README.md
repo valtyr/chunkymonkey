@@ -58,8 +58,6 @@ The recorded player will start when the second client connects to the server.
 Use netcat or a similar tool to start an otherwise idle TCP connection to the
 server.
 
-References
-----------
 
 [1]: http://golang.org/doc/install.html#fetch    "Go toolchain installation"
 [2]: http://code.google.com/p/godag/wiki/Install "Godag builder"
