@@ -1,0 +1,19 @@
+digraph {
+    node [shape=box, style=filled, fillcolor="#ffffff"]
+
+    client [label="Clients"]
+    frontend [label="Frontend\nservers"]
+    subgraph grouped {
+        rank=same;
+        chunk [label="Chunk\nservers"]
+        lookup [label="Lookup\nservers"]
+    }
+    storage [label="Storage\nservers"]
+
+    client->frontend [label="(Internet)"];
+    frontend->chunk;
+    frontend->lookup;
+    frontend->storage;
+    chunk->lookup;
+    chunk->storage;
+}
