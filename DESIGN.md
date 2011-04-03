@@ -104,4 +104,4 @@ Currently, monitoring takes two forms:
 *   Logging output (via Go's log package).
 
 
-[1]: diagrams/top-level-architecture.png  "Top-level architecture"
+[1]: ../../raw/master/diagrams/top-level-architecture.png  "Top-level architecture"
