@@ -34,6 +34,7 @@ Coding standards/style
 Pretty informal, as few decisions have been made here as yet.
 
 *   Use gofmt to format code before pushing to the master repository.
+*   Unit tests must pass before pushing to the master repository.
 *   Unit test code where possible/reasonable to do so. It is likely that a
     mocking library will be used at some stage to enable testing of more
     complex interactions - using interfaces for dependency injection is helpful
@@ -100,8 +101,10 @@ Monitoring
 
 Currently, monitoring takes two forms:
 
-*   Whitebox live variable inspection (via Go's expvar package).
-*   Logging output (via Go's log package).
+*   Whitebox live variable inspection (via [Go's expvar package][2]).
+*   Logging output (via [Go's log package][3]).
 
 
 [1]: ../../raw/master/diagrams/top-level-architecture.png  "Top-level architecture"
+[2]: http://golang.org/pkg/expvar/                         "Go expvar package"
+[3]: http://golang.org/pkg/log/                            "Go log package"
