@@ -1,4 +1,4 @@
-package serverAuth
+package server_auth
 
 import (
     "expvar"

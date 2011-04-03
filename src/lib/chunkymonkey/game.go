@@ -18,7 +18,7 @@ import (
     "chunkymonkey/player"
     "chunkymonkey/proto"
     "chunkymonkey/record"
-    "chunkymonkey/serverAuth"
+    "chunkymonkey/server_auth"
     .   "chunkymonkey/types"
 )
 
@@ -95,7 +95,7 @@ func (game *Game) Login(conn net.Conn) {
     // that authentication is pluggable
     if game.serverId != "-" {
         var authenticated bool
-        authenticated, err = serverAuth.CheckUserAuth(game.serverId, username)
+        authenticated, err = server_auth.CheckUserAuth(game.serverId, username)
         if !authenticated || err != nil {
             var reason string
             if err != nil {
