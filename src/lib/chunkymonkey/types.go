@@ -44,7 +44,7 @@ const ItemIDNull = ItemID(-1)
 type ItemUses int16
 
 // How many items are in a stack/slot etc.
-type ItemCount byte
+type ItemCount int8
 
 // Entity-related types
 
@@ -135,16 +135,24 @@ const (
 // ID specifying which slotted window, such as inventory
 type WindowID int8
 
+const (
+    WindowIDCursor    = WindowID(-1)
+    WindowIDInventory = WindowID(0)
+)
+
 type InvTypeID byte
 
 const (
     InvTypeIDChest     = InvTypeID(0)
     InvTypeIDWorkbench = InvTypeID(1)
     InvTypeIDFurnace   = InvTypeID(2)
+    InvTypeIDDispenser = InvTypeID(3)
 )
 
 // ID of the slow in inventory or other item-slotted window element
 type SlotID int16
+
+const SlotIDCursor = SlotID(-1)
 
 type PrgBarID int16
 

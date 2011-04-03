@@ -12,6 +12,7 @@ import (
 
     .   "chunkymonkey/entity"
     .   "chunkymonkey/interfaces"
+    "chunkymonkey/inventory"
     "chunkymonkey/proto"
     .   "chunkymonkey/types"
 )
@@ -21,6 +22,8 @@ var (
     expVarPlayerDisconnectionCount *expvar.Int
 )
 
+const StanceNormal = 1.62
+
 func init() {
     expVarPlayerConnectionCount = expvar.NewInt("player-connection-count")
     expVarPlayerDisconnectionCount = expvar.NewInt("player-disconnection-count")
@@ -28,20 +31,20 @@ func init() {
 
 type Player struct {
     Entity
-    game        IGame
-    conn        net.Conn
-    name        string
-    position    AbsXYZ
-    look        LookDegrees
-    currentItem ItemID
-    chunkSubs   chunkSubscriptions
+    game      IGame
+    conn      net.Conn
+    name      string
+    position  AbsXYZ
+    look      LookDegrees
+    chunkSubs chunkSubscriptions
+
+    cursor    inventory.Slot // Item being moved by mouse cursor.
+    inventory inventory.PlayerInventory
 
     mainQueue chan func(IPlayer)
     txQueue   chan []byte
     lock      sync.Mutex
 }
-
-const StanceNormal = 1.62
 
 func StartPlayer(game IGame, conn net.Conn, name string) {
     player := &Player{
@@ -56,11 +59,14 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 
     player.chunkSubs.init(player)
 
+    player.cursor.Init()
+    player.inventory.Init()
+
     game.Enqueue(func(game IGame) {
         game.AddPlayer(player)
         // TODO pass proper dimension
         buf := &bytes.Buffer{}
-        proto.ServerWriteLogin(buf, player.Entity.EntityID, 0, DimensionNormal)
+        proto.ServerWriteLogin(buf, player.EntityID, 0, DimensionNormal)
         proto.WriteSpawnPosition(buf, player.position.ToBlockXYZ())
         player.TransmitPacket(buf.Bytes())
         player.start()
@@ -92,13 +98,17 @@ func (player *Player) Enqueue(f func(IPlayer)) {
 }
 
 func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
-    return proto.WriteNamedEntitySpawn(
+    err = proto.WriteNamedEntitySpawn(
         writer,
-        player.Entity.EntityID, player.name,
+        player.EntityID, player.name,
         player.position.ToAbsIntXYZ(),
         player.look.ToLookBytes(),
-        player.currentItem,
+        player.inventory.HeldItem().ItemType,
     )
+    if err != nil {
+        return
+    }
+    return player.inventory.SendFullEquipmentUpdate(writer, player.EntityID)
 }
 
 func (player *Player) start() {
@@ -204,7 +214,10 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
 func (player *Player) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses) {
 }
 
-func (player *Player) PacketHoldingChange(itemID ItemID) {
+func (player *Player) PacketHoldingChange(slotID SlotID) {
+    player.lock.Lock()
+    defer player.lock.Unlock()
+    player.inventory.SetHolding(slotID)
 }
 
 func (player *Player) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
@@ -290,12 +303,19 @@ func (player *Player) TransmitPacket(packet []byte) {
 // Blocks until essential login packets have been transmitted.
 func (player *Player) postLogin() {
     nearbySent := func() {
+        player.lock.Lock()
+        defer player.lock.Unlock()
+
         // Send player start position etc.
         buf := &bytes.Buffer{}
         proto.ServerWritePlayerPositionLook(
             buf, &player.position, &player.look,
             player.position.Y+StanceNormal, false)
 
+        player.inventory.SendUpdate(buf, WindowIDInventory)
+
+        // FIXME: This could potentially deadlock with player.lock being held
+        // if the txQueue is full.
         player.TransmitPacket(buf.Bytes())
     }
 

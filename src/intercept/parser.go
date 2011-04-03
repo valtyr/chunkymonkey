@@ -77,8 +77,8 @@ func (p *MessageParser) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *Bloc
         itemID, blockLoc, face, amount, uses)
 }
 
-func (p *MessageParser) PacketHoldingChange(itemID ItemID) {
-    p.printf("PacketHoldingChange(itemID=%d)", itemID)
+func (p *MessageParser) PacketHoldingChange(slotID SlotID) {
+    p.printf("PacketHoldingChange(slotID=%d)", slotID)
 }
 
 func (p *MessageParser) PacketBedUse(flag bool, bedLoc *BlockXYZ) {

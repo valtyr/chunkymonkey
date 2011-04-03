@@ -97,7 +97,7 @@ type PacketHandler interface {
 type ServerPacketHandler interface {
     PacketHandler
     PacketPlayer(onGround bool)
-    PacketHoldingChange(itemID ItemID)
+    PacketHoldingChange(slotID SlotID)
     PacketWindowClose(windowID WindowID)
     PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses)
 }
@@ -182,9 +182,13 @@ func writeString(writer io.Writer, s string) (err os.Error) {
 }
 
 type WindowSlot struct {
-    ItemID ItemID
-    Amount ItemCount
-    Uses   ItemUses
+    ItemType ItemID
+    Quantity ItemCount
+    Uses     ItemUses
+}
+
+type IWindowSlot interface {
+    GetAttr() (ItemID, ItemCount, ItemUses)
 }
 
 type EntityMetadata struct {
@@ -485,7 +489,7 @@ func readTimeUpdate(reader io.Reader, handler ClientPacketHandler) (err os.Error
 
 // packetIDEntityEquipment
 
-func ServerWriteEntityEquipment(writer io.Writer, entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses) (err os.Error) {
+func WriteEntityEquipment(writer io.Writer, entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses) (err os.Error) {
     var packet = struct {
         PacketID byte
         EntityID EntityID
@@ -975,26 +979,26 @@ func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
 
 // packetIDHoldingChange
 
-func WriteHoldingChange(writer io.Writer, itemID ItemID) (err os.Error) {
+func WriteHoldingChange(writer io.Writer, slotID SlotID) (err os.Error) {
     var packet = struct {
         PacketID byte
-        ItemID   ItemID
+        SlotID   SlotID
     }{
         packetIDHoldingChange,
-        itemID,
+        slotID,
     }
 
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
 func readHoldingChange(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
-    var itemID ItemID
+    var slotID SlotID
 
-    if err = binary.Read(reader, binary.BigEndian, &itemID); err != nil {
+    if err = binary.Read(reader, binary.BigEndian, &slotID); err != nil {
         return
     }
 
-    handler.PacketHoldingChange(itemID)
+    handler.PacketHoldingChange(slotID)
 
     return
 }
@@ -2337,7 +2341,7 @@ func readWindowSetSlot(reader io.Reader, handler ClientPacketHandler) (err os.Er
 
 // packetIDWindowItems
 
-func WriteWindowItems(writer io.Writer, windowID WindowID, items []WindowSlot) (err os.Error) {
+func WriteWindowItems(writer io.Writer, windowID WindowID, items []IWindowSlot) (err os.Error) {
     var packet = struct {
         PacketID byte
         WindowID WindowID
@@ -2353,16 +2357,15 @@ func WriteWindowItems(writer io.Writer, windowID WindowID, items []WindowSlot) (
     }
 
     for _, slot := range items {
-        if err = binary.Write(writer, binary.BigEndian, slot.ItemID); err != nil {
-            return
-        }
+        itemType, quantity, uses := slot.GetAttr()
 
-        if slot.ItemID != -1 {
-            var itemInfo struct {
-                Amount ItemCount
-                Uses   ItemUses
-            }
+        if itemType != -1 {
+            itemInfo := WindowSlot{itemType, quantity, uses}
             if err = binary.Write(writer, binary.BigEndian, &itemInfo); err != nil {
+                return
+            }
+        } else {
+            if err = binary.Write(writer, binary.BigEndian, itemType); err != nil {
                 return
             }
         }
@@ -2382,21 +2385,21 @@ func readWindowItems(reader io.Reader, handler ClientPacketHandler) (err os.Erro
         return
     }
 
-    var itemID ItemID
+    var itemType ItemID
 
     items := make([]WindowSlot, packetStart.Count)
 
     for i := int16(0); i < packetStart.Count; i++ {
-        err = binary.Read(reader, binary.BigEndian, &itemID)
+        err = binary.Read(reader, binary.BigEndian, &itemType)
         if err != nil {
             return
         }
 
         var itemInfo struct {
-            Amount ItemCount
-            Uses   ItemUses
+            Quantity ItemCount
+            Uses     ItemUses
         }
-        if itemID != -1 {
+        if itemType != -1 {
             err = binary.Read(reader, binary.BigEndian, &itemInfo)
             if err != nil {
                 return
@@ -2404,9 +2407,9 @@ func readWindowItems(reader io.Reader, handler ClientPacketHandler) (err os.Erro
         }
 
         items = append(items, WindowSlot{
-            ItemID: itemID,
-            Amount: itemInfo.Amount,
-            Uses:   itemInfo.Uses,
+            ItemType: itemType,
+            Quantity: itemInfo.Quantity,
+            Uses:     itemInfo.Uses,
         })
     }
 
