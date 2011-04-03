@@ -6,7 +6,7 @@ function clean_for () {
     last=`cat $state_file 2>/dev/null || echo dirty`
     if [ "x$last" != "x$desired_state" ]; then
         echo "Cleaning up after last build type: $last"
-        gd -c src/lib
+        gd -c src
 
         # Clean up any old test .go files.
         if [ "x$last" = "xtest" ]; then
