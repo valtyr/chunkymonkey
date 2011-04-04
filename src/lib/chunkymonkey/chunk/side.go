@@ -192,3 +192,45 @@ func (updater *neighbourUpdater) flush() {
         updater.changes = nil
     }
 }
+
+func getSideBlockIndex(side ChunkSideDir, subLoc *SubChunkXYZ) (index int, ok bool) {
+    var h, h2, y SubChunkCoord
+
+    if y >= ChunkSizeY {
+        ok = false
+        return
+    }
+
+    switch side {
+    case ChunkSideEast, ChunkSideWest:
+        h = subLoc.X
+    case ChunkSideNorth, ChunkSideSouth:
+        h = subLoc.X
+    }
+
+    if h >= ChunkSizeH {
+        ok = false
+        return
+    }
+
+    switch side {
+    case ChunkSideWest, ChunkSideNorth:
+        if h2 != 0 {
+            ok = false
+            return
+        }
+    case ChunkSideEast, ChunkSideSouth:
+        if h2 != (ChunkSizeH - 1) {
+            ok = false
+            return
+        }
+    }
+
+    ok = true
+
+    y = subLoc.Y
+
+    index = (int(h) * ChunkSizeH) + int(y)
+
+    return
+}
