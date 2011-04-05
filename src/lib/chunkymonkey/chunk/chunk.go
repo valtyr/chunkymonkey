@@ -12,6 +12,7 @@ import (
     "chunkymonkey/block"
     .   "chunkymonkey/interfaces"
     "chunkymonkey/proto"
+    "chunkymonkey/chunk/store"
     .   "chunkymonkey/types"
 )
 
@@ -32,16 +33,16 @@ type Chunk struct {
     subscribers  map[IPacketSender]bool // Subscribers getting updates from the chunk
 }
 
-func newChunk(loc *ChunkXZ, mgr *ChunkManager, blocks, blockData, skyLight, blockLight, heightMap []byte) (chunk *Chunk) {
+func newChunkFromReader(reader store.ChunkReader, mgr *ChunkManager) (chunk *Chunk) {
     chunk = &Chunk{
         mainQueue:   make(chan func(IChunk), 256),
         mgr:         mgr,
-        loc:         *loc,
-        blocks:      blocks,
-        blockData:   blockData,
-        skyLight:    skyLight,
-        blockLight:  blockLight,
-        heightMap:   heightMap,
+        loc:         *reader.ChunkLoc(),
+        blocks:      reader.Blocks(),
+        blockData:   reader.BlockData(),
+        skyLight:    reader.SkyLight(),
+        blockLight:  reader.BlockLight(),
+        heightMap:   reader.HeightMap(),
         items:       make(map[EntityID]IItem),
         rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
         subscribers: make(map[IPacketSender]bool),
