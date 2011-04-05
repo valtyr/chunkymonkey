@@ -12,17 +12,17 @@ import (
     "nbt"
 )
 
-type ChunkStoreAlpha struct {
+type chunkStoreAlpha struct {
     worldPath string
 }
 
 func NewChunkStoreAlpha(worldPath string) store.ChunkStore {
-    return &ChunkStoreAlpha{
+    return &chunkStoreAlpha{
         worldPath: worldPath,
     }
 }
 
-func (s *ChunkStoreAlpha) chunkPath(chunkLoc *ChunkXZ) string {
+func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXZ) string {
     return path.Join(
         s.worldPath,
         base36Encode(int32(chunkLoc.X&63)),
@@ -31,7 +31,7 @@ func (s *ChunkStoreAlpha) chunkPath(chunkLoc *ChunkXZ) string {
 }
 
 // Load a chunk from its NBT representation
-func (s *ChunkStoreAlpha) LoadChunk(chunkLoc *ChunkXZ) (reader store.ChunkReader, err os.Error) {
+func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXZ) (reader store.ChunkReader, err os.Error) {
     if err != nil {
         return
     }
@@ -77,7 +77,6 @@ func newChunkReader(reader io.Reader) (r *chunkReader, err os.Error) {
     return
 }
 
-// Returns the chunk location.
 func (r *chunkReader) ChunkLoc() *ChunkXZ {
     return &ChunkXZ{
         X:  ChunkCoord(r.chunkTag.Lookup("/Level/xPos").(*nbt.Int).Value),
@@ -85,27 +84,22 @@ func (r *chunkReader) ChunkLoc() *ChunkXZ {
     }
 }
 
-// Returns the block IDs in the chunk.
 func (r *chunkReader) Blocks() []byte {
     return r.chunkTag.Lookup("/Level/Blocks").(*nbt.ByteArray).Value
 }
 
-// Returns the block data in the chunk.
 func (r *chunkReader) BlockData() []byte {
     return r.chunkTag.Lookup("/Level/Data").(*nbt.ByteArray).Value
 }
 
-// Returns the block light data in the chunk.
 func (r *chunkReader) BlockLight() []byte {
     return r.chunkTag.Lookup("/Level/BlockLight").(*nbt.ByteArray).Value
 }
 
-// Returns the sky light data in the chunk.
 func (r *chunkReader) SkyLight() []byte {
     return r.chunkTag.Lookup("/Level/SkyLight").(*nbt.ByteArray).Value
 }
 
-// Returns the height map data in the chunk.
 func (r *chunkReader) HeightMap() []byte {
     return r.chunkTag.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value
 }
