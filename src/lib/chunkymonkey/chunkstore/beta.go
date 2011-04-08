@@ -148,7 +148,7 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXZ) (r *chunkReader, e
         err = os.NewError("Header gave bad chunk offset.")
     }
 
-    file.Seek(int64(sectorIndex) * regionFileSectorSize, 0)
+    file.Seek(int64(sectorIndex)*regionFileSectorSize, 0)
 
     // 5 is the size of chunkDataHeader in bytes.
     maxChunkDataSize := (sectorCount * regionFileSectorSize) - 5
