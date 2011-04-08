@@ -12,7 +12,7 @@ import (
     "chunkymonkey/block"
     .   "chunkymonkey/interfaces"
     "chunkymonkey/proto"
-    "chunkymonkey/chunk/store"
+    "chunkymonkey/chunkstore"
     .   "chunkymonkey/types"
 )
 
@@ -33,7 +33,7 @@ type Chunk struct {
     subscribers  map[IPacketSender]bool // Subscribers getting updates from the chunk
 }
 
-func newChunkFromReader(reader store.ChunkReader, mgr *ChunkManager) (chunk *Chunk) {
+func newChunkFromReader(reader chunkstore.ChunkReader, mgr *ChunkManager) (chunk *Chunk) {
     chunk = &Chunk{
         mainQueue:   make(chan func(IChunk), 256),
         mgr:         mgr,

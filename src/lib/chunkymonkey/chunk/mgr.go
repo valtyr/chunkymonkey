@@ -4,23 +4,22 @@ import (
     "log"
 
     .   "chunkymonkey/interfaces"
-    "chunkymonkey/chunk/store"
-    "chunkymonkey/chunk/store_alpha"
+    "chunkymonkey/chunkstore"
     .   "chunkymonkey/types"
 )
 
 // ChunkManager contains all chunks and can look them up
 type ChunkManager struct {
     game       IGame
-    chunkStore store.ChunkStore
+    chunkStore chunkstore.ChunkStore
     blockTypes map[BlockID]IBlockType
     chunks     map[uint64]*Chunk
 }
 
-func NewChunkManager(worldPath string, game IGame) *ChunkManager {
+func NewChunkManager(chunkStore chunkstore.ChunkStore, game IGame) *ChunkManager {
     return &ChunkManager{
         game:       game,
-        chunkStore: store_alpha.NewChunkStoreAlpha(worldPath),
+        chunkStore: chunkStore,
         blockTypes: game.GetBlockTypes(),
         chunks:     make(map[uint64]*Chunk),
     }

@@ -1,22 +1,20 @@
-// Reads the Minecraft Alpha world format.
-package store_alpha
+package chunkstore
 
 import (
+    "compress/gzip"
     "fmt"
-    "io"
     "os"
     "path"
 
-    "chunkymonkey/chunk/store"
     .   "chunkymonkey/types"
-    "nbt"
 )
 
 type chunkStoreAlpha struct {
     worldPath string
 }
 
-func NewChunkStoreAlpha(worldPath string) store.ChunkStore {
+// Creates a ChunkStore that reads the Minecraft Alpha world format.
+func NewChunkStoreAlpha(worldPath string) ChunkStore {
     return &chunkStoreAlpha{
         worldPath: worldPath,
     }
@@ -31,7 +29,7 @@ func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXZ) string {
 }
 
 // Load a chunk from its NBT representation
-func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXZ) (reader store.ChunkReader, err os.Error) {
+func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXZ) (reader ChunkReader, err os.Error) {
     if err != nil {
         return
     }
@@ -42,7 +40,12 @@ func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXZ) (reader store.ChunkReader
     }
     defer file.Close()
 
-    reader, err = newChunkReader(file)
+    gzipReader, err := gzip.NewReader(file)
+    if err != nil {
+        return
+    }
+    defer gzipReader.Close()
+    reader, err = newChunkReader(gzipReader)
     if err != nil {
         return
     }
@@ -57,51 +60,6 @@ func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXZ) (reader store.ChunkReader
     }
 
     return
-}
-
-// Returned to chunks to pull their data from.
-type chunkReader struct {
-    chunkTag *nbt.NamedTag
-}
-
-func newChunkReader(reader io.Reader) (r *chunkReader, err os.Error) {
-    chunkTag, err := nbt.Read(reader)
-    if err != nil {
-        return
-    }
-
-    r = &chunkReader{
-        chunkTag: chunkTag,
-    }
-
-    return
-}
-
-func (r *chunkReader) ChunkLoc() *ChunkXZ {
-    return &ChunkXZ{
-        X:  ChunkCoord(r.chunkTag.Lookup("/Level/xPos").(*nbt.Int).Value),
-        Z:  ChunkCoord(r.chunkTag.Lookup("/Level/zPos").(*nbt.Int).Value),
-    }
-}
-
-func (r *chunkReader) Blocks() []byte {
-    return r.chunkTag.Lookup("/Level/Blocks").(*nbt.ByteArray).Value
-}
-
-func (r *chunkReader) BlockData() []byte {
-    return r.chunkTag.Lookup("/Level/Data").(*nbt.ByteArray).Value
-}
-
-func (r *chunkReader) BlockLight() []byte {
-    return r.chunkTag.Lookup("/Level/BlockLight").(*nbt.ByteArray).Value
-}
-
-func (r *chunkReader) SkyLight() []byte {
-    return r.chunkTag.Lookup("/Level/SkyLight").(*nbt.ByteArray).Value
-}
-
-func (r *chunkReader) HeightMap() []byte {
-    return r.chunkTag.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value
 }
 
 // Utility functions:

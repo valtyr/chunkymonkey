@@ -5,7 +5,6 @@ import (
     "io"
     "fmt"
     "strings"
-    "compress/gzip"
     "encoding/binary"
 )
 
@@ -358,16 +357,8 @@ func (c *Compound) Lookup(path string) (tag Tag) {
 }
 
 func Read(reader io.Reader) (compound *NamedTag, err os.Error) {
-    var gzipReader *gzip.Decompressor
-
-    gzipReader, err = gzip.NewReader(reader)
-    if err != nil {
-        return
-    }
-
     compound = &NamedTag{}
-    err = compound.Read(gzipReader)
-    gzipReader.Close()
+    err = compound.Read(reader)
     if err != nil {
         return
     }

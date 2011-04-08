@@ -1,4 +1,4 @@
-package store_beta
+package chunkstore
 
 import (
     "testing"
@@ -27,10 +27,10 @@ func TestChunkFilePath(t *testing.T) {
     }
 
     for _, test := range tests {
-        result := chunkFilePath("/foo", &test.loc)
+        result := regionFilePath("/foo", &test.loc)
         if test.expected != result {
             t.Errorf(
-                "chunkFilePath(\"/foo\", %+v) expected %#v but got %#v",
+                "regionFilePath(\"/foo\", %+v) expected %#v but got %#v",
                 test.loc, test.expected, result)
         }
     }
@@ -43,8 +43,8 @@ func TestChunkOffset(t *testing.T) {
 
     type Test struct {
         offset         chunkOffset
-        expSectorIndex int
-        expSectorCount int
+        expSectorIndex uint32
+        expSectorCount uint32
     }
 
     tests := []Test{

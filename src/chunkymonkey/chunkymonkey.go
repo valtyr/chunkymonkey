@@ -45,7 +45,10 @@ func main() {
     }
 
     worldPath := flag.Arg(0)
-    game := chunkymonkey.NewGame(worldPath)
+    game, err := chunkymonkey.NewGame(worldPath)
+    if err != nil {
+        log.Panic(err)
+    }
 
     err = startHttpServer(*httpAddr)
     if err != nil {
