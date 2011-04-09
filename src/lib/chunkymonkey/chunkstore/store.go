@@ -33,9 +33,8 @@ type ChunkReader interface {
 }
 
 // Given the NamedTag for a level.dat, returns an appropriate ChunkStore.
-// TODO consolidate chunk store with level.dat data into an appropriate type.
-func ChunkStoreForLevel(worldPath string, level *nbt.NamedTag) (store ChunkStore, err os.Error) {
-    versionTag, ok := level.Lookup("/Data/version").(*nbt.Int)
+func ChunkStoreForLevel(worldPath string, levelData *nbt.NamedTag) (store ChunkStore, err os.Error) {
+    versionTag, ok := levelData.Lookup("/Data/version").(*nbt.Int)
 
     if !ok {
         store = NewChunkStoreAlpha(worldPath)

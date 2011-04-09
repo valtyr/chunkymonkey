@@ -2,19 +2,15 @@ package chunkymonkey
 
 import (
     "bytes"
-    "compress/gzip"
     "fmt"
     "log"
     "net"
     "os"
-    "path"
     "rand"
     "time"
 
-    "nbt"
     "chunkymonkey/block"
     "chunkymonkey/chunk"
-    "chunkymonkey/chunkstore"
     .   "chunkymonkey/entity"
     .   "chunkymonkey/interfaces"
     "chunkymonkey/player"
@@ -22,6 +18,7 @@ import (
     "chunkymonkey/record"
     "chunkymonkey/server_auth"
     .   "chunkymonkey/types"
+    "chunkymonkey/worldstore"
 )
 
 type Game struct {
@@ -33,62 +30,27 @@ type Game struct {
     blockTypes    map[BlockID]IBlockType
     rand          *rand.Rand
     serverId      string
-    level         *nbt.NamedTag
-
-    // The player's starting position is loaded from level.dat for now
-    startPosition AbsXYZ
+    worldStore    *worldstore.WorldStore
 }
 
 func NewGame(worldPath string) (game *Game, err os.Error) {
+    worldStore, err := worldstore.LoadWorldStore(worldPath)
+
     game = &Game{
         mainQueue:  make(chan func(IGame), 256),
         players:    make(map[EntityID]IPlayer),
         blockTypes: block.LoadStandardBlockTypes(),
         rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
-    }
-
-    game.level, err = game.loadLevel(worldPath)
-    if err != nil {
-        return
+        worldStore: worldStore,
     }
 
     game.serverId = fmt.Sprintf("%x", game.rand.Int63())
     //game.serverId = "-"
 
-    pos := game.level.Lookup("/Data/Player/Pos").(*nbt.List).Value
-    game.startPosition = AbsXYZ{
-        AbsCoord(pos[0].(*nbt.Double).Value),
-        AbsCoord(pos[1].(*nbt.Double).Value),
-        AbsCoord(pos[2].(*nbt.Double).Value),
-    }
-
-    chunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, game.level)
-    if err != nil {
-        return
-    }
-
-    game.chunkManager = chunk.NewChunkManager(chunkStore, game)
+    game.chunkManager = chunk.NewChunkManager(worldStore.ChunkStore, game)
 
     go game.mainLoop()
     go game.timer()
-    return
-}
-
-func (game *Game) loadLevel(worldPath string) (level *nbt.NamedTag, err os.Error) {
-    file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
-    if err != nil {
-        return
-    }
-    defer file.Close()
-
-    gzipReader, err := gzip.NewReader(file)
-    if err != nil {
-        return
-    }
-    defer gzipReader.Close()
-
-    level, err = nbt.Read(gzipReader)
-
     return
 }
 
@@ -160,7 +122,7 @@ func (game *Game) Serve(addr string) {
 }
 
 func (game *Game) GetStartPosition() *AbsXYZ {
-    return &game.startPosition
+    return &game.worldStore.StartPosition
 }
 
 func (game *Game) GetBlockTypes() map[BlockID]IBlockType {

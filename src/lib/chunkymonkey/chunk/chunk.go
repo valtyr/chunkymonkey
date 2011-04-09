@@ -88,7 +88,7 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXYZ, subLoc *SubChunkXYZ, index int3
     // Tell players that the block changed
     packet := &bytes.Buffer{}
     proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
-    chunk.mgr.game.MulticastChunkPacket(packet.Bytes(), &chunk.loc)
+    chunk.multicastSubscribers(packet.Bytes())
 
     // Update neighbour caches of this change
     chunk.neighbours.setBlock(subLoc, blockType)
