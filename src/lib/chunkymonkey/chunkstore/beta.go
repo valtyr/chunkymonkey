@@ -19,34 +19,32 @@ const (
 )
 
 type chunkStoreBeta struct {
-    worldPath string
+    worldPath   string
+    regionFiles map[uint64]*regionFileReader
 }
 
 // Creates a ChunkStore that reads the Minecraft Beta world format.
 func NewChunkStoreBeta(worldPath string) ChunkStore {
     return &chunkStoreBeta{
-        worldPath: worldPath,
+        worldPath:   worldPath,
+        regionFiles: make(map[uint64]*regionFileReader),
     }
 }
 
-func regionFilePath(worldPath string, chunkLoc *ChunkXZ) string {
-    return path.Join(
-        worldPath,
-        "region",
-        fmt.Sprintf(
-            "r.%d.%d.mcr",
-            chunkLoc.X>>regionFileEdgeShift,
-            chunkLoc.Z>>regionFileEdgeShift,
-        ),
-    )
-}
-
 func (s *chunkStoreBeta) LoadChunk(chunkLoc *ChunkXZ) (reader ChunkReader, err os.Error) {
-    // TODO cache limited number of likely-to-be-used regionFileReader objs
-    filePath := regionFilePath(s.worldPath, chunkLoc)
-    cfr, err := newRegionFileReader(filePath)
-    if err != nil {
-        return
+    regionLoc := regionLocForChunkXZ(chunkLoc)
+
+    var cfr *regionFileReader
+    cfr, ok := s.regionFiles[regionLoc.regionKey()]
+    if !ok {
+        // TODO limit number of regionFileReader objs to a maximum number of
+        // most-frequently-used regions. Close regionFileReader objects when no
+        // longer needed.
+        filePath := regionLoc.regionFilePath(s.worldPath)
+        cfr, err = newRegionFileReader(filePath)
+        if err != nil {
+            return
+        }
     }
 
     return cfr.ReadChunkData(chunkLoc)
@@ -103,19 +101,17 @@ func (cdh *chunkDataHeader) GetDataReader(raw io.Reader) (output io.ReadCloser, 
 // Handle on a chunk file - used to read chunk data from the file.
 type regionFileReader struct {
     offsets  regionFileHeader
-    filePath string
+    file     *os.File
 }
 
 func newRegionFileReader(filePath string) (cfr *regionFileReader, err os.Error) {
-    // TODO keep file open until the regionFileReader is got rid of.
     file, err := os.Open(filePath, os.O_RDONLY, 0)
     if err != nil {
         return
     }
-    defer file.Close()
 
     cfr = &regionFileReader{
-        filePath: filePath,
+        file: file,
     }
 
     err = binary.Read(file, binary.BigEndian, &cfr.offsets)
@@ -127,6 +123,10 @@ func newRegionFileReader(filePath string) (cfr *regionFileReader, err os.Error) 
     return
 }
 
+func (cfr *regionFileReader) Close() {
+    cfr.file.Close()
+}
+
 func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXZ) (r *chunkReader, err os.Error) {
     offset := cfr.offsets.GetOffset(chunkLoc)
 
@@ -136,30 +136,24 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXZ) (r *chunkReader, e
         return
     }
 
-    file, err := os.Open(cfr.filePath, os.O_RDONLY, 0)
-    if err != nil {
-        return
-    }
-    defer file.Close()
-
     sectorCount, sectorIndex := offset.Get()
 
     if sectorIndex == 0 || sectorCount == 0 {
         err = os.NewError("Header gave bad chunk offset.")
     }
 
-    file.Seek(int64(sectorIndex)*regionFileSectorSize, 0)
+    cfr.file.Seek(int64(sectorIndex)*regionFileSectorSize, 0)
 
     // 5 is the size of chunkDataHeader in bytes.
     maxChunkDataSize := (sectorCount * regionFileSectorSize) - 5
 
     var header chunkDataHeader
-    binary.Read(file, binary.BigEndian, &header)
+    binary.Read(cfr.file, binary.BigEndian, &header)
     if header.DataSize > maxChunkDataSize {
         err = os.NewError("Chunk is too big for the sectors it is within.")
     }
 
-    dataReader, err := header.GetDataReader(file)
+    dataReader, err := header.GetDataReader(cfr.file)
     if err != nil {
         return
     }
@@ -168,4 +162,29 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXZ) (r *chunkReader, e
     r, err = newChunkReader(dataReader)
 
     return
+}
+
+type regionCoord int32
+
+type regionLoc struct {
+    X, Z regionCoord
+}
+
+func regionLocForChunkXZ(chunkLoc *ChunkXZ) regionLoc {
+    return regionLoc {
+        regionCoord(chunkLoc.X>>regionFileEdgeShift),
+        regionCoord(chunkLoc.Z>>regionFileEdgeShift),
+    }
+}
+
+func (loc *regionLoc) regionKey() uint64 {
+    return uint64(loc.X) << 32 | uint64(uint32(loc.Z))
+}
+
+func (loc *regionLoc) regionFilePath(worldPath string) string {
+    return path.Join(
+        worldPath,
+        "region",
+        fmt.Sprintf("r.%d.%d.mcr", loc.X, loc.Z),
+    )
 }

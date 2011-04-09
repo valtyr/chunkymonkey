@@ -6,7 +6,7 @@ import (
     .   "chunkymonkey/types"
 )
 
-func TestChunkFilePath(t *testing.T) {
+func TestRegionLoc_regionFilePath(t *testing.T) {
     type Test struct {
         loc      ChunkXZ
         expected string
@@ -27,7 +27,8 @@ func TestChunkFilePath(t *testing.T) {
     }
 
     for _, test := range tests {
-        result := regionFilePath("/foo", &test.loc)
+        regionLoc := regionLocForChunkXZ(&test.loc)
+        result := regionLoc.regionFilePath("/foo")
         if test.expected != result {
             t.Errorf(
                 "regionFilePath(\"/foo\", %+v) expected %#v but got %#v",
