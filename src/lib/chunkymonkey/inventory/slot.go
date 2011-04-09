@@ -13,33 +13,33 @@ const SlotQuantityMax = ItemCount(64)
 // Represents an inventory slot, e.g in a player's inventory, their cursor, a
 // chest.
 type Slot struct {
-    ItemType ItemID
+    ItemType ItemId
     Quantity ItemCount
     Uses     ItemUses
 }
 
 func (s *Slot) Init() {
-    s.ItemType = ItemIDNull
+    s.ItemType = ItemIdNull
     s.Quantity = 0
     s.Uses = 0
 }
 
-func (s *Slot) GetAttr() (ItemID, ItemCount, ItemUses) {
+func (s *Slot) GetAttr() (ItemId, ItemCount, ItemUses) {
     return s.ItemType, s.Quantity, s.Uses
 }
 
-func (s *Slot) SendUpdate(writer io.Writer, windowID WindowID, slotID SlotID) os.Error {
-    return proto.WriteWindowSetSlot(writer, windowID, slotID, s.ItemType, s.Quantity, s.Uses)
+func (s *Slot) SendUpdate(writer io.Writer, windowId WindowId, slotId SlotId) os.Error {
+    return proto.WriteWindowSetSlot(writer, windowId, slotId, s.ItemType, s.Quantity, s.Uses)
 }
 
-func (s *Slot) SendEquipmentUpdate(writer io.Writer, entityID EntityID, slotID SlotID) os.Error {
-    return proto.WriteEntityEquipment(writer, entityID, slotID, s.ItemType, s.Uses)
+func (s *Slot) SendEquipmentUpdate(writer io.Writer, entityId EntityId, slotId SlotId) os.Error {
+    return proto.WriteEntityEquipment(writer, entityId, slotId, s.ItemType, s.Uses)
 }
 
 func (s *Slot) setQuantity(quantity ItemCount) {
     s.Quantity = quantity
     if s.Quantity == 0 {
-        s.ItemType = ItemIDNull
+        s.ItemType = ItemIdNull
         s.Uses = 0
     }
 }
@@ -50,7 +50,7 @@ func (s *Slot) Add(src *Slot) {
     // NOTE: This code assumes that 2*SlotQuantityMax will not overflow
     // the ItemCount type.
 
-    if s.ItemType != ItemIDNull {
+    if s.ItemType != ItemIdNull {
         if s.ItemType != src.ItemType {
             return
         }

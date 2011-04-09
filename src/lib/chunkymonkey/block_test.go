@@ -9,24 +9,24 @@ func TestLoadStandardBlocksOpacity(t *testing.T) {
     b := LoadStandardBlockTypes()
 
     type BlockTransTest struct {
-        id                    BlockID
+        id                    BlockId
         expected_transparency int8
     }
 
     var BlockTransTests = []BlockTransTest{
         // A few blocks should be transparent
-        BlockTransTest{BlockIDAir, 0},
-        BlockTransTest{BlockIDSignPost, 0},
-        BlockTransTest{BlockIDGlass, 0},
+        BlockTransTest{BlockIdAir, 0},
+        BlockTransTest{BlockIdSignPost, 0},
+        BlockTransTest{BlockIdGlass, 0},
 
         // Some should be semi-transparent
-        BlockTransTest{BlockIDLeaves, 1},
-        BlockTransTest{BlockIDWater, 3},
-        BlockTransTest{BlockIDIce, 3},
+        BlockTransTest{BlockIdLeaves, 1},
+        BlockTransTest{BlockIdWater, 3},
+        BlockTransTest{BlockIdIce, 3},
 
         // Some should be opaque
-        BlockTransTest{BlockIDStone, -1},
-        BlockTransTest{BlockIDDirt, -1},
+        BlockTransTest{BlockIdStone, -1},
+        BlockTransTest{BlockIdDirt, -1},
     }
 
     for _, r := range BlockTransTests {
@@ -42,21 +42,21 @@ func TestLoadStandardBlocksSolidity(t *testing.T) {
     b := LoadStandardBlockTypes()
 
     type Test struct {
-        id             BlockID
+        id             BlockId
         expected_solid bool
     }
 
     var tests = []Test{
         // Most blocks should be solid
-        Test{BlockIDStone, true},
-        Test{BlockIDDirt, true},
-        Test{BlockIDFence, true},
-        Test{BlockIDWorkbench, true},
+        Test{BlockIdStone, true},
+        Test{BlockIdDirt, true},
+        Test{BlockIdFence, true},
+        Test{BlockIdWorkbench, true},
 
         // Some should be non-solid
-        Test{BlockIDWater, false},
-        Test{BlockIDLava, false},
-        Test{BlockIDYellowFlower, false},
+        Test{BlockIdWater, false},
+        Test{BlockIdLava, false},
+        Test{BlockIdYellowFlower, false},
     }
 
     for _, r := range tests {

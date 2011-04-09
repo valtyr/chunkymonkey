@@ -12,113 +12,113 @@ import (
 
 const (
     // TODO add in new items from Beta 1.2
-    ItemIDIronSpade           = ItemID(256)
-    ItemIDIronPickaxe         = ItemID(257)
-    ItemIDIronAxe             = ItemID(258)
-    ItemIDFlintAndSteel       = ItemID(259)
-    ItemIDApple               = ItemID(260)
-    ItemIDBow                 = ItemID(261)
-    ItemIDArrow               = ItemID(262)
-    ItemIDCoal                = ItemID(263)
-    ItemIDDiamond             = ItemID(264)
-    ItemIDIronIngot           = ItemID(265)
-    ItemIDGoldIngot           = ItemID(266)
-    ItemIDIronSword           = ItemID(267)
-    ItemIDWoodenSword         = ItemID(268)
-    ItemIDWoodenSpade         = ItemID(269)
-    ItemIDWoodenPickaxe       = ItemID(270)
-    ItemIDWoodenAxe           = ItemID(271)
-    ItemIDStoneSword          = ItemID(272)
-    ItemIDStoneSpade          = ItemID(273)
-    ItemIDStonePickaxe        = ItemID(274)
-    ItemIDStoneAxe            = ItemID(275)
-    ItemIDDiamondSword        = ItemID(276)
-    ItemIDDiamondSpade        = ItemID(277)
-    ItemIDDiamondPickaxe      = ItemID(278)
-    ItemIDDiamondAxe          = ItemID(279)
-    ItemIDStick               = ItemID(280)
-    ItemIDBowl                = ItemID(281)
-    ItemIDMushroomSoup        = ItemID(282)
-    ItemIDGoldSword           = ItemID(283)
-    ItemIDGoldSpade           = ItemID(284)
-    ItemIDGoldPickaxe         = ItemID(285)
-    ItemIDGoldAxe             = ItemID(286)
-    ItemIDString              = ItemID(287)
-    ItemIDFeather             = ItemID(288)
-    ItemIDGunpowder           = ItemID(289)
-    ItemIDWoodenHoe           = ItemID(290)
-    ItemIDStoneHoe            = ItemID(291)
-    ItemIDIronHoe             = ItemID(292)
-    ItemIDDiamondHoe          = ItemID(293)
-    ItemIDGoldHoe             = ItemID(294)
-    ItemIDSeeds               = ItemID(295)
-    ItemIDWheat               = ItemID(296)
-    ItemIDBread               = ItemID(297)
-    ItemIDLeatherHelmet       = ItemID(298)
-    ItemIDLeatherChestplate   = ItemID(299)
-    ItemIDLeatherLeggings     = ItemID(300)
-    ItemIDLeatherBoots        = ItemID(301)
-    ItemIDChainmailHelmet     = ItemID(302)
-    ItemIDChainmailChestplate = ItemID(303)
-    ItemIDChainmailLeggings   = ItemID(304)
-    ItemIDChainmailBoots      = ItemID(305)
-    ItemIDIronHelmet          = ItemID(306)
-    ItemIDIronChestplate      = ItemID(307)
-    ItemIDIronLeggings        = ItemID(308)
-    ItemIDIronBoots           = ItemID(309)
-    ItemIDDiamondHelmet       = ItemID(310)
-    ItemIDDiamondChestplate   = ItemID(311)
-    ItemIDDiamondLeggings     = ItemID(312)
-    ItemIDDiamondBoots        = ItemID(313)
-    ItemIDGoldHelmet          = ItemID(314)
-    ItemIDGoldChestplate      = ItemID(315)
-    ItemIDGoldLeggings        = ItemID(316)
-    ItemIDGoldBoots           = ItemID(317)
-    ItemIDFlint               = ItemID(318)
-    ItemIDPork                = ItemID(319)
-    ItemIDGrilledPork         = ItemID(320)
-    ItemIDPaintings           = ItemID(321)
-    ItemIDGoldenapple         = ItemID(322)
-    ItemIDSign                = ItemID(323)
-    ItemIDWoodendoor          = ItemID(324)
-    ItemIDBucket              = ItemID(325)
-    ItemIDWaterbucket         = ItemID(326)
-    ItemIDLavabucket          = ItemID(327)
-    ItemIDMinecart            = ItemID(328)
-    ItemIDSaddle              = ItemID(329)
-    ItemIDIronDoor            = ItemID(330)
-    ItemIDRedstone            = ItemID(331)
-    ItemIDSnowball            = ItemID(332)
-    ItemIDBoat                = ItemID(333)
-    ItemIDLeather             = ItemID(334)
-    ItemIDMilkBucket          = ItemID(335)
-    ItemIDClayBrick           = ItemID(336)
-    ItemIDClayBalls           = ItemID(337)
-    ItemIDSugarCane           = ItemID(338)
-    ItemIDPaper               = ItemID(339)
-    ItemIDBook                = ItemID(340)
-    ItemIDSlimeBall           = ItemID(341)
-    ItemIDStorageMinecart     = ItemID(342)
-    ItemIDPoweredMinecart     = ItemID(343)
-    ItemIDEgg                 = ItemID(344)
-    ItemIDCompass             = ItemID(345)
-    ItemIDFishingRod          = ItemID(346)
-    ItemIDWatch               = ItemID(347)
-    ItemIDGlowstoneDust       = ItemID(348)
-    ItemIDRawFish             = ItemID(349)
-    ItemIDCookedFish          = ItemID(350)
-    ItemIDGoldRecord          = ItemID(2256)
+    ItemIdIronSpade           = ItemId(256)
+    ItemIdIronPickaxe         = ItemId(257)
+    ItemIdIronAxe             = ItemId(258)
+    ItemIdFlintAndSteel       = ItemId(259)
+    ItemIdApple               = ItemId(260)
+    ItemIdBow                 = ItemId(261)
+    ItemIdArrow               = ItemId(262)
+    ItemIdCoal                = ItemId(263)
+    ItemIdDiamond             = ItemId(264)
+    ItemIdIronIngot           = ItemId(265)
+    ItemIdGoldIngot           = ItemId(266)
+    ItemIdIronSword           = ItemId(267)
+    ItemIdWoodenSword         = ItemId(268)
+    ItemIdWoodenSpade         = ItemId(269)
+    ItemIdWoodenPickaxe       = ItemId(270)
+    ItemIdWoodenAxe           = ItemId(271)
+    ItemIdStoneSword          = ItemId(272)
+    ItemIdStoneSpade          = ItemId(273)
+    ItemIdStonePickaxe        = ItemId(274)
+    ItemIdStoneAxe            = ItemId(275)
+    ItemIdDiamondSword        = ItemId(276)
+    ItemIdDiamondSpade        = ItemId(277)
+    ItemIdDiamondPickaxe      = ItemId(278)
+    ItemIdDiamondAxe          = ItemId(279)
+    ItemIdStick               = ItemId(280)
+    ItemIdBowl                = ItemId(281)
+    ItemIdMushroomSoup        = ItemId(282)
+    ItemIdGoldSword           = ItemId(283)
+    ItemIdGoldSpade           = ItemId(284)
+    ItemIdGoldPickaxe         = ItemId(285)
+    ItemIdGoldAxe             = ItemId(286)
+    ItemIdString              = ItemId(287)
+    ItemIdFeather             = ItemId(288)
+    ItemIdGunpowder           = ItemId(289)
+    ItemIdWoodenHoe           = ItemId(290)
+    ItemIdStoneHoe            = ItemId(291)
+    ItemIdIronHoe             = ItemId(292)
+    ItemIdDiamondHoe          = ItemId(293)
+    ItemIdGoldHoe             = ItemId(294)
+    ItemIdSeeds               = ItemId(295)
+    ItemIdWheat               = ItemId(296)
+    ItemIdBread               = ItemId(297)
+    ItemIdLeatherHelmet       = ItemId(298)
+    ItemIdLeatherChestplate   = ItemId(299)
+    ItemIdLeatherLeggings     = ItemId(300)
+    ItemIdLeatherBoots        = ItemId(301)
+    ItemIdChainmailHelmet     = ItemId(302)
+    ItemIdChainmailChestplate = ItemId(303)
+    ItemIdChainmailLeggings   = ItemId(304)
+    ItemIdChainmailBoots      = ItemId(305)
+    ItemIdIronHelmet          = ItemId(306)
+    ItemIdIronChestplate      = ItemId(307)
+    ItemIdIronLeggings        = ItemId(308)
+    ItemIdIronBoots           = ItemId(309)
+    ItemIdDiamondHelmet       = ItemId(310)
+    ItemIdDiamondChestplate   = ItemId(311)
+    ItemIdDiamondLeggings     = ItemId(312)
+    ItemIdDiamondBoots        = ItemId(313)
+    ItemIdGoldHelmet          = ItemId(314)
+    ItemIdGoldChestplate      = ItemId(315)
+    ItemIdGoldLeggings        = ItemId(316)
+    ItemIdGoldBoots           = ItemId(317)
+    ItemIdFlint               = ItemId(318)
+    ItemIdPork                = ItemId(319)
+    ItemIdGrilledPork         = ItemId(320)
+    ItemIdPaintings           = ItemId(321)
+    ItemIdGoldenapple         = ItemId(322)
+    ItemIdSign                = ItemId(323)
+    ItemIdWoodendoor          = ItemId(324)
+    ItemIdBucket              = ItemId(325)
+    ItemIdWaterbucket         = ItemId(326)
+    ItemIdLavabucket          = ItemId(327)
+    ItemIdMinecart            = ItemId(328)
+    ItemIdSaddle              = ItemId(329)
+    ItemIdIronDoor            = ItemId(330)
+    ItemIdRedstone            = ItemId(331)
+    ItemIdSnowball            = ItemId(332)
+    ItemIdBoat                = ItemId(333)
+    ItemIdLeather             = ItemId(334)
+    ItemIdMilkBucket          = ItemId(335)
+    ItemIdClayBrick           = ItemId(336)
+    ItemIdClayBalls           = ItemId(337)
+    ItemIdSugarCane           = ItemId(338)
+    ItemIdPaper               = ItemId(339)
+    ItemIdBook                = ItemId(340)
+    ItemIdSlimeBall           = ItemId(341)
+    ItemIdStorageMinecart     = ItemId(342)
+    ItemIdPoweredMinecart     = ItemId(343)
+    ItemIdEgg                 = ItemId(344)
+    ItemIdCompass             = ItemId(345)
+    ItemIdFishingRod          = ItemId(346)
+    ItemIdWatch               = ItemId(347)
+    ItemIdGlowstoneDust       = ItemId(348)
+    ItemIdRawFish             = ItemId(349)
+    ItemIdCookedFish          = ItemId(350)
+    ItemIdGoldRecord          = ItemId(2256)
 )
 
 type Item struct {
     entity.Entity
-    itemType    ItemID
+    itemType    ItemId
     count       ItemCount
     physObj     physics.PointObject
     orientation OrientationBytes
 }
 
-func NewItem(itemType ItemID, count ItemCount, position *AbsXYZ, velocity *AbsVelocity) (item *Item) {
+func NewItem(itemType ItemId, count ItemCount, position *AbsXyz, velocity *AbsVelocity) (item *Item) {
     item = &Item{
         itemType: itemType,
         count:    count,
@@ -133,20 +133,20 @@ func (item *Item) GetEntity() *entity.Entity {
     return &item.Entity
 }
 
-func (item *Item) GetPosition() *AbsXYZ {
+func (item *Item) GetPosition() *AbsXyz {
     return &item.physObj.Position
 }
 
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
     // TODO pass uses value instead of 0
     err = proto.WriteItemSpawn(
-        writer, item.EntityID, item.itemType, item.count, 0,
+        writer, item.EntityId, item.itemType, item.count, 0,
         &item.physObj.LastSentPosition, &item.orientation)
     if err != nil {
         return
     }
 
-    err = proto.WriteEntityVelocity(writer, item.EntityID, &item.physObj.LastSentVelocity)
+    err = proto.WriteEntityVelocity(writer, item.EntityId, &item.physObj.LastSentVelocity)
     if err != nil {
         return
     }
@@ -155,11 +155,11 @@ func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
 }
 
 func (item *Item) SendUpdate(writer io.Writer) (err os.Error) {
-    if err = proto.WriteEntity(writer, item.Entity.EntityID); err != nil {
+    if err = proto.WriteEntity(writer, item.Entity.EntityId); err != nil {
         return
     }
 
-    err = item.physObj.SendUpdate(writer, item.Entity.EntityID, &LookBytes{0, 0})
+    err = item.physObj.SendUpdate(writer, item.Entity.EntityId, &LookBytes{0, 0})
 
     return
 }

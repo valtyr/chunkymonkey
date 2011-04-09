@@ -31,81 +31,81 @@ func TestLookDegrees_ToLookBytes(t *testing.T) {
     }
 }
 
-func TestAbsXYZ_UpdateChunkXZ(t *testing.T) {
+func TestAbsXyz_UpdateChunkXz(t *testing.T) {
     type Test struct {
-        input    AbsXYZ
-        expected ChunkXZ
+        input    AbsXyz
+        expected ChunkXz
     }
     var tests = []Test{
-        {AbsXYZ{0, 0, 0}, ChunkXZ{0, 0}},
-        {AbsXYZ{0, 0, 16}, ChunkXZ{0, 1}},
-        {AbsXYZ{16, 0, 0}, ChunkXZ{1, 0}},
-        {AbsXYZ{0, 0, -16}, ChunkXZ{0, -1}},
-        {AbsXYZ{-16, 0, 0}, ChunkXZ{-1, 0}},
-        {AbsXYZ{-1, 0, -1}, ChunkXZ{-1, -1}},
+        {AbsXyz{0, 0, 0}, ChunkXz{0, 0}},
+        {AbsXyz{0, 0, 16}, ChunkXz{0, 1}},
+        {AbsXyz{16, 0, 0}, ChunkXz{1, 0}},
+        {AbsXyz{0, 0, -16}, ChunkXz{0, -1}},
+        {AbsXyz{-16, 0, 0}, ChunkXz{-1, 0}},
+        {AbsXyz{-1, 0, -1}, ChunkXz{-1, -1}},
     }
 
     for _, test := range tests {
         input, expected := test.input, test.expected
-        var result ChunkXZ
-        input.UpdateChunkXZ(&result)
+        var result ChunkXz
+        input.UpdateChunkXz(&result)
         if expected.X != result.X || expected.Z != result.Z {
-            t.Errorf("AbsXYZ%+v.UpdateChunkXZ() expected ChunkXZ%+v got ChunkXZ%+v",
+            t.Errorf("AbsXyz%+v.UpdateChunkXz() expected ChunkXz%+v got ChunkXz%+v",
                 input, expected, result)
         }
     }
 }
 
-func TestAbsXYZ_ToBlockXYZ(t *testing.T) {
+func TestAbsXyz_ToBlockXyz(t *testing.T) {
     type Test struct {
-        pos AbsXYZ
-        exp BlockXYZ
+        pos AbsXyz
+        exp BlockXyz
     }
 
     var tests = []Test{
         // Simple positive tests
-        {AbsXYZ{0.0, 0.0, 0.0}, BlockXYZ{0, 0, 0}},
-        {AbsXYZ{0.1, 0.2, 0.3}, BlockXYZ{0, 0, 0}},
-        {AbsXYZ{1.0, 2.0, 3.0}, BlockXYZ{1, 2, 3}},
+        {AbsXyz{0.0, 0.0, 0.0}, BlockXyz{0, 0, 0}},
+        {AbsXyz{0.1, 0.2, 0.3}, BlockXyz{0, 0, 0}},
+        {AbsXyz{1.0, 2.0, 3.0}, BlockXyz{1, 2, 3}},
 
         // Negative tests
-        {AbsXYZ{-0.1, -0.2, -0.3}, BlockXYZ{-1, -1, -1}},
-        {AbsXYZ{-1.0, -2.0, -3.0}, BlockXYZ{-1, -2, -3}},
-        {AbsXYZ{-1.5, -2.5, -3.5}, BlockXYZ{-2, -3, -4}},
+        {AbsXyz{-0.1, -0.2, -0.3}, BlockXyz{-1, -1, -1}},
+        {AbsXyz{-1.0, -2.0, -3.0}, BlockXyz{-1, -2, -3}},
+        {AbsXyz{-1.5, -2.5, -3.5}, BlockXyz{-2, -3, -4}},
     }
 
     for _, r := range tests {
-        result := r.pos.ToBlockXYZ()
+        result := r.pos.ToBlockXyz()
         if r.exp.X != result.X || r.exp.Y != result.Y || r.exp.Z != result.Z {
-            t.Errorf("AbsXYZ%v.ToBlockXYZ() expected BlockXYZ%v got BlockXYZ%v",
+            t.Errorf("AbsXyz%v.ToBlockXyz() expected BlockXyz%v got BlockXyz%v",
                 r.pos, r.exp, result)
         }
     }
 }
 
-func TestAbsIntXYZ_ToChunkXZ(t *testing.T) {
+func TestAbsIntXyz_ToChunkXz(t *testing.T) {
     type Test struct {
-        input    AbsIntXYZ
-        expected ChunkXZ
+        input    AbsIntXyz
+        expected ChunkXz
     }
 
     var tests = []Test{
-        {AbsIntXYZ{0, 0, 0}, ChunkXZ{0, 0}},
-        {AbsIntXYZ{8 * 32, 0, 8 * 32}, ChunkXZ{0, 0}},
-        {AbsIntXYZ{15 * 32, 0, 15 * 32}, ChunkXZ{0, 0}},
-        {AbsIntXYZ{16 * 32, 0, 16 * 32}, ChunkXZ{1, 1}},
-        {AbsIntXYZ{31*32 + 31, 0, 31*32 + 31}, ChunkXZ{1, 1}},
-        {AbsIntXYZ{32 * 32, 0, 32 * 32}, ChunkXZ{2, 2}},
-        {AbsIntXYZ{0, 0, 32 * 32}, ChunkXZ{0, 2}},
-        {AbsIntXYZ{0, 0, -16 * 32}, ChunkXZ{0, -1}},
-        {AbsIntXYZ{0, 0, -1 * 32}, ChunkXZ{0, -1}},
-        {AbsIntXYZ{0, 0, -1}, ChunkXZ{0, -1}},
+        {AbsIntXyz{0, 0, 0}, ChunkXz{0, 0}},
+        {AbsIntXyz{8 * 32, 0, 8 * 32}, ChunkXz{0, 0}},
+        {AbsIntXyz{15 * 32, 0, 15 * 32}, ChunkXz{0, 0}},
+        {AbsIntXyz{16 * 32, 0, 16 * 32}, ChunkXz{1, 1}},
+        {AbsIntXyz{31*32 + 31, 0, 31*32 + 31}, ChunkXz{1, 1}},
+        {AbsIntXyz{32 * 32, 0, 32 * 32}, ChunkXz{2, 2}},
+        {AbsIntXyz{0, 0, 32 * 32}, ChunkXz{0, 2}},
+        {AbsIntXyz{0, 0, -16 * 32}, ChunkXz{0, -1}},
+        {AbsIntXyz{0, 0, -1 * 32}, ChunkXz{0, -1}},
+        {AbsIntXyz{0, 0, -1}, ChunkXz{0, -1}},
     }
 
     for _, r := range tests {
-        result := r.input.ToChunkXZ()
+        result := r.input.ToChunkXz()
         if r.expected.X != result.X || r.expected.Z != result.Z {
-            t.Errorf("AbsIntXYZ%v expected ChunkXZ%v got ChunkXZ%v",
+            t.Errorf("AbsIntXyz%v expected ChunkXz%v got ChunkXz%v",
                 r.input, r.expected, result)
         }
     }
@@ -141,77 +141,77 @@ func TestCoordDivMod(t *testing.T) {
     }
 }
 
-func TestChunkXZ_GetChunkCornerBlockXY(t *testing.T) {
+func TestChunkXz_GetChunkCornerBlockXY(t *testing.T) {
     type Test struct {
-        input    ChunkXZ
-        expected BlockXYZ
+        input    ChunkXz
+        expected BlockXyz
     }
 
     var tests = []Test{
-        {ChunkXZ{0, 0}, BlockXYZ{0, 0, 0}},
-        {ChunkXZ{0, 1}, BlockXYZ{0, 0, 16}},
-        {ChunkXZ{1, 0}, BlockXYZ{16, 0, 0}},
-        {ChunkXZ{0, -1}, BlockXYZ{0, 0, -16}},
-        {ChunkXZ{-1, 0}, BlockXYZ{-16, 0, 0}},
+        {ChunkXz{0, 0}, BlockXyz{0, 0, 0}},
+        {ChunkXz{0, 1}, BlockXyz{0, 0, 16}},
+        {ChunkXz{1, 0}, BlockXyz{16, 0, 0}},
+        {ChunkXz{0, -1}, BlockXyz{0, 0, -16}},
+        {ChunkXz{-1, 0}, BlockXyz{-16, 0, 0}},
     }
 
     for _, r := range tests {
         result := r.input.GetChunkCornerBlockXY()
         if r.expected.X != result.X || r.expected.Y != result.Y || r.expected.Z != result.Z {
-            t.Errorf("ChunkXZ%v expected BlockXYZ%v got BlockXYZ%v",
+            t.Errorf("ChunkXz%v expected BlockXyz%v got BlockXyz%v",
                 r.input, r.expected, result)
         }
     }
 }
 
-func TestChunkXZ_ChunkKey(t *testing.T) {
+func TestChunkXz_ChunkKey(t *testing.T) {
     type Test struct {
-        input    ChunkXZ
+        input    ChunkXz
         expected uint64
     }
 
     var tests = []Test{
-        {ChunkXZ{0, 0}, 0},
-        {ChunkXZ{0, 1}, 0x0000000000000001},
-        {ChunkXZ{1, 0}, 0x0000000100000000},
-        {ChunkXZ{0, -1}, 0x00000000ffffffff},
-        {ChunkXZ{-1, 0}, 0xffffffff00000000},
-        {ChunkXZ{0, 10}, 0x000000000000000a},
-        {ChunkXZ{10, 0}, 0x0000000a00000000},
-        {ChunkXZ{10, 11}, 0x0000000a0000000b},
+        {ChunkXz{0, 0}, 0},
+        {ChunkXz{0, 1}, 0x0000000000000001},
+        {ChunkXz{1, 0}, 0x0000000100000000},
+        {ChunkXz{0, -1}, 0x00000000ffffffff},
+        {ChunkXz{-1, 0}, 0xffffffff00000000},
+        {ChunkXz{0, 10}, 0x000000000000000a},
+        {ChunkXz{10, 0}, 0x0000000a00000000},
+        {ChunkXz{10, 11}, 0x0000000a0000000b},
     }
 
     for _, r := range tests {
         result := r.input.ChunkKey()
         if r.expected != result {
-            t.Errorf("ChunkXZ%+v.ChunkKey() expected %d got %d",
+            t.Errorf("ChunkXz%+v.ChunkKey() expected %d got %d",
                 r.input, r.expected, result)
         }
     }
 }
 
-func TestBlockXYZ_ToAbsIntXYZ(t *testing.T) {
+func TestBlockXyz_ToAbsIntXyz(t *testing.T) {
     type Test struct {
-        input    BlockXYZ
-        expected AbsIntXYZ
+        input    BlockXyz
+        expected AbsIntXyz
     }
 
     var tests = []Test{
-        {BlockXYZ{0, 0, 0}, AbsIntXYZ{0, 0, 0}},
-        {BlockXYZ{0, 0, 1}, AbsIntXYZ{0, 0, 32}},
-        {BlockXYZ{0, 0, -1}, AbsIntXYZ{0, 0, -32}},
-        {BlockXYZ{1, 0, 0}, AbsIntXYZ{32, 0, 0}},
-        {BlockXYZ{-1, 0, 0}, AbsIntXYZ{-32, 0, 0}},
-        {BlockXYZ{0, 1, 0}, AbsIntXYZ{0, 32, 0}},
-        {BlockXYZ{0, 10, 0}, AbsIntXYZ{0, 320, 0}},
-        {BlockXYZ{0, 63, 0}, AbsIntXYZ{0, 2016, 0}},
-        {BlockXYZ{0, 64, 0}, AbsIntXYZ{0, 2048, 0}},
+        {BlockXyz{0, 0, 0}, AbsIntXyz{0, 0, 0}},
+        {BlockXyz{0, 0, 1}, AbsIntXyz{0, 0, 32}},
+        {BlockXyz{0, 0, -1}, AbsIntXyz{0, 0, -32}},
+        {BlockXyz{1, 0, 0}, AbsIntXyz{32, 0, 0}},
+        {BlockXyz{-1, 0, 0}, AbsIntXyz{-32, 0, 0}},
+        {BlockXyz{0, 1, 0}, AbsIntXyz{0, 32, 0}},
+        {BlockXyz{0, 10, 0}, AbsIntXyz{0, 320, 0}},
+        {BlockXyz{0, 63, 0}, AbsIntXyz{0, 2016, 0}},
+        {BlockXyz{0, 64, 0}, AbsIntXyz{0, 2048, 0}},
     }
 
     for _, r := range tests {
-        result := r.input.ToAbsIntXYZ()
+        result := r.input.ToAbsIntXyz()
         if r.expected.X != result.X || r.expected.Y != result.Y || r.expected.Z != result.Z {
-            t.Errorf("BlockXYZ%v expected AbsIntXYZ%v got AbsIntXYZ%v",
+            t.Errorf("BlockXyz%v expected AbsIntXyz%v got AbsIntXyz%v",
                 r.input, r.expected, result)
         }
     }

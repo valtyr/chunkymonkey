@@ -8,26 +8,26 @@ import (
 
 func TestRegionLoc_regionFilePath(t *testing.T) {
     type Test struct {
-        loc      ChunkXZ
+        loc      ChunkXz
         expected string
     }
 
     tests := []Test{
-        {ChunkXZ{0, 0}, "/foo/region/r.0.0.mcr"},
-        {ChunkXZ{31, 0}, "/foo/region/r.0.0.mcr"},
-        {ChunkXZ{0, 31}, "/foo/region/r.0.0.mcr"},
-        {ChunkXZ{32, 0}, "/foo/region/r.1.0.mcr"},
-        {ChunkXZ{0, 32}, "/foo/region/r.0.1.mcr"},
-        {ChunkXZ{-1, 0}, "/foo/region/r.-1.0.mcr"},
-        {ChunkXZ{0, -1}, "/foo/region/r.0.-1.mcr"},
-        {ChunkXZ{-32, 0}, "/foo/region/r.-1.0.mcr"},
-        {ChunkXZ{0, -32}, "/foo/region/r.0.-1.mcr"},
-        {ChunkXZ{-33, 0}, "/foo/region/r.-2.0.mcr"},
-        {ChunkXZ{0, -33}, "/foo/region/r.0.-2.mcr"},
+        {ChunkXz{0, 0}, "/foo/region/r.0.0.mcr"},
+        {ChunkXz{31, 0}, "/foo/region/r.0.0.mcr"},
+        {ChunkXz{0, 31}, "/foo/region/r.0.0.mcr"},
+        {ChunkXz{32, 0}, "/foo/region/r.1.0.mcr"},
+        {ChunkXz{0, 32}, "/foo/region/r.0.1.mcr"},
+        {ChunkXz{-1, 0}, "/foo/region/r.-1.0.mcr"},
+        {ChunkXz{0, -1}, "/foo/region/r.0.-1.mcr"},
+        {ChunkXz{-32, 0}, "/foo/region/r.-1.0.mcr"},
+        {ChunkXz{0, -32}, "/foo/region/r.0.-1.mcr"},
+        {ChunkXz{-33, 0}, "/foo/region/r.-2.0.mcr"},
+        {ChunkXz{0, -33}, "/foo/region/r.0.-2.mcr"},
     }
 
     for _, test := range tests {
-        regionLoc := regionLocForChunkXZ(&test.loc)
+        regionLoc := regionLocForChunkXz(&test.loc)
         result := regionLoc.regionFilePath("/foo")
         if test.expected != result {
             t.Errorf(

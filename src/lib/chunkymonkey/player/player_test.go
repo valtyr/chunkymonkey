@@ -8,7 +8,7 @@ import (
 
 // Tests that the chunk locations are all within expected bounds, and that all
 // chunks within min and max bounds are appear exactly once.
-func checkChunksPresent(t *testing.T, locs []ChunkXZ, minX, maxX, minZ, maxZ ChunkCoord) {
+func checkChunksPresent(t *testing.T, locs []ChunkXz, minX, maxX, minZ, maxZ ChunkCoord) {
     for _, loc := range locs {
         if loc.X < minX || loc.X > maxX || loc.Z < minZ || loc.Z > maxZ {
             t.Errorf("Found out-of range location %+v", loc)
@@ -33,8 +33,8 @@ func checkChunksPresent(t *testing.T, locs []ChunkXZ, minX, maxX, minZ, maxZ Chu
 
 // Tests that the chunk locations are in increasing order of max(dx,dz)
 // distance from the given center.
-func checkChunkOrder(t *testing.T, locs []ChunkXZ, center *ChunkXZ) {
-    var previous *ChunkXZ
+func checkChunkOrder(t *testing.T, locs []ChunkXz, center *ChunkXz) {
+    var previous *ChunkXz
     var curDistance ChunkCoord
     prevDistance := ChunkCoord(-1)
 
@@ -56,9 +56,9 @@ func checkChunkOrder(t *testing.T, locs []ChunkXZ, center *ChunkXZ) {
 }
 
 func TestChunkOrder(t *testing.T) {
-    var locs []ChunkXZ
+    var locs []ChunkXz
 
-    testChunkOrder := func(radius ChunkCoord, center *ChunkXZ) {
+    testChunkOrder := func(radius ChunkCoord, center *ChunkXz) {
         locs = chunkOrder(radius, center)
         t.Logf("Testing chunkOrder(%d, %+v)", radius, center)
         checkChunksPresent(
@@ -68,8 +68,8 @@ func TestChunkOrder(t *testing.T) {
     }
 
     // At the origin
-    testChunkOrder(2, &ChunkXZ{0, 0})
+    testChunkOrder(2, &ChunkXz{0, 0})
 
     // Away from the origin
-    testChunkOrder(5, &ChunkXZ{3, 1})
+    testChunkOrder(5, &ChunkXz{3, 1})
 }

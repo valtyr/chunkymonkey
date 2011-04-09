@@ -15,7 +15,7 @@ import (
 type chunkSubscriptions struct {
     player        *Player
     chunks        map[uint64]IChunk // Map from ChunkKeys to chunks
-    curChunk      ChunkXZ           // Current chunk that the player is on.
+    curChunk      ChunkXz           // Current chunk that the player is on.
     curChunkValid bool              // States if curChunkValid is valid.
 }
 
@@ -31,7 +31,7 @@ func (cs *chunkSubscriptions) init(player *Player) {
 // Subscribes to all chunks in MinChunkRadius, then calls nearbySent(), then
 // subscribes to the remaining chunks out to ChunkRadius. Note that the bulk of
 // this work happens in a seperate goroutine (including the call to nearbySent).
-func (cs *chunkSubscriptions) move(newPos *AbsXYZ, nearbySent func()) {
+func (cs *chunkSubscriptions) move(newPos *AbsXyz, nearbySent func()) {
     chunkLocLoadOrder, chunksToRemove := cs.moveChunkLocs(newPos)
 
     if len(chunkLocLoadOrder) == 0 && len(chunksToRemove) == 0 {
@@ -126,11 +126,11 @@ func (cs *chunkSubscriptions) clear() {
 
 // Work out which chunks to send following a move, and in which order. Also
 // returns the chunks that should be removed.
-func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXYZ) (chunkLocLoadOrder []ChunkXZ, chunksToRemove []IChunk) {
+func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXyz) (chunkLocLoadOrder []ChunkXz, chunksToRemove []IChunk) {
     if cs.curChunkValid {
         // Player moving within the world. We remove old chunks and add new ones.
-        var newChunkLoc ChunkXZ
-        newPos.UpdateChunkXZ(&newChunkLoc)
+        var newChunkLoc ChunkXz
+        newPos.UpdateChunkXz(&newChunkLoc)
 
         if newChunkLoc.X == cs.curChunk.X && newChunkLoc.Z == cs.curChunk.Z {
             // Still on the same chunk - nothing to be done.
@@ -141,7 +141,7 @@ func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXYZ) (chunkLocLoadOrder [
         // order, but should be correct in all general cases.
         // TODO work out a more optimal method
         allChunkLocs := chunkOrder(ChunkRadius, &newChunkLoc)
-        chunkLocLoadOrder = make([]ChunkXZ, 0, len(allChunkLocs))
+        chunkLocLoadOrder = make([]ChunkXz, 0, len(allChunkLocs))
         for _, chunkLoc := range allChunkLocs {
             dx := (chunkLoc.X - newChunkLoc.X).Abs()
             dz := (chunkLoc.Z - newChunkLoc.Z).Abs()
@@ -165,16 +165,16 @@ func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXYZ) (chunkLocLoadOrder [
         cs.curChunk = newChunkLoc
     } else {
         // Player arriving in the world. We send all nearby chunks.
-        newPos.UpdateChunkXZ(&cs.curChunk)
+        newPos.UpdateChunkXz(&cs.curChunk)
         cs.curChunkValid = true
         chunkLocLoadOrder = chunkOrder(ChunkRadius, &cs.curChunk)
     }
     return
 }
 
-func chunkOrder(radius ChunkCoord, center *ChunkXZ) (locs []ChunkXZ) {
+func chunkOrder(radius ChunkCoord, center *ChunkXz) (locs []ChunkXz) {
     areaEdgeSize := radius*2 + 1
-    locs = make([]ChunkXZ, areaEdgeSize*areaEdgeSize)
+    locs = make([]ChunkXz, areaEdgeSize*areaEdgeSize)
     locs[0] = *center
     index := 1
     for curRadius := ChunkCoord(1); curRadius <= radius; curRadius++ {
@@ -185,18 +185,18 @@ func chunkOrder(radius ChunkCoord, center *ChunkXZ) (locs []ChunkXZ) {
 
         // Northern and southern rows of chunks.
         for x := xMin; x <= xMax; x++ {
-            locs[index] = ChunkXZ{x, zMin}
+            locs[index] = ChunkXz{x, zMin}
             index++
-            locs[index] = ChunkXZ{x, zMax}
+            locs[index] = ChunkXz{x, zMax}
             index++
         }
 
         // Eastern and western columns (except for where they intersect the
         // north and south rows).
         for z := zMin + 1; z < zMax; z++ {
-            locs[index] = ChunkXZ{xMin, z}
+            locs[index] = ChunkXz{xMin, z}
             index++
-            locs[index] = ChunkXZ{xMax, z}
+            locs[index] = ChunkXz{xMax, z}
             index++
         }
     }

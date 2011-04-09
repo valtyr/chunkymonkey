@@ -8,87 +8,87 @@ import (
 
 const (
     // TODO add in new blocks from Beta 1.2
-    BlockIDAir                 = BlockID(0)
-    BlockIDStone               = BlockID(1)
-    BlockIDGrass               = BlockID(2)
-    BlockIDDirt                = BlockID(3)
-    BlockIDCobblestone         = BlockID(4)
-    BlockIDPlank               = BlockID(5)
-    BlockIDSapling             = BlockID(6)
-    BlockIDBedrock             = BlockID(7)
-    BlockIDWater               = BlockID(8)
-    BlockIDStationaryWater     = BlockID(9)
-    BlockIDLava                = BlockID(10)
-    BlockIDStationaryLava      = BlockID(11)
-    BlockIDSand                = BlockID(12)
-    BlockIDGravel              = BlockID(13)
-    BlockIDGoldOre             = BlockID(14)
-    BlockIDIronOre             = BlockID(15)
-    BlockIDCoalOre             = BlockID(16)
-    BlockIDLog                 = BlockID(17)
-    BlockIDLeaves              = BlockID(18)
-    BlockIDSponge              = BlockID(19)
-    BlockIDGlass               = BlockID(20)
-    BlockIDWool                = BlockID(35)
-    BlockIDYellowFlower        = BlockID(37)
-    BlockIDRedRose             = BlockID(38)
-    BlockIDBrownMushroom       = BlockID(39)
-    BlockIDRedMushroom         = BlockID(40)
-    BlockIDGoldBlock           = BlockID(41)
-    BlockIDIronBlock           = BlockID(42)
-    BlockIDDoubleStoneSlab     = BlockID(43)
-    BlockIDStoneSlab           = BlockID(44)
-    BlockIDBrick               = BlockID(45)
-    BlockIDTNT                 = BlockID(46)
-    BlockIDBookshelf           = BlockID(47)
-    BlockIDMossStone           = BlockID(48)
-    BlockIDObsidian            = BlockID(49)
-    BlockIDTorch               = BlockID(50)
-    BlockIDFire                = BlockID(51)
-    BlockIDMobSpawner          = BlockID(52)
-    BlockIDWoodenStairs        = BlockID(53)
-    BlockIDChest               = BlockID(54)
-    BlockIDRedstoneWire        = BlockID(55)
-    BlockIDDiamondOre          = BlockID(56)
-    BlockIDDiamondBlock        = BlockID(57)
-    BlockIDWorkbench           = BlockID(58)
-    BlockIDCrops               = BlockID(59)
-    BlockIDFarmland            = BlockID(60)
-    BlockIDFurnace             = BlockID(61)
-    BlockIDBurningFurnace      = BlockID(62)
-    BlockIDSignPost            = BlockID(63)
-    BlockIDWoodenDoor          = BlockID(64)
-    BlockIDLadder              = BlockID(65)
-    BlockIDMinecartTracks      = BlockID(66)
-    BlockIDCobblestoneStairs   = BlockID(67)
-    BlockIDWallSign            = BlockID(68)
-    BlockIDLever               = BlockID(69)
-    BlockIDStonePressurePlate  = BlockID(70)
-    BlockIDIronDoor            = BlockID(71)
-    BlockIDWoodenPressurePlate = BlockID(72)
-    BlockIDRedstoneOre         = BlockID(73)
-    BlockIDGlowingRedstoneOre  = BlockID(74)
-    BlockIDRedstoneTorchOff    = BlockID(75)
-    BlockIDRedstoneTorchOn     = BlockID(76)
-    BlockIDStoneButton         = BlockID(77)
-    BlockIDSnow                = BlockID(78)
-    BlockIDIce                 = BlockID(79)
-    BlockIDSnowBlock           = BlockID(80)
-    BlockIDCactus              = BlockID(81)
-    BlockIDClay                = BlockID(82)
-    BlockIDSugarCane           = BlockID(83)
-    BlockIDJukebox             = BlockID(84)
-    BlockIDFence               = BlockID(85)
-    BlockIDPumpkin             = BlockID(86)
-    BlockIDNetherrack          = BlockID(87)
-    BlockIDSoulSand            = BlockID(88)
-    BlockIDGlowstone           = BlockID(89)
-    BlockIDPortal              = BlockID(90)
-    BlockIDJackOLantern        = BlockID(91)
+    BlockIdAir                 = BlockId(0)
+    BlockIdStone               = BlockId(1)
+    BlockIdGrass               = BlockId(2)
+    BlockIdDirt                = BlockId(3)
+    BlockIdCobblestone         = BlockId(4)
+    BlockIdPlank               = BlockId(5)
+    BlockIdSapling             = BlockId(6)
+    BlockIdBedrock             = BlockId(7)
+    BlockIdWater               = BlockId(8)
+    BlockIdStationaryWater     = BlockId(9)
+    BlockIdLava                = BlockId(10)
+    BlockIdStationaryLava      = BlockId(11)
+    BlockIdSand                = BlockId(12)
+    BlockIdGravel              = BlockId(13)
+    BlockIdGoldOre             = BlockId(14)
+    BlockIdIronOre             = BlockId(15)
+    BlockIdCoalOre             = BlockId(16)
+    BlockIdLog                 = BlockId(17)
+    BlockIdLeaves              = BlockId(18)
+    BlockIdSponge              = BlockId(19)
+    BlockIdGlass               = BlockId(20)
+    BlockIdWool                = BlockId(35)
+    BlockIdYellowFlower        = BlockId(37)
+    BlockIdRedRose             = BlockId(38)
+    BlockIdBrownMushroom       = BlockId(39)
+    BlockIdRedMushroom         = BlockId(40)
+    BlockIdGoldBlock           = BlockId(41)
+    BlockIdIronBlock           = BlockId(42)
+    BlockIdDoubleStoneSlab     = BlockId(43)
+    BlockIdStoneSlab           = BlockId(44)
+    BlockIdBrick               = BlockId(45)
+    BlockIdTnt                 = BlockId(46)
+    BlockIdBookshelf           = BlockId(47)
+    BlockIdMossStone           = BlockId(48)
+    BlockIdObsidian            = BlockId(49)
+    BlockIdTorch               = BlockId(50)
+    BlockIdFire                = BlockId(51)
+    BlockIdMobSpawner          = BlockId(52)
+    BlockIdWoodenStairs        = BlockId(53)
+    BlockIdChest               = BlockId(54)
+    BlockIdRedstoneWire        = BlockId(55)
+    BlockIdDiamondOre          = BlockId(56)
+    BlockIdDiamondBlock        = BlockId(57)
+    BlockIdWorkbench           = BlockId(58)
+    BlockIdCrops               = BlockId(59)
+    BlockIdFarmland            = BlockId(60)
+    BlockIdFurnace             = BlockId(61)
+    BlockIdBurningFurnace      = BlockId(62)
+    BlockIdSignPost            = BlockId(63)
+    BlockIdWoodenDoor          = BlockId(64)
+    BlockIdLadder              = BlockId(65)
+    BlockIdMinecartTracks      = BlockId(66)
+    BlockIdCobblestoneStairs   = BlockId(67)
+    BlockIdWallSign            = BlockId(68)
+    BlockIdLever               = BlockId(69)
+    BlockIdStonePressurePlate  = BlockId(70)
+    BlockIdIronDoor            = BlockId(71)
+    BlockIdWoodenPressurePlate = BlockId(72)
+    BlockIdRedstoneOre         = BlockId(73)
+    BlockIdGlowingRedstoneOre  = BlockId(74)
+    BlockIdRedstoneTorchOff    = BlockId(75)
+    BlockIdRedstoneTorchOn     = BlockId(76)
+    BlockIdStoneButton         = BlockId(77)
+    BlockIdSnow                = BlockId(78)
+    BlockIdIce                 = BlockId(79)
+    BlockIdSnowBlock           = BlockId(80)
+    BlockIdCactus              = BlockId(81)
+    BlockIdClay                = BlockId(82)
+    BlockIdSugarCane           = BlockId(83)
+    BlockIdJukebox             = BlockId(84)
+    BlockIdFence               = BlockId(85)
+    BlockIdPumpkin             = BlockId(86)
+    BlockIdNetherrack          = BlockId(87)
+    BlockIdSoulSand            = BlockId(88)
+    BlockIdGlowstone           = BlockId(89)
+    BlockIdPortal              = BlockId(90)
+    BlockIdJackOLantern        = BlockId(91)
 )
 
 type BlockDropItem struct {
-    droppedItem ItemID
+    droppedItem ItemId
     probability byte // Probabilities specified as a percentage
     quantity    ItemCount
 }
@@ -108,7 +108,7 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
 // Returns true if the block should be destroyed
 // This must be called within the Chunk's goroutine.
-func (blockType *BlockType) Destroy(chunk IChunk, blockLoc *BlockXYZ) bool {
+func (blockType *BlockType) Destroy(chunk IChunk, blockLoc *BlockXyz) bool {
     if len(blockType.droppedItems) > 0 {
         rand := chunk.GetRand()
         // Possibly drop item(s)
@@ -116,7 +116,7 @@ func (blockType *BlockType) Destroy(chunk IChunk, blockLoc *BlockXYZ) bool {
         for _, dropItem := range blockType.droppedItems {
             if dropItem.probability > r {
                 for i := dropItem.quantity; i > 0; i-- {
-                    position := blockLoc.ToAbsXYZ()
+                    position := blockLoc.ToAbsXyz()
                     position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     position.Y += AbsCoord(blockItemSpawnFromEdge)
                     position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
@@ -147,10 +147,10 @@ func (blockType *BlockType) GetTransparency() int8 {
     return blockType.transparency
 }
 
-func LoadStandardBlockTypes() map[BlockID]IBlockType {
-    b := make(map[BlockID]*BlockType)
+func LoadStandardBlockTypes() map[BlockId]IBlockType {
+    b := make(map[BlockId]*BlockType)
 
-    newBlock := func(id BlockID, name string) {
+    newBlock := func(id BlockId, name string) {
         b[id] = &BlockType{
             name:         name,
             transparency: -1,
@@ -159,125 +159,125 @@ func LoadStandardBlockTypes() map[BlockID]IBlockType {
         }
     }
 
-    newBlock(BlockIDAir, "air")
-    newBlock(BlockIDStone, "stone")
-    newBlock(BlockIDGrass, "grass")
-    newBlock(BlockIDDirt, "dirt")
-    newBlock(BlockIDCobblestone, "cobblestone")
-    newBlock(BlockIDPlank, "wood")
-    newBlock(BlockIDSapling, "sapling")
-    newBlock(BlockIDBedrock, "bedrock")
-    newBlock(BlockIDWater, "water")
-    newBlock(BlockIDStationaryWater, "stationary water")
-    newBlock(BlockIDLava, "lava")
-    newBlock(BlockIDStationaryLava, "stationary lava")
-    newBlock(BlockIDSand, "sand")
-    newBlock(BlockIDGravel, "gravel")
-    newBlock(BlockIDGoldOre, "gold ore")
-    newBlock(BlockIDIronOre, "iron ore")
-    newBlock(BlockIDCoalOre, "coal ore")
-    newBlock(BlockIDLog, "log")
-    newBlock(BlockIDLeaves, "leaves")
-    newBlock(BlockIDSponge, "sponge")
-    newBlock(BlockIDGlass, "glass")
-    newBlock(BlockIDWool, "wool")
-    newBlock(BlockIDYellowFlower, "yellow flower")
-    newBlock(BlockIDRedRose, "red rose")
-    newBlock(BlockIDBrownMushroom, "brown mushroom")
-    newBlock(BlockIDRedMushroom, "red mushroom")
-    newBlock(BlockIDGoldBlock, "gold block")
-    newBlock(BlockIDIronBlock, "iron block")
-    newBlock(BlockIDDoubleStoneSlab, "double stone slab")
-    newBlock(BlockIDStoneSlab, "stone slab")
-    newBlock(BlockIDBrick, "brick")
-    newBlock(BlockIDTNT, "TNT")
-    newBlock(BlockIDBookshelf, "bookshelf")
-    newBlock(BlockIDMossStone, "moss stone")
-    newBlock(BlockIDObsidian, "obsidian")
-    newBlock(BlockIDTorch, "torch")
-    newBlock(BlockIDFire, "fire")
-    newBlock(BlockIDMobSpawner, "mob spawner")
-    newBlock(BlockIDWoodenStairs, "wooden stairs")
-    newBlock(BlockIDChest, "chest")
-    newBlock(BlockIDRedstoneWire, "redstone wire")
-    newBlock(BlockIDDiamondOre, "diamond ore")
-    newBlock(BlockIDDiamondBlock, "diamond block")
-    newBlock(BlockIDWorkbench, "workbench")
-    newBlock(BlockIDCrops, "crops")
-    newBlock(BlockIDFarmland, "soil")
-    newBlock(BlockIDFurnace, "furnace")
-    newBlock(BlockIDBurningFurnace, "burning furnace")
-    newBlock(BlockIDSignPost, "sign post")
-    newBlock(BlockIDWoodenDoor, "wooden door")
-    newBlock(BlockIDLadder, "ladder")
-    newBlock(BlockIDMinecartTracks, "minecart tracks")
-    newBlock(BlockIDCobblestoneStairs, "cobblestone stairs")
-    newBlock(BlockIDWallSign, "wall sign")
-    newBlock(BlockIDLever, "lever")
-    newBlock(BlockIDStonePressurePlate, "stone pressure plate")
-    newBlock(BlockIDIronDoor, "irondoor")
-    newBlock(BlockIDWoodenPressurePlate, "wooden pressure plate")
-    newBlock(BlockIDRedstoneOre, "redstone ore")
-    newBlock(BlockIDGlowingRedstoneOre, "glowing redstone ore")
-    newBlock(BlockIDRedstoneTorchOff, "redstone torch off")
-    newBlock(BlockIDRedstoneTorchOn, "redstone torch on")
-    newBlock(BlockIDStoneButton, "stone button")
-    newBlock(BlockIDSnow, "snow")
-    newBlock(BlockIDIce, "ice")
-    newBlock(BlockIDSnowBlock, "snow block")
-    newBlock(BlockIDCactus, "cactus")
-    newBlock(BlockIDClay, "clay")
-    newBlock(BlockIDSugarCane, "sugar cane")
-    newBlock(BlockIDJukebox, "jukebox")
-    newBlock(BlockIDFence, "fence")
-    newBlock(BlockIDPumpkin, "pumpkin")
-    newBlock(BlockIDNetherrack, "netherrack")
-    newBlock(BlockIDSoulSand, "soul sand")
-    newBlock(BlockIDGlowstone, "glowstone")
-    newBlock(BlockIDPortal, "portal")
-    newBlock(BlockIDJackOLantern, "jack o lantern")
+    newBlock(BlockIdAir, "air")
+    newBlock(BlockIdStone, "stone")
+    newBlock(BlockIdGrass, "grass")
+    newBlock(BlockIdDirt, "dirt")
+    newBlock(BlockIdCobblestone, "cobblestone")
+    newBlock(BlockIdPlank, "wood")
+    newBlock(BlockIdSapling, "sapling")
+    newBlock(BlockIdBedrock, "bedrock")
+    newBlock(BlockIdWater, "water")
+    newBlock(BlockIdStationaryWater, "stationary water")
+    newBlock(BlockIdLava, "lava")
+    newBlock(BlockIdStationaryLava, "stationary lava")
+    newBlock(BlockIdSand, "sand")
+    newBlock(BlockIdGravel, "gravel")
+    newBlock(BlockIdGoldOre, "gold ore")
+    newBlock(BlockIdIronOre, "iron ore")
+    newBlock(BlockIdCoalOre, "coal ore")
+    newBlock(BlockIdLog, "log")
+    newBlock(BlockIdLeaves, "leaves")
+    newBlock(BlockIdSponge, "sponge")
+    newBlock(BlockIdGlass, "glass")
+    newBlock(BlockIdWool, "wool")
+    newBlock(BlockIdYellowFlower, "yellow flower")
+    newBlock(BlockIdRedRose, "red rose")
+    newBlock(BlockIdBrownMushroom, "brown mushroom")
+    newBlock(BlockIdRedMushroom, "red mushroom")
+    newBlock(BlockIdGoldBlock, "gold block")
+    newBlock(BlockIdIronBlock, "iron block")
+    newBlock(BlockIdDoubleStoneSlab, "double stone slab")
+    newBlock(BlockIdStoneSlab, "stone slab")
+    newBlock(BlockIdBrick, "brick")
+    newBlock(BlockIdTnt, "Tnt")
+    newBlock(BlockIdBookshelf, "bookshelf")
+    newBlock(BlockIdMossStone, "moss stone")
+    newBlock(BlockIdObsidian, "obsidian")
+    newBlock(BlockIdTorch, "torch")
+    newBlock(BlockIdFire, "fire")
+    newBlock(BlockIdMobSpawner, "mob spawner")
+    newBlock(BlockIdWoodenStairs, "wooden stairs")
+    newBlock(BlockIdChest, "chest")
+    newBlock(BlockIdRedstoneWire, "redstone wire")
+    newBlock(BlockIdDiamondOre, "diamond ore")
+    newBlock(BlockIdDiamondBlock, "diamond block")
+    newBlock(BlockIdWorkbench, "workbench")
+    newBlock(BlockIdCrops, "crops")
+    newBlock(BlockIdFarmland, "soil")
+    newBlock(BlockIdFurnace, "furnace")
+    newBlock(BlockIdBurningFurnace, "burning furnace")
+    newBlock(BlockIdSignPost, "sign post")
+    newBlock(BlockIdWoodenDoor, "wooden door")
+    newBlock(BlockIdLadder, "ladder")
+    newBlock(BlockIdMinecartTracks, "minecart tracks")
+    newBlock(BlockIdCobblestoneStairs, "cobblestone stairs")
+    newBlock(BlockIdWallSign, "wall sign")
+    newBlock(BlockIdLever, "lever")
+    newBlock(BlockIdStonePressurePlate, "stone pressure plate")
+    newBlock(BlockIdIronDoor, "irondoor")
+    newBlock(BlockIdWoodenPressurePlate, "wooden pressure plate")
+    newBlock(BlockIdRedstoneOre, "redstone ore")
+    newBlock(BlockIdGlowingRedstoneOre, "glowing redstone ore")
+    newBlock(BlockIdRedstoneTorchOff, "redstone torch off")
+    newBlock(BlockIdRedstoneTorchOn, "redstone torch on")
+    newBlock(BlockIdStoneButton, "stone button")
+    newBlock(BlockIdSnow, "snow")
+    newBlock(BlockIdIce, "ice")
+    newBlock(BlockIdSnowBlock, "snow block")
+    newBlock(BlockIdCactus, "cactus")
+    newBlock(BlockIdClay, "clay")
+    newBlock(BlockIdSugarCane, "sugar cane")
+    newBlock(BlockIdJukebox, "jukebox")
+    newBlock(BlockIdFence, "fence")
+    newBlock(BlockIdPumpkin, "pumpkin")
+    newBlock(BlockIdNetherrack, "netherrack")
+    newBlock(BlockIdSoulSand, "soul sand")
+    newBlock(BlockIdGlowstone, "glowstone")
+    newBlock(BlockIdPortal, "portal")
+    newBlock(BlockIdJackOLantern, "jack o lantern")
 
-    setTrans := func(transparency int8, blockTypes []BlockID) {
+    setTrans := func(transparency int8, blockTypes []BlockId) {
         for _, blockType := range blockTypes {
             b[blockType].transparency = transparency
         }
     }
     // Setup transparent blocks
-    setTrans(0, []BlockID{BlockIDAir, BlockIDSapling, BlockIDGlass,
-        BlockIDYellowFlower, BlockIDRedRose, BlockIDBrownMushroom,
-        BlockIDRedMushroom, BlockIDFire, BlockIDMobSpawner, BlockIDWoodenStairs,
-        BlockIDRedstoneWire, BlockIDCrops, BlockIDSignPost, BlockIDLadder,
-        BlockIDMinecartTracks, BlockIDCobblestoneStairs, BlockIDWallSign,
-        BlockIDLever, BlockIDIronDoor, BlockIDRedstoneTorchOff,
-        BlockIDRedstoneTorchOn, BlockIDStoneButton, BlockIDSnow, BlockIDCactus,
-        BlockIDSugarCane, BlockIDFence, BlockIDPortal})
+    setTrans(0, []BlockId{BlockIdAir, BlockIdSapling, BlockIdGlass,
+        BlockIdYellowFlower, BlockIdRedRose, BlockIdBrownMushroom,
+        BlockIdRedMushroom, BlockIdFire, BlockIdMobSpawner, BlockIdWoodenStairs,
+        BlockIdRedstoneWire, BlockIdCrops, BlockIdSignPost, BlockIdLadder,
+        BlockIdMinecartTracks, BlockIdCobblestoneStairs, BlockIdWallSign,
+        BlockIdLever, BlockIdIronDoor, BlockIdRedstoneTorchOff,
+        BlockIdRedstoneTorchOn, BlockIdStoneButton, BlockIdSnow, BlockIdCactus,
+        BlockIdSugarCane, BlockIdFence, BlockIdPortal})
 
     // Setup semi-transparent blocks
-    setTrans(1, []BlockID{BlockIDLeaves})
-    setTrans(3, []BlockID{BlockIDWater, BlockIDStationaryWater, BlockIDIce})
+    setTrans(1, []BlockId{BlockIdLeaves})
+    setTrans(3, []BlockId{BlockIdWater, BlockIdStationaryWater, BlockIdIce})
 
     // Setup non-solid blocks
-    nonSolid := []BlockID{
-        BlockIDAir, BlockIDSapling, BlockIDWater, BlockIDStationaryWater,
-        BlockIDLava, BlockIDStationaryLava, BlockIDYellowFlower,
-        BlockIDRedRose, BlockIDBrownMushroom, BlockIDRedMushroom, BlockIDTorch,
-        BlockIDFire, BlockIDRedstoneWire, BlockIDCrops, BlockIDSignPost,
-        BlockIDLadder, BlockIDMinecartTracks, BlockIDWallSign, BlockIDLever,
-        BlockIDStonePressurePlate, BlockIDIronDoor, BlockIDWoodenPressurePlate,
-        BlockIDRedstoneTorchOff, BlockIDRedstoneTorchOn, BlockIDStoneButton,
-        BlockIDSugarCane, BlockIDPortal,
+    nonSolid := []BlockId{
+        BlockIdAir, BlockIdSapling, BlockIdWater, BlockIdStationaryWater,
+        BlockIdLava, BlockIdStationaryLava, BlockIdYellowFlower,
+        BlockIdRedRose, BlockIdBrownMushroom, BlockIdRedMushroom, BlockIdTorch,
+        BlockIdFire, BlockIdRedstoneWire, BlockIdCrops, BlockIdSignPost,
+        BlockIdLadder, BlockIdMinecartTracks, BlockIdWallSign, BlockIdLever,
+        BlockIdStonePressurePlate, BlockIdIronDoor, BlockIdWoodenPressurePlate,
+        BlockIdRedstoneTorchOff, BlockIdRedstoneTorchOn, BlockIdStoneButton,
+        BlockIdSugarCane, BlockIdPortal,
     }
-    for _, blockID := range nonSolid {
-        b[blockID].isSolid = false
+    for _, blockId := range nonSolid {
+        b[blockId].isSolid = false
     }
 
     // Setup behaviour of blocks when destroyed
-    setMinedDropsSameItem := func(blockTypes []BlockID) {
+    setMinedDropsSameItem := func(blockTypes []BlockId) {
         for _, blockType := range blockTypes {
             b[blockType].droppedItems = append(
                 b[blockType].droppedItems,
                 BlockDropItem{
-                    ItemID(blockType),
+                    ItemId(blockType),
                     100,
                     1,
                 })
@@ -285,8 +285,8 @@ func LoadStandardBlockTypes() map[BlockID]IBlockType {
     }
 
     type Drop struct {
-        minedBlockType  BlockID
-        droppedItemType ItemID
+        minedBlockType  BlockId
+        droppedItemType ItemId
     }
     setMinedDropBlock := func(drops []Drop) {
         for _, drop := range drops {
@@ -300,7 +300,7 @@ func LoadStandardBlockTypes() map[BlockID]IBlockType {
         }
     }
 
-    b[BlockIDBedrock].destructable = false
+    b[BlockIdBedrock].destructable = false
 
     // TODO crops are more complicated, and need code to look at their metadata
     // to decide what to drop.
@@ -310,58 +310,58 @@ func LoadStandardBlockTypes() map[BlockID]IBlockType {
 
     // TODO what item ID drops for redstone torches (on vs off state)
 
-    // Blocks that drop the same ItemID as BlockID 100% of the time
-    setMinedDropsSameItem([]BlockID{
-        BlockIDDirt, BlockIDCobblestone, BlockIDPlank, BlockIDSapling,
-        BlockIDSand, BlockIDGoldOre, BlockIDIronOre, BlockIDLog, BlockIDSponge,
-        BlockIDWool, BlockIDYellowFlower, BlockIDRedRose, BlockIDBrownMushroom,
-        BlockIDRedMushroom, BlockIDGoldBlock, BlockIDIronBlock,
-        BlockIDStoneSlab, BlockIDBrick, BlockIDMossStone, BlockIDObsidian,
-        BlockIDTorch, BlockIDWoodenStairs, BlockIDChest, BlockIDDiamondBlock,
-        BlockIDWorkbench, BlockIDLadder, BlockIDMinecartTracks,
-        BlockIDCobblestoneStairs, BlockIDLever, BlockIDStonePressurePlate,
-        BlockIDWoodenPressurePlate, BlockIDStoneButton, BlockIDCactus,
-        BlockIDClay, BlockIDJukebox, BlockIDFence, BlockIDPumpkin,
-        BlockIDNetherrack, BlockIDSoulSand, BlockIDGlowstone,
-        BlockIDJackOLantern,
+    // Blocks that drop the same ItemId as BlockId 100% of the time
+    setMinedDropsSameItem([]BlockId{
+        BlockIdDirt, BlockIdCobblestone, BlockIdPlank, BlockIdSapling,
+        BlockIdSand, BlockIdGoldOre, BlockIdIronOre, BlockIdLog, BlockIdSponge,
+        BlockIdWool, BlockIdYellowFlower, BlockIdRedRose, BlockIdBrownMushroom,
+        BlockIdRedMushroom, BlockIdGoldBlock, BlockIdIronBlock,
+        BlockIdStoneSlab, BlockIdBrick, BlockIdMossStone, BlockIdObsidian,
+        BlockIdTorch, BlockIdWoodenStairs, BlockIdChest, BlockIdDiamondBlock,
+        BlockIdWorkbench, BlockIdLadder, BlockIdMinecartTracks,
+        BlockIdCobblestoneStairs, BlockIdLever, BlockIdStonePressurePlate,
+        BlockIdWoodenPressurePlate, BlockIdStoneButton, BlockIdCactus,
+        BlockIdClay, BlockIdJukebox, BlockIdFence, BlockIdPumpkin,
+        BlockIdNetherrack, BlockIdSoulSand, BlockIdGlowstone,
+        BlockIdJackOLantern,
     })
     // Blocks that drop a single different item 100% of the time
     setMinedDropBlock([]Drop{
-        Drop{BlockIDStone, ItemID(BlockIDCobblestone)},
-        Drop{BlockIDGrass, ItemID(BlockIDDirt)},
-        Drop{BlockIDCoalOre, cmitem.ItemIDCoal},
-        Drop{BlockIDDoubleStoneSlab, ItemID(BlockIDStoneSlab)},
-        Drop{BlockIDDiamondOre, cmitem.ItemIDDiamond},
-        Drop{BlockIDFarmland, ItemID(BlockIDDirt)},
-        Drop{BlockIDSignPost, cmitem.ItemIDSign},
-        Drop{BlockIDWoodenDoor, cmitem.ItemIDWoodendoor},
-        Drop{BlockIDWallSign, cmitem.ItemIDSign},
-        Drop{BlockIDIronDoor, cmitem.ItemIDIronDoor},
-        Drop{BlockIDSnow, ItemID(BlockIDDirt)},
-        Drop{BlockIDSugarCane, cmitem.ItemIDSugarCane},
-        Drop{BlockIDGlowstone, cmitem.ItemIDGlowstoneDust},
+        Drop{BlockIdStone, ItemId(BlockIdCobblestone)},
+        Drop{BlockIdGrass, ItemId(BlockIdDirt)},
+        Drop{BlockIdCoalOre, cmitem.ItemIdCoal},
+        Drop{BlockIdDoubleStoneSlab, ItemId(BlockIdStoneSlab)},
+        Drop{BlockIdDiamondOre, cmitem.ItemIdDiamond},
+        Drop{BlockIdFarmland, ItemId(BlockIdDirt)},
+        Drop{BlockIdSignPost, cmitem.ItemIdSign},
+        Drop{BlockIdWoodenDoor, cmitem.ItemIdWoodendoor},
+        Drop{BlockIdWallSign, cmitem.ItemIdSign},
+        Drop{BlockIdIronDoor, cmitem.ItemIdIronDoor},
+        Drop{BlockIdSnow, ItemId(BlockIdDirt)},
+        Drop{BlockIdSugarCane, cmitem.ItemIdSugarCane},
+        Drop{BlockIdGlowstone, cmitem.ItemIdGlowstoneDust},
     })
     // Blocks that drop things with varying probability (or one of several
     // items)
-    b[BlockIDGravel].droppedItems = []BlockDropItem{
-        BlockDropItem{cmitem.ItemIDFlint, 10, 1},
-        BlockDropItem{ItemID(BlockIDGravel), 90, 1},
+    b[BlockIdGravel].droppedItems = []BlockDropItem{
+        BlockDropItem{cmitem.ItemIdFlint, 10, 1},
+        BlockDropItem{ItemId(BlockIdGravel), 90, 1},
     }
-    b[BlockIDLeaves].droppedItems = []BlockDropItem{
+    b[BlockIdLeaves].droppedItems = []BlockDropItem{
         // TODO get more accurate probability of sapling drop
-        BlockDropItem{ItemID(BlockIDSapling), 5, 1},
+        BlockDropItem{ItemId(BlockIdSapling), 5, 1},
     }
-    b[BlockIDRedstoneOre].droppedItems = []BlockDropItem{
+    b[BlockIdRedstoneOre].droppedItems = []BlockDropItem{
         // TODO find probabilities of dropping 4 vs 5 items
-        BlockDropItem{cmitem.ItemIDRedstone, 50, 4},
-        BlockDropItem{cmitem.ItemIDRedstone, 50, 5},
+        BlockDropItem{cmitem.ItemIdRedstone, 50, 4},
+        BlockDropItem{cmitem.ItemIdRedstone, 50, 5},
     }
-    b[BlockIDGlowingRedstoneOre].droppedItems = b[BlockIDRedstoneOre].droppedItems
-    b[BlockIDSnowBlock].droppedItems = []BlockDropItem{
-        BlockDropItem{cmitem.ItemIDSnowball, 100, 4},
+    b[BlockIdGlowingRedstoneOre].droppedItems = b[BlockIdRedstoneOre].droppedItems
+    b[BlockIdSnowBlock].droppedItems = []BlockDropItem{
+        BlockDropItem{cmitem.ItemIdSnowball, 100, 4},
     }
 
-    retval := make(map[BlockID]IBlockType)
+    retval := make(map[BlockId]IBlockType)
     for k, block := range b {
         retval[k] = block
     }

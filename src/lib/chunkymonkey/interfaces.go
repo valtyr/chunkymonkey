@@ -23,14 +23,14 @@ type IPlayer interface {
     // Safe to call from outside of player's own goroutine.
     GetEntity() *entity.Entity // Only the game mainloop may modify the return value
     GetName() string           // Do not modify return value
-    LockedGetChunkPosition() *ChunkXZ
+    LockedGetChunkPosition() *ChunkXz
 
     Enqueue(f func(IPlayer))
 
     // Everything below must be called from within Enqueue
 
     SendSpawn(writer io.Writer) (err os.Error)
-    IsWithin(p1, p2 *ChunkXZ) bool
+    IsWithin(p1, p2 *ChunkXz) bool
 }
 
 type IItem interface {
@@ -39,14 +39,14 @@ type IItem interface {
 
     // Item methods must be called from the goroutine of their parent chunk.
     // Note that items move between chunks.
-    GetPosition() *AbsXYZ
+    GetPosition() *AbsXyz
     SendSpawn(writer io.Writer) (err os.Error)
     SendUpdate(writer io.Writer) (err os.Error)
     Tick(blockQuery physics.BlockQueryFn) (leftBlock bool)
 }
 
 type IBlockType interface {
-    Destroy(chunk IChunk, blockLoc *BlockXYZ) bool
+    Destroy(chunk IChunk, blockLoc *BlockXyz) bool
     IsSolid() bool
     GetName() string
     GetTransparency() int8
@@ -54,7 +54,7 @@ type IBlockType interface {
 
 type IChunk interface {
     // Safe to call from outside of Enqueue:
-    GetLoc() *ChunkXZ // Do not modify return value
+    GetLoc() *ChunkXz // Do not modify return value
 
     Enqueue(f func(IChunk))
 
@@ -69,8 +69,8 @@ type IChunk interface {
     AddItem(item IItem)
     // Tells the chunk to take posession of the item.
     TransferItem(item IItem)
-    GetBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool)
-    DestroyBlock(subLoc *SubChunkXYZ) (ok bool)
+    GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
+    DestroyBlock(subLoc *SubChunkXyz) (ok bool)
 
     // Register subscribers to receive information about the chunk. When added,
     // a subscriber will immediately receive complete chunk information via
@@ -87,16 +87,16 @@ type IChunk interface {
 
 type IChunkManager interface {
     // Must currently be called from with the owning IGame's Enqueue:
-    Get(loc *ChunkXZ) (chunk IChunk)
-    ChunksInRadius(loc *ChunkXZ) <-chan IChunk
+    Get(loc *ChunkXz) (chunk IChunk)
+    ChunksInRadius(loc *ChunkXz) <-chan IChunk
     ChunksActive() <-chan IChunk
 }
 
 type IGame interface {
     // Safe to call from outside of Enqueue:
-    GetStartPosition() *AbsXYZ      // Do not modify return value
+    GetStartPosition() *AbsXyz      // Do not modify return value
     GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
-    GetBlockTypes() map[BlockID]IBlockType
+    GetBlockTypes() map[BlockId]IBlockType
 
     Enqueue(f func(IGame))
 
@@ -106,7 +106,7 @@ type IGame interface {
     AddPlayer(player IPlayer)
     RemovePlayer(player IPlayer)
     MulticastPacket(packet []byte, except interface{})
-    MulticastChunkPacket(packet []byte, loc *ChunkXZ)
+    MulticastChunkPacket(packet []byte, loc *ChunkXz)
     MulticastRadiusPacket(packet []byte, sender IPlayer)
     SendChatMessage(message string)
 }

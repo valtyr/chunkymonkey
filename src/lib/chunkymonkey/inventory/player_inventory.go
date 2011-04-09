@@ -10,17 +10,17 @@ import (
 const (
     playerInvSize = 45
 
-    playerInvHeldStart = SlotID(36)
-    playerInvHeldEnd   = SlotID(44)
+    playerInvHeldStart = SlotId(36)
+    playerInvHeldEnd   = SlotId(44)
     playerInvHeldNum   = 1 + playerInvHeldEnd - playerInvHeldStart
 
-    playerInvArmorStart = SlotID(5)
-    playerInvArmorEnd   = SlotID(8)
+    playerInvArmorStart = SlotId(5)
+    playerInvArmorEnd   = SlotId(8)
 )
 
 type PlayerInventory struct {
     Inventory
-    holding SlotID // Note that this is 0-8.
+    holding SlotId // Note that this is 0-8.
 }
 
 func (inv *PlayerInventory) Init() {
@@ -29,15 +29,15 @@ func (inv *PlayerInventory) Init() {
 }
 
 // Writes packets for other players to see the equipped items.
-func (inv *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer, entityID EntityID) (err os.Error) {
-    err = inv.HeldItem().SendEquipmentUpdate(writer, entityID, 0)
+func (inv *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer, entityId EntityId) (err os.Error) {
+    err = inv.HeldItem().SendEquipmentUpdate(writer, entityId, 0)
     if err != nil {
         return
     }
 
-    equipSlot := SlotID(1)
+    equipSlot := SlotId(1)
     for i := playerInvArmorStart; i <= playerInvArmorEnd; i++ {
-        err = inv.Slot(i).SendEquipmentUpdate(writer, entityID, equipSlot)
+        err = inv.Slot(i).SendEquipmentUpdate(writer, entityId, equipSlot)
         if err != nil {
             return
         }
@@ -47,7 +47,7 @@ func (inv *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer, entityID E
 }
 
 // Chooses the held item (0-8). Out of range values have no effect.
-func (inv *PlayerInventory) SetHolding(holding SlotID) {
+func (inv *PlayerInventory) SetHolding(holding SlotId) {
     if holding >= 0 && holding < playerInvHeldNum {
         inv.holding = holding
     }

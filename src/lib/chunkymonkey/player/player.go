@@ -34,7 +34,7 @@ type Player struct {
     game      IGame
     conn      net.Conn
     name      string
-    position  AbsXYZ
+    position  AbsXyz
     look      LookDegrees
     chunkSubs chunkSubscriptions
 
@@ -66,8 +66,8 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
         game.AddPlayer(player)
         // TODO pass proper dimension
         buf := &bytes.Buffer{}
-        proto.ServerWriteLogin(buf, player.EntityID, 0, DimensionNormal)
-        proto.WriteSpawnPosition(buf, player.position.ToBlockXYZ())
+        proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
+        proto.WriteSpawnPosition(buf, player.position.ToBlockXyz())
         player.TransmitPacket(buf.Bytes())
         player.start()
     })
@@ -77,14 +77,14 @@ func (player *Player) GetEntity() *Entity {
     return &player.Entity
 }
 
-func (player *Player) LockedGetChunkPosition() *ChunkXZ {
+func (player *Player) LockedGetChunkPosition() *ChunkXz {
     player.lock.Lock()
     defer player.lock.Unlock()
-    return player.position.ToChunkXZ()
+    return player.position.ToChunkXz()
 }
 
-func (player *Player) IsWithin(p1, p2 *ChunkXZ) bool {
-    p := player.position.ToChunkXZ()
+func (player *Player) IsWithin(p1, p2 *ChunkXz) bool {
+    p := player.position.ToChunkXz()
     return (p.X >= p1.X && p.X <= p2.X &&
         p.Z >= p1.Z && p.Z <= p2.Z)
 }
@@ -100,15 +100,15 @@ func (player *Player) Enqueue(f func(IPlayer)) {
 func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
     err = proto.WriteNamedEntitySpawn(
         writer,
-        player.EntityID, player.name,
-        player.position.ToAbsIntXYZ(),
+        player.EntityId, player.name,
+        player.position.ToAbsIntXyz(),
         player.look.ToLookBytes(),
         player.inventory.HeldItem().ItemType,
     )
     if err != nil {
         return
     }
-    return player.inventory.SendFullEquipmentUpdate(writer, player.EntityID)
+    return player.inventory.SendFullEquipmentUpdate(writer, player.EntityId)
 }
 
 func (player *Player) start() {
@@ -127,10 +127,10 @@ func (player *Player) PacketChatMessage(message string) {
     player.game.Enqueue(func(game IGame) { game.SendChatMessage(message) })
 }
 
-func (player *Player) PacketEntityAction(entityID EntityID, action EntityAction) {
+func (player *Player) PacketEntityAction(entityId EntityId, action EntityAction) {
 }
 
-func (player *Player) PacketUseEntity(user EntityID, target EntityID, leftClick bool) {
+func (player *Player) PacketUseEntity(user EntityId, target EntityId, leftClick bool) {
 }
 
 func (player *Player) PacketRespawn() {
@@ -139,11 +139,11 @@ func (player *Player) PacketRespawn() {
 func (player *Player) PacketPlayer(onGround bool) {
 }
 
-func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
+func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, onGround bool) {
     player.lock.Lock()
     defer player.lock.Unlock()
 
-    var delta = AbsXYZ{position.X - player.position.X,
+    var delta = AbsXyz{position.X - player.position.X,
         position.Y - player.position.Y,
         position.Z - player.position.Z}
     distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
@@ -164,8 +164,8 @@ func (player *Player) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, on
     buf := &bytes.Buffer{}
     proto.WriteEntityTeleport(
         buf,
-        player.EntityID,
-        player.position.ToAbsIntXYZ(),
+        player.EntityId,
+        player.position.ToAbsIntXyz(),
         player.look.ToLookBytes())
 
     player.game.Enqueue(func(game IGame) {
@@ -181,14 +181,14 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
     player.look = *look
 
     buf := &bytes.Buffer{}
-    proto.WriteEntityLook(buf, player.EntityID, look.ToLookBytes())
+    proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
 
     player.game.Enqueue(func(game IGame) {
         game.MulticastPacket(buf.Bytes(), player)
     })
 }
 
-func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
+func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face) {
     // TODO validate that the player is actually somewhere near the block
 
     if status == DigBlockBroke {
@@ -211,28 +211,28 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, 
     }
 }
 
-func (player *Player) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses) {
+func (player *Player) PacketPlayerBlockPlacement(itemId ItemId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemUses) {
 }
 
-func (player *Player) PacketHoldingChange(slotID SlotID) {
+func (player *Player) PacketHoldingChange(slotId SlotId) {
     player.lock.Lock()
     defer player.lock.Unlock()
-    player.inventory.SetHolding(slotID)
+    player.inventory.SetHolding(slotId)
 }
 
-func (player *Player) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
+func (player *Player) PacketEntityAnimation(entityId EntityId, animation EntityAnimation) {
 }
 
 func (player *Player) PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool) {
 }
 
-func (player *Player) PacketWindowClose(windowID WindowID) {
+func (player *Player) PacketWindowClose(windowId WindowId) {
 }
 
-func (player *Player) PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
+func (player *Player) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemId, amount ItemCount, uses ItemUses) {
 }
 
-func (player *Player) PacketSignUpdate(position *BlockXYZ, lines [4]string) {
+func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 }
 
 func (player *Player) PacketDisconnect(reason string) {
@@ -312,7 +312,7 @@ func (player *Player) postLogin() {
             buf, &player.position, &player.look,
             player.position.Y+StanceNormal, false)
 
-        player.inventory.SendUpdate(buf, WindowIDInventory)
+        player.inventory.SendUpdate(buf, WindowIdInventory)
 
         // FIXME: This could potentially deadlock with player.lock being held
         // if the txQueue is full.

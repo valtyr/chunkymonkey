@@ -34,20 +34,20 @@ const (
 
 type PointObject struct {
     // Used in knowing what to send as client updates
-    LastSentPosition AbsIntXYZ
+    LastSentPosition AbsIntXyz
     LastSentVelocity Velocity
 
     // Used in physical modelling
-    Position  AbsXYZ
+    Position  AbsXyz
     Velocity  AbsVelocity
     onGround  bool
     remainder TickTime
 }
 
-type BlockQueryFn func(*BlockXYZ) (isSolid bool, isWithinChunk bool)
+type BlockQueryFn func(*BlockXyz) (isSolid bool, isWithinChunk bool)
 
-func (obj *PointObject) Init(position *AbsXYZ, velocity *AbsVelocity) {
-    obj.LastSentPosition = *position.ToAbsIntXYZ()
+func (obj *PointObject) Init(position *AbsXyz, velocity *AbsVelocity) {
+    obj.LastSentPosition = *position.ToAbsIntXyz()
     obj.LastSentVelocity = *velocity.ToVelocity()
     obj.Position = *position
     obj.Velocity = *velocity
@@ -59,8 +59,8 @@ func (obj *PointObject) Init(position *AbsXYZ, velocity *AbsVelocity) {
 // It assumes that the clients have either been sent packets via this method
 // before, or that the previous position/velocity sent was generated from the
 // LastSentPosition and LastSentVelocity attributes.
-func (obj *PointObject) SendUpdate(writer io.Writer, entityID EntityID, look *LookBytes) (err os.Error) {
-    curPosition := obj.Position.ToAbsIntXYZ()
+func (obj *PointObject) SendUpdate(writer io.Writer, entityId EntityId, look *LookBytes) (err os.Error) {
+    curPosition := obj.Position.ToAbsIntXyz()
 
     dx := curPosition.X - obj.LastSentPosition.X
     dy := curPosition.Y - obj.LastSentPosition.Y
@@ -69,7 +69,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityID EntityID, look *Lo
     if dx != 0 || dy != 0 || dz != 0 {
         if dx >= -128 && dx <= 127 && dy >= -128 && dy <= 127 && dz >= -128 && dz <= 127 {
             err = proto.WriteEntityRelMove(
-                writer, entityID,
+                writer, entityId,
                 &RelMove{
                     RelMoveCoord(dx),
                     RelMoveCoord(dy),
@@ -78,7 +78,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityID EntityID, look *Lo
             )
         } else {
             err = proto.WriteEntityTeleport(
-                writer, entityID,
+                writer, entityId,
                 curPosition, look)
         }
         if err != nil {
@@ -89,7 +89,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityID EntityID, look *Lo
 
     curVelocity := obj.Velocity.ToVelocity()
     if curVelocity.X != obj.LastSentVelocity.X || curVelocity.Y != obj.LastSentVelocity.Y || curVelocity.Z != obj.LastSentVelocity.Z {
-        if err = proto.WriteEntityVelocity(writer, entityID, curVelocity); err != nil {
+        if err = proto.WriteEntityVelocity(writer, entityId, curVelocity); err != nil {
             return
         }
         obj.LastSentVelocity = *curVelocity
@@ -131,7 +131,7 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
     var t0, t1, t TickTime
 
     // `Dt` and `dt` means delta-time, that is, time relative to `t`
-    var nextBlockXDt, nextBlockYDt, nextBlockZDt TickTime
+    var nextBlockXdt, nextBlockYdt, nextBlockZdt TickTime
 
     var dt TickTime
 
@@ -147,12 +147,12 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
     for t = t0; t < t1; t += dt {
         // How long after t0 is it that the object hits a block boundary on
         // each axis?
-        nextBlockXDt = calcNextBlockDt(p.X, v.X)
-        nextBlockYDt = calcNextBlockDt(p.Y, v.Y)
-        nextBlockZDt = calcNextBlockDt(p.Z, v.Z)
+        nextBlockXdt = calcNextBlockDt(p.X, v.X)
+        nextBlockYdt = calcNextBlockDt(p.Y, v.Y)
+        nextBlockZdt = calcNextBlockDt(p.Z, v.Z)
 
         // In the axis of which block are we moving? In X, Y or Z axis?
-        move, dt = getBlockAxisMove(nextBlockXDt, nextBlockYDt, nextBlockZDt)
+        move, dt = getBlockAxisMove(nextBlockXdt, nextBlockYdt, nextBlockZdt)
 
         // Don't calculate beyond 1 tick of time
         if t+dt >= t1 {
@@ -242,11 +242,11 @@ func (obj *PointObject) updateVelocity() (stopped bool) {
     return
 }
 
-func (obj *PointObject) nextBlockToEnter(move blockAxisMove) *BlockXYZ {
+func (obj *PointObject) nextBlockToEnter(move blockAxisMove) *BlockXyz {
     p := &obj.Position
     v := &obj.Velocity
 
-    block := p.ToBlockXYZ()
+    block := p.ToBlockXyz()
 
     switch move {
     case blockAxisMoveX:

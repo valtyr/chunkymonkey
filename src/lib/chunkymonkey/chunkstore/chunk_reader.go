@@ -27,8 +27,8 @@ func newChunkReader(reader io.Reader) (r *chunkReader, err os.Error) {
     return
 }
 
-func (r *chunkReader) ChunkLoc() *ChunkXZ {
-    return &ChunkXZ{
+func (r *chunkReader) ChunkLoc() *ChunkXz {
+    return &ChunkXz{
         X:  ChunkCoord(r.chunkTag.Lookup("/Level/xPos").(*nbt.Int).Value),
         Z:  ChunkCoord(r.chunkTag.Lookup("/Level/zPos").(*nbt.Int).Value),
     }

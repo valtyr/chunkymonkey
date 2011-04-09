@@ -60,7 +60,7 @@ func (p *MessageParser) PacketPlayer(onGround bool) {
     // Not logging this packet as it's a bit spammy
 }
 
-func (p *MessageParser) PacketPlayerPosition(position *AbsXYZ, stance AbsCoord, onGround bool) {
+func (p *MessageParser) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, onGround bool) {
     p.printf("PacketPlayerPosition(position=%v, stance=%v, onGround=%v)", position, stance, onGround)
 }
 
@@ -68,33 +68,33 @@ func (p *MessageParser) PacketPlayerLook(look *LookDegrees, onGround bool) {
     p.printf("PacketPlayerLook(look=%v, onGround=%v)", look, onGround)
 }
 
-func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXYZ, face Face) {
+func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face) {
     p.printf("PacketPlayerDigging(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) PacketPlayerBlockPlacement(itemID ItemID, blockLoc *BlockXYZ, face Face, amount ItemCount, uses ItemUses) {
+func (p *MessageParser) PacketPlayerBlockPlacement(itemId ItemId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemUses) {
     p.printf("PacketPlayerBlockPlacement(itemId=%d, blockLoc=%v, face=%d, amount=%d, uses=%d)",
-        itemID, blockLoc, face, amount, uses)
+        itemId, blockLoc, face, amount, uses)
 }
 
-func (p *MessageParser) PacketHoldingChange(slotID SlotID) {
-    p.printf("PacketHoldingChange(slotID=%d)", slotID)
+func (p *MessageParser) PacketHoldingChange(slotId SlotId) {
+    p.printf("PacketHoldingChange(slotId=%d)", slotId)
 }
 
-func (p *MessageParser) PacketBedUse(flag bool, bedLoc *BlockXYZ) {
+func (p *MessageParser) PacketBedUse(flag bool, bedLoc *BlockXyz) {
     p.printf("PacketBedUse(flag=%v, bedLoc=%v)", flag, bedLoc)
 }
 
-func (p *MessageParser) PacketEntityAnimation(entityID EntityID, animation EntityAnimation) {
-    p.printf("PacketEntityAnimation(entityID=%d, animation=%v)", entityID, animation)
+func (p *MessageParser) PacketEntityAnimation(entityId EntityId, animation EntityAnimation) {
+    p.printf("PacketEntityAnimation(entityId=%d, animation=%v)", entityId, animation)
 }
 
-func (p *MessageParser) PacketEntityAction(entityID EntityID, action EntityAction) {
-    p.printf("PacketEntityAction(entityID=%d, action=%d)",
-        entityID, action)
+func (p *MessageParser) PacketEntityAction(entityId EntityId, action EntityAction) {
+    p.printf("PacketEntityAction(entityId=%d, action=%d)",
+        entityId, action)
 }
 
-func (p *MessageParser) PacketSignUpdate(position *BlockXYZ, lines [4]string) {
+func (p *MessageParser) PacketSignUpdate(position *BlockXyz, lines [4]string) {
     p.printf("PacketSignUpdate(position=%v, lines=[%q, %q, %q, %q])",
         position,
         lines[0], lines[1], lines[2], lines[3])
@@ -104,25 +104,25 @@ func (p *MessageParser) PacketDisconnect(reason string) {
     p.printf("PacketDisconnect(%s)", reason)
 }
 
-func (p *MessageParser) ClientPacketLogin(entityID EntityID, mapSeed RandomSeed, dimension DimensionID) {
-    p.printf("PacketLogin(entityID=%d, mapSeed=%d, dimension=%d)",
-        entityID, mapSeed, dimension)
+func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, dimension DimensionId) {
+    p.printf("PacketLogin(entityId=%d, mapSeed=%d, dimension=%d)",
+        entityId, mapSeed, dimension)
 }
 
 func (p *MessageParser) PacketTimeUpdate(time TimeOfDay) {
     p.printf("PacketTime(time=%d)", time)
 }
 
-func (p *MessageParser) PacketEntityEquipment(entityID EntityID, slot SlotID, itemID ItemID, uses ItemUses) {
-    p.printf("PacketEntityEquipment(entityID=%d, slot=%d, itemID=%d, uses=%d)",
-        entityID, slot, itemID, uses)
+func (p *MessageParser) PacketEntityEquipment(entityId EntityId, slot SlotId, itemId ItemId, uses ItemUses) {
+    p.printf("PacketEntityEquipment(entityId=%d, slot=%d, itemId=%d, uses=%d)",
+        entityId, slot, itemId, uses)
 }
 
-func (p *MessageParser) PacketSpawnPosition(position *BlockXYZ) {
+func (p *MessageParser) PacketSpawnPosition(position *BlockXyz) {
     p.printf("PacketSpawnPosition(position=%v)", position)
 }
 
-func (p *MessageParser) PacketUseEntity(user EntityID, target EntityID, leftClick bool) {
+func (p *MessageParser) PacketUseEntity(user EntityId, target EntityId, leftClick bool) {
     p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%v)", user, target, leftClick)
 }
 
@@ -130,34 +130,34 @@ func (p *MessageParser) PacketUpdateHealth(health int16) {
     p.printf("PacketUpdateHealth(health=%d)", health)
 }
 
-func (p *MessageParser) PacketNamedEntitySpawn(entityID EntityID, name string, position *AbsIntXYZ, look *LookBytes, currentItem ItemID) {
-    p.printf("PacketNamedEntitySpawn(entityID=%d, name=%q, position=%v, look=%v, currentItem=%d)",
-        entityID, name, position, look, currentItem)
+func (p *MessageParser) PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemId) {
+    p.printf("PacketNamedEntitySpawn(entityId=%d, name=%q, position=%v, look=%v, currentItem=%d)",
+        entityId, name, position, look, currentItem)
 }
 
-func (p *MessageParser) PacketItemSpawn(entityID EntityID, itemID ItemID, count ItemCount, uses ItemUses, location *AbsIntXYZ, orientation *OrientationBytes) {
-    p.printf("PacketItemSpawn(entityID=%d, itemID=%d, count=%d, uses=%d, location=%v, orientation=%v)",
-        entityID, itemID, count, uses, location, orientation)
+func (p *MessageParser) PacketItemSpawn(entityId EntityId, itemId ItemId, count ItemCount, uses ItemUses, location *AbsIntXyz, orientation *OrientationBytes) {
+    p.printf("PacketItemSpawn(entityId=%d, itemId=%d, count=%d, uses=%d, location=%v, orientation=%v)",
+        entityId, itemId, count, uses, location, orientation)
 }
 
-func (p *MessageParser) PacketItemCollect(collectedItem EntityID, collector EntityID) {
+func (p *MessageParser) PacketItemCollect(collectedItem EntityId, collector EntityId) {
     p.printf("PacketItemCollect(collectedItem=%d, collector=%d)",
         collectedItem, collector)
 }
 
-func (p *MessageParser) PacketObjectSpawn(entityID EntityID, objType ObjTypeID, position *AbsIntXYZ) {
-    p.printf("PacketObjectSpawn(entityID=%d, objType=%d, position=%v)",
-        entityID, objType, position)
+func (p *MessageParser) PacketObjectSpawn(entityId EntityId, objType ObjTypeId, position *AbsIntXyz) {
+    p.printf("PacketObjectSpawn(entityId=%d, objType=%d, position=%v)",
+        entityId, objType, position)
 }
 
-func (p *MessageParser) PacketEntitySpawn(entityID EntityID, mobType EntityMobType, position *AbsIntXYZ, look *LookBytes, metadata []proto.EntityMetadata) {
-    p.printf("PacketEntitySpawn(entityID=%d, mobType=%d, position=%v, look=%v, metadata=%v)",
-        entityID, mobType, position, look, metadata)
+func (p *MessageParser) PacketEntitySpawn(entityId EntityId, mobType EntityMobType, position *AbsIntXyz, look *LookBytes, metadata []proto.EntityMetadata) {
+    p.printf("PacketEntitySpawn(entityId=%d, mobType=%d, position=%v, look=%v, metadata=%v)",
+        entityId, mobType, position, look, metadata)
 }
 
-func (p *MessageParser) PacketPaintingSpawn(entityID EntityID, title string, position *BlockXYZ, paintingType PaintingTypeID) {
-    p.printf("PacketPaintingSpawn(entityID=%d, title=%s, position=%v, paintingType=%d)",
-        entityID, title, position, position, paintingType)
+func (p *MessageParser) PacketPaintingSpawn(entityId EntityId, title string, position *BlockXyz, paintingType PaintingTypeId) {
+    p.printf("PacketPaintingSpawn(entityId=%d, title=%s, position=%v, paintingType=%d)",
+        entityId, title, position, position, paintingType)
 }
 
 func (p *MessageParser) PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool) {
@@ -167,68 +167,68 @@ func (p *MessageParser) PacketUnknown0x1b(field1, field2, field3, field4 float32
 
 }
 
-func (p *MessageParser) PacketEntityVelocity(entityID EntityID, velocity *Velocity) {
-    p.printf("PacketEntityVelocity(entityID=%d, velocity=%v)",
-        entityID, velocity)
+func (p *MessageParser) PacketEntityVelocity(entityId EntityId, velocity *Velocity) {
+    p.printf("PacketEntityVelocity(entityId=%d, velocity=%v)",
+        entityId, velocity)
 }
 
-func (p *MessageParser) PacketEntityDestroy(entityID EntityID) {
-    p.printf("PacketEntityDestroy(entityID=%d)", entityID)
+func (p *MessageParser) PacketEntityDestroy(entityId EntityId) {
+    p.printf("PacketEntityDestroy(entityId=%d)", entityId)
 }
 
-func (p *MessageParser) PacketEntity(entityID EntityID) {
-    p.printf("PacketEntity(entityID=%d)", entityID)
+func (p *MessageParser) PacketEntity(entityId EntityId) {
+    p.printf("PacketEntity(entityId=%d)", entityId)
 }
 
-func (p *MessageParser) PacketEntityRelMove(entityID EntityID, movement *RelMove) {
-    p.printf("PacketEntityRelMove(entityID=%d, movement=%v)",
-        entityID, movement)
+func (p *MessageParser) PacketEntityRelMove(entityId EntityId, movement *RelMove) {
+    p.printf("PacketEntityRelMove(entityId=%d, movement=%v)",
+        entityId, movement)
 }
 
-func (p *MessageParser) PacketEntityLook(entityID EntityID, look *LookBytes) {
-    p.printf("PacketEntityLook(entityID=%d, look=%v)",
-        entityID, look)
+func (p *MessageParser) PacketEntityLook(entityId EntityId, look *LookBytes) {
+    p.printf("PacketEntityLook(entityId=%d, look=%v)",
+        entityId, look)
 }
 
-func (p *MessageParser) PacketEntityTeleport(entityID EntityID, position *AbsIntXYZ, look *LookBytes) {
-    p.printf("PacketEntityTeleport(entityID=%d, position=%v, look=%v",
-        entityID, position, look)
+func (p *MessageParser) PacketEntityTeleport(entityId EntityId, position *AbsIntXyz, look *LookBytes) {
+    p.printf("PacketEntityTeleport(entityId=%d, position=%v, look=%v",
+        entityId, position, look)
 }
 
-func (p *MessageParser) PacketEntityStatus(entityID EntityID, status EntityStatus) {
-    p.printf("PacketEntityStatus(entityID=%d, status=%d",
-        entityID, status)
+func (p *MessageParser) PacketEntityStatus(entityId EntityId, status EntityStatus) {
+    p.printf("PacketEntityStatus(entityId=%d, status=%d",
+        entityId, status)
 }
 
-func (p *MessageParser) PacketEntityMetadata(entityID EntityID, metadata []proto.EntityMetadata) {
-    p.printf("PacketEntityMetadata(entityID=%d, metadata=%v)", entityID, metadata)
+func (p *MessageParser) PacketEntityMetadata(entityId EntityId, metadata []proto.EntityMetadata) {
+    p.printf("PacketEntityMetadata(entityId=%d, metadata=%v)", entityId, metadata)
 }
 
-func (p *MessageParser) PacketPreChunk(position *ChunkXZ, mode ChunkLoadMode) {
+func (p *MessageParser) PacketPreChunk(position *ChunkXz, mode ChunkLoadMode) {
     p.printf("PacketPreChunk(position=%v, mode=%d)", position, mode)
 }
 
-func (p *MessageParser) PacketMapChunk(position *BlockXYZ, size *SubChunkSize, data []byte) {
+func (p *MessageParser) PacketMapChunk(position *BlockXyz, size *SubChunkSize, data []byte) {
     p.printf("PacketMapChunk(position=%v, size=%v, len(data)=%d)",
         position, size, len(data))
 }
 
-func (p *MessageParser) PacketBlockChangeMulti(chunkLoc *ChunkXZ, blockCoords []SubChunkXYZ, blockTypes []BlockID, blockMetaData []byte) {
+func (p *MessageParser) PacketBlockChangeMulti(chunkLoc *ChunkXz, blockCoords []SubChunkXyz, blockTypes []BlockId, blockMetaData []byte) {
     p.printf("PacketBlockChangeMulti(chunkLoc=%v, blockCoords=%v, blockTypes=%v, blockMetaData=%v)",
         chunkLoc, blockCoords, blockTypes, blockMetaData)
 }
 
-func (p *MessageParser) PacketBlockChange(blockLoc *BlockXYZ, blockType BlockID, blockMetaData byte) {
+func (p *MessageParser) PacketBlockChange(blockLoc *BlockXyz, blockType BlockId, blockMetaData byte) {
     p.printf("PacketBlockChange(blockLoc=%v, blockType=%d, blockMetaData=%d)",
         blockLoc, blockType, blockMetaData)
 }
 
-func (p *MessageParser) PacketNoteBlockPlay(position *BlockXYZ, instrument InstrumentID, pitch NotePitch) {
+func (p *MessageParser) PacketNoteBlockPlay(position *BlockXyz, instrument InstrumentId, pitch NotePitch) {
     p.printf("PacketNoteBlockPlay(position=%v, instrument=%d, pitch=%d)",
         position, instrument, pitch)
 }
 
-func (p *MessageParser) PacketExplosion(position *AbsXYZ, power float32, blockOffsets []proto.ExplosionOffsetXYZ) {
+func (p *MessageParser) PacketExplosion(position *AbsXyz, power float32, blockOffsets []proto.ExplosionOffsetXyz) {
     p.printf("PacketExplosion(position=%v, power=%f, blockOffsets=%v)",
         position, power, blockOffsets)
 }
@@ -237,41 +237,41 @@ func (p *MessageParser) PacketBedInvalid(field1 byte) {
     p.printf("PacketBedInvalid(field1=%t)", field1)
 }
 
-func (p *MessageParser) PacketWindowOpen(windowID WindowID, invTypeID InvTypeID, windowTitle string, numSlots byte) {
-    p.printf("PacketWindowOpen(windowID=%d, invTypeID=%d, windowTitle=%q, numSlots=%d)",
-        windowID, invTypeID, windowTitle, numSlots)
+func (p *MessageParser) PacketWindowOpen(windowId WindowId, invTypeId InvTypeId, windowTitle string, numSlots byte) {
+    p.printf("PacketWindowOpen(windowId=%d, invTypeId=%d, windowTitle=%q, numSlots=%d)",
+        windowId, invTypeId, windowTitle, numSlots)
 }
 
-func (p *MessageParser) PacketWindowClose(windowID WindowID) {
-    p.printf("PacketWindowClose(windowID=%d)", windowID)
+func (p *MessageParser) PacketWindowClose(windowId WindowId) {
+    p.printf("PacketWindowClose(windowId=%d)", windowId)
 }
 
-func (p *MessageParser) PacketWindowProgressBar(windowID WindowID, prgBarID PrgBarID, value PrgBarValue) {
-    p.printf("PacketWindowProgressBar(windowID=%d, prgBarID=%d, value=%d)",
-        windowID, prgBarID, value)
+func (p *MessageParser) PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue) {
+    p.printf("PacketWindowProgressBar(windowId=%d, prgBarId=%d, value=%d)",
+        windowId, prgBarId, value)
 }
 
-func (p *MessageParser) PacketWindowTransaction(windowID WindowID, txID TxID, accepted bool) {
-    p.printf("PacketWindowTransaction(windowID=%d, txID=%d, accepted=%v)")
+func (p *MessageParser) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
+    p.printf("PacketWindowTransaction(windowId=%d, txId=%d, accepted=%v)")
 }
 
-func (p *MessageParser) PacketWindowClick(windowID WindowID, slot SlotID, rightClick bool, txID TxID, itemID ItemID, amount ItemCount, uses ItemUses) {
-    p.printf("PacketWindowClick(windowID=%d, slot=%d, rightClick=%v, txID=%d, itemID=%d, amount=%d, uses=%d)",
-        windowID, slot, rightClick, txID, itemID, amount, uses)
+func (p *MessageParser) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemId, amount ItemCount, uses ItemUses) {
+    p.printf("PacketWindowClick(windowId=%d, slot=%d, rightClick=%v, txId=%d, itemId=%d, amount=%d, uses=%d)",
+        windowId, slot, rightClick, txId, itemId, amount, uses)
 }
 
-func (p *MessageParser) PacketWindowSetSlot(windowID WindowID, slot SlotID, itemID ItemID, amount ItemCount, uses ItemUses) {
-    p.printf("PacketWindowSetSlot(windowID=%d, slot=%d, itemID=%d, amount=%d, uses=%d)",
-        windowID, slot, itemID, amount, uses)
+func (p *MessageParser) PacketWindowSetSlot(windowId WindowId, slot SlotId, itemId ItemId, amount ItemCount, uses ItemUses) {
+    p.printf("PacketWindowSetSlot(windowId=%d, slot=%d, itemId=%d, amount=%d, uses=%d)",
+        windowId, slot, itemId, amount, uses)
 }
 
-func (p *MessageParser) PacketWindowItems(windowID WindowID, items []proto.WindowSlot) {
-    p.printf("PacketWindowItems(windowID=%d, items=%v)",
-        windowID, items)
+func (p *MessageParser) PacketWindowItems(windowId WindowId, items []proto.WindowSlot) {
+    p.printf("PacketWindowItems(windowId=%d, items=%v)",
+        windowId, items)
 }
 
 // Parses messages from the client
-func (p *MessageParser) CSParse(reader io.Reader) {
+func (p *MessageParser) CsParse(reader io.Reader) {
     // If we return, we should consume all input to avoid blocking the pipe
     // we're listening on. TODO Maybe we could just close it?
     defer p.consumeUnrecognizedInput(reader)
@@ -312,7 +312,7 @@ func (p *MessageParser) CSParse(reader io.Reader) {
 }
 
 // Parses messages from the server
-func (p *MessageParser) SCParse(reader io.Reader) {
+func (p *MessageParser) ScParse(reader io.Reader) {
     // If we return, we should consume all input to avoid blocking the pipe
     // we're listening on. TODO Maybe we could just close it?
     defer p.consumeUnrecognizedInput(reader)

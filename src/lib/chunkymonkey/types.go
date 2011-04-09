@@ -26,19 +26,19 @@ const (
 type RandomSeed int64
 
 // Which 'world'?
-type DimensionID int8
+type DimensionId int8
 
 const (
-    DimensionNether = DimensionID(-1)
-    DimensionNormal = DimensionID(0)
+    DimensionNether = DimensionId(-1)
+    DimensionNormal = DimensionId(0)
 )
 
 // Item-related types
 
 // Item type ID
-type ItemID int16
+type ItemId int16
 
-const ItemIDNull = ItemID(-1)
+const ItemIdNull = ItemId(-1)
 
 // Number of times that an item has been used
 type ItemUses int16
@@ -48,7 +48,7 @@ type ItemCount int8
 
 // Entity-related types
 
-type EntityID int32
+type EntityId int32
 
 // The type of mob
 type EntityMobType byte
@@ -73,32 +73,32 @@ const (
     EntityActionUncrouch = EntityAction(2)
 )
 
-type ObjTypeID int8
+type ObjTypeId int8
 
 const (
-    ObjTypeIDBoat           = ObjTypeID(1)
-    ObjTypeIDMinecart       = ObjTypeID(10)
-    ObjTypeIDStorageCart    = ObjTypeID(11)
-    ObjTypeIDPoweredCart    = ObjTypeID(12)
-    ObjTypeIDActivatedTNT   = ObjTypeID(50)
-    ObjTypeIDArrow          = ObjTypeID(60)
-    ObjTypeIDThrownSnowball = ObjTypeID(61)
-    ObjTypeIDThrownEgg      = ObjTypeID(62)
-    ObjTypeIDFallingSand    = ObjTypeID(70)
-    ObjTypeIDFallingGravel  = ObjTypeID(71)
-    ObjTypeIDFishingFloat   = ObjTypeID(90)
+    ObjTypeIdBoat           = ObjTypeId(1)
+    ObjTypeIdMinecart       = ObjTypeId(10)
+    ObjTypeIdStorageCart    = ObjTypeId(11)
+    ObjTypeIdPoweredCart    = ObjTypeId(12)
+    ObjTypeIdActivatedTnt   = ObjTypeId(50)
+    ObjTypeIdArrow          = ObjTypeId(60)
+    ObjTypeIdThrownSnowball = ObjTypeId(61)
+    ObjTypeIdThrownEgg      = ObjTypeId(62)
+    ObjTypeIdFallingSand    = ObjTypeId(70)
+    ObjTypeIdFallingGravel  = ObjTypeId(71)
+    ObjTypeIdFishingFloat   = ObjTypeId(90)
 )
 
-type PaintingTypeID int32
+type PaintingTypeId int32
 
-type InstrumentID byte
+type InstrumentId byte
 
 const (
-    InstrumentIDDoubleBass = InstrumentID(1)
-    InstrumentIDSnareDrum  = InstrumentID(2)
-    InstrumentIDSticks     = InstrumentID(3)
-    InstrumentIDBassDrum   = InstrumentID(4)
-    InstrumentIDHarp       = InstrumentID(5)
+    InstrumentIdDoubleBass = InstrumentId(1)
+    InstrumentIdSnareDrum  = InstrumentId(2)
+    InstrumentIdSticks     = InstrumentId(3)
+    InstrumentIdBassDrum   = InstrumentId(4)
+    InstrumentIdHarp       = InstrumentId(5)
 )
 
 type NotePitch byte
@@ -110,7 +110,7 @@ const (
 
 // Block-related types
 
-type BlockID byte
+type BlockId byte
 
 // Block face (0-5)
 type Face int8
@@ -133,38 +133,38 @@ const (
 // Window/inventory-related types and constants
 
 // ID specifying which slotted window, such as inventory
-type WindowID int8
+type WindowId int8
 
 const (
-    WindowIDCursor    = WindowID(-1)
-    WindowIDInventory = WindowID(0)
+    WindowIdCursor    = WindowId(-1)
+    WindowIdInventory = WindowId(0)
 )
 
-type InvTypeID byte
+type InvTypeId byte
 
 const (
-    InvTypeIDChest     = InvTypeID(0)
-    InvTypeIDWorkbench = InvTypeID(1)
-    InvTypeIDFurnace   = InvTypeID(2)
-    InvTypeIDDispenser = InvTypeID(3)
+    InvTypeIdChest     = InvTypeId(0)
+    InvTypeIdWorkbench = InvTypeId(1)
+    InvTypeIdFurnace   = InvTypeId(2)
+    InvTypeIdDispenser = InvTypeId(3)
 )
 
 // ID of the slow in inventory or other item-slotted window element
-type SlotID int16
+type SlotId int16
 
-const SlotIDCursor = SlotID(-1)
+const SlotIdCursor = SlotId(-1)
 
-type PrgBarID int16
+type PrgBarId int16
 
 const (
-    PrgBarIDFurnaceProgress = PrgBarID(0)
-    PrgBarIDFurnaceFire     = PrgBarID(1)
+    PrgBarIdFurnaceProgress = PrgBarId(0)
+    PrgBarIdFurnaceFire     = PrgBarId(1)
 )
 
 type PrgBarValue int16
 
 // Transaction ID
-type TxID int16
+type TxId int16
 
 // Movement-related types and constants
 
@@ -271,7 +271,7 @@ const (
     ChunkSideNorth = 3
 )
 
-func (d ChunkSideDir) GetDXz() (dx, dz ChunkCoord) {
+func (d ChunkSideDir) GetDxz() (dx, dz ChunkCoord) {
     switch d {
     case ChunkSideEast:
         dx = 0
@@ -306,7 +306,7 @@ func (d ChunkSideDir) GetOpposite() ChunkSideDir {
 
 // Returns the direction that (dx,dz) is in. Exactly one of dx and dz must be
 // -1 or 1, and the other must be 0, otherwide ok will return as false.
-func DXzToDir(dx, dz int32) (dir ChunkSideDir, ok bool) {
+func DxzToDir(dx, dz int32) (dir ChunkSideDir, ok bool) {
     ok = true
     if dz == 0 {
         if dx == -1 {
@@ -354,36 +354,36 @@ const (
 // Specifies exact world distance in blocks (floating point)
 type AbsCoord float64
 
-type AbsXYZ struct {
+type AbsXyz struct {
     X, Y, Z AbsCoord
 }
 
-func (p *AbsXYZ) Copy() *AbsXYZ {
-    return &AbsXYZ{p.X, p.Y, p.Z}
+func (p *AbsXyz) Copy() *AbsXyz {
+    return &AbsXyz{p.X, p.Y, p.Z}
 }
 
-// Updates a ChunkXZ with the chunk position that the AbsXYZ is within.
-func (p *AbsXYZ) UpdateChunkXZ(chunkLoc *ChunkXZ) {
+// Updates a ChunkXz with the chunk position that the AbsXyz is within.
+func (p *AbsXyz) UpdateChunkXz(chunkLoc *ChunkXz) {
     chunkLoc.X = ChunkCoord(math.Floor(float64(p.X / ChunkSizeH)))
     chunkLoc.Z = ChunkCoord(math.Floor(float64(p.Z / ChunkSizeH)))
 }
 
-func (p *AbsXYZ) ApplyVelocity(dt TickTime, v *AbsVelocity) {
+func (p *AbsXyz) ApplyVelocity(dt TickTime, v *AbsVelocity) {
     p.X += AbsCoord(float64(v.X) * float64(dt))
     p.Y += AbsCoord(float64(v.Y) * float64(dt))
     p.Z += AbsCoord(float64(v.Z) * float64(dt))
 }
 
-func (p *AbsXYZ) ToAbsIntXYZ() *AbsIntXYZ {
-    return &AbsIntXYZ{
+func (p *AbsXyz) ToAbsIntXyz() *AbsIntXyz {
+    return &AbsIntXyz{
         AbsIntCoord(p.X * PixelsPerBlock),
         AbsIntCoord(p.Y * PixelsPerBlock),
         AbsIntCoord(p.Z * PixelsPerBlock),
     }
 }
 
-func (p *AbsXYZ) ToBlockXYZ() *BlockXYZ {
-    return &BlockXYZ{
+func (p *AbsXyz) ToBlockXyz() *BlockXyz {
+    return &BlockXyz{
         BlockCoord(math.Floor(float64(p.X))),
         BlockYCoord(math.Floor(float64(p.Y))),
         BlockCoord(math.Floor(float64(p.Z))),
@@ -393,12 +393,12 @@ func (p *AbsXYZ) ToBlockXYZ() *BlockXYZ {
 // Specifies approximate world distance in pixels (absolute / PixelsPerBlock)
 type AbsIntCoord int32
 
-type AbsIntXYZ struct {
+type AbsIntXyz struct {
     X, Y, Z AbsIntCoord
 }
 
-func (p *AbsIntXYZ) ToBlockXYZ() *BlockXYZ {
-    return &BlockXYZ{
+func (p *AbsIntXyz) ToBlockXyz() *BlockXyz {
+    return &BlockXyz{
         BlockCoord(p.X / PixelsPerBlock),
         BlockYCoord(p.Y / PixelsPerBlock),
         BlockCoord(p.Z / PixelsPerBlock),
@@ -415,13 +415,13 @@ func (c ChunkCoord) Abs() ChunkCoord {
     return c
 }
 
-type ChunkXZ struct {
+type ChunkXz struct {
     X, Z ChunkCoord
 }
 
-// Returns the world BlockXYZ position of the (0, 0, 0) block in the chunk
-func (chunkLoc *ChunkXZ) GetChunkCornerBlockXY() *BlockXYZ {
-    return &BlockXYZ{
+// Returns the world BlockXyz position of the (0, 0, 0) block in the chunk
+func (chunkLoc *ChunkXz) GetChunkCornerBlockXY() *BlockXyz {
+    return &BlockXyz{
         BlockCoord(chunkLoc.X) * ChunkSizeH,
         0,
         BlockCoord(chunkLoc.Z) * ChunkSizeH,
@@ -429,8 +429,8 @@ func (chunkLoc *ChunkXZ) GetChunkCornerBlockXY() *BlockXYZ {
 }
 
 // Convert a position within a chunk to a block position within the world
-func (chunkLoc *ChunkXZ) ToBlockXYZ(subLoc *SubChunkXYZ) *BlockXYZ {
-    return &BlockXYZ{
+func (chunkLoc *ChunkXz) ToBlockXyz(subLoc *SubChunkXyz) *BlockXyz {
+    return &BlockXyz{
         BlockCoord(chunkLoc.X)*ChunkSizeH + BlockCoord(subLoc.X),
         BlockYCoord(subLoc.Y),
         BlockCoord(chunkLoc.Z)*ChunkSizeH + BlockCoord(subLoc.Z),
@@ -438,7 +438,7 @@ func (chunkLoc *ChunkXZ) ToBlockXYZ(subLoc *SubChunkXYZ) *BlockXYZ {
 }
 
 // Converts a chunk location into a key suitable for using in a hash.
-func (chunkLoc *ChunkXZ) ChunkKey() uint64 {
+func (chunkLoc *ChunkXz) ChunkKey() uint64 {
     return uint64(chunkLoc.X)<<32 | uint64(uint32(chunkLoc.Z))
 }
 
@@ -452,7 +452,7 @@ type SubChunkSize struct {
     X, Y, Z SubChunkSizeCoord
 }
 
-type SubChunkXYZ struct {
+type SubChunkXyz struct {
     X, Y, Z SubChunkCoord
 }
 
@@ -460,7 +460,7 @@ type SubChunkXYZ struct {
 type BlockCoord int32
 type BlockYCoord int8
 
-type BlockXYZ struct {
+type BlockXyz struct {
     X   BlockCoord
     Y   BlockYCoord
     Z   BlockCoord
@@ -468,30 +468,30 @@ type BlockXYZ struct {
 
 // Test if a block location is not appropriate to the situation, but block
 // location data passed (such as using an item not on a block).
-func (b *BlockXYZ) IsNull() bool {
+func (b *BlockXyz) IsNull() bool {
     return b.Y == -1 && b.X == -1 && b.Z == -1
 }
 
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
-func (abs *AbsXYZ) ToChunkXZ() (chunkXz *ChunkXZ) {
-    return &ChunkXZ{
+func (abs *AbsXyz) ToChunkXz() (chunkXz *ChunkXz) {
+    return &ChunkXz{
         ChunkCoord(abs.X / ChunkSizeH),
         ChunkCoord(abs.Z / ChunkSizeH),
     }
 }
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
-func (abs *AbsIntXYZ) ToChunkXZ() *ChunkXZ {
+func (abs *AbsIntXyz) ToChunkXz() *ChunkXz {
     chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeH*PixelsPerBlock)
     chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeH*PixelsPerBlock)
 
-    return &ChunkXZ{
+    return &ChunkXz{
         ChunkCoord(chunkX),
         ChunkCoord(chunkZ),
     }
 }
 
-func (abs *AbsIntXYZ) IAdd(dx, dy, dz AbsIntCoord) {
+func (abs *AbsIntXyz) IAdd(dx, dy, dz AbsIntCoord) {
     abs.X += dx
     abs.Y += dy
     abs.Z += dz
@@ -509,25 +509,25 @@ func coordDivMod(num, denom int32) (div, mod int32) {
 
 // Convert an (x, z) block coordinate pair to chunk coordinates and the
 // coordinates of the block within the chunk
-func (blockLoc *BlockXYZ) ToChunkLocal() (chunkLoc *ChunkXZ, subLoc *SubChunkXYZ) {
+func (blockLoc *BlockXyz) ToChunkLocal() (chunkLoc *ChunkXz, subLoc *SubChunkXyz) {
     chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeH)
     chunkZ, subZ := coordDivMod(int32(blockLoc.Z), ChunkSizeH)
 
-    chunkLoc = &ChunkXZ{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
-    subLoc = &SubChunkXYZ{SubChunkCoord(subX), SubChunkCoord(blockLoc.Y), SubChunkCoord(subZ)}
+    chunkLoc = &ChunkXz{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
+    subLoc = &SubChunkXyz{SubChunkCoord(subX), SubChunkCoord(blockLoc.Y), SubChunkCoord(subZ)}
     return
 }
 
-func (blockLoc *BlockXYZ) ToAbsIntXYZ() *AbsIntXYZ {
-    return &AbsIntXYZ{
+func (blockLoc *BlockXyz) ToAbsIntXyz() *AbsIntXyz {
+    return &AbsIntXyz{
         AbsIntCoord(blockLoc.X) * PixelsPerBlock,
         AbsIntCoord(blockLoc.Y) * PixelsPerBlock,
         AbsIntCoord(blockLoc.Z) * PixelsPerBlock,
     }
 }
 
-func (blockLoc *BlockXYZ) ToAbsXYZ() *AbsXYZ {
-    return &AbsXYZ{
+func (blockLoc *BlockXyz) ToAbsXyz() *AbsXyz {
+    return &AbsXyz{
         AbsCoord(blockLoc.X),
         AbsCoord(blockLoc.Y),
         AbsCoord(blockLoc.Z),

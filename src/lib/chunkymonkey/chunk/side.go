@@ -19,7 +19,7 @@ func (n *neighboursCache) init() {
     }
 }
 
-func (n *neighboursCache) setBlock(subLoc *SubChunkXYZ, blockType BlockID) {
+func (n *neighboursCache) setBlock(subLoc *SubChunkXyz, blockType BlockId) {
     if subLoc.X == 0 {
         n.sideUpdater[ChunkSideNorth].blockChanged(subLoc, blockType)
     } else if subLoc.X == ChunkSizeH-1 {
@@ -53,7 +53,7 @@ func (n *neighboursCache) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Ch
 
     // Construct and send a full side cache update.
 
-    var subLoc SubChunkXYZ
+    var subLoc SubChunkXyz
     var h *SubChunkCoord
     switch side {
     case ChunkSideNorth:
@@ -87,8 +87,8 @@ func (n *neighboursCache) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Ch
     })
 }
 
-func (n *neighboursCache) GetCachedBlock(dx, dz ChunkCoord, subLoc *SubChunkXYZ) (ok bool, blockTypeID BlockID) {
-    dir, isNeighbour := DXzToDir(int32(dx), int32(dz))
+func (n *neighboursCache) GetCachedBlock(dx, dz ChunkCoord, subLoc *SubChunkXyz) (ok bool, blockTypeId BlockId) {
+    dir, isNeighbour := DxzToDir(int32(dx), int32(dz))
     ok = false
 
     if !isNeighbour {
@@ -102,7 +102,7 @@ func (n *neighboursCache) GetCachedBlock(dx, dz ChunkCoord, subLoc *SubChunkXYZ)
         return
     }
 
-    blockTypeID, ok = sideCache.GetCachedBlock(subLoc)
+    blockTypeId, ok = sideCache.GetCachedBlock(subLoc)
     if !ok {
         return
     }
@@ -125,19 +125,19 @@ func (cache *chunkSideCache) init(side ChunkSideDir) {
     cache.active = false
 }
 
-func (cache *chunkSideCache) GetCachedBlock(subLoc *SubChunkXYZ) (blockType BlockID, ok bool) {
+func (cache *chunkSideCache) GetCachedBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
     index, ok := getSideBlockIndex(cache.side, subLoc)
     if !ok {
         return
     }
-    blockType = BlockID(cache.blocks[index])
+    blockType = BlockId(cache.blocks[index])
     return
 }
 
 // Represents a single block change on the side of a chunk.
 type blockChange struct {
     index     int16
-    blockType BlockID
+    blockType BlockId
 }
 
 // Represents a set of individual block changes on the side of a chunk.
@@ -166,7 +166,7 @@ func (updater *neighbourUpdater) init(side ChunkSideDir) {
     updater.neighbour = nil
 }
 
-func (updater *neighbourUpdater) blockChanged(subLoc *SubChunkXYZ, blockType BlockID) {
+func (updater *neighbourUpdater) blockChanged(subLoc *SubChunkXyz, blockType BlockId) {
     if updater.neighbour == nil {
         // Don't remember changes to send if the neighbouring chunk is not present.
         return
@@ -193,7 +193,7 @@ func (updater *neighbourUpdater) flush() {
     }
 }
 
-func getSideBlockIndex(side ChunkSideDir, subLoc *SubChunkXYZ) (index int, ok bool) {
+func getSideBlockIndex(side ChunkSideDir, subLoc *SubChunkXyz) (index int, ok bool) {
     var h, h2, y SubChunkCoord
 
     if y >= ChunkSizeY {

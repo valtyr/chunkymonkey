@@ -9,12 +9,12 @@ import (
 )
 
 type ChunkStore interface {
-    LoadChunk(chunkLoc *ChunkXZ) (reader ChunkReader, err os.Error)
+    LoadChunk(chunkLoc *ChunkXz) (reader ChunkReader, err os.Error)
 }
 
 type ChunkReader interface {
     // Returns the chunk location.
-    ChunkLoc() *ChunkXZ
+    ChunkLoc() *ChunkXz
 
     // Returns the block IDs in the chunk.
     Blocks() []byte

@@ -55,12 +55,12 @@ func serveConn(clientConn net.Conn, remoteaddr string) {
 
     // Set up for parsing messages from server to client
     serverToClientReportChan := spliceParser(
-        func(reader io.Reader) { serverParser.SCParse(reader) },
+        func(reader io.Reader) { serverParser.ScParse(reader) },
         clientConn, serverConn)
 
     // Set up for parsing messages from client to server
     clientToServerReportChan := spliceParser(
-        func(reader io.Reader) { clientParser.CSParse(reader) },
+        func(reader io.Reader) { clientParser.CsParse(reader) },
         serverConn, clientConn)
 
     // Wait for the both relay/splices to stop, then we let the connections

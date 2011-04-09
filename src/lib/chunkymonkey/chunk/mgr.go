@@ -12,7 +12,7 @@ import (
 type ChunkManager struct {
     game       IGame
     chunkStore chunkstore.ChunkStore
-    blockTypes map[BlockID]IBlockType
+    blockTypes map[BlockId]IBlockType
     chunks     map[uint64]*Chunk
 }
 
@@ -26,7 +26,7 @@ func NewChunkManager(chunkStore chunkstore.ChunkStore, game IGame) *ChunkManager
 }
 
 // Get a chunk at given coordinates
-func (mgr *ChunkManager) Get(loc *ChunkXZ) (c IChunk) {
+func (mgr *ChunkManager) Get(loc *ChunkXz) (c IChunk) {
     var ok bool
     key := loc.ChunkKey()
 
@@ -46,8 +46,8 @@ func (mgr *ChunkManager) Get(loc *ChunkXZ) (c IChunk) {
     // Notify neighbouring chunk(s) (if any) that this chunk is now active, and
     // notify this chunk of its active neighbours
     linkNeighbours := func(from ChunkSideDir) {
-        dx, dz := from.GetDXz()
-        loc := ChunkXZ{
+        dx, dz := from.GetDxz()
+        loc := ChunkXz{
             X:  loc.X + dx,
             Z:  loc.Z + dz,
         }
@@ -84,14 +84,14 @@ func (mgr *ChunkManager) ChunksActive() <-chan IChunk {
 }
 
 // Return a channel to iterate over all chunks within a chunk's radius
-func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXZ) <-chan IChunk {
+func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXz) <-chan IChunk {
     c := make(chan IChunk)
     go func() {
-        curChunkXZ := ChunkXZ{0, 0}
+        curChunkXz := ChunkXz{0, 0}
         for z := loc.Z - ChunkRadius; z <= loc.Z+ChunkRadius; z++ {
             for x := loc.X - ChunkRadius; x <= loc.X+ChunkRadius; x++ {
-                curChunkXZ.X, curChunkXZ.Z = x, z
-                c <- mgr.Get(&curChunkXZ)
+                curChunkXz.X, curChunkXz.Z = x, z
+                c <- mgr.Get(&curChunkXz)
             }
         }
         close(c)

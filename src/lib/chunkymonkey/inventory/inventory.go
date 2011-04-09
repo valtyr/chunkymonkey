@@ -22,13 +22,13 @@ func (inv *Inventory) Init(size int) {
     }
 }
 
-func (inv *Inventory) Slot(slotID SlotID) *Slot {
-    if slotID < 0 || int(slotID) > len(inv.slots) {
+func (inv *Inventory) Slot(slotId SlotId) *Slot {
+    if slotId < 0 || int(slotId) > len(inv.slots) {
         return nil
     }
-    return &inv.slots[slotID]
+    return &inv.slots[slotId]
 }
 
-func (inv *Inventory) SendUpdate(writer io.Writer, windowID WindowID) os.Error {
-    return proto.WriteWindowItems(writer, windowID, inv.slotsProto)
+func (inv *Inventory) SendUpdate(writer io.Writer, windowId WindowId) os.Error {
+    return proto.WriteWindowItems(writer, windowId, inv.slotsProto)
 }

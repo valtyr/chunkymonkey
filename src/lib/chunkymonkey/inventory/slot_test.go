@@ -22,29 +22,29 @@ func TestSlot_Add(t *testing.T) {
     tests := []Test{
         {
             "one empty slot added to another",
-            Slot{ItemIDNull, 0, 0}, Slot{ItemIDNull, 0, 0},
-            Slot{ItemIDNull, 0, 0}, Slot{ItemIDNull, 0, 0},
+            Slot{ItemIdNull, 0, 0}, Slot{ItemIdNull, 0, 0},
+            Slot{ItemIdNull, 0, 0}, Slot{ItemIdNull, 0, 0},
         },
         // Tests involving the same item types: (or empty plus an item)
         {
             "1 + 0 => 1 + 0",
-            Slot{1, 1, 0}, Slot{ItemIDNull, 0, 0},
-            Slot{1, 1, 0}, Slot{ItemIDNull, 0, 0},
+            Slot{1, 1, 0}, Slot{ItemIdNull, 0, 0},
+            Slot{1, 1, 0}, Slot{ItemIdNull, 0, 0},
         },
         {
             "1 + 1 => 2 + 0",
             Slot{1, 1, 0}, Slot{1, 1, 0},
-            Slot{1, 2, 0}, Slot{ItemIDNull, 0, 0},
+            Slot{1, 2, 0}, Slot{ItemIdNull, 0, 0},
         },
         {
             "0 + 20 => 20 + 0",
-            Slot{ItemIDNull, 0, 0}, Slot{1, 20, 0},
-            Slot{1, 20, 0}, Slot{ItemIDNull, 0, 0},
+            Slot{ItemIdNull, 0, 0}, Slot{1, 20, 0},
+            Slot{1, 20, 0}, Slot{ItemIdNull, 0, 0},
         },
         {
             "0 + 64 => 64 + 0",
-            Slot{ItemIDNull, 0, 0}, Slot{1, 64, 0},
-            Slot{1, 64, 0}, Slot{ItemIDNull, 0, 0},
+            Slot{ItemIdNull, 0, 0}, Slot{1, 64, 0},
+            Slot{1, 64, 0}, Slot{ItemIdNull, 0, 0},
         },
         {
             "32 + 33 => 64 + 1 (hitting max quantity)",
@@ -69,12 +69,12 @@ func TestSlot_Add(t *testing.T) {
         {
             "1 + 1 => 2 + 0 where items' \"Uses\" value is the same",
             Slot{1, 1, 5}, Slot{1, 1, 5},
-            Slot{1, 2, 5}, Slot{ItemIDNull, 0, 0},
+            Slot{1, 2, 5}, Slot{ItemIdNull, 0, 0},
         },
         {
             "0 + 1 => 1 + 0 - carrying the \"use\" value",
-            Slot{ItemIDNull, 0, 0}, Slot{1, 1, 5},
-            Slot{1, 1, 5}, Slot{ItemIDNull, 0, 0},
+            Slot{ItemIdNull, 0, 0}, Slot{1, 1, 5},
+            Slot{1, 1, 5}, Slot{ItemIdNull, 0, 0},
         },
         // Tests involving different item types:
         {

@@ -25,9 +25,9 @@ type Game struct {
     chunkManager  *chunk.ChunkManager
     mainQueue     chan func(IGame)
     entityManager EntityManager
-    players       map[EntityID]IPlayer
+    players       map[EntityId]IPlayer
     time          TimeOfDay
-    blockTypes    map[BlockID]IBlockType
+    blockTypes    map[BlockId]IBlockType
     rand          *rand.Rand
     serverId      string
     worldStore    *worldstore.WorldStore
@@ -38,7 +38,7 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 
     game = &Game{
         mainQueue:  make(chan func(IGame), 256),
-        players:    make(map[EntityID]IPlayer),
+        players:    make(map[EntityId]IPlayer),
         blockTypes: block.LoadStandardBlockTypes(),
         rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
         worldStore: worldStore,
@@ -121,11 +121,11 @@ func (game *Game) Serve(addr string) {
     }
 }
 
-func (game *Game) GetStartPosition() *AbsXYZ {
+func (game *Game) GetStartPosition() *AbsXyz {
     return &game.worldStore.StartPosition
 }
 
-func (game *Game) GetBlockTypes() map[BlockID]IBlockType {
+func (game *Game) GetBlockTypes() map[BlockId]IBlockType {
     return game.blockTypes
 }
 
@@ -143,7 +143,7 @@ func (game *Game) AddEntity(entity *Entity) {
 func (game *Game) AddPlayer(newPlayer IPlayer) {
     entity := newPlayer.GetEntity()
     game.AddEntity(entity)
-    game.players[entity.EntityID] = newPlayer
+    game.players[entity.EntityId] = newPlayer
     name := newPlayer.GetName()
     game.SendChatMessage(fmt.Sprintf("%s has joined", name))
 
@@ -182,10 +182,10 @@ func (game *Game) RemovePlayer(player IPlayer) {
     // Destroy player for other players
     buf := &bytes.Buffer{}
     entity := player.GetEntity()
-    proto.WriteEntityDestroy(buf, entity.EntityID)
+    proto.WriteEntityDestroy(buf, entity.EntityId)
     game.MulticastRadiusPacket(buf.Bytes(), player)
 
-    game.players[entity.EntityID] = nil, false
+    game.players[entity.EntityId] = nil, false
     game.entityManager.RemoveEntity(entity)
     game.SendChatMessage(fmt.Sprintf("%s has left", player.GetName()))
 }
@@ -262,7 +262,7 @@ func (game *Game) tick() {
 }
 
 // Transmit a packet to all players in chunk radius
-func (game *Game) MulticastChunkPacket(packet []byte, loc *ChunkXZ) {
+func (game *Game) MulticastChunkPacket(packet []byte, loc *ChunkXz) {
     p1, p2 := getChunkRadius(loc)
 
     for _, receiver := range game.players {
@@ -289,13 +289,13 @@ func (game *Game) MulticastRadiusPacket(packet []byte, sender IPlayer) {
     }
 }
 
-func getChunkRadius(loc *ChunkXZ) (p1, p2 *ChunkXZ) {
+func getChunkRadius(loc *ChunkXz) (p1, p2 *ChunkXz) {
 
-    p1 = &ChunkXZ{
+    p1 = &ChunkXz{
         loc.X - ChunkRadius,
         loc.Z - ChunkRadius,
     }
-    p2 = &ChunkXZ{
+    p2 = &ChunkXz{
         loc.X + ChunkRadius,
         loc.Z + ChunkRadius,
     }

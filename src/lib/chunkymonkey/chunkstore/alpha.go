@@ -20,7 +20,7 @@ func NewChunkStoreAlpha(worldPath string) ChunkStore {
     }
 }
 
-func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXZ) string {
+func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXz) string {
     return path.Join(
         s.worldPath,
         base36Encode(int32(chunkLoc.X&63)),
@@ -29,7 +29,7 @@ func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXZ) string {
 }
 
 // Load a chunk from its NBT representation
-func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXZ) (reader ChunkReader, err os.Error) {
+func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXz) (reader ChunkReader, err os.Error) {
     if err != nil {
         return
     }
