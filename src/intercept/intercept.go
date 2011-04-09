@@ -39,7 +39,7 @@ func serveConn(clientConn net.Conn, remoteaddr string) {
     log.Printf("(%s) Client connected ", clientAddr)
 
     log.Printf("(%s) Creating relay to server %s", clientAddr, remoteaddr)
-    serverConn, err := net.Dial("tcp", "", remoteaddr)
+    serverConn, err := net.Dial("tcp", remoteaddr)
 
     if err != nil {
         log.Printf("(%s) Error connecting to %s: %v", clientAddr, remoteaddr, err)
