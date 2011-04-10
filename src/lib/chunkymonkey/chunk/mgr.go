@@ -28,19 +28,27 @@ func NewChunkManager(chunkStore chunkstore.ChunkStore, game IGame) *ChunkManager
 // Get a chunk at given coordinates
 func (mgr *ChunkManager) Get(loc *ChunkXz) (c IChunk) {
     var ok bool
+    var chunk *Chunk
     key := loc.ChunkKey()
 
-    if c, ok = mgr.chunks[key]; ok {
+    if chunk, ok = mgr.chunks[key]; ok {
+        c = chunk
         return
     }
 
     chunkReader, err := mgr.chunkStore.LoadChunk(loc)
     if err != nil {
         log.Printf("ChunkManager.Get(%+v): %s", loc, err.String())
-        return nil
+        return
     }
 
-    chunk := newChunkFromReader(chunkReader, mgr)
+    if chunkReader == nil {
+        // Chunk doesn't exist in store.
+        // TODO Generate new chunks.
+        return
+    }
+
+    chunk = newChunkFromReader(chunkReader, mgr)
     c = chunk
 
     // Notify neighbouring chunk(s) (if any) that this chunk is now active, and

@@ -48,7 +48,12 @@ func (s *chunkStoreBeta) LoadChunk(chunkLoc *ChunkXz) (reader ChunkReader, err o
         s.regionFiles[regionLoc.regionKey()] = cfr
     }
 
-    return cfr.ReadChunkData(chunkLoc)
+    chunkReader, err := cfr.ReadChunkData(chunkLoc)
+    if chunkReader != nil {
+        reader = chunkReader
+    }
+
+    return
 }
 
 // A chunk file header entry.
