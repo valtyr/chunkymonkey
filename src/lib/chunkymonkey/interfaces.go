@@ -106,7 +106,5 @@ type IGame interface {
     AddPlayer(player IPlayer)
     RemovePlayer(player IPlayer)
     MulticastPacket(packet []byte, except interface{})
-    MulticastChunkPacket(packet []byte, loc *ChunkXz)
-    MulticastRadiusPacket(packet []byte, sender IPlayer)
     SendChatMessage(message string)
 }

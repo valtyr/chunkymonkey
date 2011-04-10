@@ -153,8 +153,8 @@ func (game *Game) AddPlayer(newPlayer IPlayer) {
         if err := newPlayer.SendSpawn(buf); err != nil {
             return
         }
-        game.Enqueue(func(game IGame) {
-            game.MulticastRadiusPacket(buf.Bytes(), newPlayer)
+        game.Enqueue(func(_ IGame) {
+            game.multicastRadiusPacket(buf.Bytes(), newPlayer)
         })
     })
 
@@ -183,7 +183,7 @@ func (game *Game) RemovePlayer(player IPlayer) {
     buf := &bytes.Buffer{}
     entity := player.GetEntity()
     proto.WriteEntityDestroy(buf, entity.EntityId)
-    game.MulticastRadiusPacket(buf.Bytes(), player)
+    game.multicastRadiusPacket(buf.Bytes(), player)
 
     game.players[entity.EntityId] = nil, false
     game.entityManager.RemoveEntity(entity)
@@ -261,21 +261,8 @@ func (game *Game) tick() {
     game.physicsTick()
 }
 
-// Transmit a packet to all players in chunk radius
-func (game *Game) MulticastChunkPacket(packet []byte, loc *ChunkXz) {
-    p1, p2 := getChunkRadius(loc)
-
-    for _, receiver := range game.players {
-        receiver.Enqueue(func(receiver IPlayer) {
-            if receiver.IsWithin(p1, p2) {
-                receiver.TransmitPacket(packet)
-            }
-        })
-    }
-}
-
 // Transmit a packet to all players near the sender (except the sender itself)
-func (game *Game) MulticastRadiusPacket(packet []byte, sender IPlayer) {
+func (game *Game) multicastRadiusPacket(packet []byte, sender IPlayer) {
     p1, p2 := getChunkRadius(sender.LockedGetChunkPosition())
 
     for _, receiver := range game.players {
