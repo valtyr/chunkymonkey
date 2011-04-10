@@ -38,14 +38,14 @@ func (mgr *ChunkManager) Get(loc *ChunkXz) (c IChunk) {
 
     chunkReader, err := mgr.chunkStore.LoadChunk(loc)
     if err != nil {
-        log.Printf("ChunkManager.Get(%+v): %s", loc, err.String())
-        return
-    }
-
-    if chunkReader == nil {
-        // Chunk doesn't exist in store.
-        // TODO Generate new chunks.
-        return
+        if _, ok := err.(chunkstore.NoSuchChunkError); !ok {
+            log.Printf("ChunkManager.Get(%+v): %s", loc, err.String())
+            return
+        } else {
+            // Chunk doesn't exist in store.
+            // TODO Generate new chunks.
+            return
+        }
     }
 
     chunk = newChunkFromReader(chunkReader, mgr)

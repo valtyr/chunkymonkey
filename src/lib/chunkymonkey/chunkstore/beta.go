@@ -113,6 +113,9 @@ type regionFileReader struct {
 func newRegionFileReader(filePath string) (cfr *regionFileReader, err os.Error) {
     file, err := os.Open(filePath, os.O_RDONLY, 0)
     if err != nil {
+        if sysErr, ok := err.(*os.SyscallError); ok && sysErr.Errno == os.ENOENT {
+            err = NoSuchChunkError(false)
+        }
         return
     }
 
@@ -138,7 +141,7 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXz) (r *chunkReader, e
 
     if !offset.IsPresent() {
         // Chunk doesn't exist in file
-        err = nil
+        err = NoSuchChunkError(false)
         return
     }
 

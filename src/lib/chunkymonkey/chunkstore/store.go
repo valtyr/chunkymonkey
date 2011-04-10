@@ -55,3 +55,9 @@ type UnknownLevelVersion int32
 func (err UnknownLevelVersion) String() string {
     return fmt.Sprintf("Unknown level version %d", err)
 }
+
+type NoSuchChunkError bool
+
+func (err NoSuchChunkError) String() string {
+    return "Chunk does not exist."
+}

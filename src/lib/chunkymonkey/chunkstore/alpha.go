@@ -36,6 +36,9 @@ func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXz) (reader ChunkReader, err 
 
     file, err := os.Open(s.chunkPath(chunkLoc), os.O_RDONLY, 0)
     if err != nil {
+        if sysErr, ok := err.(*os.SyscallError); ok && sysErr.Errno == os.ENOENT {
+            err = NoSuchChunkError(false)
+        }
         return
     }
     defer file.Close()
