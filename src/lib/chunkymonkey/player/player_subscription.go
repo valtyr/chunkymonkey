@@ -9,8 +9,14 @@ import (
     .   "chunkymonkey/types"
 )
 
+const (
+    // The radius within which player's exact location is relayed to chunks.
+    positionUpdateRadius = ChunkCoord(1)
+)
+
 // Keeps track of chunks that the player is subscribed to, and adds/removes the
-// player from chunks as they move around.
+// player from chunks as they move around. Also keeps nearby chunks up to date
+// with the player's position.
 // TODO implement the movement add/remove tracking
 type chunkSubscriptions struct {
     player        *Player
@@ -39,18 +45,7 @@ func (cs *chunkSubscriptions) move(newPos *AbsXyz, nearbySent func()) {
     }
 
     // Get all the chunks together that we're going to send.
-    chunksChan := make(chan []IChunk)
-    cs.player.game.Enqueue(func(game IGame) {
-        chunks := make([]IChunk, 0, len(chunkLocLoadOrder))
-        mgr := cs.player.game.GetChunkManager()
-        for _, chunkLoc := range chunkLocLoadOrder {
-            if chunk := mgr.Get(&chunkLoc); chunk != nil {
-                chunks = append(chunks, chunk)
-            }
-        }
-        chunksChan <- chunks
-    })
-    chunksToAdd := <-chunksChan
+    chunksToAdd := getChunks(cs.player.game, chunkLocLoadOrder)
 
     // Remember the chunks that we're going to be subscribed to.
     for _, chunk := range chunksToAdd {
@@ -61,66 +56,19 @@ func (cs *chunkSubscriptions) move(newPos *AbsXyz, nearbySent func()) {
         cs.chunks[chunk.GetLoc().ChunkKey()] = nil, false
     }
 
-    // Send all chunks in the background (otherwise we can deadlock on a full
-    // txQueue in the player goroutine).
-    go func() {
-        chunksSent := 0
-        if len(chunksToAdd) > 0 {
-            // Warn client to allocate memory for the chunks we're sending.
-            buf := &bytes.Buffer{}
-            for _, chunk := range chunksToAdd {
-                proto.WritePreChunk(buf, chunk.GetLoc(), ChunkInit)
-            }
-            cs.player.TransmitPacket(buf.Bytes())
-
-            // Send the important chunks.
-            waitChunks := &sync.WaitGroup{}
-            for _, chunk := range chunksToAdd {
-                chunkLoc := chunk.GetLoc()
-                dx := (chunkLoc.X - cs.curChunk.X).Abs()
-                dz := (chunkLoc.Z - cs.curChunk.Z).Abs()
-                if dx > MinChunkRadius || dz > MinChunkRadius {
-                    // This chunk isn't important, wait until after other login data
-                    // has been sent before sending this and chunks following.
-                    break
-                }
-                chunksSent++
-                waitChunks.Add(1)
-                chunk.Enqueue(func(chunk IChunk) {
-                    chunk.AddSubscriber(cs.player)
-                    waitChunks.Done()
-                })
-            }
-            waitChunks.Wait()
-        }
-
-        if nearbySent != nil {
-            nearbySent()
-        }
-
-        if len(chunksToAdd) > 0 {
-            // Send the remaining chunks. We don't need to wait for these to complete
-            // before continuing with talking to the client.
-            for _, chunk := range chunksToAdd[chunksSent:] {
-                chunk.Enqueue(func(chunk IChunk) {
-                    chunk.AddSubscriber(cs.player)
-                })
-            }
-        }
-
-        // Unsubscribe from old chunks
-        for _, chunk := range chunksToRemove {
-            chunk.Enqueue(func(chunk IChunk) {
-                chunk.RemoveSubscriber(cs.player, true)
-            })
-        }
-    }()
+    // Send/remove all chunks in the background (otherwise we can deadlock on a
+    // full txQueue in the player goroutine).
+    go addRemoveChunkSubs(cs.player, cs.curChunk, nearbySent, chunksToAdd, chunksToRemove)
 }
 
-// Removes all subscriptions to chunks.
+// Removes all subscriptions to chunks without sending packets to "unload" the
+// chunks from the client.
 func (cs *chunkSubscriptions) clear() {
+    player := cs.player
     for _, chunk := range cs.chunks {
-        chunk.RemoveSubscriber(cs.player, false)
+        chunk.Enqueue(func(chunk IChunk) {
+            chunk.RemoveSubscriber(player, false)
+        })
     }
 }
 
@@ -201,4 +149,71 @@ func chunkOrder(radius ChunkCoord, center *ChunkXz) (locs []ChunkXz) {
         }
     }
     return
+}
+
+func getChunks(game IGame, chunkLocOrder []ChunkXz) []IChunk {
+    chunksChan := make(chan []IChunk)
+    game.Enqueue(func(game IGame) {
+        chunks := make([]IChunk, 0, len(chunkLocOrder))
+        mgr := game.GetChunkManager()
+        for _, chunkLoc := range chunkLocOrder {
+            if chunk := mgr.Get(&chunkLoc); chunk != nil {
+                chunks = append(chunks, chunk)
+            }
+        }
+        chunksChan <- chunks
+    })
+    return <-chunksChan
+}
+
+func addRemoveChunkSubs(player IPlayer, curChunk ChunkXz, nearbySent func(), chunksToAdd []IChunk, chunksToRemove []IChunk) {
+    if len(chunksToAdd) > 0 {
+        chunksSent := 0
+        if nearbySent != nil {
+            // Warn client to allocate memory for the chunks we're sending.
+            buf := &bytes.Buffer{}
+            for _, chunk := range chunksToAdd {
+                proto.WritePreChunk(buf, chunk.GetLoc(), ChunkInit)
+            }
+            player.TransmitPacket(buf.Bytes())
+
+            // Send the important chunks.
+            waitChunks := &sync.WaitGroup{}
+            for _, chunk := range chunksToAdd {
+                chunkLoc := chunk.GetLoc()
+                dx := (chunkLoc.X - curChunk.X).Abs()
+                dz := (chunkLoc.Z - curChunk.Z).Abs()
+                if dx > MinChunkRadius || dz > MinChunkRadius {
+                    // This chunk isn't important, wait until after other login
+                    // data has been sent before sending this and chunks
+                    // following.
+                    break
+                }
+                chunksSent++
+                waitChunks.Add(1)
+                chunk.Enqueue(func(chunk IChunk) {
+                    chunk.AddSubscriber(player)
+                    waitChunks.Done()
+                })
+            }
+            waitChunks.Wait()
+
+            nearbySent()
+        }
+
+        // Send the remaining chunks. We don't need to wait for these to complete
+        // before continuing with talking to the client.
+        for _, chunk := range chunksToAdd[chunksSent:] {
+            chunk.Enqueue(func(chunk IChunk) {
+                chunk.AddSubscriber(player)
+            })
+        }
+    }
+
+    // Unsubscribe from old chunks
+    for _, chunk := range chunksToRemove {
+        chunk.Enqueue(func(chunk IChunk) {
+            chunk.RemoveSubscriber(player, true)
+        })
+    }
 }
