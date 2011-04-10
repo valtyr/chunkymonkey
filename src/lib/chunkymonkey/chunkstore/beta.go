@@ -45,6 +45,7 @@ func (s *chunkStoreBeta) LoadChunk(chunkLoc *ChunkXz) (reader ChunkReader, err o
         if err != nil {
             return
         }
+        s.regionFiles[regionLoc.regionKey()] = cfr
     }
 
     return cfr.ReadChunkData(chunkLoc)
@@ -140,6 +141,7 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXz) (r *chunkReader, e
 
     if sectorIndex == 0 || sectorCount == 0 {
         err = os.NewError("Header gave bad chunk offset.")
+        return
     }
 
     cfr.file.Seek(int64(sectorIndex)*regionFileSectorSize, 0)
@@ -151,14 +153,15 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXz) (r *chunkReader, e
     binary.Read(cfr.file, binary.BigEndian, &header)
     if header.DataSize > maxChunkDataSize {
         err = os.NewError("Chunk is too big for the sectors it is within.")
+        return
     }
 
     dataReader, err := header.GetDataReader(cfr.file)
     if err != nil {
         return
     }
-
     defer dataReader.Close()
+
     r, err = newChunkReader(dataReader)
 
     return
