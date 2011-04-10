@@ -106,8 +106,8 @@ func (cdh *chunkDataHeader) GetDataReader(raw io.Reader) (output io.ReadCloser, 
 
 // Handle on a chunk file - used to read chunk data from the file.
 type regionFileReader struct {
-    offsets  regionFileHeader
-    file     *os.File
+    offsets regionFileHeader
+    file    *os.File
 }
 
 func newRegionFileReader(filePath string) (cfr *regionFileReader, err os.Error) {
@@ -182,14 +182,14 @@ type regionLoc struct {
 }
 
 func regionLocForChunkXz(chunkLoc *ChunkXz) regionLoc {
-    return regionLoc {
-        regionCoord(chunkLoc.X>>regionFileEdgeShift),
-        regionCoord(chunkLoc.Z>>regionFileEdgeShift),
+    return regionLoc{
+        regionCoord(chunkLoc.X >> regionFileEdgeShift),
+        regionCoord(chunkLoc.Z >> regionFileEdgeShift),
     }
 }
 
 func (loc *regionLoc) regionKey() uint64 {
-    return uint64(loc.X) << 32 | uint64(uint32(loc.Z))
+    return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
 }
 
 func (loc *regionLoc) regionFilePath(worldPath string) string {
