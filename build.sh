@@ -3,6 +3,10 @@
 
 clean_for "build"
 
-gd src/lib \
-    && gd -o chunkymonkey -I src/lib src/chunkymonkey \
-    && gd -o intercept -I src/lib src/intercept
+BINARIES="chunkymonkey intercept inspectlevel"
+
+gd src/lib || exit $?
+
+for BINARY in $BINARIES; do
+    gd -o $BINARY -I src/lib src/$BINARY || exit $?
+done

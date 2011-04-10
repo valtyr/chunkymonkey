@@ -75,12 +75,12 @@ func (end *End) Lookup(path string) Tag {
 }
 
 type NamedTag struct {
-    name string
-    tag  Tag
+    Name string
+    Tag  Tag
 }
 
 func (n *NamedTag) GetType() byte {
-    return TagNamed | n.tag.GetType()
+    return TagNamed | n.Tag.GetType()
 }
 
 func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
@@ -104,22 +104,22 @@ func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
         return
     }
 
-    n.name = name.Value
-    n.tag = value
+    n.Name = name.Value
+    n.Tag = value
     return
 }
 
 func (n *NamedTag) Lookup(path string) Tag {
     components := strings.Split(path, "/", 2)
-    if components[0] != n.name {
+    if components[0] != n.Name {
         return nil
     }
 
     if len(components) == 1 {
-        return n.tag
+        return n.Tag
     }
 
-    return n.tag.Lookup(components[1])
+    return n.Tag.Lookup(components[1])
 }
 
 type Byte struct {
@@ -319,7 +319,7 @@ func (*List) Lookup(path string) Tag {
 }
 
 type Compound struct {
-    tags map[string]*NamedTag
+    Tags map[string]*NamedTag
 }
 
 func (*Compound) GetType() byte {
@@ -339,16 +339,16 @@ func (c *Compound) Read(reader io.Reader) (err os.Error) {
             break
         }
 
-        tags[tag.name] = tag
+        tags[tag.Name] = tag
     }
 
-    c.tags = tags
+    c.Tags = tags
     return
 }
 
 func (c *Compound) Lookup(path string) (tag Tag) {
     components := strings.Split(path, "/", 2)
-    tag, ok := c.tags[components[0]]
+    tag, ok := c.Tags[components[0]]
     if !ok {
         return nil
     }

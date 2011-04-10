@@ -53,3 +53,7 @@ func (r *chunkReader) SkyLight() []byte {
 func (r *chunkReader) HeightMap() []byte {
     return r.chunkTag.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value
 }
+
+func (r *chunkReader) GetRootTag() *nbt.NamedTag {
+    return r.chunkTag
+}
