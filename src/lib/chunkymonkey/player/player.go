@@ -57,7 +57,7 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
         txQueue:   make(chan []byte, 128),
     }
 
-    player.chunkSubs.init(player)
+    player.chunkSubs.Init(player)
 
     player.cursor.Init()
     player.inventory.Init()
@@ -153,7 +153,7 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
         return
     }
     player.position = *position
-    player.chunkSubs.move(position, nil)
+    player.chunkSubs.Move(position, nil)
 
     // TODO: Should keep track of when players enter/leave their mutual radius
     // of "awareness". I.e a client should receive a RemoveEntity packet when
@@ -319,5 +319,5 @@ func (player *Player) postLogin() {
         player.TransmitPacket(buf.Bytes())
     }
 
-    player.chunkSubs.move(&player.position, nearbySent)
+    player.chunkSubs.Move(&player.position, nearbySent)
 }

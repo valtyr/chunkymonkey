@@ -18,19 +18,20 @@ import (
 
 // A chunk is slice of the world map
 type Chunk struct {
-    mainQueue    chan func(IChunk)
-    mgr          *ChunkManager
-    loc          ChunkXz
-    blocks       []byte
-    blockData    []byte
-    blockLight   []byte
-    skyLight     []byte
-    heightMap    []byte
-    items        map[EntityId]IItem
-    rand         *rand.Rand
-    neighbours   neighboursCache
-    cachedPacket []byte                 // Cached packet data for this block.
-    subscribers  map[IPacketSender]bool // Subscribers getting updates from the chunk
+    mainQueue     chan func(IChunk)
+    mgr           *ChunkManager
+    loc           ChunkXz
+    blocks        []byte
+    blockData     []byte
+    blockLight    []byte
+    skyLight      []byte
+    heightMap     []byte
+    items         map[EntityId]IItem
+    rand          *rand.Rand
+    neighbours    neighboursCache
+    cachedPacket  []byte                    // Cached packet data for this block.
+    subscribers   map[IPacketSender]bool    // Subscribers getting updates from the chunk.
+    subscriberPos map[IPacketSender]*AbsXyz // Player positions that are near or in the chunk.
 }
 
 func newChunkFromReader(reader chunkstore.ChunkReader, mgr *ChunkManager) (chunk *Chunk) {
@@ -281,6 +282,10 @@ func (chunk *Chunk) multicastSubscribers(packet []byte) {
     for subscriber, _ := range chunk.subscribers {
         subscriber.TransmitPacket(packet)
     }
+}
+
+func (chunk *Chunk) SetSubscriberPosition(subscriber IPacketSender, pos *AbsXyz) {
+    chunk.subscriberPos[subscriber] = pos, pos != nil
 }
 
 func (chunk *Chunk) chunkPacket() []byte {

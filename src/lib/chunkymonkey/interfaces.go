@@ -81,6 +81,10 @@ type IChunk interface {
     // sendPacket is true, then an unload-chunk packet is sent.
     RemoveSubscriber(subscriber IPacketSender, sendPacket bool)
 
+    // Tells the chunk about the position of a player in/near the chunk. pos =
+    // nil indicates that the player is no longer nearby.
+    SetSubscriberPosition(subscriber IPacketSender, pos *AbsXyz)
+
     // Get packet data for the chunk
     SendUpdate()
 }

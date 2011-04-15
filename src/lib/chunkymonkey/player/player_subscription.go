@@ -11,23 +11,27 @@ import (
 
 const (
     // The radius within which player's exact location is relayed to chunks.
+    // For item pickup the only values that make any sense are 0 or 1.
     positionUpdateRadius = ChunkCoord(1)
+    numPosChunksEdge = positionUpdateRadius * 2 + 1
+    numPosChunks = numPosChunksEdge * numPosChunksEdge
 )
 
 // Keeps track of chunks that the player is subscribed to, and adds/removes the
 // player from chunks as they move around. Also keeps nearby chunks up to date
 // with the player's position.
-// TODO implement the movement add/remove tracking
 type chunkSubscriptions struct {
     player        *Player
     chunks        map[uint64]IChunk // Map from ChunkKeys to chunks
+    chunksWithLoc map[uint64]IChunk // Chunks that have previously received a position update.
     curChunk      ChunkXz           // Current chunk that the player is on.
     curChunkValid bool              // States if curChunkValid is valid.
 }
 
-func (cs *chunkSubscriptions) init(player *Player) {
+func (cs *chunkSubscriptions) Init(player *Player) {
     cs.player = player
     cs.chunks = make(map[uint64]IChunk)
+    cs.chunksWithLoc = make(map[uint64]IChunk)
     cs.curChunkValid = false
 }
 
@@ -37,28 +41,29 @@ func (cs *chunkSubscriptions) init(player *Player) {
 // Subscribes to all chunks in MinChunkRadius, then calls nearbySent(), then
 // subscribes to the remaining chunks out to ChunkRadius. Note that the bulk of
 // this work happens in a seperate goroutine (including the call to nearbySent).
-func (cs *chunkSubscriptions) move(newPos *AbsXyz, nearbySent func()) {
-    chunkLocLoadOrder, chunksToRemove := cs.moveChunkLocs(newPos)
+func (cs *chunkSubscriptions) Move(newPos *AbsXyz, nearbySent func()) {
+    chunkLocLoadOrder, chunksToRemove, changedChunk := cs.moveChunkLocs(newPos)
 
-    if len(chunkLocLoadOrder) == 0 && len(chunksToRemove) == 0 {
-        return
+    // Subscribe/unsubscribe from chunk updates.
+    if len(chunkLocLoadOrder) > 0 || len(chunksToRemove) > 0 {
+        // Get all the chunks together that we're going to send.
+        chunksToAdd := getChunks(cs.player.game, chunkLocLoadOrder)
+
+        // Remember the chunks that we're going to be subscribed to.
+        for _, chunk := range chunksToAdd {
+            cs.chunks[chunk.GetLoc().ChunkKey()] = chunk
+        }
+        // Forget the chunks that we're removing subscription from.
+        for _, chunk := range chunksToRemove {
+            cs.chunks[chunk.GetLoc().ChunkKey()] = nil, false
+        }
+
+        // Send/remove all chunks in the background (otherwise we can deadlock on a
+        // full txQueue in the player goroutine).
+        go addRemoveChunkSubs(cs.player, cs.curChunk, nearbySent, chunksToAdd, chunksToRemove)
     }
 
-    // Get all the chunks together that we're going to send.
-    chunksToAdd := getChunks(cs.player.game, chunkLocLoadOrder)
-
-    // Remember the chunks that we're going to be subscribed to.
-    for _, chunk := range chunksToAdd {
-        cs.chunks[chunk.GetLoc().ChunkKey()] = chunk
-    }
-    // Forget the chunks that we're removing subscription from.
-    for _, chunk := range chunksToRemove {
-        cs.chunks[chunk.GetLoc().ChunkKey()] = nil, false
-    }
-
-    // Send/remove all chunks in the background (otherwise we can deadlock on a
-    // full txQueue in the player goroutine).
-    go addRemoveChunkSubs(cs.player, cs.curChunk, nearbySent, chunksToAdd, chunksToRemove)
+    cs.updateChunksWithLoc(newPos, changedChunk)
 }
 
 // Removes all subscriptions to chunks without sending packets to "unload" the
@@ -74,7 +79,7 @@ func (cs *chunkSubscriptions) clear() {
 
 // Work out which chunks to send following a move, and in which order. Also
 // returns the chunks that should be removed.
-func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXyz) (chunkLocLoadOrder []ChunkXz, chunksToRemove []IChunk) {
+func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXyz) (chunkLocLoadOrder []ChunkXz, chunksToRemove []IChunk, changedChunk bool) {
     if cs.curChunkValid {
         // Player moving within the world. We remove old chunks and add new ones.
         var newChunkLoc ChunkXz
@@ -82,7 +87,7 @@ func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXyz) (chunkLocLoadOrder [
 
         if newChunkLoc.X == cs.curChunk.X && newChunkLoc.Z == cs.curChunk.Z {
             // Still on the same chunk - nothing to be done.
-            return nil, nil
+            return nil, nil, false
         }
 
         // Very sub-optimal way to determine new chunks to load and their
@@ -117,7 +122,50 @@ func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXyz) (chunkLocLoadOrder [
         cs.curChunkValid = true
         chunkLocLoadOrder = chunkOrder(ChunkRadius, &cs.curChunk)
     }
+    changedChunk = true
     return
+}
+
+func (cs *chunkSubscriptions) updateChunksWithLoc(newPos *AbsXyz, changedChunk bool) {
+    // Update immediately adjacent chunks with player position.
+    if changedChunk {
+        // Remove previously adjacent chunks.
+        for key, chunk := range cs.chunksWithLoc {
+            chunkLoc := chunk.GetLoc()
+            dx := (chunkLoc.X - cs.curChunk.X).Abs()
+            dz := (chunkLoc.Z - cs.curChunk.Z).Abs()
+            if dx > positionUpdateRadius || dz > positionUpdateRadius {
+                // Tell chunk to forget about player position.
+                chunk.Enqueue(func(chunk IChunk) {
+                    chunk.SetSubscriberPosition(cs.player, nil)
+                })
+                cs.chunksWithLoc[key] = nil, false
+            }
+        }
+
+        // Add newly adjacent chunks.
+        var cursor ChunkXz
+        // Assumes that ChunkRadius > positionUpdateRadius to avoid doing
+        // additional chunkmanager lookups.
+        for cursor.X = cs.curChunk.X-positionUpdateRadius; cursor.X <= cs.curChunk.X+positionUpdateRadius; cursor.X++ {
+            for cursor.Z = cs.curChunk.Z-positionUpdateRadius; cursor.Z <= cs.curChunk.Z+positionUpdateRadius; cursor.Z++ {
+                key := cursor.ChunkKey()
+                if chunk, ok := cs.chunksWithLoc[key]; !ok {
+                    if chunk, ok = cs.chunks[key]; ok {
+                        cs.chunksWithLoc[key] = chunk
+                    }
+                }
+            }
+        }
+    }
+
+    // Send player position updates to adjacent chunks.
+    posCopy := newPos.Copy()
+    for _, chunk := range cs.chunksWithLoc {
+        chunk.Enqueue(func(chunk IChunk) {
+            chunk.SetSubscriberPosition(cs.player, posCopy)
+        })
+    }
 }
 
 func chunkOrder(radius ChunkCoord, center *ChunkXz) (locs []ChunkXz) {
