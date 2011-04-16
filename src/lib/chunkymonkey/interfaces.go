@@ -7,6 +7,7 @@ import (
 
     "chunkymonkey/entity"
     "chunkymonkey/physics"
+    "chunkymonkey/slot"
     .   "chunkymonkey/types"
 )
 
@@ -40,6 +41,7 @@ type IPlayer interface {
 type IItem interface {
     // Safe to call from outside of chunk's own goroutine
     GetEntity() *entity.Entity // Only the game mainloop may modify the return value
+    GetSlot() *slot.Slot
 
     // Item methods must be called from the goroutine of their parent chunk.
     // Note that items move between chunks.

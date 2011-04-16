@@ -4,6 +4,7 @@ import (
     "io"
     "os"
 
+    "chunkymonkey/slot"
     .   "chunkymonkey/types"
 )
 
@@ -62,6 +63,6 @@ func (inv *PlayerInventory) SetHolding(holding SlotId) {
 }
 
 // Returns the slot that is the current "held" item.
-func (inv *PlayerInventory) HeldItem() *Slot {
+func (inv *PlayerInventory) HeldItem() *slot.Slot {
     return inv.Slot(inv.holding + playerInvHeldStart)
 }

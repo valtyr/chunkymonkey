@@ -14,6 +14,7 @@ import (
     .   "chunkymonkey/interfaces"
     "chunkymonkey/inventory"
     "chunkymonkey/proto"
+    "chunkymonkey/slot"
     .   "chunkymonkey/types"
 )
 
@@ -38,7 +39,7 @@ type Player struct {
     look      LookDegrees
     chunkSubs chunkSubscriptions
 
-    cursor    inventory.Slot // Item being moved by mouse cursor.
+    cursor    slot.Slot // Item being moved by mouse cursor.
     inventory inventory.PlayerInventory
 
     mainQueue chan func(IPlayer)
@@ -311,7 +312,7 @@ func (player *Player) OfferItem(item IItem) (taken bool) {
 
     buf := &bytes.Buffer{}
 
-    slotChanged := func(slotId SlotId, slot *inventory.Slot) {
+    slotChanged := func(slotId SlotId, slot *slot.Slot) {
         slot.SendUpdate(buf, WindowIdInventory, slotId)
     }
 

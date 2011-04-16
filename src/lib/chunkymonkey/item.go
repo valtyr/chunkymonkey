@@ -7,6 +7,7 @@ import (
     "chunkymonkey/entity"
     "chunkymonkey/physics"
     "chunkymonkey/proto"
+    "chunkymonkey/slot"
     .   "chunkymonkey/types"
 )
 
@@ -112,20 +113,18 @@ const (
 
 type Item struct {
     entity.Entity
-    // TODO consider using inventory.Slot as a "base" for this struct.
-    itemType    ItemId
-    count       ItemCount
+    slot.Slot
     physObj     physics.PointObject
     orientation OrientationBytes
 }
 
 func NewItem(itemType ItemId, count ItemCount, position *AbsXyz, velocity *AbsVelocity) (item *Item) {
     item = &Item{
-        itemType: itemType,
-        count:    count,
         // TODO proper orientation
         orientation: OrientationBytes{0, 0, 0},
     }
+    item.Slot.ItemType = itemType
+    item.Slot.Count = count
     item.physObj.Init(position, velocity)
     return
 }
@@ -134,16 +133,20 @@ func (item *Item) GetEntity() *entity.Entity {
     return &item.Entity
 }
 
+func (item *Item) GetSlot() *slot.Slot {
+    return &item.Slot
+}
+
 func (item *Item) GetItemType() ItemId {
-    return item.itemType
+    return item.ItemType
 }
 
 func (item *Item) GetCount() ItemCount {
-    return item.count
+    return item.Count
 }
 
 func (item *Item) SetCount(count ItemCount) {
-    item.count = count
+    item.Count = count
 }
 
 func (item *Item) GetPosition() *AbsXyz {
@@ -153,7 +156,7 @@ func (item *Item) GetPosition() *AbsXyz {
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
     // TODO pass uses value instead of 0
     err = proto.WriteItemSpawn(
-        writer, item.EntityId, item.itemType, item.count, 0,
+        writer, item.EntityId, item.ItemType, item.Count, 0,
         &item.physObj.LastSentPosition, &item.orientation)
     if err != nil {
         return
