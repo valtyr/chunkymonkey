@@ -36,10 +36,9 @@ const (
 // Item-related types
 
 // Item type ID
-// TODO Rename to ItemTypeId to avoid confusion with item entities.
-type ItemId int16
+type ItemTypeId int16
 
-const ItemIdNull = ItemId(-1)
+const ItemTypeIdNull = ItemTypeId(-1)
 
 // Number of times that an item has been used
 type ItemData int16

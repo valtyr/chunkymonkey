@@ -1,4 +1,4 @@
-package inventory
+package slot
 
 import (
     "testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func slotEq(s1, s2 *Slot) bool {
-    return (s1.ItemType == s2.ItemType &&
+    return (s1.ItemTypeId == s2.ItemTypeId &&
         s1.Count == s2.Count &&
         s1.Data == s2.Data)
 }
@@ -23,33 +23,33 @@ func TestSlot_Add(t *testing.T) {
     tests := []Test{
         {
             "one empty slot added to another",
-            Slot{ItemIdNull, 0, 0}, Slot{ItemIdNull, 0, 0},
-            Slot{ItemIdNull, 0, 0}, Slot{ItemIdNull, 0, 0},
+            Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
+            Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
             false,
         },
         // Tests involving the same item types: (or empty plus an item)
         {
             "1 + 0 => 1 + 0",
-            Slot{1, 1, 0}, Slot{ItemIdNull, 0, 0},
-            Slot{1, 1, 0}, Slot{ItemIdNull, 0, 0},
+            Slot{1, 1, 0}, Slot{ItemTypeIdNull, 0, 0},
+            Slot{1, 1, 0}, Slot{ItemTypeIdNull, 0, 0},
             false,
         },
         {
             "1 + 1 => 2 + 0",
             Slot{1, 1, 0}, Slot{1, 1, 0},
-            Slot{1, 2, 0}, Slot{ItemIdNull, 0, 0},
+            Slot{1, 2, 0}, Slot{ItemTypeIdNull, 0, 0},
             true,
         },
         {
             "0 + 20 => 20 + 0",
-            Slot{ItemIdNull, 0, 0}, Slot{1, 20, 0},
-            Slot{1, 20, 0}, Slot{ItemIdNull, 0, 0},
+            Slot{ItemTypeIdNull, 0, 0}, Slot{1, 20, 0},
+            Slot{1, 20, 0}, Slot{ItemTypeIdNull, 0, 0},
             true,
         },
         {
             "0 + 64 => 64 + 0",
-            Slot{ItemIdNull, 0, 0}, Slot{1, 64, 0},
-            Slot{1, 64, 0}, Slot{ItemIdNull, 0, 0},
+            Slot{ItemTypeIdNull, 0, 0}, Slot{1, 64, 0},
+            Slot{1, 64, 0}, Slot{ItemTypeIdNull, 0, 0},
             true,
         },
         {
@@ -79,13 +79,13 @@ func TestSlot_Add(t *testing.T) {
         {
             "1 + 1 => 2 + 0 where items' \"Data\" value is the same",
             Slot{1, 1, 5}, Slot{1, 1, 5},
-            Slot{1, 2, 5}, Slot{ItemIdNull, 0, 0},
+            Slot{1, 2, 5}, Slot{ItemTypeIdNull, 0, 0},
             true,
         },
         {
             "0 + 1 => 1 + 0 - carrying the \"use\" value",
-            Slot{ItemIdNull, 0, 0}, Slot{1, 1, 5},
-            Slot{1, 1, 5}, Slot{ItemIdNull, 0, 0},
+            Slot{ItemTypeIdNull, 0, 0}, Slot{1, 1, 5},
+            Slot{1, 1, 5}, Slot{ItemTypeIdNull, 0, 0},
             true,
         },
         // Tests involving different item types:

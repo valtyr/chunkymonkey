@@ -88,7 +88,7 @@ const (
 )
 
 type BlockDropItem struct {
-    droppedItem ItemId
+    droppedItem ItemTypeId
     probability byte // Probabilities specified as a percentage
     count       ItemCount
 }
@@ -277,7 +277,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
             b[blockType].droppedItems = append(
                 b[blockType].droppedItems,
                 BlockDropItem{
-                    ItemId(blockType),
+                    ItemTypeId(blockType),
                     100,
                     1,
                 })
@@ -286,7 +286,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
 
     type Drop struct {
         minedBlockType  BlockId
-        droppedItemType ItemId
+        droppedItemType ItemTypeId
     }
     setMinedDropBlock := func(drops []Drop) {
         for _, drop := range drops {
@@ -310,7 +310,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
 
     // TODO what item ID drops for redstone torches (on vs off state)
 
-    // Blocks that drop the same ItemId as BlockId 100% of the time
+    // Blocks that drop the same ItemTypeId as BlockId 100% of the time
     setMinedDropsSameItem([]BlockId{
         BlockIdDirt, BlockIdCobblestone, BlockIdPlank, BlockIdSapling,
         BlockIdSand, BlockIdGoldOre, BlockIdIronOre, BlockIdLog, BlockIdSponge,
@@ -327,17 +327,17 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     })
     // Blocks that drop a single different item 100% of the time
     setMinedDropBlock([]Drop{
-        Drop{BlockIdStone, ItemId(BlockIdCobblestone)},
-        Drop{BlockIdGrass, ItemId(BlockIdDirt)},
+        Drop{BlockIdStone, ItemTypeId(BlockIdCobblestone)},
+        Drop{BlockIdGrass, ItemTypeId(BlockIdDirt)},
         Drop{BlockIdCoalOre, cmitem.ItemIdCoal},
-        Drop{BlockIdDoubleStoneSlab, ItemId(BlockIdStoneSlab)},
+        Drop{BlockIdDoubleStoneSlab, ItemTypeId(BlockIdStoneSlab)},
         Drop{BlockIdDiamondOre, cmitem.ItemIdDiamond},
-        Drop{BlockIdFarmland, ItemId(BlockIdDirt)},
+        Drop{BlockIdFarmland, ItemTypeId(BlockIdDirt)},
         Drop{BlockIdSignPost, cmitem.ItemIdSign},
         Drop{BlockIdWoodenDoor, cmitem.ItemIdWoodendoor},
         Drop{BlockIdWallSign, cmitem.ItemIdSign},
         Drop{BlockIdIronDoor, cmitem.ItemIdIronDoor},
-        Drop{BlockIdSnow, ItemId(BlockIdDirt)},
+        Drop{BlockIdSnow, ItemTypeId(BlockIdDirt)},
         Drop{BlockIdSugarCane, cmitem.ItemIdSugarCane},
         Drop{BlockIdGlowstone, cmitem.ItemIdGlowstoneDust},
     })
@@ -345,11 +345,11 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     // items)
     b[BlockIdGravel].droppedItems = []BlockDropItem{
         BlockDropItem{cmitem.ItemIdFlint, 10, 1},
-        BlockDropItem{ItemId(BlockIdGravel), 90, 1},
+        BlockDropItem{ItemTypeId(BlockIdGravel), 90, 1},
     }
     b[BlockIdLeaves].droppedItems = []BlockDropItem{
         // TODO get more accurate probability of sapling drop
-        BlockDropItem{ItemId(BlockIdSapling), 5, 1},
+        BlockDropItem{ItemTypeId(BlockIdSapling), 5, 1},
     }
     b[BlockIdRedstoneOre].droppedItems = []BlockDropItem{
         // TODO find probabilities of dropping 4 vs 5 items

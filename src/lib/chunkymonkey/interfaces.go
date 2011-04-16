@@ -46,7 +46,7 @@ type IItem interface {
     // Item methods must be called from the goroutine of their parent chunk.
     // Note that items move between chunks.
     GetPosition() *AbsXyz
-    GetItemType() ItemId
+    GetItemTypeId() ItemTypeId
     // Note that most code assumes that an item's count is 1.
     GetCount() ItemCount
     SetCount(count ItemCount)
