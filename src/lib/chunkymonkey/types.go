@@ -40,7 +40,8 @@ type ItemTypeId int16
 
 const ItemTypeIdNull = ItemTypeId(-1)
 
-// Number of times that an item has been used
+// Item metadata. The meaning of this varies depending upon the item type. In
+// the case of tools/armor it indicates "uses" or "damage".
 type ItemData int16
 
 // How many items are in a stack/slot etc.
