@@ -42,9 +42,7 @@ type ItemId int16
 const ItemIdNull = ItemId(-1)
 
 // Number of times that an item has been used
-// TODO This is no longer the "uses" or "damage" of the item, but rather a
-// generic "data" field for an item as of MC beta.
-type ItemUses int16
+type ItemData int16
 
 // How many items are in a stack/slot etc.
 type ItemCount int8
@@ -155,7 +153,10 @@ const (
 // ID of the slow in inventory or other item-slotted window element
 type SlotId int16
 
-const SlotIdCursor = SlotId(-1)
+const (
+    SlotIdCursor = SlotId(-1)
+    SlotIdNull   = SlotId(999) // Clicked outside window.
+)
 
 type PrgBarId int16
 

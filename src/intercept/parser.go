@@ -72,9 +72,9 @@ func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz
     p.printf("PacketPlayerDigging(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) PacketPlayerBlockPlacement(itemId ItemId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemUses) {
-    p.printf("PacketPlayerBlockPlacement(itemId=%d, blockLoc=%v, face=%d, amount=%d, uses=%d)",
-        itemId, blockLoc, face, amount, uses)
+func (p *MessageParser) PacketPlayerBlockPlacement(itemId ItemId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData) {
+    p.printf("PacketPlayerBlockPlacement(itemId=%d, blockLoc=%v, face=%d, amount=%d, data=%d)",
+        itemId, blockLoc, face, amount, data)
 }
 
 func (p *MessageParser) PacketHoldingChange(slotId SlotId) {
@@ -113,9 +113,9 @@ func (p *MessageParser) PacketTimeUpdate(time TimeOfDay) {
     p.printf("PacketTime(time=%d)", time)
 }
 
-func (p *MessageParser) PacketEntityEquipment(entityId EntityId, slot SlotId, itemId ItemId, uses ItemUses) {
-    p.printf("PacketEntityEquipment(entityId=%d, slot=%d, itemId=%d, uses=%d)",
-        entityId, slot, itemId, uses)
+func (p *MessageParser) PacketEntityEquipment(entityId EntityId, slot SlotId, itemId ItemId, data ItemData) {
+    p.printf("PacketEntityEquipment(entityId=%d, slot=%d, itemId=%d, data=%d)",
+        entityId, slot, itemId, data)
 }
 
 func (p *MessageParser) PacketSpawnPosition(position *BlockXyz) {
@@ -135,9 +135,9 @@ func (p *MessageParser) PacketNamedEntitySpawn(entityId EntityId, name string, p
         entityId, name, position, look, currentItem)
 }
 
-func (p *MessageParser) PacketItemSpawn(entityId EntityId, itemId ItemId, count ItemCount, uses ItemUses, location *AbsIntXyz, orientation *OrientationBytes) {
-    p.printf("PacketItemSpawn(entityId=%d, itemId=%d, count=%d, uses=%d, location=%v, orientation=%v)",
-        entityId, itemId, count, uses, location, orientation)
+func (p *MessageParser) PacketItemSpawn(entityId EntityId, itemId ItemId, count ItemCount, data ItemData, location *AbsIntXyz, orientation *OrientationBytes) {
+    p.printf("PacketItemSpawn(entityId=%d, itemId=%d, count=%d, data=%d, location=%v, orientation=%v)",
+        entityId, itemId, count, data, location, orientation)
 }
 
 func (p *MessageParser) PacketItemCollect(collectedItem EntityId, collector EntityId) {
@@ -255,14 +255,14 @@ func (p *MessageParser) PacketWindowTransaction(windowId WindowId, txId TxId, ac
         windowId, txId, accepted)
 }
 
-func (p *MessageParser) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemId, amount ItemCount, uses ItemUses) {
-    p.printf("PacketWindowClick(windowId=%d, slot=%d, rightClick=%t, txId=%d, itemId=%d, amount=%d, uses=%d)",
-        windowId, slot, rightClick, txId, itemId, amount, uses)
+func (p *MessageParser) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemId, amount ItemCount, data ItemData) {
+    p.printf("PacketWindowClick(windowId=%d, slot=%d, rightClick=%t, txId=%d, itemId=%d, amount=%d, data=%d)",
+        windowId, slot, rightClick, txId, itemId, amount, data)
 }
 
-func (p *MessageParser) PacketWindowSetSlot(windowId WindowId, slot SlotId, itemId ItemId, amount ItemCount, uses ItemUses) {
-    p.printf("PacketWindowSetSlot(windowId=%d, slot=%d, itemId=%d, amount=%d, uses=%d)",
-        windowId, slot, itemId, amount, uses)
+func (p *MessageParser) PacketWindowSetSlot(windowId WindowId, slot SlotId, itemId ItemId, amount ItemCount, data ItemData) {
+    p.printf("PacketWindowSetSlot(windowId=%d, slot=%d, itemId=%d, amount=%d, data=%d)",
+        windowId, slot, itemId, amount, data)
 }
 
 func (p *MessageParser) PacketWindowItems(windowId WindowId, items []proto.WindowSlot) {

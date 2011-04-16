@@ -8,8 +8,8 @@ import (
 
 func slotEq(s1, s2 *Slot) bool {
     return (s1.ItemType == s2.ItemType &&
-        s1.Quantity == s2.Quantity &&
-        s1.Uses == s2.Uses)
+        s1.Count == s2.Count &&
+        s1.Data == s2.Data)
 }
 
 func TestSlot_Add(t *testing.T) {
@@ -53,13 +53,13 @@ func TestSlot_Add(t *testing.T) {
             true,
         },
         {
-            "32 + 33 => 64 + 1 (hitting max quantity)",
+            "32 + 33 => 64 + 1 (hitting max count)",
             Slot{1, 32, 0}, Slot{1, 33, 0},
             Slot{1, 64, 0}, Slot{1, 1, 0},
             true,
         },
         {
-            "65 + 1 => 65 + 1 (already above max quantity)",
+            "65 + 1 => 65 + 1 (already above max count)",
             Slot{1, 65, 0}, Slot{1, 1, 0},
             Slot{1, 65, 0}, Slot{1, 1, 0},
             false,
@@ -71,13 +71,13 @@ func TestSlot_Add(t *testing.T) {
             false,
         },
         {
-            "1 + 1 => 1 + 1 where items' \"Uses\" value differs",
+            "1 + 1 => 1 + 1 where items' \"Data\" value differs",
             Slot{1, 1, 5}, Slot{1, 1, 6},
             Slot{1, 1, 5}, Slot{1, 1, 6},
             false,
         },
         {
-            "1 + 1 => 2 + 0 where items' \"Uses\" value is the same",
+            "1 + 1 => 2 + 0 where items' \"Data\" value is the same",
             Slot{1, 1, 5}, Slot{1, 1, 5},
             Slot{1, 2, 5}, Slot{ItemIdNull, 0, 0},
             true,
@@ -107,8 +107,8 @@ func TestSlot_Add(t *testing.T) {
             test.expectedChange)
         // Sanity check the test itself. Sum of inputs must equal sum of
         // outputs.
-        sumInput := test.initialA.Quantity + test.initialB.Quantity
-        sumExpectedOutput := test.expectedA.Quantity + test.expectedB.Quantity
+        sumInput := test.initialA.Count + test.initialB.Count
+        sumExpectedOutput := test.expectedA.Count + test.expectedB.Count
         if sumInput != sumExpectedOutput {
             t.Errorf(
                 "    Test incorrect: sum of inputs %d != sum of expected outputs %d",

@@ -215,7 +215,7 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, 
     }
 }
 
-func (player *Player) PacketPlayerBlockPlacement(itemId ItemId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemUses) {
+func (player *Player) PacketPlayerBlockPlacement(itemId ItemId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
 }
 
 func (player *Player) PacketHoldingChange(slotId SlotId) {
@@ -233,7 +233,7 @@ func (player *Player) PacketUnknown0x1b(field1, field2, field3, field4 float32, 
 func (player *Player) PacketWindowClose(windowId WindowId) {
 }
 
-func (player *Player) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemId, amount ItemCount, uses ItemUses) {
+func (player *Player) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemId, amount ItemCount, uses ItemData) {
 }
 
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {

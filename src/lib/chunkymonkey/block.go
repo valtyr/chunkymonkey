@@ -90,7 +90,7 @@ const (
 type BlockDropItem struct {
     droppedItem ItemId
     probability byte // Probabilities specified as a percentage
-    quantity    ItemCount
+    count       ItemCount
 }
 
 type BlockType struct {
@@ -115,7 +115,7 @@ func (blockType *BlockType) Destroy(chunk IChunk, blockLoc *BlockXyz) bool {
         r := byte(rand.Intn(100))
         for _, dropItem := range blockType.droppedItems {
             if dropItem.probability > r {
-                for i := dropItem.quantity; i > 0; i-- {
+                for i := dropItem.count; i > 0; i-- {
                     position := blockLoc.ToAbsXyz()
                     position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     position.Y += AbsCoord(blockItemSpawnFromEdge)

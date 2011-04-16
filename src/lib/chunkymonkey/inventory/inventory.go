@@ -43,16 +43,16 @@ func (inv *Inventory) PutItem(item IItem, slotChanged func(slotId SlotId, slot *
     // slots containing an item of various item type IDs.
     srcSlot := Slot{
         ItemType: item.GetItemType(),
-        Quantity: item.GetCount(),
+        Count:    item.GetCount(),
         // TODO Item needs to store "uses", when it does, use them here.
         // Ideally Items will use and provide a mutable "Slot" within
         // themselves, then we can remove the creation of a slot here, and the
         // updating of the item count at the end.
-        Uses: 0,
+        Data: 0,
     }
     for _, slotIndex := range inv.slotOrder {
         slot := &inv.slots[slotIndex]
-        if srcSlot.Quantity <= 0 {
+        if srcSlot.Count <= 0 {
             break
         }
         if slot.ItemType == ItemIdNull || slot.ItemType == srcSlot.ItemType {
@@ -64,7 +64,7 @@ func (inv *Inventory) PutItem(item IItem, slotChanged func(slotId SlotId, slot *
             }
         }
     }
-    item.SetCount(srcSlot.Quantity)
+    item.SetCount(srcSlot.Count)
     return
 }
 
