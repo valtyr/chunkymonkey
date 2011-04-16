@@ -49,7 +49,7 @@ func (p *MessageParser) PacketKeepAlive() {
 }
 
 func (p *MessageParser) PacketChatMessage(message string) {
-    p.printf("PacketChatMessage(%s)", message)
+    p.printf("PacketChatMessage(%q)", message)
 }
 
 func (p *MessageParser) PacketRespawn() {
@@ -61,11 +61,11 @@ func (p *MessageParser) PacketPlayer(onGround bool) {
 }
 
 func (p *MessageParser) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, onGround bool) {
-    p.printf("PacketPlayerPosition(position=%v, stance=%v, onGround=%v)", position, stance, onGround)
+    p.printf("PacketPlayerPosition(position=%v, stance=%v, onGround=%t)", position, stance, onGround)
 }
 
 func (p *MessageParser) PacketPlayerLook(look *LookDegrees, onGround bool) {
-    p.printf("PacketPlayerLook(look=%v, onGround=%v)", look, onGround)
+    p.printf("PacketPlayerLook(look=%v, onGround=%t)", look, onGround)
 }
 
 func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face) {
@@ -101,7 +101,7 @@ func (p *MessageParser) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 }
 
 func (p *MessageParser) PacketDisconnect(reason string) {
-    p.printf("PacketDisconnect(%s)", reason)
+    p.printf("PacketDisconnect(%q)", reason)
 }
 
 func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, dimension DimensionId) {
@@ -123,7 +123,7 @@ func (p *MessageParser) PacketSpawnPosition(position *BlockXyz) {
 }
 
 func (p *MessageParser) PacketUseEntity(user EntityId, target EntityId, leftClick bool) {
-    p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%v)", user, target, leftClick)
+    p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%t)", user, target, leftClick)
 }
 
 func (p *MessageParser) PacketUpdateHealth(health int16) {
@@ -156,7 +156,7 @@ func (p *MessageParser) PacketEntitySpawn(entityId EntityId, mobType EntityMobTy
 }
 
 func (p *MessageParser) PacketPaintingSpawn(entityId EntityId, title string, position *BlockXyz, paintingType PaintingTypeId) {
-    p.printf("PacketPaintingSpawn(entityId=%d, title=%s, position=%v, paintingType=%d)",
+    p.printf("PacketPaintingSpawn(entityId=%d, title=%q, position=%v, paintingType=%d)",
         entityId, title, position, position, paintingType)
 }
 
@@ -164,7 +164,6 @@ func (p *MessageParser) PacketUnknown0x1b(field1, field2, field3, field4 float32
     p.printf(
         "PacketUnknown0x1b(field1=%v, field2=%v, field3=%v, field4=%v, field5=%v, field6=%v)",
         field1, field2, field3, field4, field5, field6)
-
 }
 
 func (p *MessageParser) PacketEntityVelocity(entityId EntityId, velocity *Velocity) {
@@ -252,11 +251,12 @@ func (p *MessageParser) PacketWindowProgressBar(windowId WindowId, prgBarId PrgB
 }
 
 func (p *MessageParser) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
-    p.printf("PacketWindowTransaction(windowId=%d, txId=%d, accepted=%v)")
+    p.printf("PacketWindowTransaction(windowId=%d, txId=%d, accepted=%t)",
+        windowId, txId, accepted)
 }
 
 func (p *MessageParser) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemId, amount ItemCount, uses ItemUses) {
-    p.printf("PacketWindowClick(windowId=%d, slot=%d, rightClick=%v, txId=%d, itemId=%d, amount=%d, uses=%d)",
+    p.printf("PacketWindowClick(windowId=%d, slot=%d, rightClick=%t, txId=%d, itemId=%d, amount=%d, uses=%d)",
         windowId, slot, rightClick, txId, itemId, amount, uses)
 }
 
