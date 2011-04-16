@@ -3,17 +3,15 @@ DIAGRAMS=diagrams/top-level-architecture.png
 
 all: $(BINARIES)
 
-libs:
-	@gd -q src/lib
+fmt:
+	@gd -fmt src
 
 test:
 	@mkdir -p .test_obj
 	@gd -q -L .test_obj -t src/lib
 
-docs: $(DIAGRAMS)
-
-%.png: %.dot
-	@dot -Tpng $< -o $@
+libs:
+	@gd -q src/lib
 
 chunkymonkey: libs
 	@gd -q -I src/lib -o $@ src/$@
@@ -24,4 +22,9 @@ intercept: libs
 inspectlevel: libs
 	@gd -q -I src/lib -o $@ src/$@
 
-.PHONY: all libs test docs
+docs: $(DIAGRAMS)
+
+%.png: %.dot
+	@dot -Tpng $< -o $@
+
+.PHONY: all fmt libs test docs
