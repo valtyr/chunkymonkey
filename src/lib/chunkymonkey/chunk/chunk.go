@@ -16,6 +16,13 @@ import (
     .   "chunkymonkey/types"
 )
 
+const (
+    // Assumed values for size of player axis-aligned bounding box (AAB).
+    playerAabH = AbsCoord(0.75) // Each side of player.
+    playerAabY = AbsCoord(2.00) // From player's feet position upwards.
+)
+
+
 // A chunk is slice of the world map
 type Chunk struct {
     mainQueue     chan func(IChunk)
@@ -29,24 +36,25 @@ type Chunk struct {
     items         map[EntityId]IItem
     rand          *rand.Rand
     neighbours    neighboursCache
-    cachedPacket  []byte                    // Cached packet data for this block.
-    subscribers   map[IPacketSender]bool    // Subscribers getting updates from the chunk.
-    subscriberPos map[IPacketSender]*AbsXyz // Player positions that are near or in the chunk.
+    cachedPacket  []byte                       // Cached packet data for this block.
+    subscribers   map[IChunkSubscriber]bool    // Subscribers getting updates from the chunk.
+    subscriberPos map[IChunkSubscriber]*AbsXyz // Player positions that are near or in the chunk.
 }
 
 func newChunkFromReader(reader chunkstore.ChunkReader, mgr *ChunkManager) (chunk *Chunk) {
     chunk = &Chunk{
-        mainQueue:   make(chan func(IChunk), 256),
-        mgr:         mgr,
-        loc:         *reader.ChunkLoc(),
-        blocks:      reader.Blocks(),
-        blockData:   reader.BlockData(),
-        skyLight:    reader.SkyLight(),
-        blockLight:  reader.BlockLight(),
-        heightMap:   reader.HeightMap(),
-        items:       make(map[EntityId]IItem),
-        rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
-        subscribers: make(map[IPacketSender]bool),
+        mainQueue:     make(chan func(IChunk), 256),
+        mgr:           mgr,
+        loc:           *reader.ChunkLoc(),
+        blocks:        reader.Blocks(),
+        blockData:     reader.BlockData(),
+        skyLight:      reader.SkyLight(),
+        blockLight:    reader.BlockLight(),
+        heightMap:     reader.HeightMap(),
+        items:         make(map[EntityId]IItem),
+        rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
+        subscribers:   make(map[IChunkSubscriber]bool),
+        subscriberPos: make(map[IChunkSubscriber]*AbsXyz),
     }
     chunk.neighbours.init()
     go chunk.mainLoop()
@@ -255,7 +263,7 @@ func (chunk *Chunk) Tick() {
     }
 }
 
-func (chunk *Chunk) AddSubscriber(subscriber IPacketSender) {
+func (chunk *Chunk) AddSubscriber(subscriber IChunkSubscriber) {
     chunk.subscribers[subscriber] = true
     subscriber.TransmitPacket(chunk.chunkPacket())
 
@@ -269,7 +277,7 @@ func (chunk *Chunk) AddSubscriber(subscriber IPacketSender) {
     }
 }
 
-func (chunk *Chunk) RemoveSubscriber(subscriber IPacketSender, sendPacket bool) {
+func (chunk *Chunk) RemoveSubscriber(subscriber IChunkSubscriber, sendPacket bool) {
     chunk.subscribers[subscriber] = false, false
     if sendPacket {
         buf := &bytes.Buffer{}
@@ -284,8 +292,47 @@ func (chunk *Chunk) multicastSubscribers(packet []byte) {
     }
 }
 
-func (chunk *Chunk) SetSubscriberPosition(subscriber IPacketSender, pos *AbsXyz) {
+func (chunk *Chunk) SetSubscriberPosition(subscriber IChunkSubscriber, pos *AbsXyz) {
     chunk.subscriberPos[subscriber] = pos, pos != nil
+    if pos != nil {
+        // Does the subscriber overlap with any items?
+        minX := pos.X - playerAabH
+        maxX := pos.X + playerAabH
+        minZ := pos.Z - playerAabH
+        maxZ := pos.Z + playerAabH
+        minY := pos.Y
+        maxY := pos.Y + playerAabY
+
+        for entityId, item := range chunk.items {
+            pos := item.GetPosition()
+            if pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z >= minZ && pos.Z <= maxZ {
+                if subscriber.OfferItem(item) {
+                    buf := &bytes.Buffer{}
+
+                    // Tell all subscribers to animate the item flying at the
+                    // subscriber.
+                    proto.WriteItemCollect(buf, entityId, subscriber.GetEntityId())
+
+                    if item.GetCount() <= 0 {
+                        // The item has been accepted and completely consumed.
+                        chunk.items[entityId] = nil, false
+                        // Tell all subscribers that the item's entity is
+                        // destroyed.
+                        proto.WriteEntityDestroy(buf, entityId)
+                    }
+
+                    chunk.multicastSubscribers(buf.Bytes())
+                }
+
+                // TODO Check for properly handle partially consumed items?
+                // Probably not high priority since all dropped items have a
+                // count of 1 at the moment. Might need to respawn the item
+                // with a new count. Do the clients even care what the count is
+                // or if it changes? Or if an item is "collected" but still
+                // exists?
+            }
+        }
+    }
 }
 
 func (chunk *Chunk) chunkPacket() []byte {

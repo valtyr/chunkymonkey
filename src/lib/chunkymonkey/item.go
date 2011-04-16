@@ -112,6 +112,7 @@ const (
 
 type Item struct {
     entity.Entity
+    // TODO consider using inventory.Slot as a "base" for this struct.
     itemType    ItemId
     count       ItemCount
     physObj     physics.PointObject
@@ -131,6 +132,18 @@ func NewItem(itemType ItemId, count ItemCount, position *AbsXyz, velocity *AbsVe
 
 func (item *Item) GetEntity() *entity.Entity {
     return &item.Entity
+}
+
+func (item *Item) GetItemType() ItemId {
+    return item.itemType
+}
+
+func (item *Item) GetCount() ItemCount {
+    return item.count
+}
+
+func (item *Item) SetCount(count ItemCount) {
+    item.count = count
 }
 
 func (item *Item) GetPosition() *AbsXyz {

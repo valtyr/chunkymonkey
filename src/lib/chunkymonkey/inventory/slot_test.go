@@ -17,6 +17,7 @@ func TestSlot_Add(t *testing.T) {
         desc                 string
         initialA, initialB   Slot
         expectedA, expectedB Slot
+        expectedChange       bool
     }
 
     tests := []Test{
@@ -24,73 +25,86 @@ func TestSlot_Add(t *testing.T) {
             "one empty slot added to another",
             Slot{ItemIdNull, 0, 0}, Slot{ItemIdNull, 0, 0},
             Slot{ItemIdNull, 0, 0}, Slot{ItemIdNull, 0, 0},
+            false,
         },
         // Tests involving the same item types: (or empty plus an item)
         {
             "1 + 0 => 1 + 0",
             Slot{1, 1, 0}, Slot{ItemIdNull, 0, 0},
             Slot{1, 1, 0}, Slot{ItemIdNull, 0, 0},
+            false,
         },
         {
             "1 + 1 => 2 + 0",
             Slot{1, 1, 0}, Slot{1, 1, 0},
             Slot{1, 2, 0}, Slot{ItemIdNull, 0, 0},
+            true,
         },
         {
             "0 + 20 => 20 + 0",
             Slot{ItemIdNull, 0, 0}, Slot{1, 20, 0},
             Slot{1, 20, 0}, Slot{ItemIdNull, 0, 0},
+            true,
         },
         {
             "0 + 64 => 64 + 0",
             Slot{ItemIdNull, 0, 0}, Slot{1, 64, 0},
             Slot{1, 64, 0}, Slot{ItemIdNull, 0, 0},
+            true,
         },
         {
             "32 + 33 => 64 + 1 (hitting max quantity)",
             Slot{1, 32, 0}, Slot{1, 33, 0},
             Slot{1, 64, 0}, Slot{1, 1, 0},
+            true,
         },
         {
             "65 + 1 => 65 + 1 (already above max quantity)",
             Slot{1, 65, 0}, Slot{1, 1, 0},
             Slot{1, 65, 0}, Slot{1, 1, 0},
+            false,
         },
         {
             "64 + 64 => 64 + 64",
             Slot{1, 64, 0}, Slot{1, 64, 0},
             Slot{1, 64, 0}, Slot{1, 64, 0},
+            false,
         },
         {
             "1 + 1 => 1 + 1 where items' \"Uses\" value differs",
             Slot{1, 1, 5}, Slot{1, 1, 6},
             Slot{1, 1, 5}, Slot{1, 1, 6},
+            false,
         },
         {
             "1 + 1 => 2 + 0 where items' \"Uses\" value is the same",
             Slot{1, 1, 5}, Slot{1, 1, 5},
             Slot{1, 2, 5}, Slot{ItemIdNull, 0, 0},
+            true,
         },
         {
             "0 + 1 => 1 + 0 - carrying the \"use\" value",
             Slot{ItemIdNull, 0, 0}, Slot{1, 1, 5},
             Slot{1, 1, 5}, Slot{ItemIdNull, 0, 0},
+            true,
         },
         // Tests involving different item types:
         {
             "different item types don't mingle",
             Slot{1, 5, 0}, Slot{2, 5, 0},
             Slot{1, 5, 0}, Slot{2, 5, 0},
+            false,
         },
     }
 
     var a, b Slot
     for _, test := range tests {
         t.Logf(
-            "Test %s: initial a=%+v, b=%+v - expecting a=%+v, b=%+v",
+            "Test %s: initial a=%+v, b=%+v - expecting a=%+v, b=%+v, changed=%t",
             test.desc,
             test.initialA, test.initialB,
-            test.expectedA, test.expectedB)
+            test.expectedA, test.expectedB,
+            test.expectedChange)
         // Sanity check the test itself. Sum of inputs must equal sum of
         // outputs.
         sumInput := test.initialA.Quantity + test.initialB.Quantity
@@ -104,9 +118,12 @@ func TestSlot_Add(t *testing.T) {
 
         a = test.initialA
         b = test.initialB
-        a.Add(&b)
+        changed := a.Add(&b)
         if !slotEq(&test.expectedA, &a) || !slotEq(&test.expectedB, &b) {
             t.Errorf("    Fail: got a=%+v, b=%+v", a, b)
+        }
+        if test.expectedChange != changed {
+            t.Errorf("    Fail: got changed=%t", changed)
         }
     }
 }

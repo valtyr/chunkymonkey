@@ -36,11 +36,14 @@ const (
 // Item-related types
 
 // Item type ID
+// TODO Rename to ItemTypeId to avoid confusion with item entities.
 type ItemId int16
 
 const ItemIdNull = ItemId(-1)
 
 // Number of times that an item has been used
+// TODO This is no longer the "uses" or "damage" of the item, but rather a
+// generic "data" field for an item as of MC beta.
 type ItemUses int16
 
 // How many items are in a stack/slot etc.

@@ -11,19 +11,23 @@ import (
 )
 
 // Subset of player methods used by chunks.
-type IPacketSender interface {
-    // Used to send a packet to some remote party. This may be called from any
-    // goroutine.
+type IChunkSubscriber interface {
+    GetEntityId() EntityId
     TransmitPacket(packet []byte)
+    // Offers an item to the subscriber. If the subscriber takes it into their
+    // inventory, it returns true. This function is called from the item's
+    // parent chunk's goroutine, so all methods are safely accessible.
+    OfferItem(IItem) (taken bool)
 }
 
 type IPlayer interface {
-    IPacketSender
-
     // Safe to call from outside of player's own goroutine.
+    GetEntityId() EntityId
     GetEntity() *entity.Entity // Only the game mainloop may modify the return value
     GetName() string           // Do not modify return value
     LockedGetChunkPosition() *ChunkXz
+    TransmitPacket(packet []byte)
+    OfferItem(IItem) (taken bool)
 
     Enqueue(f func(IPlayer))
 
@@ -40,6 +44,10 @@ type IItem interface {
     // Item methods must be called from the goroutine of their parent chunk.
     // Note that items move between chunks.
     GetPosition() *AbsXyz
+    GetItemType() ItemId
+    // Note that most code assumes that an item's count is 1.
+    GetCount() ItemCount
+    SetCount(count ItemCount)
     SendSpawn(writer io.Writer) (err os.Error)
     SendUpdate(writer io.Writer) (err os.Error)
     Tick(blockQuery physics.BlockQueryFn) (leftBlock bool)
@@ -76,14 +84,14 @@ type IChunk interface {
     // a subscriber will immediately receive complete chunk information via
     // their TransmitPacket method, and changes thereafter via the same
     // mechanism.
-    AddSubscriber(subscriber IPacketSender)
+    AddSubscriber(subscriber IChunkSubscriber)
     // Removes a previously registered subscriber to updates from the chunk. If
     // sendPacket is true, then an unload-chunk packet is sent.
-    RemoveSubscriber(subscriber IPacketSender, sendPacket bool)
+    RemoveSubscriber(subscriber IChunkSubscriber, sendPacket bool)
 
     // Tells the chunk about the position of a player in/near the chunk. pos =
     // nil indicates that the player is no longer nearby.
-    SetSubscriberPosition(subscriber IPacketSender, pos *AbsXyz)
+    SetSubscriberPosition(subscriber IChunkSubscriber, pos *AbsXyz)
 
     // Get packet data for the chunk
     SendUpdate()

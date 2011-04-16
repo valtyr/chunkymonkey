@@ -46,7 +46,8 @@ func (s *Slot) setQuantity(quantity ItemCount) {
 
 // Adds as many items from the passed slot to the destination (subject) slot as
 // possible, depending on stacking allowances and item types etc.
-func (s *Slot) Add(src *Slot) {
+// Returns true if the destination slot changed as a result.
+func (s *Slot) Add(src *Slot) (changed bool) {
     // NOTE: This code assumes that 2*SlotQuantityMax will not overflow
     // the ItemCount type.
 
@@ -68,9 +69,13 @@ func (s *Slot) Add(src *Slot) {
     if s.Quantity+toTransfer > SlotQuantityMax {
         toTransfer = SlotQuantityMax - s.Quantity
     }
+    if toTransfer != 0 {
+        changed = true
 
-    s.Uses = src.Uses
+        s.Uses = src.Uses
 
-    s.setQuantity(s.Quantity + toTransfer)
-    src.setQuantity(src.Quantity - toTransfer)
+        s.setQuantity(s.Quantity + toTransfer)
+        src.setQuantity(src.Quantity - toTransfer)
+    }
+    return
 }

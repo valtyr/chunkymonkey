@@ -13,8 +13,8 @@ const (
     // The radius within which player's exact location is relayed to chunks.
     // For item pickup the only values that make any sense are 0 or 1.
     positionUpdateRadius = ChunkCoord(1)
-    numPosChunksEdge = positionUpdateRadius * 2 + 1
-    numPosChunks = numPosChunksEdge * numPosChunksEdge
+    numPosChunksEdge     = positionUpdateRadius*2 + 1
+    numPosChunks         = numPosChunksEdge * numPosChunksEdge
 )
 
 // Keeps track of chunks that the player is subscribed to, and adds/removes the
@@ -147,8 +147,8 @@ func (cs *chunkSubscriptions) updateChunksWithLoc(newPos *AbsXyz, changedChunk b
         var cursor ChunkXz
         // Assumes that ChunkRadius > positionUpdateRadius to avoid doing
         // additional chunkmanager lookups.
-        for cursor.X = cs.curChunk.X-positionUpdateRadius; cursor.X <= cs.curChunk.X+positionUpdateRadius; cursor.X++ {
-            for cursor.Z = cs.curChunk.Z-positionUpdateRadius; cursor.Z <= cs.curChunk.Z+positionUpdateRadius; cursor.Z++ {
+        for cursor.X = cs.curChunk.X - positionUpdateRadius; cursor.X <= cs.curChunk.X+positionUpdateRadius; cursor.X++ {
+            for cursor.Z = cs.curChunk.Z - positionUpdateRadius; cursor.Z <= cs.curChunk.Z+positionUpdateRadius; cursor.Z++ {
                 key := cursor.ChunkKey()
                 if chunk, ok := cs.chunksWithLoc[key]; !ok {
                     if chunk, ok = cs.chunks[key]; ok {

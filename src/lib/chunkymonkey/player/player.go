@@ -73,6 +73,10 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
     })
 }
 
+func (player *Player) GetEntityId() EntityId {
+    return player.EntityId
+}
+
 func (player *Player) GetEntity() *Entity {
     return &player.Entity
 }
@@ -298,6 +302,27 @@ func (player *Player) TransmitPacket(packet []byte) {
         return // skip empty packets
     }
     player.txQueue <- packet
+}
+
+// Used to receive items picked up from chunks.
+func (player *Player) OfferItem(item IItem) (taken bool) {
+    player.lock.Lock()
+    defer player.lock.Unlock()
+
+    buf := &bytes.Buffer{}
+
+    slotChanged := func(slotId SlotId, slot *inventory.Slot) {
+        slot.SendUpdate(buf, WindowIdInventory, slotId)
+    }
+
+    taken = player.inventory.PutItem(item, slotChanged)
+
+    if taken {
+        // Send the player message(s) to update the inventory.
+        player.TransmitPacket(buf.Bytes())
+    }
+
+    return
 }
 
 // Blocks until essential login packets have been transmitted.

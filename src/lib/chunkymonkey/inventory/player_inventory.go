@@ -10,13 +10,21 @@ import (
 const (
     playerInvSize = 45
 
+    playerInvArmorStart = SlotId(5)
+    playerInvArmorEnd   = SlotId(8)
+
+    playerInvMainStart = SlotId(9)
+    playerInvMainEnd   = SlotId(35)
+    playerInvMainNum   = 1 + playerInvMainEnd - playerInvMainStart
+
     playerInvHeldStart = SlotId(36)
     playerInvHeldEnd   = SlotId(44)
     playerInvHeldNum   = 1 + playerInvHeldEnd - playerInvHeldStart
-
-    playerInvArmorStart = SlotId(5)
-    playerInvArmorEnd   = SlotId(8)
 )
+
+// Determines the order in which items automatically "land" in the player
+// inventory.
+var playerInvOrder []SlotId
 
 type PlayerInventory struct {
     Inventory
@@ -24,7 +32,7 @@ type PlayerInventory struct {
 }
 
 func (inv *PlayerInventory) Init() {
-    inv.Inventory.Init(playerInvSize)
+    inv.Inventory.Init(playerInvSize, playerInvOrder)
     inv.holding = 0
 }
 
