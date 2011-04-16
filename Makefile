@@ -1,16 +1,27 @@
-chunkymonkey: build
+BINARIES=chunkymonkey intercept inspectlevel
+DIAGRAMS=diagrams/top-level-architecture.png
 
-intercept: build
+all: $(BINARIES)
 
-build:
-	./build.sh
+libs:
+	@gd -q src/lib
 
 test:
-	./test.sh
+	@mkdir -p .test_obj
+	@gd -q -L .test_obj -t src/lib
 
-docs: diagrams/top-level-architecture.png
+docs: $(DIAGRAMS)
 
 %.png: %.dot
-	dot -Tpng $< -o $@
+	@dot -Tpng $< -o $@
 
-.PHONY: build test docs
+chunkymonkey: libs
+	@gd -q -I src/lib -o $@ src/$@
+
+intercept: libs
+	@gd -q -I src/lib -o $@ src/$@
+
+inspectlevel: libs
+	@gd -q -I src/lib -o $@ src/$@
+
+.PHONY: all libs test docs
