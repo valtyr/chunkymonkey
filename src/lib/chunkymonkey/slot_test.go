@@ -189,7 +189,7 @@ func TestSlot_Split(t *testing.T) {
         },
         {
             "splitting from a non-empty slot to another non-empty with" +
-            " incompatible types",
+                " incompatible types",
             Slot{1, 2, 0}, Slot{2, 3, 0},
             Slot{1, 2, 0}, Slot{2, 3, 0},
             false,
