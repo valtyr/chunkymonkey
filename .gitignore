@@ -6,3 +6,5 @@
 _obj
 /chunkymonkey
 /intercept
+/inspectlevel
+*.log
