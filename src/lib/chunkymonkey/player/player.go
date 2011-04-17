@@ -235,7 +235,62 @@ func (player *Player) PacketUnknown0x1b(field1, field2, field3, field4 float32, 
 func (player *Player) PacketWindowClose(windowId WindowId) {
 }
 
-func (player *Player) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemTypeId, amount ItemCount, uses ItemData) {
+func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, itemId ItemTypeId, amount ItemCount, uses ItemData) {
+    var clickedInv *inventory.Inventory
+    var accepted bool
+
+    // Determine which inventory object is involved.
+    if windowId == WindowIdInventory {
+        clickedInv = &player.inventory.Inventory
+    } else {
+        // If this happens, then it's likely that either a client is trying to
+        // do something unusual, or that we haven't yet implemented something.
+        log.Printf(
+            "Warning: ignored window click on unknown window ID %d",
+            windowId)
+    }
+
+    var clickedSlot *slot.Slot
+    if clickedInv != nil {
+        player.lock.Lock()
+        defer player.lock.Unlock()
+        clickedSlot = clickedInv.Slot(slotId)
+    }
+
+    if clickedSlot == nil {
+        log.Printf(
+            "Warning: ignored window click on window ID %d with unknown slot %d",
+            windowId, slotId)
+    } else {
+        // Apply the change.
+        // TODO inventory "special" slot checks. E.g can only put armor in
+        // armor slots. (This logic likely lives inside the inventory package.
+        if player.cursor.Count == 0 {
+            if rightClick {
+                accepted = clickedSlot.Split(&player.cursor)
+            } else {
+                accepted = clickedSlot.Swap(&player.cursor)
+            }
+        } else {
+            if rightClick {
+                accepted = clickedSlot.AddOne(&player.cursor)
+            } else {
+                accepted = clickedSlot.Add(&player.cursor)
+            }
+
+            if !accepted {
+                accepted = clickedSlot.Swap(&player.cursor)
+            }
+        }
+    }
+
+    // TODO here and in other places where inventory is changed we need to send
+    // packetEntityEquipment to other clients (and this client? TBD).
+
+    // Inform client of operation status.
+    buf := &bytes.Buffer{}
+    proto.WriteWindowTransaction(buf, windowId, txId, accepted)
+    player.TransmitPacket(buf.Bytes())
 }
 
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
@@ -284,6 +339,8 @@ func (player *Player) mainLoop() {
         case f := <-player.mainQueue:
             player.runQueuedCall(f)
         case bs := <-player.txQueue:
+            // TODO move txQueue handling to another goroutine to avoid
+            // needless deadlocking with player.Lock.
             if bs == nil {
                 return // txQueue closed
             }
