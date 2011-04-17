@@ -58,6 +58,7 @@ type IItem interface {
 type IBlockType interface {
     Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigStatus) bool
     IsSolid() bool
+    IsReplaceable() bool
     GetName() string
     GetTransparency() int8
 }
@@ -81,6 +82,7 @@ type IChunk interface {
     TransferItem(item IItem)
     GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
     DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
+    PlaceBlock(subLoc *SubChunkXyz, blockId BlockId) (ok bool)
 
     // Register subscribers to receive information about the chunk. When added,
     // a subscriber will immediately receive complete chunk information via

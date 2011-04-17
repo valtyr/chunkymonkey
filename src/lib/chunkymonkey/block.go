@@ -8,6 +8,8 @@ import (
 
 const (
     // TODO add in new blocks from Beta 1.2
+    BlockIdMin                 = BlockId(0)
+
     BlockIdAir                 = BlockId(0)
     BlockIdStone               = BlockId(1)
     BlockIdGrass               = BlockId(2)
@@ -85,6 +87,8 @@ const (
     BlockIdGlowstone           = BlockId(89)
     BlockIdPortal              = BlockId(90)
     BlockIdJackOLantern        = BlockId(91)
+
+    BlockIdMax                 = BlockId(91)
 )
 
 type BlockDropItem struct {
@@ -100,6 +104,7 @@ type BlockType struct {
     // Items, up to one of which will potentially spawn when block destroyed
     droppedItems []BlockDropItem
     isSolid      bool
+    replaceable  bool
     breakOn      DigStatus
 }
 
@@ -146,6 +151,11 @@ func (blockType *BlockType) IsSolid() bool {
     return blockType.isSolid
 }
 
+// Returns true if item can be "replaced" by block placement.
+func (blockType *BlockType) IsReplaceable() bool {
+    return blockType.replaceable
+}
+
 func (blockType *BlockType) GetName() string {
     return blockType.name
 }
@@ -163,6 +173,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
             transparency: -1,
             destructable: true,
             isSolid:      true,
+            replaceable:  false,
             breakOn:      DigBlockBroke,
         }
     }
@@ -278,6 +289,19 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     for _, blockId := range nonSolid {
         b[blockId].isSolid = false
     }
+
+    // Setup replaceable blocks
+    setReplaceable := func(blockIds... BlockId) {
+        for _, blockId := range blockIds {
+            b[blockId].replaceable = true
+        }
+    }
+    setReplaceable(
+        BlockIdAir,
+        BlockIdWater, BlockIdStationaryWater,
+        BlockIdLava, BlockIdStationaryLava,
+        BlockIdSnow,
+    )
 
     // Setup behaviour of blocks when destroyed
     setMinedDropsSameItem := func(blockTypes []BlockId) {

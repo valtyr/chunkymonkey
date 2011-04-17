@@ -118,7 +118,35 @@ type Face int8
 
 // Used when a block face is not appropriate to the situation, but block
 // location data passed (such as using an item not on a block).
-const FaceNull = Face(-1)
+const (
+    FaceNull = Face(-1)
+    FaceMinValid = 0
+    FaceBottom = 0
+    FaceTop = 1
+    FaceWest = 2
+    FaceEast = 3
+    FaceNorth = 4
+    FaceSouth = 5
+    FaceMaxValid = 5
+)
+
+func (f Face) GetDxyz() (dx BlockCoord, dy BlockYCoord, dz BlockCoord) {
+    switch f {
+    case FaceBottom:
+        dy = -1
+    case FaceTop:
+        dy = 1
+    case FaceWest:
+        dz = -1
+    case FaceEast:
+        dz = 1
+    case FaceNorth:
+        dx = -1
+    case FaceSouth:
+        dx = 1
+    }
+    return
+}
 
 // Action-related types and constants
 
@@ -268,6 +296,8 @@ type OrientationBytes struct {
 // Cardinal directions
 type ChunkSideDir int
 
+// Note that these constants are different to those for Face. These index
+// directly into arrays of fixed length.
 const (
     ChunkSideEast  = 0
     ChunkSideSouth = 1
@@ -278,17 +308,13 @@ const (
 func (d ChunkSideDir) GetDxz() (dx, dz ChunkCoord) {
     switch d {
     case ChunkSideEast:
-        dx = 0
         dz = 1
     case ChunkSideSouth:
         dx = 1
-        dz = 0
     case ChunkSideWest:
-        dx = 0
         dz = -1
     case ChunkSideNorth:
         dx = -1
-        dz = 0
     }
     return
 }

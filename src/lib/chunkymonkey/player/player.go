@@ -10,6 +10,7 @@ import (
     "os"
     "sync"
 
+    "chunkymonkey/block"
     .   "chunkymonkey/entity"
     .   "chunkymonkey/interfaces"
     "chunkymonkey/inventory"
@@ -200,8 +201,56 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, 
     // TODO validate that the player has dug long enough to stop speed
     // hacking (based on block type and tool used - non-trivial).
 
+    if face != FaceNull {
+        player.game.Enqueue(func(game IGame) {
+            chunkLoc, subLoc := blockLoc.ToChunkLocal()
+
+            chunk := game.GetChunkManager().Get(chunkLoc)
+
+            if chunk == nil {
+                return
+            }
+
+            chunk.Enqueue(func(chunk IChunk) {
+                chunk.DigBlock(subLoc, status)
+            })
+        })
+    } else {
+        // TODO player dropped item
+    }
+}
+
+func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
+    if face < FaceMinValid || face > FaceMaxValid {
+        return
+    }
+
+    dx, dy, dz := face.GetDxyz()
+    placeAtLoc := &BlockXyz{
+        blockLoc.X + dx,
+        blockLoc.Y + dy,
+        blockLoc.Z + dz,
+    }
+
+    player.lock.Lock()
+    defer player.lock.Unlock()
+
+    held := player.inventory.HeldItem()
+
+    // Make sure that it's a valid-looking block item.
+    itemTypeId := held.ItemTypeId
+    if itemTypeId == ItemTypeIdNull || itemTypeId < ItemTypeId(block.BlockIdMin) || itemTypeId > ItemTypeId(block.BlockIdMax) {
+        return
+    }
+
+    // Take an item from the "held" slot.
+    tmpSlot := &slot.Slot{ItemTypeIdNull, 0, 0}
+    tmpSlot.AddOne(held)
+
     player.game.Enqueue(func(game IGame) {
-        chunkLoc, subLoc := blockLoc.ToChunkLocal()
+        // TODO check if the block being built against allows such placement
+        // (E.g fences, water, etc. do not).
+        chunkLoc, subLoc := placeAtLoc.ToChunkLocal()
 
         chunk := game.GetChunkManager().Get(chunkLoc)
 
@@ -210,12 +259,12 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, 
         }
 
         chunk.Enqueue(func(chunk IChunk) {
-            chunk.DigBlock(subLoc, status)
+            chunk.PlaceBlock(subLoc, BlockId(tmpSlot.ItemTypeId))
+            // TODO if the block couldn't be placed, stop the item being spent.
+            // How to tell the client this? Add back to inventory and update
+            // slot on client?
         })
     })
-}
-
-func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
 }
 
 func (player *Player) PacketHoldingChange(slotId SlotId) {

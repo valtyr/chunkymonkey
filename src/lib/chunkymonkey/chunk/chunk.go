@@ -177,6 +177,30 @@ func (chunk *Chunk) DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
     return
 }
 
+func (chunk *Chunk) PlaceBlock(subLoc *SubChunkXyz, blockId BlockId) (ok bool) {
+    index, shift, ok := blockIndex(subLoc)
+    if !ok {
+        return
+    }
+
+    // Blocks can only be placed in certain blocks.
+    blockTypeId := BlockId(chunk.blocks[index])
+    blockLoc := chunk.loc.ToBlockXyz(subLoc)
+
+    if blockType, ok := chunk.mgr.blockTypes[blockTypeId]; ok {
+        if blockType.IsReplaceable() {
+            // TODO block metadata
+            chunk.setBlock(blockLoc, subLoc, index, shift, blockId, 0)
+            ok = true
+        }
+    } else {
+        log.Printf("Attempted to replace unknown block Id %d", blockTypeId)
+        ok = false
+    }
+
+    return
+}
+
 func (chunk *Chunk) Tick() {
     // Update neighbouring chunks of block changes in this chunk
     chunk.neighbours.flush()
