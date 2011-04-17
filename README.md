@@ -5,7 +5,7 @@
      w====m==|       minecraft server
             /
 
-Chunky Monkey is a Minecraft Alpha multiplayer server.  It is licensed under
+Chunky Monkey is a Minecraft Beta multiplayer server.  It is licensed under
 the MIT open source license, please see the LICENSE file for more information.
 
 Website: http://github.com/huin/chunkymonkey
