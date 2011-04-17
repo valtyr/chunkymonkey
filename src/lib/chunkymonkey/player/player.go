@@ -65,8 +65,9 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 
     game.Enqueue(func(game IGame) {
         game.AddPlayer(player)
-        // TODO pass proper dimension
         buf := &bytes.Buffer{}
+        // TODO pass proper dimension. This is low priority, because there is
+        // currently no way to update the client's dimension after login.
         proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
         proto.WriteSpawnPosition(buf, player.position.ToBlockXyz())
         player.TransmitPacket(buf.Bytes())
