@@ -56,7 +56,7 @@ type IItem interface {
 }
 
 type IBlockType interface {
-    Destroy(chunk IChunk, blockLoc *BlockXyz) bool
+    Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigStatus) bool
     IsSolid() bool
     GetName() string
     GetTransparency() int8
@@ -80,7 +80,7 @@ type IChunk interface {
     // Tells the chunk to take posession of the item.
     TransferItem(item IItem)
     GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
-    DestroyBlock(subLoc *SubChunkXyz) (ok bool)
+    DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
 
     // Register subscribers to receive information about the chunk. When added,
     // a subscriber will immediately receive complete chunk information via

@@ -156,7 +156,7 @@ func (chunk *Chunk) GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
     return
 }
 
-func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXyz) (ok bool) {
+func (chunk *Chunk) DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool) {
     index, shift, ok := blockIndex(subLoc)
     if !ok {
         return
@@ -166,7 +166,7 @@ func (chunk *Chunk) DestroyBlock(subLoc *SubChunkXyz) (ok bool) {
     blockLoc := chunk.loc.ToBlockXyz(subLoc)
 
     if blockType, ok := chunk.mgr.blockTypes[blockTypeId]; ok {
-        if blockType.Destroy(chunk, blockLoc) {
+        if blockType.Dig(chunk, blockLoc, digStatus) {
             chunk.setBlock(blockLoc, subLoc, index, shift, block.BlockIdAir, 0)
         }
     } else {

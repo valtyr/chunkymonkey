@@ -100,6 +100,7 @@ type BlockType struct {
     // Items, up to one of which will potentially spawn when block destroyed
     droppedItems []BlockDropItem
     isSolid      bool
+    breakOn      DigStatus
 }
 
 // The distance from the edge of a block that items spawn at in fractional
@@ -108,7 +109,13 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
 // Returns true if the block should be destroyed
 // This must be called within the Chunk's goroutine.
-func (blockType *BlockType) Destroy(chunk IChunk, blockLoc *BlockXyz) bool {
+func (blockType *BlockType) Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
+    if !blockType.destructable || blockType.breakOn != digStatus {
+        return
+    }
+
+    destroyed = true
+
     if len(blockType.droppedItems) > 0 {
         rand := chunk.GetRand()
         // Possibly drop item(s)
@@ -132,7 +139,7 @@ func (blockType *BlockType) Destroy(chunk IChunk, blockLoc *BlockXyz) bool {
         }
     }
 
-    return blockType.destructable
+    return
 }
 
 func (blockType *BlockType) IsSolid() bool {
@@ -156,6 +163,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
             transparency: -1,
             destructable: true,
             isSolid:      true,
+            breakOn:      DigBlockBroke,
         }
     }
 
@@ -360,6 +368,19 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     b[BlockIdSnowBlock].droppedItems = []BlockDropItem{
         BlockDropItem{cmitem.ItemIdSnowball, 100, 4},
     }
+
+    // Blocks that break on DigStarted
+    setBlockBreakOn := func(digStatus DigStatus, blockIds... BlockId) {
+        for _, blockId := range blockIds {
+            b[blockId].breakOn = digStatus
+        }
+    }
+    setBlockBreakOn(
+        DigStarted,
+        BlockIdSapling, BlockIdYellowFlower, BlockIdRedRose,
+        BlockIdBrownMushroom, BlockIdRedMushroom, BlockIdTorch, BlockIdCrops,
+    )
+
 
     retval := make(map[BlockId]IBlockType)
     for k, block := range b {

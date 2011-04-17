@@ -197,24 +197,22 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face) {
     // TODO validate that the player is actually somewhere near the block
 
-    if status == DigBlockBroke {
-        // TODO validate that the player has dug long enough to stop speed
-        // hacking (based on block type and tool used - non-trivial).
+    // TODO validate that the player has dug long enough to stop speed
+    // hacking (based on block type and tool used - non-trivial).
 
-        player.game.Enqueue(func(game IGame) {
-            chunkLoc, subLoc := blockLoc.ToChunkLocal()
+    player.game.Enqueue(func(game IGame) {
+        chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
-            chunk := game.GetChunkManager().Get(chunkLoc)
+        chunk := game.GetChunkManager().Get(chunkLoc)
 
-            if chunk == nil {
-                return
-            }
+        if chunk == nil {
+            return
+        }
 
-            chunk.Enqueue(func(chunk IChunk) {
-                chunk.DestroyBlock(subLoc)
-            })
+        chunk.Enqueue(func(chunk IChunk) {
+            chunk.DigBlock(subLoc, status)
         })
-    }
+    })
 }
 
 func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
