@@ -3,8 +3,11 @@ DIAGRAMS=diagrams/top-level-architecture.png
 
 all: $(BINARIES)
 
+clean:
+	@gd -q -clean src
+
 fmt:
-	@gd -fmt src
+	@gd -q -fmt src
 
 test:
 	@mkdir -p .test_obj
@@ -27,4 +30,4 @@ docs: $(DIAGRAMS)
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all fmt libs test docs
+.PHONY: all clean fmt libs test docs
