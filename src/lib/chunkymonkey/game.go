@@ -11,13 +11,13 @@ import (
 
     "chunkymonkey/block"
     "chunkymonkey/chunk"
-    .   "chunkymonkey/entity"
-    .   "chunkymonkey/interfaces"
+    . "chunkymonkey/entity"
+    . "chunkymonkey/interfaces"
     "chunkymonkey/player"
     "chunkymonkey/proto"
     "chunkymonkey/record"
     "chunkymonkey/server_auth"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
     "chunkymonkey/worldstore"
 )
 

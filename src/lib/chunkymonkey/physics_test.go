@@ -4,7 +4,7 @@ import (
     "math"
     "testing"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 func almostEqual(v1, v2 float64) bool {

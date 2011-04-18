@@ -2,7 +2,7 @@ package block
 
 import (
     "testing"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 func TestLoadStandardBlocksOpacity(t *testing.T) {

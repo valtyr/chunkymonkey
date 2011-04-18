@@ -8,7 +8,7 @@ import (
     "chunkymonkey/entity"
     "chunkymonkey/physics"
     "chunkymonkey/slot"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 // Subset of player methods used by chunks.

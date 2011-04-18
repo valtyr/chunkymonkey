@@ -5,7 +5,7 @@ import (
     "os"
 
     "chunkymonkey/proto"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const SlotCountMax = ItemCount(64)

@@ -3,7 +3,7 @@ package slot
 import (
     "testing"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 func slotEq(s1, s2 *Slot) bool {

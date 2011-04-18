@@ -5,7 +5,7 @@ import (
     "os"
 
     "chunkymonkey/slot"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const (

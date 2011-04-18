@@ -133,7 +133,7 @@ var connections = 0
 // Interpose a recorder or replayer onto a network connection
 func WrapConn(raw net.Conn) (wrapped net.Conn) {
     if *record != "" {
-        file, err := os.Open(*record, os.O_CREAT|os.O_TRUNC|os.O_WRONLY, 0644)
+        file, err := os.Create(*record)
         if err != nil {
             log.Fatal("WrapConn: ", err.String())
         }
@@ -143,7 +143,7 @@ func WrapConn(raw net.Conn) (wrapped net.Conn) {
 
     // The second client connection will replay the log file
     if connections == 1 && *replay != "" {
-        file, err := os.Open(*replay, os.O_RDONLY, 0)
+        file, err := os.Open(*replay)
         if err != nil {
             log.Fatal("WrapConn: ", err.String())
         }

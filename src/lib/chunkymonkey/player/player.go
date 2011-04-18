@@ -11,12 +11,12 @@ import (
     "sync"
 
     "chunkymonkey/block"
-    .   "chunkymonkey/entity"
-    .   "chunkymonkey/interfaces"
+    . "chunkymonkey/entity"
+    . "chunkymonkey/interfaces"
     "chunkymonkey/inventory"
     "chunkymonkey/proto"
     "chunkymonkey/slot"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 var (

@@ -3,9 +3,9 @@ package chunk
 import (
     "log"
 
-    .   "chunkymonkey/interfaces"
+    . "chunkymonkey/interfaces"
     "chunkymonkey/chunkstore"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 // ChunkManager contains all chunks and can look them up

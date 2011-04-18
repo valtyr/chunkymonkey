@@ -3,7 +3,7 @@ package player
 import (
     "testing"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 // Tests that the chunk locations are all within expected bounds, and that all

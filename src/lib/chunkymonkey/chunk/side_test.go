@@ -3,7 +3,7 @@ package chunk
 import (
     "testing"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 func TestblockIndex(t *testing.T) {

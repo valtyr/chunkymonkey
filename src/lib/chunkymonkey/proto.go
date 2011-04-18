@@ -8,7 +8,7 @@ import (
     "encoding/binary"
     "compress/zlib"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
     "path"
 
     "chunkymonkey/chunkstore"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
     "nbt"
 )
 
@@ -47,7 +47,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 }
 
 func loadLevelData(worldPath string) (levelData *nbt.NamedTag, err os.Error) {
-    file, err := os.Open(path.Join(worldPath, "level.dat"), os.O_RDONLY, 0)
+    file, err := os.Open(path.Join(worldPath, "level.dat"))
     if err != nil {
         return
     }

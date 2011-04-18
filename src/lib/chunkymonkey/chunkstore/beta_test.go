@@ -3,7 +3,7 @@ package chunkstore
 import (
     "testing"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 func TestRegionLoc_regionFilePath(t *testing.T) {

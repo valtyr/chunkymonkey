@@ -4,9 +4,9 @@ import (
     "bytes"
     "sync"
 
-    .   "chunkymonkey/interfaces"
+    . "chunkymonkey/interfaces"
     "chunkymonkey/proto"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const (

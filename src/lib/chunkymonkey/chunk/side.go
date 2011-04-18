@@ -1,8 +1,8 @@
 package chunk
 
 import (
-    .   "chunkymonkey/interfaces"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/interfaces"
+    . "chunkymonkey/types"
 )
 
 // Encapsulates logic for looking up block data from neighbouring chunks, and

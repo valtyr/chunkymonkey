@@ -7,7 +7,7 @@ import (
     "strings"
 
     "chunkymonkey/worldstore"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
     "nbt"
 )
 

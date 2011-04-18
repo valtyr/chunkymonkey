@@ -8,7 +8,7 @@ import (
     "chunkymonkey/physics"
     "chunkymonkey/proto"
     "chunkymonkey/slot"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const (

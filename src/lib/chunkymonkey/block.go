@@ -1,9 +1,9 @@
 package block
 
 import (
-    .      "chunkymonkey/interfaces"
+    . "chunkymonkey/interfaces"
     cmitem "chunkymonkey/item"
-    .      "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const (

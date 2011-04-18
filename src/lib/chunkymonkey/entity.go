@@ -1,7 +1,7 @@
 package entity
 
 import (
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 type Entity struct {

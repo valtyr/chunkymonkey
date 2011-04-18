@@ -10,10 +10,10 @@ import (
     "time"
 
     "chunkymonkey/block"
-    .   "chunkymonkey/interfaces"
+    . "chunkymonkey/interfaces"
     "chunkymonkey/proto"
     "chunkymonkey/chunkstore"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
     "os"
     "path"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 const (
@@ -111,7 +111,7 @@ type regionFileReader struct {
 }
 
 func newRegionFileReader(filePath string) (cfr *regionFileReader, err os.Error) {
-    file, err := os.Open(filePath, os.O_RDONLY, 0)
+    file, err := os.Open(filePath)
     if err != nil {
         if sysErr, ok := err.(*os.SyscallError); ok && sysErr.Errno == os.ENOENT {
             err = NoSuchChunkError(false)

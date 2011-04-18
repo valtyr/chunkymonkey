@@ -6,7 +6,7 @@ import (
 
     "chunkymonkey/proto"
     "chunkymonkey/slot"
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 type Inventory struct {

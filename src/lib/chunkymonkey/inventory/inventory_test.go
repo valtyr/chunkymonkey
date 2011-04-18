@@ -3,7 +3,7 @@ package inventory
 import (
     "testing"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
 )
 
 func TestInventory_Init(t *testing.T) {

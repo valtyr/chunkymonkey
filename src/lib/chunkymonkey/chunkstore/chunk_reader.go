@@ -4,7 +4,7 @@ import (
     "io"
     "os"
 
-    .   "chunkymonkey/types"
+    . "chunkymonkey/types"
     "nbt"
 )
 
