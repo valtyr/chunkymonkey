@@ -4,7 +4,6 @@ import (
     "io"
     "os"
 
-    .   "chunkymonkey/interfaces"
     "chunkymonkey/proto"
     "chunkymonkey/slot"
     .   "chunkymonkey/types"
@@ -39,17 +38,16 @@ func (inv *Inventory) SendUpdate(writer io.Writer, windowId WindowId) os.Error {
 
 // Returns taken=true if any count was removed from the item. For each slot
 // that changes, the slotChanged function is called.
-func (inv *Inventory) PutItem(item IItem, slotChanged func(slotId SlotId, slot *slot.Slot)) (taken bool) {
+func (inv *Inventory) PutItem(item *slot.Slot, slotChanged func(slotId SlotId, slot *slot.Slot)) (taken bool) {
     // TODO optimize this algorithm, maybe by maintaining a map of non-full
     // slots containing an item of various item type IDs.
-    srcSlot := item.GetSlot()
     for _, slotIndex := range inv.slotOrder {
         slot := &inv.slots[slotIndex]
-        if srcSlot.Count <= 0 {
+        if item.Count <= 0 {
             break
         }
-        if slot.ItemTypeId == ItemTypeIdNull || slot.ItemTypeId == srcSlot.ItemTypeId {
-            if slot.Add(srcSlot) {
+        if slot.ItemTypeId == ItemTypeIdNull || slot.ItemTypeId == item.ItemTypeId {
+            if slot.Add(item) {
                 taken = true
                 if slotChanged != nil {
                     slotChanged(SlotId(slotIndex), slot)

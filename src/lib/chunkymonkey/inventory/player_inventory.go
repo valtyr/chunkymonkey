@@ -39,7 +39,8 @@ func (inv *PlayerInventory) Init() {
 
 // Writes packets for other players to see the equipped items.
 func (inv *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer, entityId EntityId) (err os.Error) {
-    err = inv.HeldItem().SendEquipmentUpdate(writer, entityId, 0)
+    slot, _ := inv.HeldItem()
+    err = slot.SendEquipmentUpdate(writer, entityId, 0)
     if err != nil {
         return
     }
@@ -63,6 +64,8 @@ func (inv *PlayerInventory) SetHolding(holding SlotId) {
 }
 
 // Returns the slot that is the current "held" item.
-func (inv *PlayerInventory) HeldItem() *slot.Slot {
-    return inv.Slot(inv.holding + playerInvHeldStart)
+func (inv *PlayerInventory) HeldItem() (slot *slot.Slot, slotId SlotId) {
+    slotId = inv.holding + playerInvHeldStart
+    slot = inv.Slot(slotId)
+    return
 }

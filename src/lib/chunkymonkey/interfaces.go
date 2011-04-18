@@ -18,7 +18,7 @@ type IChunkSubscriber interface {
     // Offers an item to the subscriber. If the subscriber takes it into their
     // inventory, it returns true. This function is called from the item's
     // parent chunk's goroutine, so all methods are safely accessible.
-    OfferItem(IItem) (taken bool)
+    OfferItem(item *slot.Slot) (taken bool)
 }
 
 type IPlayer interface {
@@ -28,7 +28,7 @@ type IPlayer interface {
     GetName() string           // Do not modify return value
     LockedGetChunkPosition() *ChunkXz
     TransmitPacket(packet []byte)
-    OfferItem(IItem) (taken bool)
+    OfferItem(item *slot.Slot) (taken bool)
 
     Enqueue(f func(IPlayer))
 
@@ -59,6 +59,7 @@ type IBlockType interface {
     Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigStatus) bool
     IsSolid() bool
     IsReplaceable() bool
+    IsAttachable() bool
     GetName() string
     GetTransparency() int8
 }
@@ -82,7 +83,7 @@ type IChunk interface {
     TransferItem(item IItem)
     GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
     DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
-    PlaceBlock(subLoc *SubChunkXyz, blockId BlockId) (ok bool)
+    PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId BlockId) (ok bool)
 
     // Register subscribers to receive information about the chunk. When added,
     // a subscriber will immediately receive complete chunk information via

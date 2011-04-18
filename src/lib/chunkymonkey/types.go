@@ -119,14 +119,14 @@ type Face int8
 // Used when a block face is not appropriate to the situation, but block
 // location data passed (such as using an item not on a block).
 const (
-    FaceNull = Face(-1)
+    FaceNull     = Face(-1)
     FaceMinValid = 0
-    FaceBottom = 0
-    FaceTop = 1
-    FaceWest = 2
-    FaceEast = 3
-    FaceNorth = 4
-    FaceSouth = 5
+    FaceBottom   = 0
+    FaceTop      = 1
+    FaceWest     = 2
+    FaceEast     = 3
+    FaceNorth    = 4
+    FaceSouth    = 5
     FaceMaxValid = 5
 )
 

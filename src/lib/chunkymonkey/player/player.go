@@ -105,12 +105,13 @@ func (player *Player) Enqueue(f func(IPlayer)) {
 }
 
 func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
+    heldSlot, _ := player.inventory.HeldItem()
     err = proto.WriteNamedEntitySpawn(
         writer,
         player.EntityId, player.name,
         player.position.ToAbsIntXyz(),
         player.look.ToLookBytes(),
-        player.inventory.HeldItem().ItemTypeId,
+        heldSlot.ItemTypeId,
     )
     if err != nil {
         return
@@ -202,9 +203,9 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, 
     // hacking (based on block type and tool used - non-trivial).
 
     if face != FaceNull {
-        player.game.Enqueue(func(game IGame) {
-            chunkLoc, subLoc := blockLoc.ToChunkLocal()
+        chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
+        player.game.Enqueue(func(game IGame) {
             chunk := game.GetChunkManager().Get(chunkLoc)
 
             if chunk == nil {
@@ -222,47 +223,59 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, 
 
 func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
     if face < FaceMinValid || face > FaceMaxValid {
+        log.Printf("Player/PacketPlayerBlockPlacement: invalid face %d", face)
         return
     }
 
+    // The position to put the block at.
     dx, dy, dz := face.GetDxyz()
     placeAtLoc := &BlockXyz{
         blockLoc.X + dx,
         blockLoc.Y + dy,
         blockLoc.Z + dz,
     }
+    placeChunkLoc, _ := placeAtLoc.ToChunkLocal()
 
     player.lock.Lock()
     defer player.lock.Unlock()
 
-    held := player.inventory.HeldItem()
+    heldSlot, heldSlotId := player.inventory.HeldItem()
 
     // Make sure that it's a valid-looking block item.
-    itemTypeId := held.ItemTypeId
+    itemTypeId := heldSlot.ItemTypeId
     if itemTypeId == ItemTypeIdNull || itemTypeId < ItemTypeId(block.BlockIdMin) || itemTypeId > ItemTypeId(block.BlockIdMax) {
+        log.Print("Player/PacketPlayerBlockPlacement: invalid block held")
         return
     }
 
     // Take an item from the "held" slot.
     tmpSlot := &slot.Slot{ItemTypeIdNull, 0, 0}
-    tmpSlot.AddOne(held)
+    tmpSlot.AddOne(heldSlot)
+
+    buf := &bytes.Buffer{}
+    heldSlot.SendUpdate(buf, WindowIdInventory, heldSlotId)
+    player.TransmitPacket(buf.Bytes())
 
     player.game.Enqueue(func(game IGame) {
-        // TODO check if the block being built against allows such placement
-        // (E.g fences, water, etc. do not).
-        chunkLoc, subLoc := placeAtLoc.ToChunkLocal()
-
-        chunk := game.GetChunkManager().Get(chunkLoc)
+        chunk := game.GetChunkManager().Get(placeChunkLoc)
 
         if chunk == nil {
+            // Return item to player
+            // Note that this can technically fail, in which case the item vanishes.
+            log.Print("Player/PacketPlayerBlockPlacement: chunk not found")
+            player.OfferItem(tmpSlot)
             return
         }
 
         chunk.Enqueue(func(chunk IChunk) {
-            chunk.PlaceBlock(subLoc, BlockId(tmpSlot.ItemTypeId))
-            // TODO if the block couldn't be placed, stop the item being spent.
-            // How to tell the client this? Add back to inventory and update
-            // slot on client?
+            // Note that we tell the chunk that the block is to get placed
+            // *into* to place it (rather than the block it's being attached
+            // to). The chunk itself determines if this will work.
+            if !chunk.PlaceBlock(blockLoc, face, BlockId(tmpSlot.ItemTypeId)) {
+                // Return item to player
+                // Note that this can technically fail, in which case the item vanishes.
+                player.OfferItem(tmpSlot)
+            }
         })
     })
 }
@@ -411,7 +424,7 @@ func (player *Player) TransmitPacket(packet []byte) {
 }
 
 // Used to receive items picked up from chunks.
-func (player *Player) OfferItem(item IItem) (taken bool) {
+func (player *Player) OfferItem(item *slot.Slot) (taken bool) {
     player.lock.Lock()
     defer player.lock.Unlock()
 

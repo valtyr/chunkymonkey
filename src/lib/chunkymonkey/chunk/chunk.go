@@ -177,25 +177,89 @@ func (chunk *Chunk) DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
     return
 }
 
-func (chunk *Chunk) PlaceBlock(subLoc *SubChunkXyz, blockId BlockId) (ok bool) {
-    index, shift, ok := blockIndex(subLoc)
-    if !ok {
+func (chunk *Chunk) PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId BlockId) (ok bool) {
+    // Check if the block being built against allows such placement (E.g
+    // fences, water, etc. do not).
+    againstBlockType, _, blockUnknownId := chunk.blockQuery(againstLoc)
+    if ok = !blockUnknownId; !ok {
+        return
+    }
+    if ok = againstBlockType.IsAttachable(); !ok {
         return
     }
 
-    // Blocks can only be placed in certain blocks.
-    blockTypeId := BlockId(chunk.blocks[index])
-    blockLoc := chunk.loc.ToBlockXyz(subLoc)
+    // The position to put the block at.
+    dx, dy, dz := againstFace.GetDxyz()
+    placeAtLoc := &BlockXyz{
+        againstLoc.X + dx,
+        againstLoc.Y + dy,
+        againstLoc.Z + dz,
+    }
+    placeChunkLoc, placeSubLoc := placeAtLoc.ToChunkLocal()
+    if ok = (placeChunkLoc.X == chunk.loc.X && placeChunkLoc.Z == chunk.loc.Z); !ok {
+        log.Print("Chunk/PlaceBlock: block not inside this chunk")
+        return
+    }
+    index, shift, ok := blockIndex(placeSubLoc)
+    if !ok {
+        log.Print("Chunk/PlaceBlock: invalid position within chunk")
+        return
+    }
 
-    if blockType, ok := chunk.mgr.blockTypes[blockTypeId]; ok {
-        if blockType.IsReplaceable() {
-            // TODO block metadata
-            chunk.setBlock(blockLoc, subLoc, index, shift, blockId, 0)
-            ok = true
-        }
+    // Blocks can only replace certain blocks.
+    blockTypeId := BlockId(chunk.blocks[index])
+    blockType, ok := chunk.mgr.blockTypes[blockTypeId]
+    if !ok {
+        return
+    }
+    if ok = blockType.IsReplaceable(); !ok {
+        return
+    }
+
+    placeBlockLoc := chunk.loc.ToBlockXyz(placeSubLoc)
+    // TODO block metadata
+    chunk.setBlock(placeBlockLoc, placeSubLoc, index, shift, blockId, 0)
+    ok = true
+
+    return
+}
+
+// Used to read the BlockId of a block that's either in the chunk, or
+// immediately adjoining it in a neighbouring chunk via the side caches.
+func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType IBlockType, isWithinChunk bool, blockUnknownId bool) {
+    chunkLoc, subLoc := blockLoc.ToChunkLocal()
+
+    var blockTypeId BlockId
+    var ok bool
+
+    if chunkLoc.X == chunk.loc.X && chunkLoc.Z == chunk.loc.Z {
+        // The item is asking about this chunk.
+        blockTypeId, _ = chunk.GetBlock(subLoc)
+        isWithinChunk = true
     } else {
-        log.Printf("Attempted to replace unknown block Id %d", blockTypeId)
-        ok = false
+        // The item is asking about a separate chunk.
+        isWithinChunk = false
+
+        ok, blockTypeId = chunk.neighbours.GetCachedBlock(
+            chunk.loc.X-chunkLoc.X,
+            chunk.loc.Z-chunkLoc.Z,
+            subLoc,
+        )
+
+        if !ok {
+            // The chunk side isn't cached or isn't a neighbouring block.
+            blockUnknownId = true
+            return
+        }
+    }
+
+    blockType, ok = chunk.mgr.blockTypes[blockTypeId]
+    if !ok {
+        log.Printf(
+            "Chunk/blockQuery found unknown block type Id %d at %+v",
+            blockTypeId, blockLoc,
+        )
+        blockUnknownId = true
     }
 
     return
@@ -206,37 +270,12 @@ func (chunk *Chunk) Tick() {
     chunk.neighbours.flush()
 
     blockQuery := func(blockLoc *BlockXyz) (isSolid bool, isWithinChunk bool) {
-        chunkLoc, subLoc := blockLoc.ToChunkLocal()
-
-        // If we are in doubt, we assume that the block asked about is solid
-        // (this way items don't fly off the side of the map needlessly)
-        isSolid = true
-
-        var blockTypeId BlockId
-        if chunkLoc.X == chunk.loc.X && chunkLoc.Z == chunk.loc.Z {
-            // The item is asking about this chunk.
-            blockTypeId, _ = chunk.GetBlock(subLoc)
-            isWithinChunk = true
-        } else {
-            // The item is asking about a separate chunk.
-            isWithinChunk = false
-
-            var ok bool
-            ok, blockTypeId = chunk.neighbours.GetCachedBlock(
-                chunk.loc.X-chunkLoc.X,
-                chunk.loc.Z-chunkLoc.Z,
-                subLoc)
-
-            if !ok {
-                return
-            }
-        }
-
-        blockType, ok := chunk.mgr.blockTypes[blockTypeId]
-        if !ok {
-            log.Printf(
-                "game.physicsTick/blockQuery found unknown block type Id %d at %+v",
-                blockTypeId, blockLoc)
+        blockType, isWithinChunk, blockUnknownId := chunk.blockQuery(blockLoc)
+        if blockUnknownId {
+            // If we are in doubt, we assume that the block asked about is
+            // solid (this way items don't fly off the side of the map
+            // needlessly).
+            isSolid = true
         } else {
             isSolid = blockType.IsSolid()
         }
@@ -330,7 +369,7 @@ func (chunk *Chunk) SetSubscriberPosition(subscriber IChunkSubscriber, pos *AbsX
         for entityId, item := range chunk.items {
             pos := item.GetPosition()
             if pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z >= minZ && pos.Z <= maxZ {
-                if subscriber.OfferItem(item) {
+                if subscriber.OfferItem(item.GetSlot()) {
                     buf := &bytes.Buffer{}
 
                     // Tell all subscribers to animate the item flying at the

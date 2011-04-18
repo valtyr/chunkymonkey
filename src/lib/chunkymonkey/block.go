@@ -8,7 +8,7 @@ import (
 
 const (
     // TODO add in new blocks from Beta 1.2
-    BlockIdMin                 = BlockId(0)
+    BlockIdMin = BlockId(0)
 
     BlockIdAir                 = BlockId(0)
     BlockIdStone               = BlockId(1)
@@ -88,7 +88,7 @@ const (
     BlockIdPortal              = BlockId(90)
     BlockIdJackOLantern        = BlockId(91)
 
-    BlockIdMax                 = BlockId(91)
+    BlockIdMax = BlockId(91)
 )
 
 type BlockDropItem struct {
@@ -105,6 +105,7 @@ type BlockType struct {
     droppedItems []BlockDropItem
     isSolid      bool
     replaceable  bool
+    attachable   bool
     breakOn      DigStatus
 }
 
@@ -156,6 +157,11 @@ func (blockType *BlockType) IsReplaceable() bool {
     return blockType.replaceable
 }
 
+// Returns true if a block can be placed onto a face of the block.
+func (blockType *BlockType) IsAttachable() bool {
+    return blockType.attachable
+}
+
 func (blockType *BlockType) GetName() string {
     return blockType.name
 }
@@ -174,6 +180,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
             destructable: true,
             isSolid:      true,
             replaceable:  false,
+            attachable:   true,
             breakOn:      DigBlockBroke,
         }
     }
@@ -209,7 +216,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     newBlock(BlockIdDoubleStoneSlab, "double stone slab")
     newBlock(BlockIdStoneSlab, "stone slab")
     newBlock(BlockIdBrick, "brick")
-    newBlock(BlockIdTnt, "Tnt")
+    newBlock(BlockIdTnt, "TNT")
     newBlock(BlockIdBookshelf, "bookshelf")
     newBlock(BlockIdMossStone, "moss stone")
     newBlock(BlockIdObsidian, "obsidian")
@@ -291,7 +298,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     }
 
     // Setup replaceable blocks
-    setReplaceable := func(blockIds... BlockId) {
+    setReplaceable := func(blockIds ...BlockId) {
         for _, blockId := range blockIds {
             b[blockId].replaceable = true
         }
@@ -300,7 +307,29 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
         BlockIdAir,
         BlockIdWater, BlockIdStationaryWater,
         BlockIdLava, BlockIdStationaryLava,
+        BlockIdFire,
         BlockIdSnow,
+    )
+
+    // Setup non-attachable blocks
+    setNonAttachable := func(blockIds ...BlockId) {
+        for _, blockId := range blockIds {
+            b[blockId].attachable = false
+        }
+    }
+    setNonAttachable(
+        BlockIdAir, BlockIdSapling, BlockIdWater, BlockIdStationaryWater,
+        BlockIdLava, BlockIdStationaryLava, BlockIdYellowFlower,
+        BlockIdRedRose, BlockIdBrownMushroom, BlockIdRedMushroom,
+        BlockIdStoneSlab, BlockIdTorch, BlockIdFire, BlockIdWoodenStairs,
+        BlockIdChest, BlockIdRedstoneWire, BlockIdWorkbench, BlockIdCrops,
+        BlockIdFurnace, BlockIdBurningFurnace, BlockIdSignPost,
+        BlockIdWoodenDoor, BlockIdLadder, BlockIdMinecartTracks,
+        BlockIdCobblestoneStairs, BlockIdWallSign, BlockIdLever,
+        BlockIdStonePressurePlate, BlockIdIronDoor, BlockIdWoodenPressurePlate,
+        BlockIdRedstoneTorchOff, BlockIdRedstoneTorchOn, BlockIdStoneButton,
+        BlockIdSnow, BlockIdSugarCane, BlockIdJukebox, BlockIdFence,
+        BlockIdPortal,
     )
 
     // Setup behaviour of blocks when destroyed
@@ -394,7 +423,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     }
 
     // Blocks that break on DigStarted
-    setBlockBreakOn := func(digStatus DigStatus, blockIds... BlockId) {
+    setBlockBreakOn := func(digStatus DigStatus, blockIds ...BlockId) {
         for _, blockId := range blockIds {
             b[blockId].breakOn = digStatus
         }
@@ -404,7 +433,6 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
         BlockIdSapling, BlockIdYellowFlower, BlockIdRedRose,
         BlockIdBrownMushroom, BlockIdRedMushroom, BlockIdTorch, BlockIdCrops,
     )
-
 
     retval := make(map[BlockId]IBlockType)
     for k, block := range b {
