@@ -1,4 +1,4 @@
-BINARIES=chunkymonkey intercept inspectlevel
+BINARIES=chunkymonkey intercept inspectlevel dumpblockdefs
 DIAGRAMS=diagrams/top-level-architecture.png
 
 all: $(BINARIES)
@@ -23,6 +23,9 @@ intercept: libs
 	@gd -q -I src/lib -o $@ src/$@
 
 inspectlevel: libs
+	@gd -q -I src/lib -o $@ src/$@
+
+dumpblockdefs: libs
 	@gd -q -I src/lib -o $@ src/$@
 
 docs: $(DIAGRAMS)
