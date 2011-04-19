@@ -166,8 +166,8 @@ func (chunk *Chunk) DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
     blockTypeId := BlockId(chunk.blocks[index])
     blockLoc := chunk.loc.ToBlockXyz(subLoc)
 
-    if blockType, ok := chunk.mgr.blockTypes[blockTypeId]; ok {
-        if blockType.Dig(chunk, blockLoc, digStatus) {
+    if blockType, ok := chunk.mgr.blockTypes[blockTypeId]; ok && blockType.Destructable {
+        if blockType.Aspect.Dig(chunk, blockLoc, digStatus) {
             chunk.setBlock(blockLoc, subLoc, index, shift, block.BlockIdAir, 0)
         }
     } else {

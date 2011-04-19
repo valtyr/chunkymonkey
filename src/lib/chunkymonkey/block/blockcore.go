@@ -92,22 +92,20 @@ const (
     BlockIdMax = BlockId(91)
 )
 
-type BlockDropItem struct {
-    DroppedItem ItemTypeId
-    Probability byte // Probabilities specified as a percentage
-    Count       ItemCount
+// Defines the behaviour of a block.
+type IBlockAspect interface {
+    Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool)
 }
 
+// The core information about any block type.
 type BlockType struct {
+    Aspect       *StandardAspect
     Name         string
     Transparency int8
     Destructable bool
-    // Items, up to one of which will potentially spawn when block destroyed
-    DroppedItems []BlockDropItem
     Solid        bool
     Replaceable  bool
     Attachable   bool
-    BreakOn      DigStatus
 }
 
 // The interface required of a chunk by block behaviour.
@@ -122,38 +120,6 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
 // Returns true if the block should be destroyed
 // This must be called within the Chunk's goroutine.
-func (blockType *BlockType) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
-    if !blockType.Destructable || blockType.BreakOn != digStatus {
-        return
-    }
-
-    destroyed = true
-
-    if len(blockType.DroppedItems) > 0 {
-        rand := chunk.GetRand()
-        // Possibly drop item(s)
-        r := byte(rand.Intn(100))
-        for _, dropItem := range blockType.DroppedItems {
-            if dropItem.Probability > r {
-                for i := dropItem.Count; i > 0; i-- {
-                    position := blockLoc.ToAbsXyz()
-                    position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
-                    position.Y += AbsCoord(blockItemSpawnFromEdge)
-                    position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
-                    chunk.AddItem(
-                        item.NewItem(
-                            dropItem.DroppedItem, 1,
-                            position,
-                            &AbsVelocity{0, 0, 0}))
-                }
-                break
-            }
-            r -= dropItem.Probability
-        }
-    }
-
-    return
-}
 
 func (blockType *BlockType) IsSolid() bool {
     return blockType.Solid
@@ -182,13 +148,16 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
 
     newBlock := func(id BlockId, name string) {
         b[id] = &BlockType{
+            Aspect:    &StandardAspect{
+                DroppedItems: nil,
+                BreakOn:      DigBlockBroke,
+            },
             Name:         name,
             Transparency: -1,
             Destructable: true,
             Solid:        true,
             Replaceable:  false,
             Attachable:   true,
-            BreakOn:      DigBlockBroke,
         }
     }
 
@@ -342,8 +311,8 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
     // Setup behaviour of blocks when destroyed
     setMinedDropsSameItem := func(blockTypes []BlockId) {
         for _, blockType := range blockTypes {
-            b[blockType].DroppedItems = append(
-                b[blockType].DroppedItems,
+            b[blockType].Aspect.DroppedItems = append(
+                b[blockType].Aspect.DroppedItems,
                 BlockDropItem{
                     ItemTypeId(blockType),
                     100,
@@ -358,8 +327,8 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
     }
     setMinedDropBlock := func(drops []Drop) {
         for _, drop := range drops {
-            b[drop.minedBlockType].DroppedItems = append(
-                b[drop.minedBlockType].DroppedItems,
+            b[drop.minedBlockType].Aspect.DroppedItems = append(
+                b[drop.minedBlockType].Aspect.DroppedItems,
                 BlockDropItem{
                     drop.droppedItemType,
                     100,
@@ -411,28 +380,28 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
     })
     // Blocks that drop things with varying probability (or one of several
     // items)
-    b[BlockIdGravel].DroppedItems = []BlockDropItem{
+    b[BlockIdGravel].Aspect.DroppedItems = []BlockDropItem{
         BlockDropItem{item.ItemIdFlint, 10, 1},
         BlockDropItem{ItemTypeId(BlockIdGravel), 90, 1},
     }
-    b[BlockIdLeaves].DroppedItems = []BlockDropItem{
+    b[BlockIdLeaves].Aspect.DroppedItems = []BlockDropItem{
         // TODO get more accurate probability of sapling drop
         BlockDropItem{ItemTypeId(BlockIdSapling), 5, 1},
     }
-    b[BlockIdRedstoneOre].DroppedItems = []BlockDropItem{
+    b[BlockIdRedstoneOre].Aspect.DroppedItems = []BlockDropItem{
         // TODO find probabilities of dropping 4 vs 5 items
         BlockDropItem{item.ItemIdRedstone, 50, 4},
         BlockDropItem{item.ItemIdRedstone, 50, 5},
     }
-    b[BlockIdGlowingRedstoneOre].DroppedItems = b[BlockIdRedstoneOre].DroppedItems
-    b[BlockIdSnowBlock].DroppedItems = []BlockDropItem{
+    b[BlockIdGlowingRedstoneOre].Aspect.DroppedItems = b[BlockIdRedstoneOre].Aspect.DroppedItems
+    b[BlockIdSnowBlock].Aspect.DroppedItems = []BlockDropItem{
         BlockDropItem{item.ItemIdSnowball, 100, 4},
     }
 
     // Blocks that break on DigStarted
     setBlockBreakOn := func(digStatus DigStatus, blockIds ...BlockId) {
         for _, blockId := range blockIds {
-            b[blockId].BreakOn = digStatus
+            b[blockId].Aspect.BreakOn = digStatus
         }
     }
     setBlockBreakOn(
