@@ -11,6 +11,7 @@ import (
 
     "chunkymonkey/block"
     . "chunkymonkey/interfaces"
+    "chunkymonkey/item"
     "chunkymonkey/proto"
     "chunkymonkey/chunkstore"
     . "chunkymonkey/types"
@@ -33,7 +34,7 @@ type Chunk struct {
     blockLight    []byte
     skyLight      []byte
     heightMap     []byte
-    items         map[EntityId]IItem
+    items         map[EntityId]*item.Item
     rand          *rand.Rand
     neighbours    neighboursCache
     cachedPacket  []byte                       // Cached packet data for this block.
@@ -51,7 +52,7 @@ func newChunkFromReader(reader chunkstore.ChunkReader, mgr *ChunkManager) (chunk
         skyLight:      reader.SkyLight(),
         blockLight:    reader.BlockLight(),
         heightMap:     reader.HeightMap(),
-        items:         make(map[EntityId]IItem),
+        items:         make(map[EntityId]*item.Item),
         rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
         subscribers:   make(map[IChunkSubscriber]bool),
         subscriberPos: make(map[IChunkSubscriber]*AbsXyz),
@@ -124,7 +125,7 @@ func (chunk *Chunk) GetRand() *rand.Rand {
     return chunk.rand
 }
 
-func (chunk *Chunk) AddItem(item IItem) {
+func (chunk *Chunk) AddItem(item *item.Item) {
     wg := &sync.WaitGroup{}
     wg.Add(1)
     chunk.mgr.game.Enqueue(func(game IGame) {
@@ -141,7 +142,7 @@ func (chunk *Chunk) AddItem(item IItem) {
     chunk.multicastSubscribers(buf.Bytes())
 }
 
-func (chunk *Chunk) TransferItem(item IItem) {
+func (chunk *Chunk) TransferItem(item *item.Item) {
     chunk.items[item.GetEntity().EntityId] = item
 }
 
@@ -283,7 +284,7 @@ func (chunk *Chunk) Tick() {
     }
 
     destroyedEntityIds := []EntityId{}
-    leftItems := []IItem{}
+    leftItems := []*item.Item{}
 
     for _, item := range chunk.items {
         if item.Tick(blockQuery) {

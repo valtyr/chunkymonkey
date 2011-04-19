@@ -6,7 +6,7 @@ import (
     "rand"
 
     "chunkymonkey/entity"
-    "chunkymonkey/physics"
+    "chunkymonkey/item"
     "chunkymonkey/slot"
     . "chunkymonkey/types"
 )
@@ -38,23 +38,6 @@ type IPlayer interface {
     IsWithin(p1, p2 *ChunkXz) bool
 }
 
-type IItem interface {
-    // Safe to call from outside of chunk's own goroutine
-    GetEntity() *entity.Entity // Only the game mainloop may modify the return value
-    GetSlot() *slot.Slot
-
-    // Item methods must be called from the goroutine of their parent chunk.
-    // Note that items move between chunks.
-    GetPosition() *AbsXyz
-    GetItemTypeId() ItemTypeId
-    // Note that most code assumes that an item's count is 1.
-    GetCount() ItemCount
-    SetCount(count ItemCount)
-    SendSpawn(writer io.Writer) (err os.Error)
-    SendUpdate(writer io.Writer) (err os.Error)
-    Tick(blockQuery physics.BlockQueryFn) (leftBlock bool)
-}
-
 type IBlockType interface {
     Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigStatus) bool
     IsSolid() bool
@@ -78,9 +61,9 @@ type IChunk interface {
 
     // Intended for use by blocks/entities within the chunk.
     GetRand() *rand.Rand
-    AddItem(item IItem)
+    AddItem(item *item.Item)
     // Tells the chunk to take posession of the item.
-    TransferItem(item IItem)
+    TransferItem(item *item.Item)
     GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
     DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
     PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId BlockId) (ok bool)
