@@ -3,6 +3,7 @@ package chunk
 import (
     "log"
 
+    "chunkymonkey/block"
     . "chunkymonkey/interfaces"
     "chunkymonkey/chunkstore"
     . "chunkymonkey/types"
@@ -12,7 +13,7 @@ import (
 type ChunkManager struct {
     game       IGame
     chunkStore chunkstore.ChunkStore
-    blockTypes map[BlockId]IBlockType
+    blockTypes map[BlockId]*block.BlockType
     chunks     map[uint64]*Chunk
 }
 

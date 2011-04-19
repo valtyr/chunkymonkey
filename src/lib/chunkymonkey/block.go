@@ -1,8 +1,9 @@
 package block
 
 import (
-    . "chunkymonkey/interfaces"
-    cmitem "chunkymonkey/item"
+    "rand"
+
+    "chunkymonkey/item"
     . "chunkymonkey/types"
 )
 
@@ -109,13 +110,19 @@ type BlockType struct {
     BreakOn      DigStatus
 }
 
+// The interface required of a chunk by block behaviour.
+type IChunkBlock interface {
+    GetRand() *rand.Rand
+    AddItem(item *item.Item)
+}
+
 // The distance from the edge of a block that items spawn at in fractional
 // blocks.
 const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
 // Returns true if the block should be destroyed
 // This must be called within the Chunk's goroutine.
-func (blockType *BlockType) Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
+func (blockType *BlockType) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
     if !blockType.Destructable || blockType.BreakOn != digStatus {
         return
     }
@@ -134,7 +141,7 @@ func (blockType *BlockType) Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigS
                     position.Y += AbsCoord(blockItemSpawnFromEdge)
                     position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     chunk.AddItem(
-                        cmitem.NewItem(
+                        item.NewItem(
                             dropItem.DroppedItem, 1,
                             position,
                             &AbsVelocity{0, 0, 0}))
@@ -170,7 +177,7 @@ func (blockType *BlockType) GetTransparency() int8 {
     return blockType.Transparency
 }
 
-func LoadStandardBlockTypes() map[BlockId]IBlockType {
+func LoadStandardBlockTypes() map[BlockId]*BlockType {
     b := make(map[BlockId]*BlockType)
 
     newBlock := func(id BlockId, name string) {
@@ -390,22 +397,22 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     setMinedDropBlock([]Drop{
         Drop{BlockIdStone, ItemTypeId(BlockIdCobblestone)},
         Drop{BlockIdGrass, ItemTypeId(BlockIdDirt)},
-        Drop{BlockIdCoalOre, cmitem.ItemIdCoal},
+        Drop{BlockIdCoalOre, item.ItemIdCoal},
         Drop{BlockIdDoubleStoneSlab, ItemTypeId(BlockIdStoneSlab)},
-        Drop{BlockIdDiamondOre, cmitem.ItemIdDiamond},
+        Drop{BlockIdDiamondOre, item.ItemIdDiamond},
         Drop{BlockIdFarmland, ItemTypeId(BlockIdDirt)},
-        Drop{BlockIdSignPost, cmitem.ItemIdSign},
-        Drop{BlockIdWoodenDoor, cmitem.ItemIdWoodendoor},
-        Drop{BlockIdWallSign, cmitem.ItemIdSign},
-        Drop{BlockIdIronDoor, cmitem.ItemIdIronDoor},
+        Drop{BlockIdSignPost, item.ItemIdSign},
+        Drop{BlockIdWoodenDoor, item.ItemIdWoodendoor},
+        Drop{BlockIdWallSign, item.ItemIdSign},
+        Drop{BlockIdIronDoor, item.ItemIdIronDoor},
         Drop{BlockIdSnow, ItemTypeId(BlockIdDirt)},
-        Drop{BlockIdSugarCane, cmitem.ItemIdSugarCane},
-        Drop{BlockIdGlowstone, cmitem.ItemIdGlowstoneDust},
+        Drop{BlockIdSugarCane, item.ItemIdSugarCane},
+        Drop{BlockIdGlowstone, item.ItemIdGlowstoneDust},
     })
     // Blocks that drop things with varying probability (or one of several
     // items)
     b[BlockIdGravel].DroppedItems = []BlockDropItem{
-        BlockDropItem{cmitem.ItemIdFlint, 10, 1},
+        BlockDropItem{item.ItemIdFlint, 10, 1},
         BlockDropItem{ItemTypeId(BlockIdGravel), 90, 1},
     }
     b[BlockIdLeaves].DroppedItems = []BlockDropItem{
@@ -414,12 +421,12 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
     }
     b[BlockIdRedstoneOre].DroppedItems = []BlockDropItem{
         // TODO find probabilities of dropping 4 vs 5 items
-        BlockDropItem{cmitem.ItemIdRedstone, 50, 4},
-        BlockDropItem{cmitem.ItemIdRedstone, 50, 5},
+        BlockDropItem{item.ItemIdRedstone, 50, 4},
+        BlockDropItem{item.ItemIdRedstone, 50, 5},
     }
     b[BlockIdGlowingRedstoneOre].DroppedItems = b[BlockIdRedstoneOre].DroppedItems
     b[BlockIdSnowBlock].DroppedItems = []BlockDropItem{
-        BlockDropItem{cmitem.ItemIdSnowball, 100, 4},
+        BlockDropItem{item.ItemIdSnowball, 100, 4},
     }
 
     // Blocks that break on DigStarted
@@ -434,7 +441,7 @@ func LoadStandardBlockTypes() map[BlockId]IBlockType {
         BlockIdBrownMushroom, BlockIdRedMushroom, BlockIdTorch, BlockIdCrops,
     )
 
-    retval := make(map[BlockId]IBlockType)
+    retval := make(map[BlockId]*BlockType)
     for k, block := range b {
         retval[k] = block
     }

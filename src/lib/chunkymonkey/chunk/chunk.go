@@ -227,7 +227,7 @@ func (chunk *Chunk) PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId B
 
 // Used to read the BlockId of a block that's either in the chunk, or
 // immediately adjoining it in a neighbouring chunk via the side caches.
-func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType IBlockType, isWithinChunk bool, blockUnknownId bool) {
+func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, isWithinChunk bool, blockUnknownId bool) {
     chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
     var blockTypeId BlockId

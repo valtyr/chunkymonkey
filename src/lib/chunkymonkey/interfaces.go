@@ -5,6 +5,7 @@ import (
     "os"
     "rand"
 
+    "chunkymonkey/block"
     "chunkymonkey/entity"
     "chunkymonkey/item"
     "chunkymonkey/slot"
@@ -36,15 +37,6 @@ type IPlayer interface {
 
     SendSpawn(writer io.Writer) (err os.Error)
     IsWithin(p1, p2 *ChunkXz) bool
-}
-
-type IBlockType interface {
-    Dig(chunk IChunk, blockLoc *BlockXyz, digStatus DigStatus) bool
-    IsSolid() bool
-    IsReplaceable() bool
-    IsAttachable() bool
-    GetName() string
-    GetTransparency() int8
 }
 
 type IChunk interface {
@@ -96,7 +88,7 @@ type IGame interface {
     // Safe to call from outside of Enqueue:
     GetStartPosition() *AbsXyz      // Do not modify return value
     GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
-    GetBlockTypes() map[BlockId]IBlockType
+    GetBlockTypes() map[BlockId]*block.BlockType
 
     Enqueue(f func(IGame))
 
