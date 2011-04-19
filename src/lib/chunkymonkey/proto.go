@@ -1,12 +1,13 @@
 package proto
 
 import (
+    "bytes"
+    "compress/zlib"
+    "encoding/binary"
+    "fmt"
     "io"
     "os"
-    "fmt"
-    "bytes"
-    "encoding/binary"
-    "compress/zlib"
+    "utf8"
 
     . "chunkymonkey/types"
 )
@@ -14,6 +15,9 @@ import (
 const (
     // Currently only this protocol version is supported
     protocolVersion = 10
+
+    maxUcs2Char = 0xffff
+    ucs2ReplChar = 0xfffd
 
     // Packet type IDs
     packetIdKeepAlive            = 0x00
@@ -157,27 +161,61 @@ func byteToBool(b byte) bool {
     return b != 0
 }
 
+func encodeUtf8(codepoints []uint16) string {
+    bytesRequired := 0
+
+    for _, cp := range codepoints {
+        bytesRequired += utf8.RuneLen(int(cp))
+    }
+
+    bs := make([]byte, bytesRequired)
+    curByte := 0
+    for _, cp := range codepoints {
+        curByte += utf8.EncodeRune(bs[curByte:], int(cp))
+    }
+
+    return string(bs)
+}
+
+func decodeUtf8(s string) []uint16 {
+    codepoints := make([]uint16, 0, len(s))
+
+    for _, cp := range s {
+        // We only encode chars in the range U+0000 to U+FFFF.
+        if cp > maxUcs2Char || cp < 0 {
+            cp = ucs2ReplChar
+        }
+        codepoints = append(codepoints, uint16(cp))
+    }
+
+    return codepoints
+}
+
 func readString(reader io.Reader) (s string, err os.Error) {
-    var length int16
+    var length uint16
     err = binary.Read(reader, binary.BigEndian, &length)
     if err != nil {
         return
     }
 
-    bs := make([]byte, uint16(length))
-    _, err = io.ReadFull(reader, bs)
-    return string(bs), err
+    bs := make([]uint16, length)
+    err = binary.Read(reader, binary.BigEndian, bs)
+    if err != nil {
+        return
+    }
+
+    return encodeUtf8(bs), err
 }
 
 func writeString(writer io.Writer, s string) (err os.Error) {
-    bs := []byte(s)
+    bs := decodeUtf8(s)
 
     err = binary.Write(writer, binary.BigEndian, int16(len(bs)))
     if err != nil {
         return
     }
 
-    _, err = writer.Write(bs)
+    err = binary.Write(writer, binary.BigEndian, bs)
     return
 }
 
