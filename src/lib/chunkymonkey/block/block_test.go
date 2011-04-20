@@ -9,8 +9,8 @@ func TestLoadStandardBlocksOpacity(t *testing.T) {
     b := LoadStandardBlockTypes()
 
     type BlockTransTest struct {
-        id                    BlockId
-        expected_transparency int8
+        id               BlockId
+        expected_opacity int8
     }
 
     var BlockTransTests = []BlockTransTest{
@@ -31,9 +31,9 @@ func TestLoadStandardBlocksOpacity(t *testing.T) {
 
     for _, r := range BlockTransTests {
         block := b[r.id]
-        if r.expected_transparency != block.GetTransparency() {
-            t.Errorf("block #%d (%s) expected transparency %d, got %d",
-                r.id, block.GetName(), r.expected_transparency, block.GetTransparency())
+        if r.expected_opacity != block.GetOpacity() {
+            t.Errorf("block #%d (%s) expected opacity %d, got %d",
+                r.id, block.GetName(), r.expected_opacity, block.GetOpacity())
         }
     }
 }

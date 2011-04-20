@@ -101,7 +101,7 @@ type IBlockAspect interface {
 type BlockType struct {
     Aspect       *StandardAspect
     Name         string
-    Transparency int8
+    Opacity      int8
     Destructable bool
     Solid        bool
     Replaceable  bool
@@ -139,8 +139,8 @@ func (blockType *BlockType) GetName() string {
     return blockType.Name
 }
 
-func (blockType *BlockType) GetTransparency() int8 {
-    return blockType.Transparency
+func (blockType *BlockType) GetOpacity() int8 {
+    return blockType.Opacity
 }
 
 func LoadStandardBlockTypes() map[BlockId]*BlockType {
@@ -148,12 +148,12 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
 
     newBlock := func(id BlockId, name string) {
         b[id] = &BlockType{
-            Aspect:    &StandardAspect{
+            Aspect: &StandardAspect{
                 DroppedItems: nil,
                 BreakOn:      DigBlockBroke,
             },
             Name:         name,
-            Transparency: -1,
+            Opacity:      15,
             Destructable: true,
             Solid:        true,
             Replaceable:  false,
@@ -239,9 +239,9 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
     newBlock(BlockIdPortal, "portal")
     newBlock(BlockIdJackOLantern, "jack o lantern")
 
-    setTrans := func(transparency int8, blockTypes []BlockId) {
+    setTrans := func(opacity int8, blockTypes []BlockId) {
         for _, blockType := range blockTypes {
-            b[blockType].Transparency = transparency
+            b[blockType].Opacity = opacity
         }
     }
     // Setup transparent blocks
