@@ -14,9 +14,9 @@ import (
 
 const (
     // Currently only this protocol version is supported
-    protocolVersion = 10
+    protocolVersion = 11
 
-    maxUcs2Char = 0xffff
+    maxUcs2Char  = 0xffff
     ucs2ReplChar = 0xfffd
 
     // Packet type IDs
@@ -63,6 +63,7 @@ const (
     packetIdNoteBlockPlay        = 0x36
     packetIdExplosion            = 0x3c
     packetIdBedInvalid           = 0x46
+    packetIdWeather              = 0x47
     packetIdWindowOpen           = 0x64
     packetIdWindowClose          = 0x65
     packetIdWindowClick          = 0x66
@@ -71,6 +72,7 @@ const (
     packetIdWindowProgressBar    = 0x69
     packetIdWindowTransaction    = 0x6a
     packetIdSignUpdate           = 0x82
+    packetIdIncrementStatistic   = 0xc8
     packetIdDisconnect           = 0xff
 
     // Inventory types
@@ -140,12 +142,14 @@ type ClientPacketHandler interface {
     PacketExplosion(position *AbsXyz, power float32, blockOffsets []ExplosionOffsetXyz)
 
     PacketBedInvalid(field1 byte)
+    PacketWeather(entityId EntityId, raining bool, position *AbsIntXyz)
 
     PacketWindowOpen(windowId WindowId, invTypeId InvTypeId, windowTitle string, numSlots byte)
     PacketWindowSetSlot(windowId WindowId, slot SlotId, itemTypeId ItemTypeId, amount ItemCount, data ItemData)
     PacketWindowItems(windowId WindowId, items []WindowSlot)
     PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue)
     PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool)
+    PacketIncrementStatistic(statisticId StatisticId, delta int8)
 }
 
 // Common protocol helper functions
@@ -370,14 +374,11 @@ func readKeepAlive(reader io.Reader, handler PacketHandler) (err os.Error) {
 
 // packetIdLogin
 
-func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str1, str2 string, mapSeed RandomSeed, dimension DimensionId, err os.Error) {
+func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, mapSeed RandomSeed, dimension DimensionId, err os.Error) {
     if err = binary.Read(reader, binary.BigEndian, &versionOrEntityId); err != nil {
         return
     }
-    if str1, err = readString16(reader); err != nil {
-        return
-    }
-    if str2, err = readString16(reader); err != nil {
+    if str, err = readString16(reader); err != nil {
         return
     }
 
@@ -395,7 +396,7 @@ func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str1, str2 stri
     return
 }
 
-func ServerReadLogin(reader io.Reader) (username, password string, err os.Error) {
+func ServerReadLogin(reader io.Reader) (username string, err os.Error) {
     var packetId byte
     if err = binary.Read(reader, binary.BigEndian, &packetId); err != nil {
         return
@@ -405,7 +406,7 @@ func ServerReadLogin(reader io.Reader) (username, password string, err os.Error)
         return
     }
 
-    version, username, password, _, _, err := commonReadLogin(reader)
+    version, username, _, _, err := commonReadLogin(reader)
     if err != nil {
         return
     }
@@ -418,12 +419,12 @@ func ServerReadLogin(reader io.Reader) (username, password string, err os.Error)
 }
 
 func clientReadLogin(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
-    entityIdInt32, _, _, mapSeed, dimension, err := commonReadLogin(reader)
+    entityId, _, mapSeed, dimension, err := commonReadLogin(reader)
     if err != nil {
         return
     }
 
-    handler.ClientPacketLogin(EntityId(entityIdInt32), mapSeed, dimension)
+    handler.ClientPacketLogin(EntityId(entityId), mapSeed, dimension)
 
     return
 }
@@ -2186,6 +2187,45 @@ func readBedInvalid(reader io.Reader, handler ClientPacketHandler) (err os.Error
     return
 }
 
+// packetIdWeather
+
+func WriteWeather(writer io.Writer, entityId EntityId, raining bool, position *AbsIntXyz) (err os.Error) {
+    var packet = struct {
+        PacketId byte
+        EntityId EntityId
+        Raining  byte
+        X, Y, Z  AbsIntCoord
+    }{
+        packetIdWeather,
+        entityId,
+        boolToByte(raining),
+        position.X, position.Y, position.Z,
+    }
+
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readWeather(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        EntityId EntityId
+        Raining  byte
+        X, Y, Z  AbsIntCoord
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    handler.PacketWeather(
+        packet.EntityId,
+        byteToBool(packet.Raining),
+        &AbsIntXyz{packet.X, packet.Y, packet.Z},
+    )
+
+    return
+}
+
 // packetIdWindowOpen
 
 func WriteWindowOpen(writer io.Writer, windowId WindowId, invTypeId InvTypeId, windowTitle string, numSlots byte) (err os.Error) {
@@ -2608,6 +2648,37 @@ func readSignUpdate(reader io.Reader, handler PacketHandler) (err os.Error) {
     return
 }
 
+// packetIdIncrementStatistic
+
+func WriteIncrementStatistic(writer io.Writer, statisticId StatisticId, delta int8) (err os.Error) {
+    var packet = struct {
+        PacketId    byte
+        StatisticId StatisticId
+        Delta       int8
+    }{
+        packetIdIncrementStatistic,
+        statisticId,
+        delta,
+    }
+    return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readIncrementStatistic(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+    var packet struct {
+        StatisticId StatisticId
+        Delta       int8
+    }
+
+    err = binary.Read(reader, binary.BigEndian, &packet)
+    if err != nil {
+        return
+    }
+
+    handler.PacketIncrementStatistic(packet.StatisticId, packet.Delta)
+
+    return
+}
+
 // packetIdDisconnect
 
 func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
@@ -2696,11 +2767,13 @@ var clientReadFns = clientPacketReaderMap{
     packetIdNoteBlockPlay:        readNoteBlockPlay,
     packetIdExplosion:            readExplosion,
     packetIdBedInvalid:           readBedInvalid,
+    packetIdWeather:              readWeather,
     packetIdWindowOpen:           readWindowOpen,
     packetIdWindowSetSlot:        readWindowSetSlot,
     packetIdWindowItems:          readWindowItems,
     packetIdWindowProgressBar:    readWindowProgressBar,
     packetIdWindowTransaction:    readWindowTransaction,
+    packetIdIncrementStatistic:   readIncrementStatistic,
 }
 
 // A server should call this to receive a single packet from a client. It will
