@@ -161,6 +161,8 @@ func byteToBool(b byte) bool {
     return b != 0
 }
 
+// Conversion between UTF-8 and UCS-2.
+
 func encodeUtf8(codepoints []uint16) string {
     bytesRequired := 0
 
@@ -191,7 +193,35 @@ func decodeUtf8(s string) []uint16 {
     return codepoints
 }
 
-func readString(reader io.Reader) (s string, err os.Error) {
+// 8-bit encoded strings. (Modified UTF-8).
+
+func readString8(reader io.Reader) (s string, err os.Error) {
+    var length int16
+    err = binary.Read(reader, binary.BigEndian, &length)
+    if err != nil {
+        return
+    }
+
+    bs := make([]byte, uint16(length))
+    _, err = io.ReadFull(reader, bs)
+    return string(bs), err
+}
+
+func writeString8(writer io.Writer, s string) (err os.Error) {
+    bs := []byte(s)
+
+    err = binary.Write(writer, binary.BigEndian, int16(len(bs)))
+    if err != nil {
+        return
+    }
+
+    _, err = writer.Write(bs)
+    return
+}
+
+// 16-bit encoded strings. (UCS-2)
+
+func readString16(reader io.Reader) (s string, err os.Error) {
     var length uint16
     err = binary.Read(reader, binary.BigEndian, &length)
     if err != nil {
@@ -207,7 +237,7 @@ func readString(reader io.Reader) (s string, err os.Error) {
     return encodeUtf8(bs), err
 }
 
-func writeString(writer io.Writer, s string) (err os.Error) {
+func writeString16(writer io.Writer, s string) (err os.Error) {
     bs := decodeUtf8(s)
 
     err = binary.Write(writer, binary.BigEndian, int16(len(bs)))
@@ -295,7 +325,7 @@ func readEntityMetadataField(reader io.Reader) (data []EntityMetadata, err os.Er
             field3 = floatVal
         case 4:
             var stringVal string
-            stringVal, err = readString(reader)
+            stringVal, err = readString16(reader)
             field3 = stringVal
         case 5:
             var position struct {
@@ -344,10 +374,10 @@ func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str1, str2 stri
     if err = binary.Read(reader, binary.BigEndian, &versionOrEntityId); err != nil {
         return
     }
-    if str1, err = readString(reader); err != nil {
+    if str1, err = readString16(reader); err != nil {
         return
     }
-    if str2, err = readString(reader); err != nil {
+    if str2, err = readString16(reader); err != nil {
         return
     }
 
@@ -404,10 +434,10 @@ func commonWriteLogin(writer io.Writer, str1, str2 string, entityId EntityId, ma
     }
 
     // These strings are currently unused
-    if err = writeString(writer, str1); err != nil {
+    if err = writeString16(writer, str1); err != nil {
         return
     }
-    if err = writeString(writer, str2); err != nil {
+    if err = writeString16(writer, str2); err != nil {
         return
     }
 
@@ -450,7 +480,7 @@ func ServerReadHandshake(reader io.Reader) (username string, err os.Error) {
         return
     }
 
-    return readString(reader)
+    return readString16(reader)
 }
 
 func ClientReadHandshake(reader io.Reader) (serverId string, err os.Error) {
@@ -464,7 +494,7 @@ func ClientReadHandshake(reader io.Reader) (serverId string, err os.Error) {
         return
     }
 
-    return readString(reader)
+    return readString16(reader)
 }
 
 func ServerWriteHandshake(writer io.Writer, reply string) (err os.Error) {
@@ -473,7 +503,7 @@ func ServerWriteHandshake(writer io.Writer, reply string) (err os.Error) {
         return
     }
 
-    return writeString(writer, reply)
+    return writeString16(writer, reply)
 }
 
 // packetIdChatMessage
@@ -484,12 +514,12 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
         return
     }
 
-    err = writeString(writer, message)
+    err = writeString16(writer, message)
     return
 }
 
 func readChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
-    message, err := readString(reader)
+    message, err := readString16(reader)
     if err != nil {
         return
     }
@@ -1157,7 +1187,7 @@ func WriteNamedEntitySpawn(writer io.Writer, entityId EntityId, name string, pos
         return
     }
 
-    err = writeString(writer, name)
+    err = writeString16(writer, name)
     if err != nil {
         return
     }
@@ -1190,7 +1220,7 @@ func readNamedEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os
     }
 
     var name string
-    if name, err = readString(reader); err != nil {
+    if name, err = readString16(reader); err != nil {
         return
     }
 
@@ -1411,7 +1441,7 @@ func WritePaintingSpawn(writer io.Writer, entityId EntityId, title string, posit
         return
     }
 
-    if err = writeString(writer, title); err != nil {
+    if err = writeString16(writer, title); err != nil {
         return
     }
 
@@ -1433,7 +1463,7 @@ func readPaintingSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Er
         return
     }
 
-    title, err := readString(reader)
+    title, err := readString16(reader)
     if err != nil {
         return
     }
@@ -2173,7 +2203,7 @@ func WriteWindowOpen(writer io.Writer, windowId WindowId, invTypeId InvTypeId, w
         return
     }
 
-    if err = writeString(writer, windowTitle); err != nil {
+    if err = writeString8(writer, windowTitle); err != nil {
         return
     }
 
@@ -2190,7 +2220,7 @@ func readWindowOpen(reader io.Reader, handler ClientPacketHandler) (err os.Error
         return
     }
 
-    windowTitle, err := readString(reader)
+    windowTitle, err := readString8(reader)
     if err != nil {
         return
     }
@@ -2544,7 +2574,7 @@ func WriteSignUpdate(writer io.Writer, position *BlockXyz, lines [4]string) (err
     }
 
     for _, line := range lines {
-        if err = writeString(writer, line); err != nil {
+        if err = writeString16(writer, line); err != nil {
             return
         }
     }
@@ -2566,7 +2596,7 @@ func readSignUpdate(reader io.Reader, handler PacketHandler) (err os.Error) {
     var lines [4]string
 
     for i := 0; i < len(lines); i++ {
-        if lines[i], err = readString(reader); err != nil {
+        if lines[i], err = readString16(reader); err != nil {
             return
         }
     }
@@ -2583,13 +2613,13 @@ func readSignUpdate(reader io.Reader, handler PacketHandler) (err os.Error) {
 func WriteDisconnect(writer io.Writer, reason string) (err os.Error) {
     buf := &bytes.Buffer{}
     binary.Write(buf, binary.BigEndian, byte(packetIdDisconnect))
-    writeString(buf, reason)
+    writeString16(buf, reason)
     _, err = writer.Write(buf.Bytes())
     return
 }
 
 func readDisconnect(reader io.Reader, handler PacketHandler) (err os.Error) {
-    reason, err := readString(reader)
+    reason, err := readString16(reader)
     if err != nil {
         return
     }
