@@ -25,9 +25,6 @@ intercept: libs
 inspectlevel: libs
 	@gd -q -I src/lib -o $@ src/$@
 
-dumpblockdefs: libs
-	@gd -q -I src/lib -o $@ src/$@
-
 docs: $(DIAGRAMS)
 
 %.png: %.dot
