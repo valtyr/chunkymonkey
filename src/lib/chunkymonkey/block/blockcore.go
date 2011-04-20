@@ -118,31 +118,6 @@ type IChunkBlock interface {
 // blocks.
 const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
-// Returns true if the block should be destroyed
-// This must be called within the Chunk's goroutine.
-
-func (blockType *BlockType) IsSolid() bool {
-    return blockType.Solid
-}
-
-// Returns true if item can be "replaced" by block placement.
-func (blockType *BlockType) IsReplaceable() bool {
-    return blockType.Replaceable
-}
-
-// Returns true if a block can be placed onto a face of the block.
-func (blockType *BlockType) IsAttachable() bool {
-    return blockType.Attachable
-}
-
-func (blockType *BlockType) GetName() string {
-    return blockType.Name
-}
-
-func (blockType *BlockType) GetOpacity() int8 {
-    return blockType.Opacity
-}
-
 func LoadStandardBlockTypes() map[BlockId]*BlockType {
     b := make(map[BlockId]*BlockType)
 

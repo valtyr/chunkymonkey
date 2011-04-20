@@ -185,7 +185,7 @@ func (chunk *Chunk) PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId B
     if ok = !blockUnknownId; !ok {
         return
     }
-    if ok = againstBlockType.IsAttachable(); !ok {
+    if ok = againstBlockType.Attachable; !ok {
         return
     }
 
@@ -213,7 +213,7 @@ func (chunk *Chunk) PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId B
     if !ok {
         return
     }
-    if ok = blockType.IsReplaceable(); !ok {
+    if ok = blockType.Replaceable; !ok {
         return
     }
 
@@ -278,7 +278,7 @@ func (chunk *Chunk) Tick() {
             // needlessly).
             isSolid = true
         } else {
-            isSolid = blockType.IsSolid()
+            isSolid = blockType.Solid
         }
         return
     }
