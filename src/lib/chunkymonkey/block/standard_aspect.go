@@ -11,6 +11,10 @@ type BlockDropItem struct {
     Count       ItemCount
 }
 
+func makeStandardAspect() (aspect IBlockAspect) {
+    return &StandardAspect{}
+}
+
 // Behaviour of a "standard" block. A StandardAspect block is one that is
 // diggable, and drops items in a simple manner. StandardAspect blocks do not
 // use block metadata.

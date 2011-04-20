@@ -97,15 +97,19 @@ type IBlockAspect interface {
     Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool)
 }
 
-// The core information about any block type.
-type BlockType struct {
-    Aspect       *StandardAspect
+type BlockAttrs struct {
     Name         string
     Opacity      int8
     Destructable bool
     Solid        bool
     Replaceable  bool
     Attachable   bool
+}
+
+// The core information about any block type.
+type BlockType struct {
+    BlockAttrs
+    Aspect       IBlockAspect
 }
 
 // The interface required of a chunk by block behaviour.
@@ -123,16 +127,18 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
 
     newBlock := func(id BlockId, name string) {
         b[id] = &BlockType{
+            BlockAttrs: BlockAttrs {
+                Name:         name,
+                Opacity:      15,
+                Destructable: true,
+                Solid:        true,
+                Replaceable:  false,
+                Attachable:   true,
+            },
             Aspect: &StandardAspect{
                 DroppedItems: nil,
                 BreakOn:      DigBlockBroke,
             },
-            Name:         name,
-            Opacity:      15,
-            Destructable: true,
-            Solid:        true,
-            Replaceable:  false,
-            Attachable:   true,
         }
     }
 
@@ -286,8 +292,8 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
     // Setup behaviour of blocks when destroyed
     setMinedDropsSameItem := func(blockTypes []BlockId) {
         for _, blockType := range blockTypes {
-            b[blockType].Aspect.DroppedItems = append(
-                b[blockType].Aspect.DroppedItems,
+            b[blockType].Aspect.(*StandardAspect).DroppedItems = append(
+                b[blockType].Aspect.(*StandardAspect).DroppedItems,
                 BlockDropItem{
                     ItemTypeId(blockType),
                     100,
@@ -302,8 +308,8 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
     }
     setMinedDropBlock := func(drops []Drop) {
         for _, drop := range drops {
-            b[drop.minedBlockType].Aspect.DroppedItems = append(
-                b[drop.minedBlockType].Aspect.DroppedItems,
+            b[drop.minedBlockType].Aspect.(*StandardAspect).DroppedItems = append(
+                b[drop.minedBlockType].Aspect.(*StandardAspect).DroppedItems,
                 BlockDropItem{
                     drop.droppedItemType,
                     100,
@@ -355,28 +361,28 @@ func LoadStandardBlockTypes() map[BlockId]*BlockType {
     })
     // Blocks that drop things with varying probability (or one of several
     // items)
-    b[BlockIdGravel].Aspect.DroppedItems = []BlockDropItem{
+    b[BlockIdGravel].Aspect.(*StandardAspect).DroppedItems = []BlockDropItem{
         BlockDropItem{item.ItemIdFlint, 10, 1},
         BlockDropItem{ItemTypeId(BlockIdGravel), 90, 1},
     }
-    b[BlockIdLeaves].Aspect.DroppedItems = []BlockDropItem{
+    b[BlockIdLeaves].Aspect.(*StandardAspect).DroppedItems = []BlockDropItem{
         // TODO get more accurate probability of sapling drop
         BlockDropItem{ItemTypeId(BlockIdSapling), 5, 1},
     }
-    b[BlockIdRedstoneOre].Aspect.DroppedItems = []BlockDropItem{
+    b[BlockIdRedstoneOre].Aspect.(*StandardAspect).DroppedItems = []BlockDropItem{
         // TODO find probabilities of dropping 4 vs 5 items
         BlockDropItem{item.ItemIdRedstone, 50, 4},
         BlockDropItem{item.ItemIdRedstone, 50, 5},
     }
-    b[BlockIdGlowingRedstoneOre].Aspect.DroppedItems = b[BlockIdRedstoneOre].Aspect.DroppedItems
-    b[BlockIdSnowBlock].Aspect.DroppedItems = []BlockDropItem{
+    b[BlockIdGlowingRedstoneOre].Aspect.(*StandardAspect).DroppedItems = b[BlockIdRedstoneOre].Aspect.(*StandardAspect).DroppedItems
+    b[BlockIdSnowBlock].Aspect.(*StandardAspect).DroppedItems = []BlockDropItem{
         BlockDropItem{item.ItemIdSnowball, 100, 4},
     }
 
     // Blocks that break on DigStarted
     setBlockBreakOn := func(digStatus DigStatus, blockIds ...BlockId) {
         for _, blockId := range blockIds {
-            b[blockId].Aspect.BreakOn = digStatus
+            b[blockId].Aspect.(*StandardAspect).BreakOn = digStatus
         }
     }
     setBlockBreakOn(

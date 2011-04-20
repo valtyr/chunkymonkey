@@ -25,15 +25,15 @@ func TestLoadStandardBlocksOpacity(t *testing.T) {
         BlockTransTest{BlockIdIce, 3},
 
         // Some should be opaque
-        BlockTransTest{BlockIdStone, -1},
-        BlockTransTest{BlockIdDirt, -1},
+        BlockTransTest{BlockIdStone, 15},
+        BlockTransTest{BlockIdDirt, 15},
     }
 
     for _, r := range BlockTransTests {
         block := b[r.id]
-        if r.expected_opacity != block.GetOpacity() {
+        if r.expected_opacity != block.Opacity {
             t.Errorf("block #%d (%s) expected opacity %d, got %d",
-                r.id, block.GetName(), r.expected_opacity, block.GetOpacity())
+                r.id, block.Name, r.expected_opacity, block.Opacity)
         }
     }
 }
@@ -61,9 +61,9 @@ func TestLoadStandardBlocksSolidity(t *testing.T) {
 
     for _, r := range tests {
         block := b[r.id]
-        if r.expected_solid != block.IsSolid() {
+        if r.expected_solid != block.Solid {
             t.Errorf("block #%d (%s) expected IsSolid %t, got %t",
-                r.id, block.GetName(), r.expected_solid, block.IsSolid())
+                r.id, block.Name, r.expected_solid, block.Solid)
         }
     }
 }
