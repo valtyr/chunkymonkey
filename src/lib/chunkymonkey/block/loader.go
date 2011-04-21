@@ -16,7 +16,7 @@ var aspectMakers map[string]aspectMakerFn
 // Used specifically for json unmarshalling of block definitions.
 type blockDef struct {
     BlockAttrs
-    Aspect string
+    Aspect     string
     AspectArgs *aspectArgs
 }
 
@@ -28,13 +28,13 @@ func newBlockDefFromBlockType(block *BlockType) (bd *blockDef, err os.Error) {
     }
     bd = &blockDef{
         BlockAttrs: block.BlockAttrs,
-        Aspect: block.Aspect.Name(),
+        Aspect:     block.Aspect.Name(),
         AspectArgs: aspectArgs,
     }
     return
 }
 
-func (bd *blockDef)LoadBlockType() (block *BlockType, err os.Error) {
+func (bd *blockDef) LoadBlockType() (block *BlockType, err os.Error) {
     // Create the Aspect attribute of the block.
     aspect, err := bd.loadAspect()
     if err != nil {
@@ -42,12 +42,12 @@ func (bd *blockDef)LoadBlockType() (block *BlockType, err os.Error) {
     }
     block = &BlockType{
         BlockAttrs: bd.BlockAttrs,
-        Aspect: aspect,
+        Aspect:     aspect,
     }
     return
 }
 
-func (bd *blockDef)loadAspect() (aspect IBlockAspect, err os.Error) {
+func (bd *blockDef) loadAspect() (aspect IBlockAspect, err os.Error) {
     aspectMakerFn, ok := aspectMakers[bd.Aspect]
     if !ok {
         err = os.NewError(fmt.Sprintf("Unknown aspect type %q", bd.Aspect))
@@ -75,7 +75,7 @@ func newAspectArgs(block IBlockAspect) (a *aspectArgs, err os.Error) {
     return
 }
 
-func (a *aspectArgs)UnmarshalJSON(raw []byte) (err os.Error) {
+func (a *aspectArgs) UnmarshalJSON(raw []byte) (err os.Error) {
     // Copy raw into a.Raw - the JSON library will destroy the content of the
     // argument after this function returns.
     a.Raw = make([]byte, len(raw))
@@ -85,7 +85,7 @@ func (a *aspectArgs)UnmarshalJSON(raw []byte) (err os.Error) {
     return
 }
 
-func (a *aspectArgs)MarshalJSON() (raw []byte, err os.Error) {
+func (a *aspectArgs) MarshalJSON() (raw []byte, err os.Error) {
     raw = a.Raw
     return
 }
@@ -137,6 +137,6 @@ func SaveBlockDefs(writer io.Writer, blocks map[BlockId]*BlockType) (err os.Erro
 func init() {
     aspectMakers = map[string]aspectMakerFn{
         "Standard": makeStandardAspect,
-        "Void": makeVoidAspect,
+        "Void":     makeVoidAspect,
     }
 }

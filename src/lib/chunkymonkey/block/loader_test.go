@@ -91,12 +91,12 @@ func TestLoadBlockDefs(t *testing.T) {
         t,
         &BlockType{
             BlockAttrs: BlockAttrs{
-                Name: "air",
-                Opacity: 0,
+                Name:         "air",
+                Opacity:      0,
                 Destructable: true,
-                Solid: false,
-                Replaceable: true,
-                Attachable: false,
+                Solid:        false,
+                Replaceable:  true,
+                Attachable:   false,
             },
             Aspect: &VoidAspect{},
         },
@@ -107,19 +107,19 @@ func TestLoadBlockDefs(t *testing.T) {
         t,
         &BlockType{
             BlockAttrs: BlockAttrs{
-                Name: "stone",
-                Opacity: 15,
+                Name:         "stone",
+                Opacity:      15,
                 Destructable: true,
-                Solid: true,
-                Replaceable: false,
-                Attachable: true,
+                Solid:        true,
+                Replaceable:  false,
+                Attachable:   true,
             },
             Aspect: &StandardAspect{
                 DroppedItems: []BlockDropItem{
                     BlockDropItem{
                         DroppedItem: 4,
                         Probability: 100,
-                        Count: 1,
+                        Count:       1,
                     },
                 },
                 BreakOn: DigBlockBroke,
