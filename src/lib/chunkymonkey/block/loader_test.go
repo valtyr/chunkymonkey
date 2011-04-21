@@ -10,11 +10,8 @@ import (
 
 const twoBlocks = ("{\n" +
     "  \"0\": {\n" +
-    "    \"Aspect\": \"Standard\",\n" +
-    "    \"AspectArgs\": {\n" +
-    "      \"DroppedItems\": [],\n" +
-    "      \"BreakOn\": 2\n" +
-    "    },\n" +
+    "    \"Aspect\": \"Void\",\n" +
+    "    \"AspectArgs\": {},\n" +
     "    \"Name\": \"air\",\n" +
     "    \"Opacity\": 0,\n" +
     "    \"Destructable\": true,\n" +
@@ -99,12 +96,7 @@ func TestLoadBlockDefs(t *testing.T) {
                 Replaceable: true,
                 Attachable: false,
             },
-            Aspect: &StandardAspect{
-                // TODO air will likely change to some specialised block in
-                // future.
-                DroppedItems: []BlockDropItem{},
-                BreakOn: DigBlockBroke,
-            },
+            Aspect: &VoidAspect{},
         },
         blocks[0],
     )

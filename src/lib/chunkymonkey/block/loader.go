@@ -85,5 +85,6 @@ func LoadBlockDefs(reader io.Reader) (blocks map[BlockId]*BlockType, err os.Erro
 func init() {
     aspectMakers = map[string]aspectMakerFn{
         "Standard": makeStandardAspect,
+        "Void": makeVoidAspect,
     }
 }
