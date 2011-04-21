@@ -134,18 +134,32 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
         blocks[id] = *block
     }
 
+    // Put VoidAspect in any undefined blocks rather than leave it nil.
+    void := makeVoidAspect()
+    for id := range blocks {
+        block := &blocks[id]
+        if !block.defined {
+            block.Aspect = void
+        }
+    }
+
     return
 }
 
 func SaveBlockDefs(writer io.Writer, blocks BlockTypeList) (err os.Error) {
     blockDefs := make(map[string]blockDef)
     for id := range blocks {
+        block := &blocks[id]
+        if !block.defined {
+            // Don't save undefined blocks.
+            continue
+        }
         var blockDef *blockDef
-        blockDef, err = newBlockDefFromBlockType(&blocks[id])
+        blockDef, err = newBlockDefFromBlockType(block)
         if err != nil {
             return
         }
-        blockDefs[fmt.Sprintf("%d", id)] = *blockDef
+        blockDefs[strconv.Itoa(id)] = *blockDef
     }
 
     data, err := json.MarshalIndent(blockDefs, "", "  ")
