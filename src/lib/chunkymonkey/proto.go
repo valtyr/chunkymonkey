@@ -105,7 +105,7 @@ type ServerPacketHandler interface {
     PacketPlayer(onGround bool)
     PacketHoldingChange(slotId SlotId)
     PacketWindowClose(windowId WindowId)
-    PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemTypeId ItemTypeId, amount ItemCount, data ItemData)
+    PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, unknown1 bool, itemTypeId ItemTypeId, amount ItemCount, data ItemData)
 }
 
 // Clients to the protocol must implement this interface to receive packets
@@ -2307,13 +2307,14 @@ func readWindowClose(reader io.Reader, handler ServerPacketHandler) (err os.Erro
 
 // packetIdWindowClick
 
-func WriteWindowClick(writer io.Writer, windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemTypeId ItemTypeId, amount ItemCount, data ItemData) (err os.Error) {
+func WriteWindowClick(writer io.Writer, windowId WindowId, slot SlotId, rightClick bool, txId TxId, unknown1 bool, itemTypeId ItemTypeId, amount ItemCount, data ItemData) (err os.Error) {
     var packet = struct {
         PacketId   byte
         WindowId   WindowId
         Slot       SlotId
         RightClick byte
         TxId       TxId
+        Unknown1   byte  // TODO identify this field
         ItemTypeId ItemTypeId
     }{
         packetIdWindowClick,
@@ -2321,6 +2322,7 @@ func WriteWindowClick(writer io.Writer, windowId WindowId, slot SlotId, rightCli
         slot,
         boolToByte(rightClick),
         txId,
+        boolToByte(unknown1),
         itemTypeId,
     }
 
@@ -2348,6 +2350,7 @@ func readWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Erro
         Slot       SlotId
         RightClick byte
         TxId       TxId
+        Unknown1   byte  // TODO identify this field
         ItemTypeId ItemTypeId
     }
 
@@ -2373,6 +2376,7 @@ func readWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Erro
         packetStart.Slot,
         byteToBool(packetStart.RightClick),
         packetStart.TxId,
+        byteToBool(packetStart.Unknown1),
         packetStart.ItemTypeId,
         packetEnd.Amount,
         packetEnd.Data)

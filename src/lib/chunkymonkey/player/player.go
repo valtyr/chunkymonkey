@@ -295,7 +295,7 @@ func (player *Player) PacketUnknown0x1b(field1, field2, field3, field4 float32, 
 func (player *Player) PacketWindowClose(windowId WindowId) {
 }
 
-func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, itemId ItemTypeId, amount ItemCount, uses ItemData) {
+func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, unknown1 bool, itemId ItemTypeId, amount ItemCount, uses ItemData) {
     var clickedInv *inventory.Inventory
     var accepted bool
 
