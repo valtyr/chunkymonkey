@@ -43,6 +43,22 @@ const twoBlocks = ("{\n" +
     "  }\n" +
     "}")
 
+const badAspect = ("{\n" +
+    "  \"0\": {\n" +
+    "    \"Aspect\": \"Standard\",\n" +
+    "    \"AspectArgs\": {\n" +
+    "      \"DroppedItems\": 5,\n" +
+    "      \"BreakOn\": \"foo\"\n" +
+    "    },\n" +
+    "    \"Name\": \"air\",\n" +
+    "    \"Opacity\": 0,\n" +
+    "    \"Destructable\": true,\n" +
+    "    \"Solid\": false,\n" +
+    "    \"Replaceable\": true,\n" +
+    "    \"Attachable\": false\n" +
+    "  }\n" +
+    "}")
+
 func assertBlockTypeEq(t *testing.T, expected, result *BlockType) {
     if !reflect.DeepEqual(expected, result) {
         t.Error("BlockTypes differed")
@@ -53,6 +69,12 @@ func assertBlockTypeEq(t *testing.T, expected, result *BlockType) {
     }
 }
 
+func displayBlocks(t *testing.T, blocks map[BlockId]*BlockType) {
+    t.Logf("%d blocks:", len(blocks))
+    for id, block := range blocks {
+        t.Logf("    [%d] attrs=%#v aspect=%#v", id, block.BlockAttrs, block.Aspect)
+    }
+}
 
 func TestLoadBlockDefs(t *testing.T) {
     reader := strings.NewReader(twoBlocks)
@@ -111,4 +133,15 @@ func TestLoadBlockDefs(t *testing.T) {
         },
         blocks[1],
     )
+}
+
+func TestBadAspectArgFails(t *testing.T) {
+    reader := strings.NewReader(badAspect)
+    t.Log(badAspect)
+
+    blocks, err := LoadBlockDefs(reader)
+    if err == nil {
+        t.Error("Expected an error")
+    }
+    displayBlocks(t, blocks)
 }
