@@ -92,7 +92,7 @@ func (game *Game) Login(conn net.Conn) {
         log.Print("Client ", conn.RemoteAddr(), " passed minecraft.net authentication")
     }
 
-    _, _, err = proto.ServerReadLogin(conn)
+    _, err = proto.ServerReadLogin(conn)
     if err != nil {
         log.Print("ServerReadLogin: ", err.String())
         proto.WriteDisconnect(conn, err.String())

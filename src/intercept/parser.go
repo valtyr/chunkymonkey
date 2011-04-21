@@ -100,10 +100,6 @@ func (p *MessageParser) PacketSignUpdate(position *BlockXyz, lines [4]string) {
         lines[0], lines[1], lines[2], lines[3])
 }
 
-func (p *MessageParser) PacketDisconnect(reason string) {
-    p.printf("PacketDisconnect(%q)", reason)
-}
-
 func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, dimension DimensionId) {
     p.printf("PacketLogin(entityId=%d, mapSeed=%d, dimension=%d)",
         entityId, mapSeed, dimension)
@@ -236,6 +232,11 @@ func (p *MessageParser) PacketBedInvalid(field1 byte) {
     p.printf("PacketBedInvalid(field1=%t)", field1)
 }
 
+func (p *MessageParser) PacketWeather(entityId EntityId, raining bool, position *AbsIntXyz) {
+    p.printf("PacketWeather(entityId=%d, raining=%t, position=%#v)",
+        entityId, raining, position)
+}
+
 func (p *MessageParser) PacketWindowOpen(windowId WindowId, invTypeId InvTypeId, windowTitle string, numSlots byte) {
     p.printf("PacketWindowOpen(windowId=%d, invTypeId=%d, windowTitle=%q, numSlots=%d)",
         windowId, invTypeId, windowTitle, numSlots)
@@ -243,16 +244,6 @@ func (p *MessageParser) PacketWindowOpen(windowId WindowId, invTypeId InvTypeId,
 
 func (p *MessageParser) PacketWindowClose(windowId WindowId) {
     p.printf("PacketWindowClose(windowId=%d)", windowId)
-}
-
-func (p *MessageParser) PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue) {
-    p.printf("PacketWindowProgressBar(windowId=%d, prgBarId=%d, value=%d)",
-        windowId, prgBarId, value)
-}
-
-func (p *MessageParser) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
-    p.printf("PacketWindowTransaction(windowId=%d, txId=%d, accepted=%t)",
-        windowId, txId, accepted)
 }
 
 func (p *MessageParser) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, itemId ItemTypeId, amount ItemCount, data ItemData) {
@@ -268,6 +259,25 @@ func (p *MessageParser) PacketWindowSetSlot(windowId WindowId, slot SlotId, item
 func (p *MessageParser) PacketWindowItems(windowId WindowId, items []proto.WindowSlot) {
     p.printf("PacketWindowItems(windowId=%d, items=%v)",
         windowId, items)
+}
+
+func (p *MessageParser) PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue) {
+    p.printf("PacketWindowProgressBar(windowId=%d, prgBarId=%d, value=%d)",
+        windowId, prgBarId, value)
+}
+
+func (p *MessageParser) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
+    p.printf("PacketWindowTransaction(windowId=%d, txId=%d, accepted=%t)",
+        windowId, txId, accepted)
+}
+
+func (p *MessageParser) PacketIncrementStatistic(statisticId StatisticId, delta int8) {
+    p.printf("PacketIncrementStatistic(statisticId=%d, delta=%d)",
+        statisticId, delta)
+}
+
+func (p *MessageParser) PacketDisconnect(reason string) {
+    p.printf("PacketDisconnect(%q)", reason)
 }
 
 // Parses messages from the client
@@ -291,7 +301,7 @@ func (p *MessageParser) CsParse(reader io.Reader) {
     }
     p.printf("ServerReadHandshake(username=%v)", username)
 
-    loginUsername, _, err := proto.ServerReadLogin(reader)
+    loginUsername, err := proto.ServerReadLogin(reader)
     if err != nil {
         p.printf("ServerReadLogin error: %v", err)
         return

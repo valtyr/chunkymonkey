@@ -195,6 +195,9 @@ const (
 
 type PrgBarValue int16
 
+// ID specifying a player statistic.
+type StatisticId int32
+
 // Transaction ID
 type TxId int16
 
