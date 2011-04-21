@@ -94,6 +94,7 @@ func TestLoadBlockDefs(t *testing.T) {
             BlockAttrs: BlockAttrs{
                 Name:         "air",
                 Opacity:      0,
+                defined:      true,
                 Destructable: true,
                 Solid:        false,
                 Replaceable:  true,
@@ -110,6 +111,7 @@ func TestLoadBlockDefs(t *testing.T) {
             BlockAttrs: BlockAttrs{
                 Name:         "stone",
                 Opacity:      15,
+                defined:      true,
                 Destructable: true,
                 Solid:        true,
                 Replaceable:  false,

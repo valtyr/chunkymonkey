@@ -105,8 +105,8 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
         }
         if id < 0 || id > 255 {
             err = os.NewError(fmt.Sprintf(
-                "Encountered block type with ID %d which is outside the range" +
-                "0 <= N <= 255", id))
+                "Encountered block type with ID %d which is outside the range"+
+                    "0 <= N <= 255",id))
             return
         }
         if id > maxId {
