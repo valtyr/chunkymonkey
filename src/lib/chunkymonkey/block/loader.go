@@ -20,6 +20,18 @@ type blockDef struct {
     AspectArgs *aspectArgs
 }
 
+func (bd *blockDef)CreateAspect() (aspect IBlockAspect, err os.Error) {
+    aspectMakerFn, ok := aspectMakers[bd.Aspect]
+    if !ok {
+        err = os.NewError(fmt.Sprintf("Unknown aspect type %q", bd.Aspect))
+        return
+    }
+    aspect = aspectMakerFn()
+    err = json.Unmarshal(bd.AspectArgs.Raw, aspect)
+    return
+}
+
+// Defers parsing of AspectArgs until we know the aspect type.
 type aspectArgs struct {
     Raw []byte
 }
@@ -43,19 +55,15 @@ func LoadBlockDefs(reader io.Reader) (blocks map[BlockId]*BlockType, err os.Erro
     blocks = make(map[BlockId]*BlockType)
     for idStr, blockDef := range blocksStr {
         var id BlockId
+
         fmt.Sscanf(idStr, "%d", &id)
         block := &BlockType{
             BlockAttrs: blockDef.BlockAttrs,
         }
 
         // Create the Aspect attribute of the block.
-        aspectMakerFn, ok := aspectMakers[blockDef.Aspect]
-        if !ok {
-            err = os.NewError(fmt.Sprintf("Unknown aspect type %q", blockDef.Aspect))
-            return
-        }
-        aspect := aspectMakerFn()
-        err = json.Unmarshal(blockDef.AspectArgs.Raw, aspect)
+        var aspect IBlockAspect
+        aspect, err = blockDef.CreateAspect()
         if err != nil {
             return
         }
