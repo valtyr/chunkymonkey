@@ -146,11 +146,8 @@
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Void",
+    "AspectArgs": {}
   },
   "8": {
     "BlockAttrs": {
@@ -161,11 +158,8 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Void",
+    "AspectArgs": {}
   },
   "9": {
     "BlockAttrs": {
@@ -176,11 +170,8 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Void",
+    "AspectArgs": {}
   },
   "10": {
     "BlockAttrs": {
@@ -191,11 +182,8 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Void",
+    "AspectArgs": {}
   },
   "11": {
     "BlockAttrs": {
@@ -206,11 +194,8 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Void",
+    "AspectArgs": {}
   },
   "12": {
     "BlockAttrs": {
