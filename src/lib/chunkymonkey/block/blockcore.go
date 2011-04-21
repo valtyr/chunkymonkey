@@ -94,6 +94,7 @@ const (
 
 // Defines the behaviour of a block.
 type IBlockAspect interface {
+    Name() string
     Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool)
 }
 

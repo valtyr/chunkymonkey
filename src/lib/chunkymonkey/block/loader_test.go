@@ -1,6 +1,8 @@
 package block
 
 import (
+    "bytes"
+    "os"
     "reflect"
     "strings"
     "testing"
@@ -125,6 +127,51 @@ func TestLoadBlockDefs(t *testing.T) {
         },
         blocks[1],
     )
+}
+
+// Test if loading blocks, saving them and loading them gives an equal result
+// to the original.
+func TestLoadSaveAndLoadBlockDefs(t *testing.T) {
+    var err os.Error
+
+    var originalBlocks map[BlockId]*BlockType
+    {
+        reader := strings.NewReader(twoBlocks)
+
+        originalBlocks, err = LoadBlockDefs(reader)
+        if err != nil {
+            t.Fatalf("Expected no error on first load but got %v", err)
+        }
+    }
+
+    var savedData []byte
+    {
+        writer := &bytes.Buffer{}
+        err = SaveBlockDefs(writer, originalBlocks)
+        if err != nil {
+            t.Fatalf("Expected no error on write but got %v", err)
+        }
+        savedData = writer.Bytes()
+    }
+    t.Logf("Saved data: %s", savedData)
+
+    var reloadedBlocks map[BlockId]*BlockType
+    {
+        reader := bytes.NewBuffer(savedData)
+
+        reloadedBlocks, err = LoadBlockDefs(reader)
+        if err != nil {
+            t.Fatalf("Expected no error on second load but got %v", err)
+        }
+    }
+
+    if !reflect.DeepEqual(originalBlocks, reloadedBlocks) {
+        t.Errorf("Expected reloaded blocks to be the same as the original")
+        t.Logf("Original:")
+        displayBlocks(t, originalBlocks)
+        t.Logf("Reloaded:")
+        displayBlocks(t, reloadedBlocks)
+    }
 }
 
 func TestBadAspectArgFails(t *testing.T) {

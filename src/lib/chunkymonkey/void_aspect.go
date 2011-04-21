@@ -11,6 +11,10 @@ func makeVoidAspect() (aspect IBlockAspect) {
 // Behaviour of a "void" block which has no behaviour.
 type VoidAspect struct {}
 
+func (aspect *VoidAspect) Name() string {
+    return "Void"
+}
+
 func (aspect *VoidAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
     destroyed = false
     return

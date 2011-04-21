@@ -24,6 +24,10 @@ type StandardAspect struct {
     BreakOn      DigStatus
 }
 
+func (aspect *StandardAspect) Name() string {
+    return "Standard"
+}
+
 func (aspect *StandardAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
     if aspect.BreakOn != digStatus {
         return
