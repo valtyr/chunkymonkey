@@ -5,8 +5,7 @@ import (
     "io"
     "json"
     "os"
-
-    . "chunkymonkey/types"
+    "strconv"
 )
 
 type aspectMakerFn func() (aspect IBlockAspect)
@@ -90,34 +89,59 @@ func (a *aspectArgs) MarshalJSON() (raw []byte, err os.Error) {
     return
 }
 
-func LoadBlockDefs(reader io.Reader) (blocks map[BlockId]*BlockType, err os.Error) {
+func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
     blocksStr := make(map[string]blockDef)
     decoder := json.NewDecoder(reader)
     err = decoder.Decode(&blocksStr)
 
-    // Convert map string keys to ints.
-    blocks = make(map[BlockId]*BlockType)
-    for idStr, blockDef := range blocksStr {
-        var id BlockId
-        var block *BlockType
+    // Find the max block ID so we allocate the correct amount of memory. Also
+    // range check the IDs.
+    maxId := 0
+    for idStr := range blocksStr {
+        var id int
+        id, err = strconv.Atoi(idStr)
+        if err != nil {
+            return
+        }
+        if id < 0 || id > 255 {
+            err = os.NewError(fmt.Sprintf(
+                "Encountered block type with ID %d which is outside the range" +
+                "0 <= N <= 255", id))
+            return
+        }
+        if id > maxId {
+            maxId = id
+        }
+    }
 
+    // Convert map string keys to ints.
+    blocks = make(BlockTypeList, maxId+1)
+    for idStr, blockDef := range blocksStr {
+        var id int
+        id, _ = strconv.Atoi(idStr)
+
+        if blocks[id].defined {
+            err = os.NewError(fmt.Sprintf(
+                "Block ID %d defined more than once.", id))
+        }
+
+        var block *BlockType
         block, err = blockDef.LoadBlockType()
         if err != nil {
             return
         }
-
-        fmt.Sscanf(idStr, "%d", &id)
-        blocks[id] = block
+        block.defined = true
+        blocks[id] = *block
     }
 
     return
 }
 
-func SaveBlockDefs(writer io.Writer, blocks map[BlockId]*BlockType) (err os.Error) {
+func SaveBlockDefs(writer io.Writer, blocks BlockTypeList) (err os.Error) {
     blockDefs := make(map[string]blockDef)
-    for id, block := range blocks {
+    for id := range blocks {
         var blockDef *blockDef
-        blockDef, err = newBlockDefFromBlockType(block)
+        blockDef, err = newBlockDefFromBlockType(&blocks[id])
         if err != nil {
             return
         }

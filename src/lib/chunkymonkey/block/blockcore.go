@@ -22,6 +22,7 @@ type IBlockAspect interface {
 type BlockAttrs struct {
     Name         string
     Opacity      int8
+    defined      bool
     Destructable bool
     Solid        bool
     Replaceable  bool
@@ -35,7 +36,17 @@ type BlockType struct {
 }
 
 // Lookup table of blocks.
-type BlockTypeMap map[BlockId]*BlockType
+type BlockTypeList []BlockType
+
+func (btl *BlockTypeList) Get(id BlockId) (block *BlockType, ok bool) {
+    if id < 0 || int(id) > len(*btl) {
+        ok = false
+        return
+    }
+    block = &(*btl)[id]
+    ok = block.defined
+    return
+}
 
 // The interface required of a chunk by block behaviour.
 type IChunkBlock interface {

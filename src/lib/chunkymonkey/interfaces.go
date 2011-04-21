@@ -88,7 +88,7 @@ type IGame interface {
     // Safe to call from outside of Enqueue:
     GetStartPosition() *AbsXyz      // Do not modify return value
     GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
-    GetBlockTypes() map[BlockId]*block.BlockType
+    GetBlockTypes() block.BlockTypeList
 
     Enqueue(f func(IGame))
 

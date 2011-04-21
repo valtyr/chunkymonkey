@@ -27,13 +27,13 @@ type Game struct {
     entityManager EntityManager
     players       map[EntityId]IPlayer
     time          TimeOfDay
-    blockTypes    map[BlockId]*block.BlockType
+    blockTypes    block.BlockTypeList
     rand          *rand.Rand
     serverId      string
     worldStore    *worldstore.WorldStore
 }
 
-func NewGame(worldPath string, blockTypes map[BlockId]*block.BlockType) (game *Game, err os.Error) {
+func NewGame(worldPath string, blockTypes block.BlockTypeList) (game *Game, err os.Error) {
     worldStore, err := worldstore.LoadWorldStore(worldPath)
 
     game = &Game{
@@ -125,7 +125,7 @@ func (game *Game) GetStartPosition() *AbsXyz {
     return &game.worldStore.StartPosition
 }
 
-func (game *Game) GetBlockTypes() map[BlockId]*block.BlockType {
+func (game *Game) GetBlockTypes() block.BlockTypeList {
     return game.blockTypes
 }
 

@@ -13,7 +13,7 @@ import (
 type ChunkManager struct {
     game       IGame
     chunkStore chunkstore.ChunkStore
-    blockTypes map[BlockId]*block.BlockType
+    blockTypes block.BlockTypeList
     chunks     map[uint64]*Chunk
 }
 

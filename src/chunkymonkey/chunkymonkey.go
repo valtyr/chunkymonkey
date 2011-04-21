@@ -38,7 +38,7 @@ func startHttpServer(addr string) (err os.Error) {
     return
 }
 
-func loadBlocks() (blocks block.BlockTypeMap, err os.Error) {
+func loadBlocks() (blocks block.BlockTypeList, err os.Error) {
     file, err := os.Open(*blockDefs)
     if err != nil {
         return

@@ -68,9 +68,10 @@ func assertBlockTypeEq(t *testing.T, expected, result *BlockType) {
     }
 }
 
-func displayBlocks(t *testing.T, blocks map[BlockId]*BlockType) {
+func displayBlocks(t *testing.T, blocks BlockTypeList) {
     t.Logf("%d blocks:", len(blocks))
-    for id, block := range blocks {
+    for id := range blocks {
+        block := &blocks[id]
         t.Logf("    [%d] attrs=%#v aspect=%#v", id, block.BlockAttrs, block.Aspect)
     }
 }
@@ -100,7 +101,7 @@ func TestLoadBlockDefs(t *testing.T) {
             },
             Aspect: &VoidAspect{},
         },
-        blocks[0],
+        &blocks[0],
     )
 
     assertBlockTypeEq(
@@ -125,7 +126,7 @@ func TestLoadBlockDefs(t *testing.T) {
                 BreakOn: DigBlockBroke,
             },
         },
-        blocks[1],
+        &blocks[1],
     )
 }
 
@@ -134,7 +135,7 @@ func TestLoadBlockDefs(t *testing.T) {
 func TestLoadSaveAndLoadBlockDefs(t *testing.T) {
     var err os.Error
 
-    var originalBlocks map[BlockId]*BlockType
+    var originalBlocks BlockTypeList
     {
         reader := strings.NewReader(twoBlocks)
 
@@ -155,7 +156,7 @@ func TestLoadSaveAndLoadBlockDefs(t *testing.T) {
     }
     t.Logf("Saved data: %s", savedData)
 
-    var reloadedBlocks map[BlockId]*BlockType
+    var reloadedBlocks BlockTypeList
     {
         reader := bytes.NewBuffer(savedData)
 

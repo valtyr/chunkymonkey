@@ -166,7 +166,7 @@ func (chunk *Chunk) DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
     blockTypeId := BlockId(chunk.blocks[index])
     blockLoc := chunk.loc.ToBlockXyz(subLoc)
 
-    if blockType, ok := chunk.mgr.blockTypes[blockTypeId]; ok && blockType.Destructable {
+    if blockType, ok := chunk.mgr.blockTypes.Get(blockTypeId); ok && blockType.Destructable {
         if blockType.Aspect.Dig(chunk, blockLoc, digStatus) {
             chunk.setBlock(blockLoc, subLoc, index, shift, block.BlockIdAir, 0)
         }
@@ -209,7 +209,7 @@ func (chunk *Chunk) PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId B
 
     // Blocks can only replace certain blocks.
     blockTypeId := BlockId(chunk.blocks[index])
-    blockType, ok := chunk.mgr.blockTypes[blockTypeId]
+    blockType, ok := chunk.mgr.blockTypes.Get(blockTypeId)
     if !ok {
         return
     }
@@ -254,7 +254,7 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
         }
     }
 
-    blockType, ok = chunk.mgr.blockTypes[blockTypeId]
+    blockType, ok = chunk.mgr.blockTypes.Get(blockTypeId)
     if !ok {
         log.Printf(
             "Chunk/blockQuery found unknown block type Id %d at %+v",
