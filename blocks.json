@@ -1,0 +1,1525 @@
+{
+  "0": {
+    "BlockAttrs": {
+      "Name": "air",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "1": {
+    "BlockAttrs": {
+      "Name": "stone",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 4,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "10": {
+    "BlockAttrs": {
+      "Name": "lava",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "11": {
+    "BlockAttrs": {
+      "Name": "stationary lava",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "12": {
+    "BlockAttrs": {
+      "Name": "sand",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 12,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "13": {
+    "BlockAttrs": {
+      "Name": "gravel",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 318,
+          "Probability": 10,
+          "Count": 1
+        },
+        {
+          "DroppedItem": 13,
+          "Probability": 90,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "14": {
+    "BlockAttrs": {
+      "Name": "gold ore",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 14,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "15": {
+    "BlockAttrs": {
+      "Name": "iron ore",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 15,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "16": {
+    "BlockAttrs": {
+      "Name": "coal ore",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 263,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "17": {
+    "BlockAttrs": {
+      "Name": "log",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 17,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "18": {
+    "BlockAttrs": {
+      "Name": "leaves",
+      "Opacity": 1,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 6,
+          "Probability": 5,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "19": {
+    "BlockAttrs": {
+      "Name": "sponge",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 19,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "2": {
+    "BlockAttrs": {
+      "Name": "grass",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 3,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "20": {
+    "BlockAttrs": {
+      "Name": "glass",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "3": {
+    "BlockAttrs": {
+      "Name": "dirt",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 3,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "35": {
+    "BlockAttrs": {
+      "Name": "wool",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 35,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "37": {
+    "BlockAttrs": {
+      "Name": "yellow flower",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 37,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 0
+    }
+  },
+  "38": {
+    "BlockAttrs": {
+      "Name": "red rose",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 38,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 0
+    }
+  },
+  "39": {
+    "BlockAttrs": {
+      "Name": "brown mushroom",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 39,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 0
+    }
+  },
+  "4": {
+    "BlockAttrs": {
+      "Name": "cobblestone",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 4,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "40": {
+    "BlockAttrs": {
+      "Name": "red mushroom",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 40,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 0
+    }
+  },
+  "41": {
+    "BlockAttrs": {
+      "Name": "gold block",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 41,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "42": {
+    "BlockAttrs": {
+      "Name": "iron block",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 42,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "43": {
+    "BlockAttrs": {
+      "Name": "double stone slab",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 44,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "44": {
+    "BlockAttrs": {
+      "Name": "stone slab",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 44,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "45": {
+    "BlockAttrs": {
+      "Name": "brick",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 45,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "46": {
+    "BlockAttrs": {
+      "Name": "TNT",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "47": {
+    "BlockAttrs": {
+      "Name": "bookshelf",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "48": {
+    "BlockAttrs": {
+      "Name": "moss stone",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 48,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "49": {
+    "BlockAttrs": {
+      "Name": "obsidian",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 49,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "5": {
+    "BlockAttrs": {
+      "Name": "wood",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 5,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "50": {
+    "BlockAttrs": {
+      "Name": "torch",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 50,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 0
+    }
+  },
+  "51": {
+    "BlockAttrs": {
+      "Name": "fire",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "52": {
+    "BlockAttrs": {
+      "Name": "mob spawner",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "53": {
+    "BlockAttrs": {
+      "Name": "wooden stairs",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 53,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "54": {
+    "BlockAttrs": {
+      "Name": "chest",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 54,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "55": {
+    "BlockAttrs": {
+      "Name": "redstone wire",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "56": {
+    "BlockAttrs": {
+      "Name": "diamond ore",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 264,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "57": {
+    "BlockAttrs": {
+      "Name": "diamond block",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 57,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "58": {
+    "BlockAttrs": {
+      "Name": "workbench",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 58,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "59": {
+    "BlockAttrs": {
+      "Name": "crops",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 0
+    }
+  },
+  "6": {
+    "BlockAttrs": {
+      "Name": "sapling",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 6,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 0
+    }
+  },
+  "60": {
+    "BlockAttrs": {
+      "Name": "soil",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 3,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "61": {
+    "BlockAttrs": {
+      "Name": "furnace",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "62": {
+    "BlockAttrs": {
+      "Name": "burning furnace",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "63": {
+    "BlockAttrs": {
+      "Name": "sign post",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 323,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "64": {
+    "BlockAttrs": {
+      "Name": "wooden door",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 324,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "65": {
+    "BlockAttrs": {
+      "Name": "ladder",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 65,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "66": {
+    "BlockAttrs": {
+      "Name": "minecart tracks",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 66,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "67": {
+    "BlockAttrs": {
+      "Name": "cobblestone stairs",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 67,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "68": {
+    "BlockAttrs": {
+      "Name": "wall sign",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 323,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "69": {
+    "BlockAttrs": {
+      "Name": "lever",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 69,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "7": {
+    "BlockAttrs": {
+      "Name": "bedrock",
+      "Opacity": 15,
+      "Destructable": false,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "70": {
+    "BlockAttrs": {
+      "Name": "stone pressure plate",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 70,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "71": {
+    "BlockAttrs": {
+      "Name": "irondoor",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 330,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "72": {
+    "BlockAttrs": {
+      "Name": "wooden pressure plate",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 72,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "73": {
+    "BlockAttrs": {
+      "Name": "redstone ore",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 331,
+          "Probability": 50,
+          "Count": 4
+        },
+        {
+          "DroppedItem": 331,
+          "Probability": 50,
+          "Count": 5
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "74": {
+    "BlockAttrs": {
+      "Name": "glowing redstone ore",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 331,
+          "Probability": 50,
+          "Count": 4
+        },
+        {
+          "DroppedItem": 331,
+          "Probability": 50,
+          "Count": 5
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "75": {
+    "BlockAttrs": {
+      "Name": "redstone torch off",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "76": {
+    "BlockAttrs": {
+      "Name": "redstone torch on",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "77": {
+    "BlockAttrs": {
+      "Name": "stone button",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 77,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "78": {
+    "BlockAttrs": {
+      "Name": "snow",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 3,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "79": {
+    "BlockAttrs": {
+      "Name": "ice",
+      "Opacity": 3,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "8": {
+    "BlockAttrs": {
+      "Name": "water",
+      "Opacity": 3,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "80": {
+    "BlockAttrs": {
+      "Name": "snow block",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 332,
+          "Probability": 100,
+          "Count": 4
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "81": {
+    "BlockAttrs": {
+      "Name": "cactus",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 81,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "82": {
+    "BlockAttrs": {
+      "Name": "clay",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 82,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "83": {
+    "BlockAttrs": {
+      "Name": "sugar cane",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 338,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "84": {
+    "BlockAttrs": {
+      "Name": "jukebox",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 84,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "85": {
+    "BlockAttrs": {
+      "Name": "fence",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 85,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "86": {
+    "BlockAttrs": {
+      "Name": "pumpkin",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 86,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "87": {
+    "BlockAttrs": {
+      "Name": "netherrack",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 87,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "88": {
+    "BlockAttrs": {
+      "Name": "soul sand",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 88,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "89": {
+    "BlockAttrs": {
+      "Name": "glowstone",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 89,
+          "Probability": 100,
+          "Count": 1
+        },
+        {
+          "DroppedItem": 348,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "9": {
+    "BlockAttrs": {
+      "Name": "stationary water",
+      "Opacity": 3,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "90": {
+    "BlockAttrs": {
+      "Name": "portal",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
+  },
+  "91": {
+    "BlockAttrs": {
+      "Name": "jack o lantern",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 91,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  }
+}

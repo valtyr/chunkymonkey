@@ -33,13 +33,13 @@ type Game struct {
     worldStore    *worldstore.WorldStore
 }
 
-func NewGame(worldPath string) (game *Game, err os.Error) {
+func NewGame(worldPath string, blockTypes map[BlockId]*block.BlockType) (game *Game, err os.Error) {
     worldStore, err := worldstore.LoadWorldStore(worldPath)
 
     game = &Game{
         mainQueue:  make(chan func(IGame), 256),
         players:    make(map[EntityId]IPlayer),
-        blockTypes: block.LoadStandardBlockTypes(),
+        blockTypes: blockTypes,
         rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
         worldStore: worldStore,
     }

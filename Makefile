@@ -1,7 +1,10 @@
-BINARIES=chunkymonkey intercept inspectlevel dumpblockdefs
+SERVER=chunkymonkey
+BINARIES=intercept inspectlevel dumpblockdefs
 DIAGRAMS=diagrams/top-level-architecture.png
 
-all: $(BINARIES)
+all: $(SERVER)
+
+extra: $(BINARIES)
 
 clean:
 	@gd -q -clean src
@@ -33,4 +36,4 @@ docs: $(DIAGRAMS)
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all clean fmt libs test docs
+.PHONY: all clean docs extra fmt libs test

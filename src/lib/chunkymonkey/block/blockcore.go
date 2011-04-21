@@ -113,6 +113,9 @@ type BlockType struct {
     Aspect       IBlockAspect
 }
 
+// Lookup table of blocks.
+type BlockTypeMap map[BlockId]*BlockType
+
 // The interface required of a chunk by block behaviour.
 type IChunkBlock interface {
     GetRand() *rand.Rand

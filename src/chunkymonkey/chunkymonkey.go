@@ -9,6 +9,7 @@ import (
     "os"
 
     "chunkymonkey"
+    "chunkymonkey/block"
 )
 
 var addr = flag.String(
@@ -18,6 +19,10 @@ var addr = flag.String(
 var httpAddr = flag.String(
     "http_addr", ":25566",
     "Serves HTTP diagnostics on the given address:port.")
+
+var blockDefs = flag.String(
+    "blocks", "blocks.json",
+    "The JSON file containing block type definitions.")
 
 func usage() {
     os.Stderr.WriteString("usage: " + os.Args[0] + " [flags] <world>\n")
@@ -33,6 +38,16 @@ func startHttpServer(addr string) (err os.Error) {
     return
 }
 
+func loadBlocks() (blocks block.BlockTypeMap, err os.Error) {
+    file, err := os.Open(*blockDefs)
+    if err != nil {
+        return
+    }
+    defer file.Close()
+
+    return block.LoadBlockDefs(file)
+}
+
 func main() {
     var err os.Error
 
@@ -44,8 +59,14 @@ func main() {
         os.Exit(1)
     }
 
+    blocks, err := loadBlocks()
+    if err != nil {
+        log.Print("Error loading block definitions: ", err)
+        os.Exit(1)
+    }
+
     worldPath := flag.Arg(0)
-    game, err := chunkymonkey.NewGame(worldPath)
+    game, err := chunkymonkey.NewGame(worldPath, blocks)
     if err != nil {
         log.Panic(err)
     }
