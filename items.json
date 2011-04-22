@@ -1,0 +1,506 @@
+{
+  "256": {
+    "Name": "iron shovel",
+    "MaxStack": 1,
+    "ToolType": 1,
+    "ToolUses": 251
+  },
+  "257": {
+    "Name": "iron pickaxe",
+    "MaxStack": 1,
+    "ToolType": 2,
+    "ToolUses": 251
+  },
+  "258": {
+    "Name": "iron axe",
+    "MaxStack": 1,
+    "ToolType": 3,
+    "ToolUses": 251
+  },
+  "259": {
+    "Name": "flint and steel",
+    "MaxStack": 1,
+    "ToolType": 13
+  },
+  "260": {
+    "Name": "apple",
+    "MaxStack": 1
+  },
+  "261": {
+    "Name": "bow",
+    "MaxStack": 1,
+    "ToolType": 11
+  },
+  "262": {
+    "Name": "arrow",
+    "MaxStack": 64
+  },
+  "263": {
+    "Name": "coal",
+    "MaxStack": 64
+  },
+  "264": {
+    "Name": "diamond",
+    "MaxStack": 64
+  },
+  "265": {
+    "Name": "iron ingot",
+    "MaxStack": 64
+  },
+  "266": {
+    "Name": "gold ingot",
+    "MaxStack": 64
+  },
+  "267": {
+    "Name": "iron sword",
+    "MaxStack": 1,
+    "ToolType": 4,
+    "ToolUses": 251
+  },
+  "268": {
+    "Name": "wooden sword",
+    "MaxStack": 1,
+    "ToolType": 4,
+    "ToolUses": 60
+  },
+  "269": {
+    "Name": "wooden shovel",
+    "MaxStack": 1,
+    "ToolType": 1,
+    "ToolUses": 60
+  },
+  "270": {
+    "Name": "wooden pickaxe",
+    "MaxStack": 1,
+    "ToolType": 2,
+    "ToolUses": 60
+  },
+  "271": {
+    "Name": "wooden axe",
+    "MaxStack": 1,
+    "ToolType": 3,
+    "ToolUses": 60
+  },
+  "272": {
+    "Name": "stone sword",
+    "MaxStack": 1,
+    "ToolType": 4,
+    "ToolUses": 132
+  },
+  "273": {
+    "Name": "stone shovel",
+    "MaxStack": 1,
+    "ToolType": 1,
+    "ToolUses": 132
+  },
+  "274": {
+    "Name": "stone pickaxe",
+    "MaxStack": 1,
+    "ToolType": 2,
+    "ToolUses": 132
+  },
+  "275": {
+    "Name": "stone axe",
+    "MaxStack": 1,
+    "ToolType": 3,
+    "ToolUses": 132
+  },
+  "276": {
+    "Name": "diamond sword",
+    "MaxStack": 1,
+    "ToolType": 4,
+    "ToolUses": 1562
+  },
+  "277": {
+    "Name": "diamond shovel",
+    "MaxStack": 1,
+    "ToolType": 1,
+    "ToolUses": 1562
+  },
+  "278": {
+    "Name": "diamond pickaxe",
+    "MaxStack": 1,
+    "ToolType": 2,
+    "ToolUses": 1562
+  },
+  "279": {
+    "Name": "diamond axe",
+    "MaxStack": 1,
+    "ToolType": 3,
+    "ToolUses": 1562
+  },
+  "280": {
+    "Name": "stick",
+    "MaxStack": 64
+  },
+  "281": {
+    "Name": "bowl",
+    "MaxStack": 64
+  },
+  "282": {
+    "Name": "mushroom soup",
+    "MaxStack": 64
+  },
+  "283": {
+    "Name": "gold sword",
+    "MaxStack": 64,
+    "MaxStack": 1,
+    "ToolType": 4,
+    "ToolUses": 33
+  },
+  "284": {
+    "Name": "gold shovel",
+    "MaxStack": 1,
+    "ToolType": 1,
+    "ToolUses": 33
+  },
+  "285": {
+    "Name": "gold pickaxe",
+    "MaxStack": 1,
+    "ToolType": 2,
+    "ToolUses": 33
+  },
+  "286": {
+    "Name": "gold axe",
+    "MaxStack": 64
+  },
+  "287": {
+    "Name": "string",
+    "MaxStack": 64
+  },
+  "288": {
+    "Name": "feather",
+    "MaxStack": 64
+  },
+  "289": {
+    "Name": "gunpowder",
+    "MaxStack": 64
+  },
+  "290": {
+    "Name": "wooden hoe",
+    "MaxStack": 1,
+    "ToolType": 5,
+    "ToolUses": 60
+  },
+  "291": {
+    "Name": "stone hoe",
+    "MaxStack": 1,
+    "ToolType": 5,
+    "ToolUses": 132
+  },
+  "292": {
+    "Name": "iron hoe",
+    "MaxStack": 1,
+    "ToolType": 5,
+    "ToolUses": 251
+  },
+  "293": {
+    "Name": "diamond hoe",
+    "MaxStack": 1,
+    "ToolType": 5,
+    "ToolUses": 1562
+  },
+  "294": {
+    "Name": "gold hoe",
+    "MaxStack": 1,
+    "ToolType": 5,
+    "ToolUses": 33
+  },
+  "295": {
+    "Name": "seeds",
+    "MaxStack": 64
+  },
+  "296": {
+    "Name": "wheat",
+    "MaxStack": 64
+  },
+  "297": {
+    "Name": "bread",
+    "MaxStack": 64
+  },
+  "298": {
+    "Name": "leather cap",
+    "MaxStack": 64
+  },
+  "299": {
+    "Name": "leather tunic",
+    "MaxStack": 64
+  },
+  "300": {
+    "Name": "leather pants",
+    "MaxStack": 64
+  },
+  "301": {
+    "Name": "leather boots",
+    "MaxStack": 1,
+    "ToolType": 9,
+    "ToolUses": 39
+  },
+  "302": {
+    "Name": "chain helmet",
+    "MaxStack": 1,
+    "ToolType": 6,
+    "ToolUses": 66
+  },
+  "303": {
+    "Name": "chain chestplate",
+    "MaxStack": 1,
+    "ToolType": 7,
+    "ToolUses": 48
+  },
+  "304": {
+    "Name": "chain leggings",
+    "MaxStack": 1,
+    "ToolType": 8,
+    "ToolUses": 90
+  },
+  "305": {
+    "Name": "chain boots",
+    "MaxStack": 1,
+    "ToolType": 9,
+    "ToolUses": 78
+  },
+  "306": {
+    "Name": "iron helmet",
+    "MaxStack": 1,
+    "ToolType": 6,
+    "ToolUses": 132
+  },
+  "307": {
+    "Name": "iron chestplate",
+    "MaxStack": 1,
+    "ToolType": 7,
+    "ToolUses": 192
+  },
+  "308": {
+    "Name": "iron leggings",
+    "MaxStack": 1,
+    "ToolType": 8,
+    "ToolUses": 180
+  },
+  "309": {
+    "Name": "iron boots",
+    "MaxStack": 1,
+    "ToolType": 9,
+    "ToolUses": 156
+  },
+  "310": {
+    "Name": "diamond helmet",
+    "MaxStack": 1,
+    "ToolType": 6,
+    "ToolUses": 264
+  },
+  "311": {
+    "Name": "diamond chestplate",
+    "MaxStack": 1,
+    "ToolType": 7,
+    "ToolUses": 384
+  },
+  "312": {
+    "Name": "diamond leggings",
+    "MaxStack": 1,
+    "ToolType": 8,
+    "ToolUses": 360
+  },
+  "313": {
+    "Name": "diamond boots",
+    "MaxStack": 1,
+    "ToolType": 9,
+    "ToolUses": 312
+  },
+  "314": {
+    "Name": "gold helmet",
+    "MaxStack": 1,
+    "ToolType": 6,
+    "ToolUses": 66
+  },
+  "315": {
+    "Name": "gold chestplate",
+    "MaxStack": 1,
+    "ToolType": 7,
+    "ToolUses": 96
+  },
+  "316": {
+    "Name": "gold leggings",
+    "MaxStack": 1,
+    "ToolType": 8,
+    "ToolUses": 90
+  },
+  "317": {
+    "Name": "gold boots",
+    "MaxStack": 1,
+    "ToolType": 9,
+    "ToolUses": 78
+  },
+  "318": {
+    "Name": "flint",
+    "MaxStack": 1,
+    "ToolType": 9,
+    "ToolUses": 65
+  },
+  "319": {
+    "Name": "raw porkchop",
+    "MaxStack": 1
+  },
+  "320": {
+    "Name": "cooked porkchop",
+    "MaxStack": 1
+  },
+  "321": {
+    "Name": "paintings",
+    "MaxStack": 64
+  },
+  "322": {
+    "Name": "golden apple",
+    "MaxStack": 1
+  },
+  "323": {
+    "Name": "sign",
+    "MaxStack": 64
+  },
+  "324": {
+    "Name": "wooden door",
+    "MaxStack": 1
+  },
+  "325": {
+    "Name": "bucket",
+    "MaxStack": 1,
+    "ToolType": 12
+  },
+  "326": {
+    "Name": "water bucket",
+    "MaxStack": 1
+  },
+  "327": {
+    "Name": "lava bucket",
+    "MaxStack": 1
+  },
+  "328": {
+    "Name": "minecart",
+    "MaxStack": 64
+  },
+  "329": {
+    "Name": "saddle",
+    "MaxStack": 1
+  },
+  "330": {
+    "Name": "iron door",
+    "MaxStack": 1
+  },
+  "331": {
+    "Name": "redstone",
+    "MaxStack": 64
+  },
+  "332": {
+    "Name": "snowball",
+    "MaxStack": 64
+  },
+  "333": {
+    "Name": "boat",
+    "MaxStack": 64
+  },
+  "334": {
+    "Name": "leather",
+    "MaxStack": 64
+  },
+  "335": {
+    "Name": "milk",
+    "MaxStack": 1
+  },
+  "336": {
+    "Name": "clay brick",
+    "MaxStack": 64
+  },
+  "337": {
+    "Name": "clay",
+    "MaxStack": 64
+  },
+  "338": {
+    "Name": "sugar cane",
+    "MaxStack": 64
+  },
+  "339": {
+    "Name": "paper",
+    "MaxStack": 64
+  },
+  "340": {
+    "Name": "book",
+    "MaxStack": 64
+  },
+  "341": {
+    "Name": "slimeball",
+    "MaxStack": 64
+  },
+  "342": {
+    "Name": "storage minecart",
+    "MaxStack": 64
+  },
+  "343": {
+    "Name": "powered minecart",
+    "MaxStack": 64
+  },
+  "344": {
+    "Name": "egg",
+    "MaxStack": 64
+  },
+  "345": {
+    "Name": "compass",
+    "MaxStack": 64
+  },
+  "346": {
+    "Name": "fishing rod",
+    "MaxStack": 64
+  },
+  "347": {
+    "Name": "clock",
+    "MaxStack": 64
+  },
+  "348": {
+    "Name": "glowstone dust",
+    "MaxStack": 64
+  },
+  "349": {
+    "Name": "raw fish",
+    "MaxStack": 64
+  },
+  "350": {
+    "Name": "cooked fish",
+    "MaxStack": 64
+  },
+  "351": {
+    "Name": "dye",
+    "MaxStack": 64
+  },
+  "352": {
+    "Name": "bone",
+    "MaxStack": 64
+  },
+  "353": {
+    "Name": "sugar",
+    "MaxStack": 64
+  },
+  "354": {
+    "Name": "cake",
+    "MaxStack": 1
+  },
+  "355": {
+    "Name": "bed",
+    "MaxStack": 1
+  },
+  "356": {
+    "Name": "redstone repeater",
+    "MaxStack": 64
+  },
+  "357": {
+    "Name": "cookie",
+    "MaxStack": 8
+  },
+  "2256": {
+    "Name": "gold music disc",
+    "MaxStack": 64
+  },
+  "2257": {
+    "Name": "green music disc",
+    "MaxStack": 64
+  }
+}
