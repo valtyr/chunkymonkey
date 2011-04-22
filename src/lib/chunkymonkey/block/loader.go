@@ -78,9 +78,7 @@ func (a *aspectArgs) UnmarshalJSON(raw []byte) (err os.Error) {
     // Copy raw into a.Raw - the JSON library will destroy the content of the
     // argument after this function returns.
     a.Raw = make([]byte, len(raw))
-    for i := range raw {
-        a.Raw[i] = raw[i]
-    }
+    copy(a.Raw, raw)
     return
 }
 
@@ -103,10 +101,10 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
         if err != nil {
             return
         }
-        if id < 0 || id > 255 {
+        if id < BlockIdMin || id > BlockIdMax {
             err = os.NewError(fmt.Sprintf(
                 "Encountered block type with ID %d which is outside the range"+
-                    "0 <= N <= 255",id))
+                    "%d <= N <= %d", id, BlockIdMin, BlockIdMax))
             return
         }
         if id > maxId {

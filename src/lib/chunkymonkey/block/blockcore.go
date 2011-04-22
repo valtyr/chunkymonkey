@@ -8,9 +8,9 @@ import (
 )
 
 const (
-    BlockIdMin = BlockId(0)
+    BlockIdMin = 0
     BlockIdAir = BlockId(0)
-    BlockIdMax = BlockId(255)
+    BlockIdMax = 255
 )
 
 // Defines the behaviour of a block.

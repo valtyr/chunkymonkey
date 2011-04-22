@@ -2314,7 +2314,7 @@ func WriteWindowClick(writer io.Writer, windowId WindowId, slot SlotId, rightCli
         Slot       SlotId
         RightClick byte
         TxId       TxId
-        Unknown1   byte  // TODO identify this field
+        Unknown1   byte // TODO identify this field
         ItemTypeId ItemTypeId
     }{
         packetIdWindowClick,
@@ -2350,7 +2350,7 @@ func readWindowClick(reader io.Reader, handler ServerPacketHandler) (err os.Erro
         Slot       SlotId
         RightClick byte
         TxId       TxId
-        Unknown1   byte  // TODO identify this field
+        Unknown1   byte // TODO identify this field
         ItemTypeId ItemTypeId
     }
 
