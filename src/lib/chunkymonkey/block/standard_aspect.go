@@ -1,6 +1,8 @@
 package block
 
 import (
+    "log"
+
     "chunkymonkey/item"
     . "chunkymonkey/types"
 )
@@ -41,6 +43,17 @@ func (aspect *StandardAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStat
         r := byte(rand.Intn(100))
         for _, dropItem := range aspect.DroppedItems {
             if dropItem.Probability > r {
+                itemType, ok := chunk.GetItemType(dropItem.DroppedItem)
+
+                if !ok {
+                    log.Printf(
+                        "Warning: tried to create item with type ID #%d - "+
+                            "but no such item type is defined. block and item "+
+                            "definitions out of sync?",dropItem.DroppedItem)
+
+                    break
+                }
+
                 for i := dropItem.Count; i > 0; i-- {
                     position := blockLoc.ToAbsXyz()
                     position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
@@ -48,7 +61,7 @@ func (aspect *StandardAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStat
                     position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
                     chunk.AddItem(
                         item.NewItem(
-                            dropItem.DroppedItem, 1,
+                            itemType, 1,
                             position,
                             &AbsVelocity{0, 0, 0}))
                 }

@@ -6,6 +6,8 @@ import (
     "json"
     "os"
     "strconv"
+
+    . "chunkymonkey/types"
 )
 
 type aspectMakerFn func() (aspect IBlockAspect)
@@ -104,7 +106,7 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
         if id < BlockIdMin || id > BlockIdMax {
             err = os.NewError(fmt.Sprintf(
                 "Encountered block type with ID %d which is outside the range"+
-                    "%d <= N <= %d", id, BlockIdMin, BlockIdMax))
+                    "%d <= N <= %d",id, BlockIdMin, BlockIdMax))
             return
         }
         if id > maxId {

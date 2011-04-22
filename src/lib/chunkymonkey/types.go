@@ -113,6 +113,12 @@ const (
 
 type BlockId byte
 
+const (
+    BlockIdMin = 0
+    BlockIdAir = BlockId(0)
+    BlockIdMax = 255
+)
+
 // Block face (0-5)
 type Face int8
 

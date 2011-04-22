@@ -10,7 +10,6 @@ import (
     "os"
     "sync"
 
-    "chunkymonkey/block"
     . "chunkymonkey/entity"
     . "chunkymonkey/interfaces"
     "chunkymonkey/inventory"
@@ -106,12 +105,13 @@ func (player *Player) Enqueue(f func(IPlayer)) {
 
 func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
     heldSlot, _ := player.inventory.HeldItem()
+
     err = proto.WriteNamedEntitySpawn(
         writer,
         player.EntityId, player.name,
         player.position.ToAbsIntXyz(),
         player.look.ToLookBytes(),
-        heldSlot.ItemTypeId,
+        heldSlot.GetItemTypeId(),
     )
     if err != nil {
         return
@@ -242,14 +242,14 @@ func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *Bl
     heldSlot, heldSlotId := player.inventory.HeldItem()
 
     // Make sure that it's a valid-looking block item.
-    itemTypeId := heldSlot.ItemTypeId
-    if itemTypeId == ItemTypeIdNull || itemTypeId < ItemTypeId(block.BlockIdMin) || itemTypeId > ItemTypeId(block.BlockIdMax) {
-        log.Print("Player/PacketPlayerBlockPlacement: invalid block held")
+    itemType := heldSlot.ItemType
+    if itemType == nil || itemType.Id < ItemTypeId(BlockIdMin) || itemType.Id > ItemTypeId(BlockIdMax) {
+        log.Print("Player/PacketPlayerBlockPlacement: no or non-block item held")
         return
     }
 
     // Take an item from the "held" slot.
-    tmpSlot := &slot.Slot{ItemTypeIdNull, 0, 0}
+    tmpSlot := &slot.Slot{nil, 0, 0}
     tmpSlot.AddOne(heldSlot)
 
     buf := &bytes.Buffer{}
@@ -271,7 +271,7 @@ func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *Bl
             // Note that we tell the chunk that the block is to get placed
             // *into* to place it (rather than the block it's being attached
             // to). The chunk itself determines if this will work.
-            if !chunk.PlaceBlock(blockLoc, face, BlockId(tmpSlot.ItemTypeId)) {
+            if !chunk.PlaceBlock(blockLoc, face, BlockId(tmpSlot.ItemType.Id)) {
                 // Return item to player
                 // Note that this can technically fail, in which case the item vanishes.
                 player.OfferItem(tmpSlot)
@@ -317,6 +317,8 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
         clickedSlot = clickedInv.Slot(slotId)
     }
 
+    buf := &bytes.Buffer{}
+
     if clickedSlot == nil {
         log.Printf(
             "Warning: ignored window click on window ID %d with unknown slot %d",
@@ -328,29 +330,41 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
         if player.cursor.Count == 0 {
             if rightClick {
                 accepted = clickedSlot.Split(&player.cursor)
+                log.Printf("split %t", accepted)
             } else {
                 accepted = clickedSlot.Swap(&player.cursor)
+                log.Printf("swap %t", accepted)
             }
         } else {
             if rightClick {
                 accepted = clickedSlot.AddOne(&player.cursor)
+                log.Printf("addone %t", accepted)
             } else {
                 accepted = clickedSlot.Add(&player.cursor)
+                log.Printf("add %t", accepted)
             }
 
             if !accepted {
                 accepted = clickedSlot.Swap(&player.cursor)
+                log.Printf("swap %t", accepted)
             }
         }
+
+        // We send slot updates in case we have custom max counts that differ
+        // from the client's idea.
+        clickedSlot.SendUpdate(buf, windowId, slotId)
+        player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
     }
 
     // TODO here and in other places where inventory is changed we need to send
     // packetEntityEquipment to other clients (and this client? TBD).
 
     // Inform client of operation status.
-    buf := &bytes.Buffer{}
     proto.WriteWindowTransaction(buf, windowId, txId, accepted)
     player.TransmitPacket(buf.Bytes())
+}
+
+func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
 }
 
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {

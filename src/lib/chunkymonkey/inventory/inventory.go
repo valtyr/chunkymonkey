@@ -46,7 +46,7 @@ func (inv *Inventory) PutItem(item *slot.Slot, slotChanged func(slotId SlotId, s
         if item.Count <= 0 {
             break
         }
-        if slot.ItemTypeId == ItemTypeIdNull || slot.ItemTypeId == item.ItemTypeId {
+        if slot.ItemType == nil || slot.ItemType == item.ItemType {
             if slot.Add(item) {
                 taken = true
                 if slotChanged != nil {

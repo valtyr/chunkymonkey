@@ -12,6 +12,7 @@ import (
     "chunkymonkey/block"
     . "chunkymonkey/interfaces"
     "chunkymonkey/item"
+    "chunkymonkey/itemtype"
     "chunkymonkey/proto"
     "chunkymonkey/chunkstore"
     . "chunkymonkey/types"
@@ -125,6 +126,11 @@ func (chunk *Chunk) GetRand() *rand.Rand {
     return chunk.rand
 }
 
+func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool) {
+    itemType, ok = chunk.mgr.itemTypes[itemTypeId]
+    return
+}
+
 func (chunk *Chunk) AddItem(item *item.Item) {
     wg := &sync.WaitGroup{}
     wg.Add(1)
@@ -168,7 +174,7 @@ func (chunk *Chunk) DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
 
     if blockType, ok := chunk.mgr.blockTypes.Get(blockTypeId); ok && blockType.Destructable {
         if blockType.Aspect.Dig(chunk, blockLoc, digStatus) {
-            chunk.setBlock(blockLoc, subLoc, index, shift, block.BlockIdAir, 0)
+            chunk.setBlock(blockLoc, subLoc, index, shift, BlockIdAir, 0)
         }
     } else {
         log.Printf("Attempted to destroy unknown block Id %d", blockTypeId)

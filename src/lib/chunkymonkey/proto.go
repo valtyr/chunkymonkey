@@ -95,6 +95,7 @@ type PacketHandler interface {
     PacketPlayerBlockPlacement(itemTypeId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData)
     PacketEntityAnimation(entityId EntityId, animation EntityAnimation)
     PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool)
+    PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool)
     PacketSignUpdate(position *BlockXyz, lines [4]string)
     PacketDisconnect(reason string)
 }
@@ -148,7 +149,6 @@ type ClientPacketHandler interface {
     PacketWindowSetSlot(windowId WindowId, slot SlotId, itemTypeId ItemTypeId, amount ItemCount, data ItemData)
     PacketWindowItems(windowId WindowId, items []WindowSlot)
     PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue)
-    PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool)
     PacketIncrementStatistic(statisticId StatisticId, delta int8)
 }
 
@@ -2584,7 +2584,7 @@ func WriteWindowTransaction(writer io.Writer, windowId WindowId, txId TxId, acce
     return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readWindowTransaction(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+func readWindowTransaction(reader io.Reader, handler PacketHandler) (err os.Error) {
     var packet struct {
         WindowId WindowId
         TxId     TxId
@@ -2727,6 +2727,7 @@ var commonReadFns = commonPacketReaderMap{
     packetIdPlayerDigging:        readPlayerDigging,
     packetIdPlayerBlockPlacement: readPlayerBlockPlacement,
     packetIdEntityAnimation:      readEntityAnimation,
+    packetIdWindowTransaction:    readWindowTransaction,
     packetIdSignUpdate:           readSignUpdate,
     packetIdDisconnect:           readDisconnect,
 }
@@ -2776,7 +2777,6 @@ var clientReadFns = clientPacketReaderMap{
     packetIdWindowSetSlot:        readWindowSetSlot,
     packetIdWindowItems:          readWindowItems,
     packetIdWindowProgressBar:    readWindowProgressBar,
-    packetIdWindowTransaction:    readWindowTransaction,
     packetIdIncrementStatistic:   readIncrementStatistic,
 }
 

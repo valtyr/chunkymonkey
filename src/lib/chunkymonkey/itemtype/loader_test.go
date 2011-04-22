@@ -4,6 +4,8 @@ import (
     "reflect"
     "strings"
     "testing"
+
+    . "chunkymonkey/types"
 )
 
 const threeItems = ("{\n" +
@@ -24,10 +26,10 @@ const threeItems = ("{\n" +
     "  }\n" +
     "}")
 
-func assertItemTypeEq(t *testing.T, expected *ItemType, result ItemType) {
-    if !reflect.DeepEqual(*expected, result) {
+func assertItemTypeEq(t *testing.T, expected *ItemType, result *ItemType) {
+    if !reflect.DeepEqual(expected, result) {
         t.Error("ItemTypes differed")
-        t.Logf("    expected %#v", *expected)
+        t.Logf("    expected %#v", expected)
         t.Logf("    result   %#v", result)
     }
 }
@@ -47,14 +49,28 @@ func TestLoadItemDefs(t *testing.T) {
     if err != nil {
         t.Fatalf("Expected no error but got %v", err)
     }
-    if len(items) != 3 {
-        t.Fatalf("Expected 3 item types, but got %d", len(items))
+    // All 3 items should be defined, plus the "null" item.
+    if len(items) != 4 {
+        t.Fatalf("Expected 4 item types, but got %d", len(items))
     }
 
     assertItemTypeEq(
         t,
         &ItemType{
-            Name: "iron shovel",
+            Id:       ItemTypeIdNull,
+            Name:     "null item",
+            MaxStack: 0,
+            ToolType: 0,
+            ToolUses: 0,
+        },
+        items[ItemTypeIdNull],
+    )
+
+    assertItemTypeEq(
+        t,
+        &ItemType{
+            Id:       256,
+            Name:     "iron shovel",
             MaxStack: 1,
             ToolType: 1,
             ToolUses: 251,
@@ -65,7 +81,8 @@ func TestLoadItemDefs(t *testing.T) {
     assertItemTypeEq(
         t,
         &ItemType{
-            Name: "diamond",
+            Id:       264,
+            Name:     "diamond",
             MaxStack: 64,
             ToolType: 0,
             ToolUses: 0,
@@ -76,7 +93,8 @@ func TestLoadItemDefs(t *testing.T) {
     assertItemTypeEq(
         t,
         &ItemType{
-            Name: "bow",
+            Id:       261,
+            Name:     "bow",
             MaxStack: 1,
             ToolType: 11,
             ToolUses: 0,

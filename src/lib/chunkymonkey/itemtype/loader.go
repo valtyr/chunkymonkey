@@ -9,25 +9,14 @@ import (
     . "chunkymonkey/types"
 )
 
-type ToolTypeId byte
-
-type ItemType struct {
-    Name     string
-    MaxStack ItemCount
-    ToolType ToolTypeId
-    ToolUses ItemData
-}
-
-type ItemTypeMap map[ItemTypeId]ItemType
-
 func LoadItemDefs(reader io.Reader) (items ItemTypeMap, err os.Error) {
-    itemsStr := make(map[string]ItemType)
+    itemsStr := make(map[string]*ItemType)
     decoder := json.NewDecoder(reader)
     err = decoder.Decode(&itemsStr)
 
     // Convert map string keys to ints.
     items = make(ItemTypeMap)
-    for idStr := range itemsStr {
+    for idStr, item := range itemsStr {
         var id int
         id, err = strconv.Atoi(idStr)
 
@@ -35,7 +24,16 @@ func LoadItemDefs(reader io.Reader) (items ItemTypeMap, err os.Error) {
             return
         }
 
+        item.Id = ItemTypeId(id)
+
         items[ItemTypeId(id)] = itemsStr[idStr]
+    }
+
+    // Include a "null" item type.
+    items[ItemTypeIdNull] = &ItemType{
+        Id:       ItemTypeIdNull,
+        Name:     "null item",
+        MaxStack: 0,
     }
 
     return

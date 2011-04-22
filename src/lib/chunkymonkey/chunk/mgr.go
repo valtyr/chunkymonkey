@@ -5,6 +5,7 @@ import (
 
     "chunkymonkey/block"
     . "chunkymonkey/interfaces"
+    "chunkymonkey/itemtype"
     "chunkymonkey/chunkstore"
     . "chunkymonkey/types"
 )
@@ -14,6 +15,7 @@ type ChunkManager struct {
     game       IGame
     chunkStore chunkstore.ChunkStore
     blockTypes block.BlockTypeList
+    itemTypes  itemtype.ItemTypeMap
     chunks     map[uint64]*Chunk
 }
 
@@ -22,6 +24,7 @@ func NewChunkManager(chunkStore chunkstore.ChunkStore, game IGame) *ChunkManager
         game:       game,
         chunkStore: chunkStore,
         blockTypes: game.GetBlockTypes(),
+        itemTypes:  game.GetItemTypes(),
         chunks:     make(map[uint64]*Chunk),
     }
 }

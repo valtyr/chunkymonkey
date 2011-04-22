@@ -8,6 +8,7 @@ import (
     "chunkymonkey/block"
     "chunkymonkey/entity"
     "chunkymonkey/item"
+    "chunkymonkey/itemtype"
     "chunkymonkey/slot"
     . "chunkymonkey/types"
 )
@@ -89,6 +90,7 @@ type IGame interface {
     GetStartPosition() *AbsXyz      // Do not modify return value
     GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
     GetBlockTypes() block.BlockTypeList
+    GetItemTypes() itemtype.ItemTypeMap
 
     Enqueue(f func(IGame))
 
