@@ -330,23 +330,18 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
         if player.cursor.Count == 0 {
             if rightClick {
                 accepted = clickedSlot.Split(&player.cursor)
-                log.Printf("split %t", accepted)
             } else {
                 accepted = clickedSlot.Swap(&player.cursor)
-                log.Printf("swap %t", accepted)
             }
         } else {
             if rightClick {
                 accepted = clickedSlot.AddOne(&player.cursor)
-                log.Printf("addone %t", accepted)
             } else {
                 accepted = clickedSlot.Add(&player.cursor)
-                log.Printf("add %t", accepted)
             }
 
             if !accepted {
                 accepted = clickedSlot.Swap(&player.cursor)
-                log.Printf("swap %t", accepted)
             }
         }
 
