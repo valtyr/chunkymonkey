@@ -97,7 +97,7 @@
   },
   "5": {
     "BlockAttrs": {
-      "Name": "wood",
+      "Name": "wooden plank",
       "Opacity": 15,
       "Destructable": true,
       "Solid": true,
@@ -125,16 +125,9 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 6,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 0
+      "Comment": "These should grow over time"
     }
   },
   "7": {
@@ -158,7 +151,7 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Void",
+    "Aspect": "Todo",
     "AspectArgs": {}
   },
   "9": {
@@ -170,7 +163,7 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Void",
+    "Aspect": "Todo",
     "AspectArgs": {}
   },
   "10": {
@@ -182,7 +175,7 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Void",
+    "Aspect": "Todo",
     "AspectArgs": {}
   },
   "11": {
@@ -194,7 +187,7 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Void",
+    "Aspect": "Todo",
     "AspectArgs": {}
   },
   "12": {
@@ -316,16 +309,9 @@
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 17,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
+      "Comment": "Different wood types have different data values"
     }
   },
   "18": {
@@ -349,27 +335,6 @@
       "BreakOn": 2
     }
   },
-  "19": {
-    "BlockAttrs": {
-      "Name": "sponge",
-      "Opacity": 15,
-      "Destructable": true,
-      "Solid": true,
-      "Replaceable": false,
-      "Attachable": true
-    },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 19,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
-  },
   "20": {
     "BlockAttrs": {
       "Name": "glass",
@@ -385,9 +350,9 @@
       "BreakOn": 2
     }
   },
-  "35": {
+  "21": {
     "BlockAttrs": {
-      "Name": "wool",
+      "Name": "lapis luzuli ore",
       "Opacity": 15,
       "Destructable": true,
       "Solid": true,
@@ -398,7 +363,41 @@
     "AspectArgs": {
       "DroppedItems": [
         {
-          "DroppedItem": 35,
+          "DroppedItem": 351,
+          "DroppedItemData": 11,
+          "Probability": 20,
+          "Count": 4
+        },
+        {
+          "DroppedItem": 351,
+          "DroppedItemData": 11,
+          "Probability": 60,
+          "Count": 6
+        },
+        {
+          "DroppedItem": 351,
+          "DroppedItemData": 11,
+          "Probability": 20,
+          "Count": 8
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "22": {
+    "BlockAttrs": {
+      "Name": "lapis luzuli block",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 22,
           "Probability": 100,
           "Count": 1
         }
@@ -406,9 +405,114 @@
       "BreakOn": 2
     }
   },
+  "23": {
+    "BlockAttrs": {
+      "Name": "dispenser",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "24": {
+    "BlockAttrs": {
+      "Name": "sandstone",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 24,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "25": {
+    "BlockAttrs": {
+      "Name": "note block",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "26": {
+    "BlockAttrs": {
+      "Name": "bed",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "27": {
+    "BlockAttrs": {
+      "Name": "powered rail",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "28": {
+    "BlockAttrs": {
+      "Name": "detector rail",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "30": {
+    "BlockAttrs": {
+      "Name": "web",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "35": {
+    "BlockAttrs": {
+      "Name": "wool",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
   "37": {
     "BlockAttrs": {
-      "Name": "yellow flower",
+      "Name": "dandelion",
       "Opacity": 0,
       "Destructable": true,
       "Solid": false,
@@ -429,7 +533,7 @@
   },
   "38": {
     "BlockAttrs": {
-      "Name": "red rose",
+      "Name": "rose",
       "Opacity": 0,
       "Destructable": true,
       "Solid": false,
@@ -547,7 +651,7 @@
         {
           "DroppedItem": 44,
           "Probability": 100,
-          "Count": 1
+          "Count": 2
         }
       ],
       "BreakOn": 2
@@ -556,22 +660,15 @@
   "44": {
     "BlockAttrs": {
       "Name": "stone slab",
-      "Opacity": 15,
+      "Opacity": 0,
       "Destructable": true,
       "Solid": true,
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 44,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
+      "Comment": "When placed atop another single stone slab, this should merge into the one below to create a double stone slab."
     }
   },
   "45": {
@@ -604,11 +701,8 @@
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "47": {
     "BlockAttrs": {
@@ -697,11 +791,8 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "52": {
     "BlockAttrs": {
@@ -712,11 +803,8 @@
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "53": {
     "BlockAttrs": {
@@ -727,16 +815,9 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 53,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
+      "Comment": "Needs placement metadata"
     }
   },
   "54": {
@@ -748,17 +829,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 54,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "55": {
     "BlockAttrs": {
@@ -769,11 +841,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "56": {
     "BlockAttrs": {
@@ -847,31 +916,21 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 0
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "60": {
     "BlockAttrs": {
-      "Name": "soil",
+      "Name": "farmland",
       "Opacity": 15,
       "Destructable": true,
       "Solid": true,
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 3,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
+      "Comment": "Similar to dirt but can have seed placed on it that will grow (otherwise turns back into dirt over time)."
     }
   },
   "61": {
@@ -883,11 +942,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "62": {
     "BlockAttrs": {
@@ -898,11 +954,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "63": {
     "BlockAttrs": {
@@ -913,38 +966,20 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 323,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "64": {
     "BlockAttrs": {
       "Name": "wooden door",
-      "Opacity": 15,
+      "Opacity": 0,
       "Destructable": true,
       "Solid": true,
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 324,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "65": {
     "BlockAttrs": {
@@ -955,38 +990,22 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 65,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
+      "Comment": "Needs placement metadata."
     }
   },
   "66": {
     "BlockAttrs": {
-      "Name": "minecart tracks",
+      "Name": "rail",
       "Opacity": 0,
       "Destructable": true,
       "Solid": false,
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 66,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "67": {
     "BlockAttrs": {
@@ -997,16 +1016,9 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 67,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
+      "Comment": "Needs placement metadata"
     }
   },
   "68": {
@@ -1018,17 +1030,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 323,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "69": {
     "BlockAttrs": {
@@ -1039,17 +1042,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 69,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "70": {
     "BlockAttrs": {
@@ -1060,17 +1054,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 70,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "71": {
     "BlockAttrs": {
@@ -1081,17 +1066,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 330,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "72": {
     "BlockAttrs": {
@@ -1102,17 +1078,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 72,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "73": {
     "BlockAttrs": {
@@ -1175,11 +1142,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "76": {
     "BlockAttrs": {
@@ -1190,11 +1154,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "77": {
     "BlockAttrs": {
@@ -1205,17 +1166,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 77,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "78": {
     "BlockAttrs": {
@@ -1226,17 +1178,8 @@
       "Replaceable": true,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 3,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "79": {
     "BlockAttrs": {
@@ -1247,11 +1190,8 @@
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "80": {
     "BlockAttrs": {
@@ -1283,16 +1223,9 @@
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Standard",
+    "Aspect": "Todo",
     "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 81,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
+      "Comment": "These should grow over time"
     }
   },
   "82": {
@@ -1308,9 +1241,9 @@
     "AspectArgs": {
       "DroppedItems": [
         {
-          "DroppedItem": 82,
+          "DroppedItem": 337,
           "Probability": 100,
-          "Count": 1
+          "Count": 4
         }
       ],
       "BreakOn": 2
@@ -1325,17 +1258,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [
-        {
-          "DroppedItem": 338,
-          "Probability": 100,
-          "Count": 1
-        }
-      ],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "84": {
     "BlockAttrs": {
@@ -1455,11 +1379,6 @@
     "AspectArgs": {
       "DroppedItems": [
         {
-          "DroppedItem": 89,
-          "Probability": 100,
-          "Count": 1
-        },
-        {
           "DroppedItem": 348,
           "Probability": 100,
           "Count": 1
@@ -1477,11 +1396,8 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
-    "AspectArgs": {
-      "DroppedItems": [],
-      "BreakOn": 2
-    }
+    "Aspect": "Todo",
+    "AspectArgs": {}
   },
   "91": {
     "BlockAttrs": {
@@ -1503,5 +1419,43 @@
       ],
       "BreakOn": 2
     }
+  },
+  "92": {
+    "BlockAttrs": {
+      "Name": "cake",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {
+      "Comment": "heals when consumed as a block, consumed in slices and cannot be 'dug'"
+    }
+  },
+  "93": {
+    "BlockAttrs": {
+      "Name": "redstone repeater (off state)",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "94": {
+    "BlockAttrs": {
+      "Name": "redstone repeater (on state)",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
   }
 }

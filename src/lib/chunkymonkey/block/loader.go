@@ -173,6 +173,7 @@ func SaveBlockDefs(writer io.Writer, blocks BlockTypeList) (err os.Error) {
 func init() {
     aspectMakers = map[string]aspectMakerFn{
         "Standard": makeStandardAspect,
+        "Todo":     makeTodoAspect,
         "Void":     makeVoidAspect,
     }
 }
