@@ -246,9 +246,9 @@ func (p *MessageParser) PacketWindowClose(windowId WindowId) {
     p.printf("PacketWindowClose(windowId=%d)", windowId)
 }
 
-func (p *MessageParser) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, unknown1 bool, itemId ItemTypeId, amount ItemCount, data ItemData) {
-    p.printf("PacketWindowClick(windowId=%d, slot=%d, rightClick=%t, txId=%d, unknown1=%t, itemId=%d, amount=%d, data=%d)",
-        windowId, slot, rightClick, txId, itemId, amount, data)
+func (p *MessageParser) PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, shiftClick bool, itemId ItemTypeId, amount ItemCount, data ItemData) {
+    p.printf("PacketWindowClick(windowId=%d, slot=%d, rightClick=%t, txId=%d, shiftClick=%t, itemId=%d, amount=%d, data=%d)",
+        windowId, slot, rightClick, txId, shiftClick, itemId, amount, data)
 }
 
 func (p *MessageParser) PacketWindowSetSlot(windowId WindowId, slot SlotId, itemId ItemTypeId, amount ItemCount, data ItemData) {
