@@ -1,0 +1,93 @@
+[
+  {
+    "Comment": "log->planks",
+    "Input": [
+      "L"
+    ],
+    "InputTypes": {
+      "L": [
+        {"Id": 17, "Data": 0},
+        {"Id": 17, "Data": 1},
+        {"Id": 17, "Data": 2}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 5},
+      {"Id": 5},
+      {"Id": 5}
+    ],
+    "OutputCount": 4
+  },
+  {
+    "Comment": "plank->sticks",
+    "Input": [
+      "P",
+      "P"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}]
+    },
+    "OutputTypes": [{"Id": 280}],
+    "OutputCount": 4
+  },
+  {
+    "Comment": "3x3->block",
+    "Input": [
+      "XXX",
+      "XXX",
+      "XXX"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 265},
+        {"Id": 266},
+        {"Id": 287},
+        {"Id": 348},
+        {"Id": 351, "Data": 4},
+        {"Id": 264}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 42},
+      {"Id": 41},
+      {"Id": 35},
+      {"Id": 89},
+      {"Id": 22},
+      {"Id": 57}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "TNT",
+    "Input": [
+      "GSG",
+      "SGS",
+      "GSG"
+    ],
+    "InputTypes": {
+      "G": [{"Id": 289}],
+      "S": [{"Id": 12}]
+    },
+    "OutputTypes": [{"Id": 46}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "stairs",
+    "Input": [
+      "X  ",
+      "XX ",
+      "XXX"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 4},
+        {"Id": 5}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 67},
+      {"Id": 53}
+    ],
+    "OutputCount": 4
+  }
+]
