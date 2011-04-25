@@ -97,18 +97,22 @@ func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes itemtype.ItemT
     slotIndex := 0
     for _, inRow := range rt.Input {
         for _, inSlot := range inRow {
-            typeKey := string(inSlot)
-            inputTypeSeq, ok := rt.InputTypes[typeKey]
-            if !ok {
-                err = fmt.Errorf(
-                    "Recipe template %q: Item code %q found in Input which"+
+            if inSlot == ' ' {
+                recipe.Input[slotIndex] = RecipeSlot{nil, 0}
+            } else {
+                typeKey := string(inSlot)
+                inputTypeSeq, ok := rt.InputTypes[typeKey]
+                if !ok {
+                    err = fmt.Errorf(
+                        "Recipe template %q: Item code %q found in Input which"+
                         " does not exist in InputTypes",
-                    rt.Comment, typeKey)
-                return
-            }
-            recipe.Input[slotIndex], _ = inputTypeSeq[recipeIndex].createRecipeSlot(itemTypes)
-            if err != nil {
-                return
+                        rt.Comment, typeKey)
+                        return
+                }
+                recipe.Input[slotIndex], _ = inputTypeSeq[recipeIndex].createRecipeSlot(itemTypes)
+                if err != nil {
+                    return
+                }
             }
             slotIndex++
         }
