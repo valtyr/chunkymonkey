@@ -691,5 +691,96 @@
     },
     "OutputTypes": [{"Id": 93}],
     "OutputCount": 1
+  },
+  {
+    "Comment": "bowls",
+    "Input": [
+      "P P",
+      " P "
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}]
+    },
+    "OutputTypes": [{"Id": 281}],
+    "OutputCount": 4
+  },
+  {
+    "Comment": "mushroom stew",
+    "Input": [
+      "X",
+      "Y",
+      "B"
+    ],
+    "InputTypes": {
+      "X": [{"Id": 39}, {"Id": 40}],
+      "Y": [{"Id": 40}, {"Id": 39}],
+      "B": [{"Id": 281}, {"Id": 281}]
+    },
+    "OutputTypes": [{"Id": 282}, {"Id": 282}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "bread",
+    "Input": [
+      "WWW"
+    ],
+    "InputTypes": {
+      "W": [{"Id": 296}]
+    },
+    "OutputTypes": [{"Id": 297}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "sugar",
+    "Input": [
+      "C"
+    ],
+    "InputTypes": {
+      "C": [{"Id": 338}]
+    },
+    "OutputTypes": [{"Id": 353}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "cake TODO - recover buckets",
+    "Input": [
+      "MMM",
+      "SES",
+      "WWW"
+    ],
+    "InputTypes": {
+      "M": [{"Id": 335}],
+      "S": [{"Id": 353}],
+      "E": [{"Id": 344}],
+      "W": [{"Id": 296}]
+    },
+    "OutputTypes": [{"Id": 354}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "cookie",
+    "Input": [
+      "WCW"
+    ],
+    "InputTypes": {
+      "C": [{"Id": 351, "Data": 3}],
+      "W": [{"Id": 296}]
+    },
+    "OutputTypes": [{"Id": 357}],
+    "OutputCount": 8
+  },
+  {
+    "Comment": "golden apple",
+    "Input": [
+      "GGG",
+      "GAG",
+      "GGG"
+    ],
+    "InputTypes": {
+      "G": [{"Id": 41}],
+      "A": [{"Id": 260}]
+    },
+    "OutputTypes": [{"Id": 322}],
+    "OutputCount": 1
   }
 ]
