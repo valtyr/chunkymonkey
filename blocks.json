@@ -1259,7 +1259,9 @@
       "Attachable": false
     },
     "Aspect": "Todo",
-    "AspectArgs": {}
+    "AspectArgs": {
+      "Comment": "Needs to grow similarly to cactii. Also does it drop item 338 or 83?"
+    }
   },
   "84": {
     "BlockAttrs": {
