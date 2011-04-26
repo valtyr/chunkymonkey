@@ -638,7 +638,7 @@
   },
   "43": {
     "BlockAttrs": {
-      "Name": "double stone slab",
+      "Name": "double slab",
       "Opacity": 15,
       "Destructable": true,
       "Solid": true,
@@ -659,7 +659,7 @@
   },
   "44": {
     "BlockAttrs": {
-      "Name": "stone slab",
+      "Name": "slab",
       "Opacity": 0,
       "Destructable": true,
       "Solid": true,
@@ -668,7 +668,7 @@
     },
     "Aspect": "Todo",
     "AspectArgs": {
-      "Comment": "When placed atop another single stone slab, this should merge into the one below to create a double stone slab."
+      "Comment": "When placed atop another single slab, this should merge into the one below to create a double slab."
     }
   },
   "45": {

@@ -31,6 +31,79 @@
     "OutputCount": 4
   },
   {
+    "Comment": "torches",
+    "Input": [
+      "C",
+      "S"
+    ],
+    "InputTypes": {
+      "C": [{"Id": 263}],
+      "S": [{"Id": 280}]
+    },
+    "OutputTypes": [{"Id": 50}],
+    "OutputCount": 4
+  },
+  {
+    "Comment": "workbench",
+    "Input": [
+      "PP",
+      "PP"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}]
+    },
+    "OutputTypes": [{"Id": 58}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "furnace",
+    "Input": [
+      "CCC",
+      "C C",
+      "CCC"
+    ],
+    "InputTypes": {
+      "C": [{"Id": 4}]
+    },
+    "OutputTypes": [{"Id": 61}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "chest",
+    "Input": [
+      "PPP",
+      "P P",
+      "PPP"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}]
+    },
+    "OutputTypes": [{"Id": 54}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "2x2->block",
+    "Input": [
+      "XX",
+      "XX"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 12},
+        {"Id": 332},
+        {"Id": 337},
+        {"Id": 336}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 24},
+      {"Id": 80},
+      {"Id": 82},
+      {"Id": 45}
+    ],
+    "OutputCount": 1
+  },
+  {
     "Comment": "3x3->block",
     "Input": [
       "XXX",
@@ -72,6 +145,27 @@
     "OutputCount": 1
   },
   {
+    "Comment": "slabs",
+    "Input": [
+      "XXX"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 1},
+        {"Id": 4},
+        {"Id": 5},
+        {"Id": 24}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 44, "Data": 0},
+      {"Id": 44, "Data": 3},
+      {"Id": 44, "Data": 2},
+      {"Id": 44, "Data": 1}
+    ],
+    "OutputCount": 3
+  },
+  {
     "Comment": "stairs",
     "Input": [
       "X  ",
@@ -89,5 +183,342 @@
       {"Id": 53}
     ],
     "OutputCount": 4
-  }
+  },
+  {
+    "Comment": "bookcase",
+    "Input": [
+      "PPP",
+      "BBB",
+      "PPP"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}],
+      "B": [{"Id": 340}]
+    },
+    "OutputTypes": [{"Id": 47}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "jack-o-lantern",
+    "Input": [
+      "P",
+      "T"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 86}],
+      "T": [{"Id": 50}]
+    },
+    "OutputTypes": [{"Id": 91}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "axe",
+    "Input": [
+      "XX",
+      "XS",
+      " S"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 4},
+        {"Id": 5},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266}
+      ],
+      "S": [{"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}]
+    },
+    "OutputTypes": [
+      {"Id": 275},
+      {"Id": 271},
+      {"Id": 279},
+      {"Id": 258},
+      {"Id": 286}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "pickaxe",
+    "Input": [
+      "XXX",
+      " S ",
+      " S "
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 4},
+        {"Id": 5},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266}
+      ],
+      "S": [{"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}]
+    },
+    "OutputTypes": [
+      {"Id": 274},
+      {"Id": 270},
+      {"Id": 278},
+      {"Id": 257},
+      {"Id": 285}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "shovel",
+    "Input": [
+      "X",
+      "S",
+      "S"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 4},
+        {"Id": 5},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266}
+      ],
+      "S": [{"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}]
+    },
+    "OutputTypes": [
+      {"Id": 273},
+      {"Id": 269},
+      {"Id": 277},
+      {"Id": 256},
+      {"Id": 284}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "hoe",
+    "Input": [
+      "XX",
+      " S",
+      " S"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 4},
+        {"Id": 5},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266}
+      ],
+      "S": [{"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}]
+    },
+    "OutputTypes": [
+      {"Id": 291},
+      {"Id": 290},
+      {"Id": 293},
+      {"Id": 292},
+      {"Id": 294}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "flint and steel",
+    "Input": [
+      "I ",
+      " F"
+    ],
+    "InputTypes": {
+      "I": [{"Id": 265}],
+      "F": [{"Id": 318}]
+    },
+    "OutputTypes": [{"Id": 259}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "bucket",
+    "Input": [
+      "I I",
+      " I "
+    ],
+    "InputTypes": {
+      "I": [{"Id": 265}]
+    },
+    "OutputTypes": [{"Id": 325}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "compass & clock",
+    "Input": [
+      " X ",
+      "XRX",
+      " X "
+    ],
+    "InputTypes": {
+      "X": [{"Id": 265}, {"Id": 266}],
+      "R": [{"Id": 331}, {"Id": 331}]
+    },
+    "OutputTypes": [{"Id": 345}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "fishing rod",
+    "Input": [
+      "  S",
+      " S|",
+      "S |"
+    ],
+    "InputTypes": {
+      "S": [{"Id": 280}],
+      "|": [{"Id": 287}]
+    },
+    "OutputTypes": [{"Id": 346}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "sword",
+    "Input": [
+      "X",
+      "X",
+      "S"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 4},
+        {"Id": 5},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266}
+      ],
+      "S": [{"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}, {"Id": 280}]
+    },
+    "OutputTypes": [
+      {"Id": 272},
+      {"Id": 268},
+      {"Id": 276},
+      {"Id": 267},
+      {"Id": 283}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "bow",
+    "Input": [
+      "|S ",
+      "| S",
+      "|S "
+    ],
+    "InputTypes": {
+      "S": [{"Id": 280}],
+      "|": [{"Id": 287}]
+    },
+    "OutputTypes": [{"Id": 261}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "arrows",
+    "Input": [
+      "^",
+      "S",
+      "f"
+    ],
+    "InputTypes": {
+      "^": [{"Id": 318}],
+      "S": [{"Id": 280}],
+      "f": [{"Id": 288}]
+    },
+    "OutputTypes": [{"Id": 262}],
+    "OutputCount": 4
+  },
+  {
+    "Comment": "helmet",
+    "Input": [
+      "XXX",
+      "X X"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 51},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266},
+        {"Id": 334}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 302},
+      {"Id": 310},
+      {"Id": 306},
+      {"Id": 314},
+      {"Id": 298}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "chestplate",
+    "Input": [
+      "X X",
+      "XXX",
+      "XXX"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 51},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266},
+        {"Id": 334}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 303},
+      {"Id": 311},
+      {"Id": 307},
+      {"Id": 315},
+      {"Id": 299}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "leggings",
+    "Input": [
+      "XXX",
+      "X X",
+      "X X"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 51},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266},
+        {"Id": 334}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 304},
+      {"Id": 312},
+      {"Id": 308},
+      {"Id": 316},
+      {"Id": 300}
+    ],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "boots",
+    "Input": [
+      "X X",
+      "X X"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 51},
+        {"Id": 264},
+        {"Id": 265},
+        {"Id": 266},
+        {"Id": 334}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 305},
+      {"Id": 313},
+      {"Id": 309},
+      {"Id": 317},
+      {"Id": 301}
+    ],
+    "OutputCount": 1
+  },
 ]
