@@ -904,5 +904,102 @@
     },
     "OutputTypes": [{"Id": 355}],
     "OutputCount": 1
+  },
+
+  {
+    "Comment": "bone meal",
+    "Input": [
+      "B"
+    ],
+    "InputTypes": {
+      "B": [{"Id": 352}]
+    },
+    "OutputTypes": [{"Id": 351, "Data": 15}],
+    "OutputCount": 3
+  },
+  {
+    "Comment": "flower dye",
+    "Input": [
+      "X"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 38},
+        {"Id": 37}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 351, "Data": 1},
+      {"Id": 351, "Data": 11}
+    ],
+    "OutputCount": 2
+  },
+  {
+    "Comment": "light gray dye with two bonemeal",
+    "Input": [
+      "IBB"
+    ],
+    "InputTypes": {
+      "I": [{"Id": 351, "Data": 0}],
+      "B": [{"Id": 352}]
+    },
+    "OutputTypes": [{"Id": 315, "Data": 7}],
+    "OutputCount": 3
+  },
+  {
+    "Comment": "magenta dye with 4 reagents",
+    "Input": [
+      "LB",
+      "RR"
+    ],
+    "InputTypes": {
+      "L": [{"Id": 351, "Data": 4}],
+      "B": [{"Id": 351, "Data": 15}],
+      "R": [{"Id": 351, "Data": 1}]
+    },
+    "OutputTypes": [{"Id": 351, "Data": 5}],
+    "OutputCount": 4
+  },
+  {
+    "Comment": "common dyx mix",
+    "Input": [
+      ""
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 315, "Data": 8},
+        {"Id": 315, "Data": 0},
+        {"Id": 315, "Data": 1},
+        {"Id": 315, "Data": 2},
+        {"Id": 315, "Data": 4},
+        {"Id": 315, "Data": 4},
+        {"Id": 315, "Data": 4},
+        {"Id": 315, "Data": 5},
+        {"Id": 315, "Data": 1}
+      ],
+      "Y": [
+        {"Id": 315, "Data": 15},
+        {"Id": 315, "Data": 15},
+        {"Id": 315, "Data": 11},
+        {"Id": 315, "Data": 15},
+        {"Id": 315, "Data": 15},
+        {"Id": 315, "Data": 2},
+        {"Id": 315, "Data": 1},
+        {"Id": 315, "Data": 9},
+        {"Id": 315, "Data": 15}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 351, "Data": 7},
+      {"Id": 351, "Data": 8},
+      {"Id": 351, "Data": 14},
+      {"Id": 351, "Data": 10},
+      {"Id": 351, "Data": 12},
+      {"Id": 351, "Data": 6},
+      {"Id": 351, "Data": 5},
+      {"Id": 351, "Data": 13},
+      {"Id": 351, "Data": 9}
+    ],
+    "OutputCount": 2
   }
 ]
