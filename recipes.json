@@ -963,7 +963,7 @@
   {
     "Comment": "common dyx mix",
     "Input": [
-      ""
+      "X Y"
     ],
     "InputTypes": {
       "X": [
@@ -1001,5 +1001,54 @@
       {"Id": 351, "Data": 9}
     ],
     "OutputCount": 2
+  },
+
+  {
+    "Comment": "dyed wool",
+    "Input": [
+      "W X",
+    ],
+    "InputTypes": {
+      "W": [
+        {"Id": 35}, {"Id": 35}, {"Id": 35}, {"Id": 35}, {"Id": 35}, {"Id": 35},
+        {"Id": 35}, {"Id": 35}, {"Id": 35}, {"Id": 35}, {"Id": 35}, {"Id": 35},
+        {"Id": 35}, {"Id": 35}, {"Id": 35},
+      ],
+      "X": [
+        {"Id": 351, "Data": 0},
+        {"Id": 351, "Data": 1},
+        {"Id": 351, "Data": 2},
+        {"Id": 351, "Data": 3},
+        {"Id": 351, "Data": 4},
+        {"Id": 351, "Data": 5},
+        {"Id": 351, "Data": 6},
+        {"Id": 351, "Data": 7},
+        {"Id": 351, "Data": 8},
+        {"Id": 351, "Data": 9},
+        {"Id": 351, "Data": 10},
+        {"Id": 351, "Data": 11},
+        {"Id": 351, "Data": 12},
+        {"Id": 351, "Data": 13},
+        {"Id": 351, "Data": 14}
+      ]
+    },
+    "OutputTypes": [
+        {"Id": 35, "Data": 15},
+        {"Id": 35, "Data": 14},
+        {"Id": 35, "Data": 13},
+        {"Id": 35, "Data": 12},
+        {"Id": 35, "Data": 11},
+        {"Id": 35, "Data": 10},
+        {"Id": 35, "Data": 9},
+        {"Id": 35, "Data": 8},
+        {"Id": 35, "Data": 7},
+        {"Id": 35, "Data": 6},
+        {"Id": 35, "Data": 5},
+        {"Id": 35, "Data": 4},
+        {"Id": 35, "Data": 3},
+        {"Id": 35, "Data": 2},
+        {"Id": 35, "Data": 1}
+    ],
+    "OutputCount": 1
   }
 ]
