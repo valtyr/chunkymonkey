@@ -12,7 +12,7 @@ import (
 // Borrows some test code from loader_test.go
 
 // Helper for defining multiple input slots with less syntactic boilerplate.
-func sl(slots... slot.Slot) []slot.Slot {
+func sl(slots ...slot.Slot) []slot.Slot {
     return slots
 }
 
@@ -31,8 +31,8 @@ func TestRecipeSet_Match(t *testing.T) {
     s := func(itemTypeId ItemTypeId, count ItemCount, data ItemData) (out *slot.Slot) {
         out = &slot.Slot{
             ItemType: nil,
-            Count: count,
-            Data: data,
+            Count:    count,
+            Data:     data,
         }
         if itemTypeId != ItemTypeIdNull {
             out.ItemType = itemTypes[itemTypeId]
@@ -53,7 +53,7 @@ func TestRecipeSet_Match(t *testing.T) {
     iron := *s(265, 1, 0)
     flint := *s(318, 1, 0)
 
-    tests := []struct{
+    tests := []struct {
         comment string
         width   int
         height  int
@@ -137,7 +137,6 @@ func TestRecipeSet_Match(t *testing.T) {
         output := recipes.Match(test.width, test.height, test.input)
         assertSlotEq(t, test.expect, &output)
     }
-
 
     // TODO test things other than square or 1x1 recipes
     // TODO test recipes with gaps in

@@ -60,7 +60,7 @@ type RecipeSet struct {
 func (r *RecipeSet) Match(width, height int, slots []slot.Slot) (output slot.Slot) {
 
     // Precondition check.
-    if width * height != len(slots) || width > maxRecipeWidth || height > maxRecipeHeight {
+    if width*height != len(slots) || width > maxRecipeWidth || height > maxRecipeHeight {
         return
     }
 
@@ -76,10 +76,18 @@ func (r *RecipeSet) Match(width, height int, slots []slot.Slot) (output slot.Slo
         for h := 0; h < width; h++ {
             hasItem := slots[curIndex].ItemType != nil
             if hasItem {
-                if h < minH { minH = h }
-                if v < minV { minV = v }
-                if h > maxH { maxH = h }
-                if v > maxV { maxV = v }
+                if h < minH {
+                    minH = h
+                }
+                if v < minV {
+                    minV = v
+                }
+                if h > maxH {
+                    maxH = h
+                }
+                if v > maxV {
+                    maxV = v
+                }
             }
             curIndex++
         }
@@ -93,11 +101,11 @@ func (r *RecipeSet) Match(width, height int, slots []slot.Slot) (output slot.Slo
     }
 
     // Make used rectangle into a linear array of []*Slot.
-    rectSlots := make([]*slot.Slot, widthUsed * heightUsed)
+    rectSlots := make([]*slot.Slot, widthUsed*heightUsed)
     outIndex := 0
     for v := minV; v <= maxV; v++ {
         for h := minH; h <= maxH; h++ {
-            inIndex := v * width + h
+            inIndex := v*width + h
             rectSlots[outIndex] = &slots[inIndex]
             outIndex++
         }

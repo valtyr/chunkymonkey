@@ -105,9 +105,9 @@ func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes itemtype.ItemT
                 if !ok {
                     err = fmt.Errorf(
                         "Recipe template %q: Item code %q found in Input which"+
-                        " does not exist in InputTypes",
+                            " does not exist in InputTypes",
                         rt.Comment, typeKey)
-                        return
+                    return
                 }
                 recipe.Input[slotIndex], _ = inputTypeSeq[recipeIndex].createRecipeSlot(itemTypes)
                 if err != nil {
