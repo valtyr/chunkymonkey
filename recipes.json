@@ -521,4 +521,70 @@
     ],
     "OutputCount": 1
   },
+  {
+    "Comment": "minecart",
+    "Input": [
+      "I I",
+      "III"
+    ],
+    "InputTypes": {
+      "I": [{"Id": 265}]
+    },
+    "OutputTypes": [{"Id": 328}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "powered & storage minecarts",
+    "Input": [
+      "X",
+      "M"
+    ],
+    "InputTypes": {
+      "X": [{"Id": 61}, {"Id": 54}],
+      "M": [{"Id": 328}, {"Id": 328}]
+    },
+    "OutputTypes": [{"Id": 343}, {"Id": 342}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "rails",
+    "Input": [
+      "I I",
+      "ISI",
+      "I I"
+    ],
+    "InputTypes": {
+      "I": [{"Id": 265}],
+      "S": [{"Id": 280}]
+    },
+    "OutputTypes": [{"Id": 66}],
+    "OutputCount": 16
+  },
+  {
+    "Comment": "powered & detector rails",
+    "Input": [
+      "X X",
+      "XYX",
+      "XRX"
+    ],
+    "InputTypes": {
+      "X": [{"Id": 266}, {"Id": 265}],
+      "Y": [{"Id": 280}, {"Id": 70}],
+      "R": [{"Id": 331}, {"Id": 331}]
+    },
+    "OutputTypes": [{"Id": 66}],
+    "OutputCount": 6
+  },
+  {
+    "Comment": "boat",
+    "Input": [
+      "P P",
+      "PPP"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}]
+    },
+    "OutputTypes": [{"Id": 333}],
+    "OutputCount": 1
+  }
 ]
