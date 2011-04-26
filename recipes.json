@@ -55,6 +55,7 @@
     "OutputTypes": [{"Id": 58}],
     "OutputCount": 1
   },
+
   {
     "Comment": "furnace",
     "Input": [
@@ -211,6 +212,7 @@
     "OutputTypes": [{"Id": 91}],
     "OutputCount": 1
   },
+
   {
     "Comment": "axe",
     "Input": [
@@ -368,6 +370,7 @@
     "OutputTypes": [{"Id": 346}],
     "OutputCount": 1
   },
+
   {
     "Comment": "sword",
     "Input": [
@@ -423,6 +426,7 @@
     "OutputTypes": [{"Id": 262}],
     "OutputCount": 4
   },
+
   {
     "Comment": "helmet",
     "Input": [
@@ -521,6 +525,7 @@
     ],
     "OutputCount": 1
   },
+
   {
     "Comment": "minecart",
     "Input": [
@@ -678,6 +683,7 @@
     "OutputTypes": [{"Id": 23}],
     "OutputCount": 1
   },
+
   {
     "Comment": "redstone repeater",
     "Input": [
@@ -781,6 +787,122 @@
       "A": [{"Id": 260}]
     },
     "OutputTypes": [{"Id": 322}],
+    "OutputCount": 1
+  },
+
+  {
+    "Comment": "block -> minerals",
+    "Input": [
+      "X"
+    ],
+    "InputTypes": {
+      "X": [
+        {"Id": 42},
+        {"Id": 41},
+        {"Id": 35},
+        {"Id": 89},
+        {"Id": 22},
+        {"Id": 57}
+      ]
+    },
+    "OutputTypes": [
+      {"Id": 265},
+      {"Id": 266},
+      {"Id": 287},
+      {"Id": 348},
+      {"Id": 351, "Data": 4},
+      {"Id": 264}
+    ],
+    "OutputCount": 9
+  },
+  {
+    "Comment": "painting",
+    "Input": [
+      "///",
+      "/W/",
+      "///"
+    ],
+    "InputTypes": {
+      "/": [{"Id": 280}],
+      "W": [{"Id": 35}]
+    },
+    "OutputTypes": [{"Id": 321}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "sign",
+    "Input": [
+      "PPP",
+      "PPP",
+      " / "
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}],
+      "/": [{"Id": 280}]
+    },
+    "OutputTypes": [{"Id": 323}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "ladders",
+    "Input": [
+      "/ /",
+      "///",
+      "/ /"
+    ],
+    "InputTypes": {
+      "/": [{"Id": 280}]
+    },
+    "OutputTypes": [{"Id": 65}],
+    "OutputCount": 2
+  },
+  {
+    "Comment": "papers",
+    "Input": [
+      "CCC"
+    ],
+    "InputTypes": {
+      "C": [{"Id": 338}]
+    },
+    "OutputTypes": [{"Id": 339}],
+    "OutputCount": 3
+  },
+  {
+    "Comment": "book",
+    "Input": [
+      "-",
+      "-",
+      "-"
+    ],
+    "InputTypes": {
+      "-": [{"Id": 339}]
+    },
+    "OutputTypes": [{"Id": 340}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "fences",
+    "Input": [
+      "///",
+      "///"
+    ],
+    "InputTypes": {
+      "/": [{"Id": 280}]
+    },
+    "OutputTypes": [{"Id": 85}],
+    "OutputCount": 2
+  },
+  {
+    "Comment": "bed",
+    "Input": [
+      "WWW",
+      "PPP"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}],
+      "W": [{"Id": 35}]
+    },
+    "OutputTypes": [{"Id": 355}],
     "OutputCount": 1
   }
 ]
