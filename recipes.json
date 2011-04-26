@@ -586,5 +586,110 @@
     },
     "OutputTypes": [{"Id": 333}],
     "OutputCount": 1
+  },
+  {
+    "Comment": "door",
+    "Input": [
+      "XX",
+      "XX",
+      "XX"
+    ],
+    "InputTypes": {
+      "X": [{"Id": 5}, {"Id": 265}]
+    },
+    "OutputTypes": [{"Id": 64}, {"Id": 71}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "pressure plate",
+    "Input": [
+      "XX"
+    ],
+    "InputTypes": {
+      "X": [{"Id": 1}, {"Id": 5}]
+    },
+    "OutputTypes": [{"Id": 70}, {"Id": 72}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "stone button",
+    "Input": [
+      "X",
+      "X"
+    ],
+    "InputTypes": {
+      "X": [{"Id": 1}]
+    },
+    "OutputTypes": [{"Id": 77}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "redstone torch",
+    "Input": [
+      "R",
+      "S"
+    ],
+    "InputTypes": {
+      "R": [{"Id": 331}],
+      "S": [{"Id": 280}]
+    },
+    "OutputTypes": [{"Id": 76}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "lever",
+    "Input": [
+      "S",
+      "C"
+    ],
+    "InputTypes": {
+      "S": [{"Id": 280}],
+      "C": [{"Id": 1}]
+    },
+    "OutputTypes": [{"Id": 69}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "note block & juke box",
+    "Input": [
+      "PPP",
+      "PXP",
+      "PPP"
+    ],
+    "InputTypes": {
+      "P": [{"Id": 5}, {"Id": 5}],
+      "X": [{"Id": 331}, {"Id": 265}]
+    },
+    "OutputTypes": [{"Id": 25}, {"Id": 84}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "dispenser",
+    "Input": [
+      "CCC",
+      "C(C",
+      "CRC"
+    ],
+    "InputTypes": {
+      "C": [{"Id": 4}],
+      "(": [{"Id": 261}],
+      "R": [{"Id": 331}]
+    },
+    "OutputTypes": [{"Id": 23}],
+    "OutputCount": 1
+  },
+  {
+    "Comment": "redstone repeater",
+    "Input": [
+      ";R;",
+      "SSS"
+    ],
+    "InputTypes": {
+      ";": [{"Id": 76}],
+      "R": [{"Id": 331}],
+      "S": [{"Id": 1}]
+    },
+    "OutputTypes": [{"Id": 93}],
+    "OutputCount": 1
   }
 ]
