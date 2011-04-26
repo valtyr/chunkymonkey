@@ -169,3 +169,13 @@ func LoadRecipes(reader io.Reader, itemTypes itemtype.ItemTypeMap) (recipes *Rec
 
     return
 }
+
+func LoadRecipesFromFile(filename string, itemTypes itemtype.ItemTypeMap) (recipes *RecipeSet, err os.Error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return
+    }
+    defer file.Close()
+
+    return LoadRecipes(file, itemTypes)
+}

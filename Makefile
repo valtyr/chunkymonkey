@@ -1,5 +1,5 @@
 SERVER_BINARY=chunkymonkey
-EXTRA_BINARIES=intercept inspectlevel
+EXTRA_BINARIES=intercept inspectlevel datatests
 DIAGRAMS=diagrams/top-level-architecture.png
 
 server: $(SERVER_BINARY)
@@ -15,9 +15,10 @@ clean:
 fmt:
 	@gd -q -fmt src
 
-test:
+test: datatests
 	@mkdir -p .test_obj
 	@gd -q -L .test_obj -t src/lib
+	@./datatests
 
 libs:
 	@gd -q src/lib
@@ -29,6 +30,9 @@ intercept: libs
 	@gd -q -I src/lib -o $@ src/$@
 
 inspectlevel: libs
+	@gd -q -I src/lib -o $@ src/$@
+
+datatests: libs
 	@gd -q -I src/lib -o $@ src/$@
 
 docs: $(DIAGRAMS)

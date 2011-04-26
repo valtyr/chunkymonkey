@@ -172,6 +172,16 @@ func SaveBlockDefs(writer io.Writer, blocks BlockTypeList) (err os.Error) {
     return
 }
 
+func LoadBlocksFromFile(filename string) (blockTypes BlockTypeList, err os.Error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return
+    }
+    defer file.Close()
+
+    return LoadBlockDefs(file)
+}
+
 func init() {
     aspectMakers = map[string]aspectMakerFn{
         "Standard": makeStandardAspect,

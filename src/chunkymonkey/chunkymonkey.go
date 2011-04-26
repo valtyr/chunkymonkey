@@ -43,26 +43,6 @@ func startHttpServer(addr string) (err os.Error) {
     return
 }
 
-func loadBlocks() (blocks block.BlockTypeList, err os.Error) {
-    file, err := os.Open(*blockDefs)
-    if err != nil {
-        return
-    }
-    defer file.Close()
-
-    return block.LoadBlockDefs(file)
-}
-
-func loadItems() (items itemtype.ItemTypeMap, err os.Error) {
-    file, err := os.Open(*itemDefs)
-    if err != nil {
-        return
-    }
-    defer file.Close()
-
-    return itemtype.LoadItemDefs(file)
-}
-
 func main() {
     var err os.Error
 
@@ -74,13 +54,13 @@ func main() {
         os.Exit(1)
     }
 
-    blockTypes, err := loadBlocks()
+    blockTypes, err := block.LoadBlocksFromFile(*blockDefs)
     if err != nil {
         log.Print("Error loading block definitions: ", err)
         os.Exit(1)
     }
 
-    itemTypes, err := loadItems()
+    itemTypes, err := itemtype.LoadItemTypesFromFile(*itemDefs)
     if err != nil {
         log.Print("Error loading item definitions: ", err)
         os.Exit(1)

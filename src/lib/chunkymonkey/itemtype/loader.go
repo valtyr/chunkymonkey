@@ -38,3 +38,13 @@ func LoadItemDefs(reader io.Reader) (items ItemTypeMap, err os.Error) {
 
     return
 }
+
+func LoadItemTypesFromFile(filename string) (items ItemTypeMap, err os.Error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return
+    }
+    defer file.Close()
+
+    return LoadItemDefs(file)
+}
