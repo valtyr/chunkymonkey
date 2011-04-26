@@ -67,7 +67,7 @@ func main() {
 
     worldStore, err := worldstore.LoadWorldStore(worldPath)
     if err != nil {
-        fmt.Errorf("Error loading world: %s\n", err)
+        fmt.Fprintf(os.Stderr, "Error loading world: %s\n", err)
         return
     }
 
@@ -76,7 +76,7 @@ func main() {
 
     chunkReader, err := worldStore.ChunkStore.LoadChunk(&ChunkXz{0, 0})
     if err != nil {
-        fmt.Errorf("Error loading chunk: %s\n", err)
+        fmt.Fprintf(os.Stderr, "Error loading chunk: %s\n", err)
         return
     }
     fmt.Print("Chunk {0, 0} data:\n")
