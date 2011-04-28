@@ -12,17 +12,15 @@ import (
 type Inventory struct {
     slots      []slot.Slot
     slotsProto []proto.IWindowSlot // Holds same items as `slots`.
-    slotOrder  []SlotId            // The order to try to drop items into slots.
 }
 
-func (inv *Inventory) Init(size int, slotOrder []SlotId) {
+func (inv *Inventory) Init(size int) {
     inv.slots = make([]slot.Slot, size)
     inv.slotsProto = make([]proto.IWindowSlot, size)
     for i := range inv.slots {
         inv.slots[i].Init()
         inv.slotsProto[i] = &inv.slots[i]
     }
-    inv.slotOrder = slotOrder
 }
 
 func (inv *Inventory) Slot(slotId SlotId) *slot.Slot {
@@ -34,28 +32,6 @@ func (inv *Inventory) Slot(slotId SlotId) *slot.Slot {
 
 func (inv *Inventory) SendUpdate(writer io.Writer, windowId WindowId) os.Error {
     return proto.WriteWindowItems(writer, windowId, inv.slotsProto)
-}
-
-// Returns taken=true if any count was removed from the item. For each slot
-// that changes, the slotChanged function is called.
-func (inv *Inventory) PutItem(item *slot.Slot, slotChanged func(slotId SlotId, slot *slot.Slot)) (taken bool) {
-    // TODO optimize this algorithm, maybe by maintaining a map of non-full
-    // slots containing an item of various item type IDs.
-    for _, slotIndex := range inv.slotOrder {
-        slot := &inv.slots[slotIndex]
-        if item.Count <= 0 {
-            break
-        }
-        if slot.ItemType == nil || slot.ItemType == item.ItemType {
-            if slot.Add(item) {
-                taken = true
-                if slotChanged != nil {
-                    slotChanged(SlotId(slotIndex), slot)
-                }
-            }
-        }
-    }
-    return
 }
 
 func init() {

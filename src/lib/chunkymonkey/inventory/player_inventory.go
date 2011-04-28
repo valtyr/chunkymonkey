@@ -33,7 +33,7 @@ type PlayerInventory struct {
 }
 
 func (inv *PlayerInventory) Init() {
-    inv.Inventory.Init(playerInvSize, playerInvOrder)
+    inv.Inventory.Init(playerInvSize)
     inv.holding = 0
 }
 
@@ -67,5 +67,27 @@ func (inv *PlayerInventory) SetHolding(holding SlotId) {
 func (inv *PlayerInventory) HeldItem() (slot *slot.Slot, slotId SlotId) {
     slotId = inv.holding + playerInvHeldStart
     slot = inv.Slot(slotId)
+    return
+}
+
+// Returns taken=true if any count was removed from the item. For each slot
+// that changes, the slotChanged function is called.
+func (inv *PlayerInventory) PutItem(item *slot.Slot, slotChanged func(slotId SlotId, slot *slot.Slot)) (taken bool) {
+    // TODO optimize this algorithm, maybe by maintaining a map of non-full
+    // slots containing an item of various item type IDs.
+    for _, slotIndex := range playerInvOrder {
+        slot := &inv.slots[slotIndex]
+        if item.Count <= 0 {
+            break
+        }
+        if slot.ItemType == nil || slot.ItemType == item.ItemType {
+            if slot.Add(item) {
+                taken = true
+                if slotChanged != nil {
+                    slotChanged(SlotId(slotIndex), slot)
+                }
+            }
+        }
+    }
     return
 }
