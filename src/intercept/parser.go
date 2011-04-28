@@ -209,8 +209,8 @@ func (p *MessageParser) PacketMapChunk(position *BlockXyz, size *SubChunkSize, d
 }
 
 func (p *MessageParser) PacketBlockChangeMulti(chunkLoc *ChunkXz, blockCoords []SubChunkXyz, blockTypes []BlockId, blockMetaData []byte) {
-    p.printf("PacketBlockChangeMulti(chunkLoc=%v, blockCoords=%v, blockTypes=%v, blockMetaData=%v)",
-        chunkLoc, blockCoords, blockTypes, blockMetaData)
+    p.printf("PacketBlockChangeMulti(chunkLoc=%v, blockCoords=(%d) %v, blockTypes=%v, blockMetaData=%v)",
+        chunkLoc, len(blockCoords), blockCoords, blockTypes, blockMetaData)
 }
 
 func (p *MessageParser) PacketBlockChange(blockLoc *BlockXyz, blockType BlockId, blockMetaData byte) {
@@ -224,8 +224,8 @@ func (p *MessageParser) PacketNoteBlockPlay(position *BlockXyz, instrument Instr
 }
 
 func (p *MessageParser) PacketExplosion(position *AbsXyz, power float32, blockOffsets []proto.ExplosionOffsetXyz) {
-    p.printf("PacketExplosion(position=%v, power=%f, blockOffsets=%v)",
-        position, power, blockOffsets)
+    p.printf("PacketExplosion(position=%v, power=%f, blockOffsets=(%d) %v)",
+        position, power, len(blockOffsets), blockOffsets)
 }
 
 func (p *MessageParser) PacketBedInvalid(field1 byte) {
@@ -257,8 +257,8 @@ func (p *MessageParser) PacketWindowSetSlot(windowId WindowId, slot SlotId, item
 }
 
 func (p *MessageParser) PacketWindowItems(windowId WindowId, items []proto.WindowSlot) {
-    p.printf("PacketWindowItems(windowId=%d, items=%v)",
-        windowId, items)
+    p.printf("PacketWindowItems(windowId=%d, items=(%d) %v)",
+        windowId, len(items), items)
 }
 
 func (p *MessageParser) PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue) {
