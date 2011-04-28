@@ -2499,7 +2499,7 @@ func readWindowItems(reader io.Reader, handler ClientPacketHandler) (err os.Erro
 
     var itemTypeId ItemTypeId
 
-    items := make([]WindowSlot, packetStart.Count)
+    items := make([]WindowSlot, 0, packetStart.Count)
 
     for i := int16(0); i < packetStart.Count; i++ {
         err = binary.Read(reader, binary.BigEndian, &itemTypeId)
