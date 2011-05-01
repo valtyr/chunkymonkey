@@ -144,6 +144,10 @@ func (game *Game) AddEntity(entity *Entity) {
 	game.entityManager.AddEntity(entity)
 }
 
+func (game *Game) RemoveEntity(entity *Entity) {
+	game.entityManager.RemoveEntity(entity)
+}
+
 // Add a player to the game
 // This function sends spawn messages to all players in range.  It also spawns
 // all existing players so the new player can see them.

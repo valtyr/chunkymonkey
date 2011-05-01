@@ -98,6 +98,7 @@ type IGame interface {
 	// Everything below must be called from within Enqueue
 
 	AddEntity(entity *entity.Entity)
+	RemoveEntity(entity *entity.Entity)
 	AddPlayer(player IPlayer)
 	RemovePlayer(player IPlayer)
 	MulticastPacket(packet []byte, except interface{})

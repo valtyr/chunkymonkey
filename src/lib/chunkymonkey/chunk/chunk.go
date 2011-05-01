@@ -148,6 +148,19 @@ func (chunk *Chunk) AddItem(item *item.Item) {
 	chunk.multicastSubscribers(buf.Bytes())
 }
 
+func (chunk *Chunk) removeItem(item *item.Item) {
+	chunk.mgr.game.Enqueue(func(game IGame) {
+		game.RemoveEntity(item.GetEntity())
+	})
+	chunk.items[item.EntityId] = nil, false
+
+	// Tell all subscribers that the item's entity is
+	// destroyed.
+	buf := &bytes.Buffer{}
+	proto.WriteEntityDestroy(buf, item.EntityId)
+	chunk.multicastSubscribers(buf.Bytes())
+}
+
 func (chunk *Chunk) TransferItem(item *item.Item) {
 	chunk.items[item.GetEntity().EntityId] = item
 }
@@ -289,15 +302,13 @@ func (chunk *Chunk) Tick() {
 		return
 	}
 
-	destroyedEntityIds := []EntityId{}
 	leftItems := []*item.Item{}
 
 	for _, item := range chunk.items {
 		if item.Tick(blockQuery) {
 			if item.GetPosition().Y <= 0 {
 				// Item fell out of the world
-				destroyedEntityIds = append(
-					destroyedEntityIds, item.GetEntity().EntityId)
+				chunk.removeItem(item)
 			} else {
 				leftItems = append(leftItems, item)
 			}
@@ -321,15 +332,6 @@ func (chunk *Chunk) Tick() {
 				})
 			}
 		})
-	}
-
-	if len(destroyedEntityIds) > 0 {
-		buf := &bytes.Buffer{}
-		for _, entityId := range destroyedEntityIds {
-			proto.WriteEntityDestroy(buf, entityId)
-			chunk.items[entityId] = nil, false
-		}
-		chunk.multicastSubscribers(buf.Bytes())
 	}
 }
 
@@ -387,14 +389,8 @@ func (chunk *Chunk) SetSubscriberPosition(subscriber IChunkSubscriber, pos *AbsX
 					// Tell all subscribers to animate the item flying at the
 					// subscriber.
 					proto.WriteItemCollect(buf, entityId, subscriber.GetEntityId())
-
-					// Tell all subscribers that the item's entity is
-					// destroyed.
-					proto.WriteEntityDestroy(buf, entityId)
-
 					chunk.multicastSubscribers(buf.Bytes())
-
-					chunk.items[entityId] = nil, false
+					chunk.removeItem(item)
 				}
 
 				// TODO Check for how to properly handle partially consumed
