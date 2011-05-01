@@ -4,14 +4,18 @@ import (
 	"io"
 	"os"
 
+	"chunkymonkey/gamerules"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
 const (
-	playerInvCraftStart = SlotId(0)
-	playerInvCraftEnd   = SlotId(5)
-	playerInvCraftNum   = int(playerInvCraftEnd - playerInvCraftStart)
+	playerInvCraftStart  = SlotId(0)
+	playerInvCraftEnd    = SlotId(5)
+	playerInvCraftNum    = int(playerInvCraftEnd - playerInvCraftStart)
+	playerInvCraftOutput = SlotId(0)
+	playerInvCraftInStart = SlotId(1)
+	playerInvCraftInEnd = SlotId(5)
 
 	playerInvArmorStart = SlotId(5)
 	playerInvArmorEnd   = SlotId(9)
@@ -31,6 +35,7 @@ const (
 type PlayerInventory struct {
 	Window
 	entityId     EntityId
+	gameRules    *gamerules.GameRules
 	crafting     Inventory
 	armor        Inventory
 	main         Inventory
@@ -40,53 +45,55 @@ type PlayerInventory struct {
 
 // Init initializes PlayerInventory.
 // entityId - The EntityId of the player who holds the inventory.
-func (inv *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer) {
-	inv.crafting.Init(playerInvCraftNum)
-	inv.armor.Init(playerInvArmorNum)
-	inv.main.Init(playerInvMainNum)
-	inv.holding.Init(playerInvHoldingNum)
-	inv.Window.Init(
+func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, gameRules *gamerules.GameRules) {
+	w.entityId = entityId
+	w.gameRules = gameRules
+
+	w.crafting.Init(playerInvCraftNum)
+	w.armor.Init(playerInvArmorNum)
+	w.main.Init(playerInvMainNum)
+	w.holding.Init(playerInvHoldingNum)
+	w.Window.Init(
 		WindowIdInventory,
 		// Note that we have no known value for invTypeId - but it's only used
 		// in WriteWindowOpen which isn't used for PlayerInventory.
 		-1,
 		viewer,
 		"Inventory",
-		&inv.crafting,
-		&inv.armor,
-		&inv.main,
-		&inv.holding,
+		&w.crafting,
+		&w.armor,
+		&w.main,
+		&w.holding,
 	)
-	inv.holdingIndex = 0
-	inv.entityId = entityId
+	w.holdingIndex = 0
 }
 
 // SetHolding chooses the held item (0-8). Out of range values have no effect.
-func (inv *PlayerInventory) SetHolding(holding SlotId) {
+func (w *PlayerInventory) SetHolding(holding SlotId) {
 	if holding >= 0 && holding < SlotId(playerInvHoldingNum) {
-		inv.holdingIndex = holding
+		w.holdingIndex = holding
 	}
 }
 
 // HeldItem returns the slot that is the current "held" item.
 // TODO need any changes to the held item slot to create notifications to
 // players.
-func (inv *PlayerInventory) HeldItem() (slot *slot.Slot, slotId SlotId) {
-	slotId = playerInvHoldingStart + inv.holdingIndex
-	slot = &inv.holding.slots[inv.holdingIndex]
+func (w *PlayerInventory) HeldItem() (slot *slot.Slot, slotId SlotId) {
+	slotId = playerInvHoldingStart + w.holdingIndex
+	slot = &w.holding.slots[w.holdingIndex]
 	return
 }
 
 // Writes packets for other players to see the equipped items.
-func (inv *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer) (err os.Error) {
-	slot, _ := inv.HeldItem()
-	err = slot.SendEquipmentUpdate(writer, inv.entityId, 0)
+func (w *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer) (err os.Error) {
+	slot, _ := w.HeldItem()
+	err = slot.SendEquipmentUpdate(writer, w.entityId, 0)
 	if err != nil {
 		return
 	}
 
-	for i := range inv.armor.slots {
-		err = inv.armor.slots[i].SendEquipmentUpdate(writer, inv.entityId, SlotId(i+1))
+	for i := range w.armor.slots {
+		err = w.armor.slots[i].SendEquipmentUpdate(writer, w.entityId, SlotId(i+1))
 		if err != nil {
 			return
 		}
@@ -96,28 +103,59 @@ func (inv *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer) (err os.Er
 
 // PutItem attempts to put the item stack into the player's inventory. The item
 // will be modified as a result.
-func (inv *PlayerInventory) PutItem(item *slot.Slot) {
-	inv.holding.PutItem(item)
-	inv.main.PutItem(item)
+func (w *PlayerInventory) PutItem(item *slot.Slot) {
+	w.holding.PutItem(item)
+	w.main.PutItem(item)
 	return
 }
 
-func (inv *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
+func (w *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
 	switch {
 	case slotId < 0:
 		return false
 	case slotId < playerInvCraftEnd:
-		// TODO - handle crafting
-		return false
+		var accepted bool
+
+		if slotId == playerInvCraftOutput && cursor.Count != 0 {
+			// Player may only *take* from the output slot.
+			accepted = w.crafting.TakeOnlyClick(
+				slotId-playerInvCraftStart,
+				cursor, rightClick, shiftClick)
+		} else {
+			accepted = w.crafting.StandardClick(
+				slotId-playerInvCraftStart,
+				cursor, rightClick, shiftClick)
+		}
+
+		if !accepted {
+			return
+		}
+
+		w.crafting.withLock(func(inv *Inventory) {
+			if slotId == playerInvCraftOutput {
+				// Player clicked Subtract 1 count from each non-empty input slot.
+				for i := playerInvCraftInStart-playerInvCraftStart; i < playerInvCraftInEnd-playerInvCraftStart; i++ {
+					inv.slots[i].Decrement()
+				}
+			}
+
+			// Match recipe and set output slot.
+			inv.slots[playerInvCraftOutput] = w.gameRules.Recipes.Match(
+				2, 2,
+				inv.slots[playerInvCraftInStart:playerInvCraftInEnd])
+			inv.slotUpdate(
+				&inv.slots[playerInvCraftOutput],
+				playerInvCraftOutput-playerInvCraftStart)
+		})
 	case slotId < playerInvArmorEnd:
 		// TODO - handle armor
 		return false
 	case slotId < playerInvMainEnd:
-		accepted = inv.main.StandardClick(
+		accepted = w.main.StandardClick(
 			slotId-playerInvMainStart,
 			cursor, rightClick, shiftClick)
 	case slotId < playerInvHoldingEnd:
-		accepted = inv.holding.StandardClick(
+		accepted = w.holding.StandardClick(
 			slotId-playerInvHoldingStart,
 			cursor, rightClick, shiftClick)
 	}

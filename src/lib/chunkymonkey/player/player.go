@@ -10,7 +10,7 @@ import (
 	"os"
 	"sync"
 
-	. "chunkymonkey/entity"
+	"chunkymonkey/entity"
 	. "chunkymonkey/interfaces"
 	"chunkymonkey/inventory"
 	"chunkymonkey/proto"
@@ -31,7 +31,7 @@ func init() {
 }
 
 type Player struct {
-	Entity
+	entity.Entity
 	game      IGame
 	conn      net.Conn
 	name      string
@@ -61,7 +61,7 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 	player.chunkSubs.Init(player)
 
 	player.cursor.Init()
-	player.inventory.Init(player.EntityId, player)
+	player.inventory.Init(player.EntityId, player, game.GetGameRules())
 
 	game.Enqueue(func(game IGame) {
 		game.AddPlayer(player)
@@ -79,7 +79,7 @@ func (player *Player) GetEntityId() EntityId {
 	return player.EntityId
 }
 
-func (player *Player) GetEntity() *Entity {
+func (player *Player) GetEntity() *entity.Entity {
 	return &player.Entity
 }
 

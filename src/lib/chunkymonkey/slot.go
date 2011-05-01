@@ -165,16 +165,21 @@ func (s *Slot) AddOne(src *Slot) (changed bool) {
 	}
 
 	changed = true
-	s.Count++
-	src.Count--
-
+	s.setCount(s.Count+1)
 	s.ItemType = src.ItemType
 	s.Data = src.Data
+	src.setCount(src.Count-1)
 
-	if src.Count == 0 {
-		src.ItemType = nil
-		src.Data = 0
+	return
+}
+
+// Decrement destroys one item count from the subject slot.
+func (s *Slot) Decrement() (changed bool) {
+	if s.Count <= 0 {
+		return
 	}
 
+	s.setCount(s.Count-1)
+	changed = true
 	return
 }

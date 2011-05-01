@@ -68,8 +68,29 @@ func (inv *Inventory) StandardClick(slotId SlotId, cursor *slot.Slot, rightClick
 		}
 	}
 
-	// We send slot updates in case we have custom max counts that differ
-	// from the client's idea.
+	// We send slot updates in case we have custom max counts that differ from
+	// the client's idea.
+	inv.slotUpdate(clickedSlot, slotId)
+
+	return
+}
+
+// TakeOnlyClick only allows items to be taken from the slot.
+func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool) {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
+	if slotId < 0 || int(slotId) > len(inv.slots) {
+		return false
+	}
+
+	clickedSlot := &inv.slots[slotId]
+
+	// Apply the change.
+	accepted = cursor.Add(clickedSlot)
+
+	// We send slot updates in case we have custom max counts that differ from
+	// the client's idea.
 	inv.slotUpdate(clickedSlot, slotId)
 
 	return
@@ -115,6 +136,18 @@ func (inv *Inventory) writeProtoSlots(slots []proto.WindowSlot) {
 			Data:       src.Data,
 		}
 	}
+}
+
+func (inv *Inventory) withLock(f func(inv *Inventory)) {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+	f(inv)
+}
+
+// SetSlot sets the specified slot to contain the given value, sending the
+// appropriate update to client(s).
+func (inv *Inventory) setSlot(slotId SlotId, value *slot.Slot) {
+	
 }
 
 // Send message about the slot change to the relevant places.
