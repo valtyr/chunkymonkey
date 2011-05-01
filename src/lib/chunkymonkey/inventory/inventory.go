@@ -109,10 +109,10 @@ func (inv *Inventory) writeProtoSlots(slots []proto.WindowSlot) {
 		if src.ItemType != nil {
 			itemTypeId = src.ItemType.Id
 		}
-		slots[i] = proto.WindowSlot {
+		slots[i] = proto.WindowSlot{
 			ItemTypeId: itemTypeId,
-			Count: src.Count,
-			Data: src.Data,
+			Count:      src.Count,
+			Data:       src.Data,
 		}
 	}
 }
