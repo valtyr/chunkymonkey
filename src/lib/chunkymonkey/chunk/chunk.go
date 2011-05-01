@@ -374,32 +374,35 @@ func (chunk *Chunk) SetSubscriberPosition(subscriber IChunkSubscriber, pos *AbsX
         maxY := pos.Y + playerAabY
 
         for entityId, item := range chunk.items {
+            // TODO This check should be performed when items move as well.
             pos := item.GetPosition()
             if pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z >= minZ && pos.Z <= maxZ {
-                if subscriber.OfferItem(item.GetSlot()) {
+                slot := item.GetSlot()
+                subscriber.OfferItem(slot)
+                if slot.Count == 0 {
+                    // The item has been accepted and completely consumed.
+
                     buf := &bytes.Buffer{}
 
                     // Tell all subscribers to animate the item flying at the
                     // subscriber.
                     proto.WriteItemCollect(buf, entityId, subscriber.GetEntityId())
 
-                    if item.GetCount() <= 0 {
-                        // The item has been accepted and completely consumed.
-                        chunk.items[entityId] = nil, false
-                        // Tell all subscribers that the item's entity is
-                        // destroyed.
-                        proto.WriteEntityDestroy(buf, entityId)
-                    }
+                    // Tell all subscribers that the item's entity is
+                    // destroyed.
+                    proto.WriteEntityDestroy(buf, entityId)
 
                     chunk.multicastSubscribers(buf.Bytes())
+
+                    chunk.items[entityId] = nil, false
                 }
 
-                // TODO Check for properly handle partially consumed items?
-                // Probably not high priority since all dropped items have a
-                // count of 1 at the moment. Might need to respawn the item
-                // with a new count. Do the clients even care what the count is
-                // or if it changes? Or if an item is "collected" but still
-                // exists?
+                // TODO Check for how to properly handle partially consumed
+                // items? Probably not high priority since all dropped items
+                // have a count of 1 at the moment. Might need to respawn the
+                // item with a new count. Do the clients even care what the
+                // count is or if it changes? Or if an item is "collected" but
+                // still exists?
             }
         }
     }

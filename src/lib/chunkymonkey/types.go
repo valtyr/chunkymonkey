@@ -175,7 +175,7 @@ const (
     WindowIdInventory = WindowId(0)
 )
 
-type InvTypeId byte
+type InvTypeId int8
 
 const (
     InvTypeIdChest     = InvTypeId(0)

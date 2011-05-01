@@ -61,7 +61,7 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
     player.chunkSubs.Init(player)
 
     player.cursor.Init()
-    player.inventory.Init()
+    player.inventory.Init(player.EntityId, player)
 
     game.Enqueue(func(game IGame) {
         game.AddPlayer(player)
@@ -116,7 +116,7 @@ func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
     if err != nil {
         return
     }
-    return player.inventory.SendFullEquipmentUpdate(writer, player.EntityId)
+    return player.inventory.SendFullEquipmentUpdate(writer)
 }
 
 func (player *Player) start() {
@@ -296,13 +296,17 @@ func (player *Player) PacketWindowClose(windowId WindowId) {
 }
 
 func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, shiftClick bool, itemId ItemTypeId, amount ItemCount, uses ItemData) {
-    var clickedInv *inventory.Inventory
-    var accepted bool
 
-    // Determine which inventory object is involved.
-    if windowId == WindowIdInventory {
-        clickedInv = &player.inventory.Inventory
-    } else {
+    // Note that the parameters itemId, amount and uses are all currently
+    // ignored. The item(s) involved are worked out from the server-side data.
+
+    // Determine which inventory window is involved.
+    // TODO support for more windows
+    var clickedWindow inventory.IWindow
+    switch windowId {
+    case WindowIdInventory:
+        clickedWindow = &player.inventory
+    default:
         // If this happens, then it's likely that either a client is trying to
         // do something unusual, or that we haven't yet implemented something.
         log.Printf(
@@ -310,56 +314,28 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
             windowId)
     }
 
-    var clickedSlot *slot.Slot
-    if clickedInv != nil {
+    buf := &bytes.Buffer{}
+    accepted := false
+
+    if clickedWindow != nil {
         player.lock.Lock()
         defer player.lock.Unlock()
-        clickedSlot = clickedInv.Slot(slotId)
-    }
-
-    buf := &bytes.Buffer{}
-
-    if clickedSlot == nil {
-        log.Printf(
-            "Warning: ignored window click on window ID %d with unknown slot %d",
-            windowId, slotId)
-    } else {
-        // Apply the change.
-        // TODO inventory "special" slot checks. E.g can only put armor in
-        // armor slots. (This logic likely lives inside the inventory package.
-        if player.cursor.Count == 0 {
-            if rightClick {
-                accepted = clickedSlot.Split(&player.cursor)
-            } else {
-                accepted = clickedSlot.Swap(&player.cursor)
-            }
-        } else {
-            if rightClick {
-                accepted = clickedSlot.AddOne(&player.cursor)
-            } else {
-                accepted = clickedSlot.Add(&player.cursor)
-            }
-
-            if !accepted {
-                accepted = clickedSlot.Swap(&player.cursor)
-            }
-        }
+        accepted = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick)
 
         // We send slot updates in case we have custom max counts that differ
-        // from the client's idea.
-        clickedSlot.SendUpdate(buf, windowId, slotId)
+        // from the client's own model.
         player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
     }
 
-    // TODO here and in other places where inventory is changed we need to send
-    // packetEntityEquipment to other clients (and this client? TBD).
-
     // Inform client of operation status.
     proto.WriteWindowTransaction(buf, windowId, txId, accepted)
+
     player.TransmitPacket(buf.Bytes())
 }
 
 func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
+    // TODO investigate when this packet is sent from the client and what it
+    // means when it does get sent.
 }
 
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
@@ -433,22 +409,11 @@ func (player *Player) TransmitPacket(packet []byte) {
 }
 
 // Used to receive items picked up from chunks.
-func (player *Player) OfferItem(item *slot.Slot) (taken bool) {
+func (player *Player) OfferItem(item *slot.Slot) {
     player.lock.Lock()
     defer player.lock.Unlock()
 
-    buf := &bytes.Buffer{}
-
-    slotChanged := func(slotId SlotId, slot *slot.Slot) {
-        slot.SendUpdate(buf, WindowIdInventory, slotId)
-    }
-
-    taken = player.inventory.PutItem(item, slotChanged)
-
-    if taken {
-        // Send the player message(s) to update the inventory.
-        player.TransmitPacket(buf.Bytes())
-    }
+    player.inventory.PutItem(item)
 
     return
 }
@@ -465,7 +430,7 @@ func (player *Player) postLogin() {
             buf, &player.position, &player.look,
             player.position.Y+StanceNormal, false)
 
-        player.inventory.SendUpdate(buf, WindowIdInventory)
+        player.inventory.WriteWindowItems(buf)
 
         // FIXME: This could potentially deadlock with player.lock being held
         // if the txQueue is full.

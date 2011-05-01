@@ -74,12 +74,6 @@ const (
     packetIdSignUpdate           = 0x82
     packetIdIncrementStatistic   = 0xc8
     packetIdDisconnect           = 0xff
-
-    // Inventory types
-    // FIXME remove these with the WritePlayerInventory
-    inventoryTypeMain     = -1
-    inventoryTypeArmor    = -2
-    inventoryTypeCrafting = -3
 )
 
 // Packets commonly received by both client and server

@@ -17,10 +17,11 @@ import (
 type IChunkSubscriber interface {
     GetEntityId() EntityId
     TransmitPacket(packet []byte)
-    // Offers an item to the subscriber. If the subscriber takes it into their
-    // inventory, it returns true. This function is called from the item's
-    // parent chunk's goroutine, so all methods are safely accessible.
-    OfferItem(item *slot.Slot) (taken bool)
+    // Offers an item to the subscriber. If the subscriber completely consumes
+    // it, then item.Count will be 0 afterwards. This function is called from
+    // the item's parent chunk's goroutine, so all methods are safely
+    // accessible.
+    OfferItem(item *slot.Slot)
 }
 
 type IPlayer interface {
@@ -30,7 +31,7 @@ type IPlayer interface {
     GetName() string           // Do not modify return value
     LockedGetChunkPosition() *ChunkXz
     TransmitPacket(packet []byte)
-    OfferItem(item *slot.Slot) (taken bool)
+    OfferItem(item *slot.Slot)
 
     Enqueue(f func(IPlayer))
 
