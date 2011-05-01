@@ -165,10 +165,10 @@ func (s *Slot) AddOne(src *Slot) (changed bool) {
 	}
 
 	changed = true
-	s.setCount(s.Count+1)
+	s.setCount(s.Count + 1)
 	s.ItemType = src.ItemType
 	s.Data = src.Data
-	src.setCount(src.Count-1)
+	src.setCount(src.Count - 1)
 
 	return
 }
@@ -179,7 +179,7 @@ func (s *Slot) Decrement() (changed bool) {
 		return
 	}
 
-	s.setCount(s.Count-1)
+	s.setCount(s.Count - 1)
 	changed = true
 	return
 }

@@ -10,12 +10,11 @@ import (
 )
 
 const (
+	playerInvCraftWidth  = 2
+	playerInvCraftHeight = 2
+	playerInvCraftNum    = 1 + playerInvCraftWidth + playerInvCraftHeight
 	playerInvCraftStart  = SlotId(0)
-	playerInvCraftEnd    = SlotId(5)
-	playerInvCraftNum    = int(playerInvCraftEnd - playerInvCraftStart)
-	playerInvCraftOutput = SlotId(0)
-	playerInvCraftInStart = SlotId(1)
-	playerInvCraftInEnd = SlotId(5)
+	playerInvCraftEnd    = playerInvCraftStart + SlotId(playerInvCraftNum)
 
 	playerInvArmorStart = SlotId(5)
 	playerInvArmorEnd   = SlotId(9)
@@ -36,7 +35,7 @@ type PlayerInventory struct {
 	Window
 	entityId     EntityId
 	gameRules    *gamerules.GameRules
-	crafting     Inventory
+	crafting     CraftingInventory
 	armor        Inventory
 	main         Inventory
 	holding      Inventory
@@ -49,7 +48,7 @@ func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, gameRule
 	w.entityId = entityId
 	w.gameRules = gameRules
 
-	w.crafting.Init(playerInvCraftNum)
+	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, gameRules)
 	w.armor.Init(playerInvArmorNum)
 	w.main.Init(playerInvMainNum)
 	w.holding.Init(playerInvHoldingNum)
@@ -60,7 +59,7 @@ func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, gameRule
 		-1,
 		viewer,
 		"Inventory",
-		&w.crafting,
+		&w.crafting.Inventory,
 		&w.armor,
 		&w.main,
 		&w.holding,
@@ -114,39 +113,9 @@ func (w *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick boo
 	case slotId < 0:
 		return false
 	case slotId < playerInvCraftEnd:
-		var accepted bool
-
-		if slotId == playerInvCraftOutput && cursor.Count != 0 {
-			// Player may only *take* from the output slot.
-			accepted = w.crafting.TakeOnlyClick(
-				slotId-playerInvCraftStart,
-				cursor, rightClick, shiftClick)
-		} else {
-			accepted = w.crafting.StandardClick(
-				slotId-playerInvCraftStart,
-				cursor, rightClick, shiftClick)
-		}
-
-		if !accepted {
-			return
-		}
-
-		w.crafting.withLock(func(inv *Inventory) {
-			if slotId == playerInvCraftOutput {
-				// Player clicked Subtract 1 count from each non-empty input slot.
-				for i := playerInvCraftInStart-playerInvCraftStart; i < playerInvCraftInEnd-playerInvCraftStart; i++ {
-					inv.slots[i].Decrement()
-				}
-			}
-
-			// Match recipe and set output slot.
-			inv.slots[playerInvCraftOutput] = w.gameRules.Recipes.Match(
-				2, 2,
-				inv.slots[playerInvCraftInStart:playerInvCraftInEnd])
-			inv.slotUpdate(
-				&inv.slots[playerInvCraftOutput],
-				playerInvCraftOutput-playerInvCraftStart)
-		})
+		accepted = w.crafting.Click(
+			slotId-playerInvCraftStart,
+			cursor, rightClick, shiftClick)
 	case slotId < playerInvArmorEnd:
 		// TODO - handle armor
 		return false

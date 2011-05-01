@@ -138,18 +138,6 @@ func (inv *Inventory) writeProtoSlots(slots []proto.WindowSlot) {
 	}
 }
 
-func (inv *Inventory) withLock(f func(inv *Inventory)) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
-	f(inv)
-}
-
-// SetSlot sets the specified slot to contain the given value, sending the
-// appropriate update to client(s).
-func (inv *Inventory) setSlot(slotId SlotId, value *slot.Slot) {
-	
-}
-
 // Send message about the slot change to the relevant places.
 func (inv *Inventory) slotUpdate(slot *slot.Slot, slotId SlotId) {
 	for subscriber := range inv.subscribers {
