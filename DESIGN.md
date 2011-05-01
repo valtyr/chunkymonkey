@@ -25,16 +25,21 @@ optimizations - so some things should get faster over time anyway.
 Intent
 ------
 
-Create a scalable Minecraft service that is able to scale horizontally across many hosts.
+Create a scalable Minecraft service that is able to scale horizontally across
+many hosts.
 
 
 Coding standards/style
 ----------------------
 
-Pretty informal, as few decisions have been made here as yet.
+Pretty informal, as few decisions have been made here as yet. Note that this is
+a statement of intent, rather than reality, as the codebase needs some
+improvement in the following regards.
 
-*   Use gofmt to format code before pushing to the master repository.
-*   Unit tests must pass before pushing to the master repository.
+*   Use gofmt to format code before pushing to the master repository. 4 space
+    characters per indent is the indentation style used (use `make fmt`).
+*   Unit tests must pass before pushing to the master repository (use
+    `make test`).
 *   Unit test code where possible/reasonable to do so. It is likely that a
     mocking library will be used at some stage to enable testing of more
     complex interactions - using interfaces for dependency injection is helpful
@@ -44,6 +49,11 @@ Pretty informal, as few decisions have been made here as yet.
 *   Identifier naming generally makes use of CamelCasing. Leading
     upper/lowercase letter dictates private/public to package, as defined by
     the Go programming language.
+
+To ease the above, there are two make targets:
+
+    $ make fmt  # Format the codebase with gofmt.
+    $ make test # Run all unit tests.
 
 
 Top-level architecture

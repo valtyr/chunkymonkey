@@ -54,7 +54,7 @@ Building
 
 [Godag][2] is used to build chunkymonkey. Install it, and run:
 
-    $ ./build.sh
+    $ make
 
 Running
 -------
