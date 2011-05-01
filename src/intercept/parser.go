@@ -68,12 +68,12 @@ func (p *MessageParser) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	p.printf("PacketPlayerLook(look=%v, onGround=%t)", look, onGround)
 }
 
-func (p *MessageParser) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face) {
-	p.printf("PacketPlayerDigging(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
+func (p *MessageParser) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face) {
+	p.printf("PacketPlayerBlockHit(status=%v, blockLoc=%v, face=%v)", status, blockLoc, face)
 }
 
-func (p *MessageParser) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData) {
-	p.printf("PacketPlayerBlockPlacement(itemId=%d, blockLoc=%v, face=%d, amount=%d, data=%d)",
+func (p *MessageParser) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData) {
+	p.printf("PacketPlayerBlockInteract(itemId=%d, blockLoc=%v, face=%d, amount=%d, data=%d)",
 		itemId, blockLoc, face, amount, data)
 }
 

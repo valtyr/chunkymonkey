@@ -34,8 +34,8 @@ const (
 	packetIdPlayerPosition       = 0x0b
 	packetIdPlayerLook           = 0x0c
 	packetIdPlayerPositionLook   = 0x0d
-	packetIdPlayerDigging        = 0x0e
-	packetIdPlayerBlockPlacement = 0x0f
+	packetIdPlayerBlockHit       = 0x0e
+	packetIdPlayerBlockInteract  = 0x0f
 	packetIdHoldingChange        = 0x10
 	packetIdBedUse               = 0x11
 	packetIdEntityAnimation      = 0x12
@@ -85,8 +85,8 @@ type PacketHandler interface {
 	PacketRespawn()
 	PacketPlayerPosition(position *AbsXyz, stance AbsCoord, onGround bool)
 	PacketPlayerLook(look *LookDegrees, onGround bool)
-	PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face)
-	PacketPlayerBlockPlacement(itemTypeId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData)
+	PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face)
+	PacketPlayerBlockInteract(itemTypeId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData)
 	PacketEntityAnimation(entityId EntityId, animation EntityAnimation)
 	PacketUnknown0x1b(field1, field2 float32, field3, field4 bool, field5, field6 float32)
 	PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool)
@@ -922,9 +922,9 @@ func serverPlayerPositionLook(reader io.Reader, handler ServerPacketHandler) (er
 	return
 }
 
-// packetIdPlayerDigging
+// packetIdPlayerBlockHit
 
-func WritePlayerDigging(writer io.Writer, status DigStatus, blockLoc *BlockXyz, face Face) (err os.Error) {
+func WritePlayerBlockHit(writer io.Writer, status DigStatus, blockLoc *BlockXyz, face Face) (err os.Error) {
 	var packet = struct {
 		PacketId byte
 		Status   DigStatus
@@ -933,7 +933,7 @@ func WritePlayerDigging(writer io.Writer, status DigStatus, blockLoc *BlockXyz, 
 		Z        BlockCoord
 		Face     Face
 	}{
-		packetIdPlayerDigging,
+		packetIdPlayerBlockHit,
 		status,
 		blockLoc.X, blockLoc.Y, blockLoc.Z,
 		face,
@@ -942,7 +942,7 @@ func WritePlayerDigging(writer io.Writer, status DigStatus, blockLoc *BlockXyz, 
 	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readPlayerBlockHit(reader io.Reader, handler PacketHandler) (err os.Error) {
 	var packet struct {
 		Status DigStatus
 		X      BlockCoord
@@ -956,16 +956,16 @@ func readPlayerDigging(reader io.Reader, handler PacketHandler) (err os.Error) {
 		return
 	}
 
-	handler.PacketPlayerDigging(
+	handler.PacketPlayerBlockHit(
 		packet.Status,
 		&BlockXyz{packet.X, packet.Y, packet.Z},
 		packet.Face)
 	return
 }
 
-// packetIdPlayerBlockPlacement
+// packetIdPlayerBlockInteract
 
-func WritePlayerBlockPlacement(writer io.Writer, itemTypeId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData) (err os.Error) {
+func WritePlayerBlockInteract(writer io.Writer, itemTypeId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData) (err os.Error) {
 	var packet = struct {
 		PacketId   byte
 		X          BlockCoord
@@ -974,7 +974,7 @@ func WritePlayerBlockPlacement(writer io.Writer, itemTypeId ItemTypeId, blockLoc
 		Face       Face
 		ItemTypeId ItemTypeId
 	}{
-		packetIdPlayerBlockPlacement,
+		packetIdPlayerBlockInteract,
 		blockLoc.X, blockLoc.Y, blockLoc.Z,
 		face,
 		itemTypeId,
@@ -998,7 +998,7 @@ func WritePlayerBlockPlacement(writer io.Writer, itemTypeId ItemTypeId, blockLoc
 	return
 }
 
-func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.Error) {
+func readPlayerBlockInteract(reader io.Reader, handler PacketHandler) (err os.Error) {
 	var packet struct {
 		X          BlockCoord
 		Y          BlockYCoord
@@ -1023,7 +1023,7 @@ func readPlayerBlockPlacement(reader io.Reader, handler PacketHandler) (err os.E
 		}
 	}
 
-	handler.PacketPlayerBlockPlacement(
+	handler.PacketPlayerBlockInteract(
 		packet.ItemTypeId,
 		&BlockXyz{
 			packet.X,
@@ -2707,19 +2707,19 @@ type clientPacketReaderMap map[byte]clientPacketHandler
 
 // Common packet mapping
 var commonReadFns = commonPacketReaderMap{
-	packetIdKeepAlive:            readKeepAlive,
-	packetIdChatMessage:          readChatMessage,
-	packetIdEntityAction:         readEntityAction,
-	packetIdUseEntity:            readUseEntity,
-	packetIdRespawn:              readRespawn,
-	packetIdPlayerPosition:       readPlayerPosition,
-	packetIdPlayerLook:           readPlayerLook,
-	packetIdPlayerDigging:        readPlayerDigging,
-	packetIdPlayerBlockPlacement: readPlayerBlockPlacement,
-	packetIdEntityAnimation:      readEntityAnimation,
-	packetIdWindowTransaction:    readWindowTransaction,
-	packetIdSignUpdate:           readSignUpdate,
-	packetIdDisconnect:           readDisconnect,
+	packetIdKeepAlive:           readKeepAlive,
+	packetIdChatMessage:         readChatMessage,
+	packetIdEntityAction:        readEntityAction,
+	packetIdUseEntity:           readUseEntity,
+	packetIdRespawn:             readRespawn,
+	packetIdPlayerPosition:      readPlayerPosition,
+	packetIdPlayerLook:          readPlayerLook,
+	packetIdPlayerBlockHit:      readPlayerBlockHit,
+	packetIdPlayerBlockInteract: readPlayerBlockInteract,
+	packetIdEntityAnimation:     readEntityAnimation,
+	packetIdWindowTransaction:   readWindowTransaction,
+	packetIdSignUpdate:          readSignUpdate,
+	packetIdDisconnect:          readDisconnect,
 }
 
 // Client->server specific packet mapping

@@ -193,7 +193,7 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	})
 }
 
-func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face) {
+func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face) {
 	// TODO validate that the player is actually somewhere near the block
 
 	// TODO validate that the player has dug long enough to stop speed
@@ -218,9 +218,9 @@ func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, 
 	}
 }
 
-func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
+func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
 	if face < FaceMinValid || face > FaceMaxValid {
-		log.Printf("Player/PacketPlayerBlockPlacement: invalid face %d", face)
+		log.Printf("Player/PacketPlayerBlockInteract: invalid face %d", face)
 		return
 	}
 
@@ -241,7 +241,7 @@ func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *Bl
 	// Make sure that it's a valid-looking block item.
 	itemType := heldSlot.ItemType
 	if itemType == nil || itemType.Id < ItemTypeId(BlockIdMin) || itemType.Id > ItemTypeId(BlockIdMax) {
-		log.Print("Player/PacketPlayerBlockPlacement: no or non-block item held")
+		log.Print("Player/PacketPlayerBlockInteract: no or non-block item held")
 		return
 	}
 
@@ -259,7 +259,7 @@ func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *Bl
 		if chunk == nil {
 			// Return item to player
 			// Note that this can technically fail, in which case the item vanishes.
-			log.Print("Player/PacketPlayerBlockPlacement: chunk not found")
+			log.Print("Player/PacketPlayerBlockInteract: chunk not found")
 			player.OfferItem(tmpSlot)
 			return
 		}
