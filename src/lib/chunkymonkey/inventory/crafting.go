@@ -24,9 +24,7 @@ func (inv *CraftingInventory) Init(width, height int, gameRules *gamerules.GameR
 // Click handles window clicks from a user with special handling for crafting.
 func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
 	if slotId == 0 {
-		// Player may only *take* from the output slot.
-		// TODO this should only take the whole stack from the output. It should
-		// not allow taking partial stacks.
+		// Player may only *take* the *whole* stack from the output slot.
 		accepted = inv.Inventory.TakeOnlyClick(
 			slotId, cursor, rightClick, shiftClick)
 	} else {

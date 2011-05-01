@@ -75,7 +75,8 @@ func (inv *Inventory) StandardClick(slotId SlotId, cursor *slot.Slot, rightClick
 	return
 }
 
-// TakeOnlyClick only allows items to be taken from the slot.
+// TakeOnlyClick only allows items to be taken from the slot, and it only
+// allows the *whole* stack to be taken, otherwise no items are taken at all.
 func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool) {
 	inv.lock.Lock()
 	defer inv.lock.Unlock()
@@ -87,7 +88,7 @@ func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick
 	clickedSlot := &inv.slots[slotId]
 
 	// Apply the change.
-	accepted = cursor.Add(clickedSlot)
+	accepted = cursor.AddWhole(clickedSlot)
 
 	// We send slot updates in case we have custom max counts that differ from
 	// the client's idea.
