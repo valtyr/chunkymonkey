@@ -5,6 +5,7 @@
 .*.swp
 _obj
 /chunkymonkey
+/datatests
 /intercept
 /inspectlevel
 *.log
