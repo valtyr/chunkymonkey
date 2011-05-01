@@ -99,10 +99,6 @@ func (player *Player) GetName() string {
 	return player.name
 }
 
-func (player *Player) Enqueue(f func(IPlayer)) {
-	player.mainQueue <- f
-}
-
 func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
 	heldSlot, _ := player.inventory.HeldItem()
 
@@ -121,6 +117,7 @@ func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
 
 func (player *Player) start() {
 	go player.receiveLoop()
+	go player.transmitLoop()
 	go player.mainLoop()
 }
 
@@ -345,9 +342,10 @@ func (player *Player) PacketDisconnect(reason string) {
 	log.Printf("Player %s disconnected reason=%s", player.name, reason)
 	player.game.Enqueue(func(game IGame) {
 		game.RemovePlayer(player)
-		player.txQueue <- nil
-		player.conn.Close()
 	})
+	player.txQueue <- nil
+	player.mainQueue <- nil
+	player.conn.Close()
 }
 
 func (player *Player) receiveLoop() {
@@ -363,6 +361,31 @@ func (player *Player) receiveLoop() {
 }
 
 // End of packet handling code
+
+func (player *Player) transmitLoop() {
+	for {
+		bs := <-player.txQueue
+
+		if bs == nil {
+			return // txQueue closed
+		}
+
+		_, err := player.conn.Write(bs)
+		if err != nil {
+			if err != os.EOF {
+				log.Print("TransmitLoop failed: ", err.String())
+			}
+			return
+		}
+	}
+}
+
+func (player *Player) TransmitPacket(packet []byte) {
+	if packet == nil {
+		return // skip empty packets
+	}
+	player.txQueue <- packet
+}
 
 func (player *Player) runQueuedCall(f func(IPlayer)) {
 	player.lock.Lock()
@@ -380,32 +403,19 @@ func (player *Player) mainLoop() {
 	player.postLogin()
 
 	for {
-		select {
-		case f := <-player.mainQueue:
-			player.runQueuedCall(f)
-		case bs := <-player.txQueue:
-			// TODO move txQueue handling to another goroutine to avoid
-			// needless deadlocking with player.Lock.
-			if bs == nil {
-				return // txQueue closed
-			}
-
-			_, err := player.conn.Write(bs)
-			if err != nil {
-				if err != os.EOF {
-					log.Print("TransmitLoop failed: ", err.String())
-				}
-				return
-			}
+		f := <-player.mainQueue
+		if f == nil {
+			return
 		}
+		player.runQueuedCall(f)
 	}
 }
 
-func (player *Player) TransmitPacket(packet []byte) {
-	if packet == nil {
-		return // skip empty packets
+func (player *Player) Enqueue(f func(IPlayer)) {
+	if f == nil {
+		return
 	}
-	player.txQueue <- packet
+	player.mainQueue <- f
 }
 
 // Used to receive items picked up from chunks.
@@ -432,8 +442,6 @@ func (player *Player) postLogin() {
 
 		player.inventory.WriteWindowItems(buf)
 
-		// FIXME: This could potentially deadlock with player.lock being held
-		// if the txQueue is full.
 		player.TransmitPacket(buf.Bytes())
 	}
 
