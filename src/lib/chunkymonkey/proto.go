@@ -253,10 +253,6 @@ type WindowSlot struct {
 	Data       ItemData
 }
 
-type IWindowSlot interface {
-	GetAttr() (ItemTypeId, ItemCount, ItemData)
-}
-
 type EntityMetadata struct {
 	Field1 byte
 	Field2 byte
@@ -2447,7 +2443,7 @@ func readWindowSetSlot(reader io.Reader, handler ClientPacketHandler) (err os.Er
 
 // packetIdWindowItems
 
-func WriteWindowItems(writer io.Writer, windowId WindowId, items []IWindowSlot) (err os.Error) {
+func WriteWindowItems(writer io.Writer, windowId WindowId, items []WindowSlot) (err os.Error) {
 	var packet = struct {
 		PacketId byte
 		WindowId WindowId
@@ -2462,16 +2458,14 @@ func WriteWindowItems(writer io.Writer, windowId WindowId, items []IWindowSlot) 
 		return
 	}
 
-	for _, slot := range items {
-		itemTypeId, count, data := slot.GetAttr()
-
-		if itemTypeId != -1 {
-			itemInfo := WindowSlot{itemTypeId, count, data}
-			if err = binary.Write(writer, binary.BigEndian, &itemInfo); err != nil {
+	for i := range items {
+		slot := &items[i]
+		if slot.ItemTypeId != -1 {
+			if err = binary.Write(writer, binary.BigEndian, slot); err != nil {
 				return
 			}
 		} else {
-			if err = binary.Write(writer, binary.BigEndian, itemTypeId); err != nil {
+			if err = binary.Write(writer, binary.BigEndian, slot.ItemTypeId); err != nil {
 				return
 			}
 		}

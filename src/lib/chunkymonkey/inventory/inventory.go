@@ -15,16 +15,13 @@ type IInventorySubscriber interface {
 type Inventory struct {
 	lock        sync.Mutex
 	slots       []slot.Slot
-	slotsProto  []proto.IWindowSlot // Holds same items as `slots`.
 	subscribers map[IInventorySubscriber]bool
 }
 
 func (inv *Inventory) Init(size int) {
 	inv.slots = make([]slot.Slot, size)
-	inv.slotsProto = make([]proto.IWindowSlot, size)
 	for i := range inv.slots {
 		inv.slots[i].Init()
-		inv.slotsProto[i] = &inv.slots[i]
 	}
 	inv.subscribers = make(map[IInventorySubscriber]bool)
 }
@@ -98,6 +95,26 @@ func (inv *Inventory) PutItem(item *slot.Slot) {
 		}
 	}
 	return
+}
+
+// WriteProtoSlots stores into the slots parameter the proto version of the
+// item data in the inventory.
+// Precondition: len(slots) == len(inv.slots)
+func (inv *Inventory) writeProtoSlots(slots []proto.WindowSlot) {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+	for i := range inv.slots {
+		src := &inv.slots[i]
+		itemTypeId := ItemTypeIdNull
+		if src.ItemType != nil {
+			itemTypeId = src.ItemType.Id
+		}
+		slots[i] = proto.WindowSlot {
+			ItemTypeId: itemTypeId,
+			Count: src.Count,
+			Data: src.Data,
+		}
+	}
 }
 
 // Send message about the slot change to the relevant places.

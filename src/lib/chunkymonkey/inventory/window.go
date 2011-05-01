@@ -30,12 +30,14 @@ type inventoryView struct {
 	window    *Window
 	inventory *Inventory
 	startSlot SlotId
+	endSlot   SlotId
 }
 
-func (iv *inventoryView) Init(window *Window, inventory *Inventory, startSlot SlotId) {
+func (iv *inventoryView) Init(window *Window, inventory *Inventory, startSlot SlotId, endSlot SlotId) {
 	iv.window = window
 	iv.inventory = inventory
 	iv.startSlot = startSlot
+	iv.endSlot = endSlot
 	iv.inventory.AddSubscriber(iv)
 }
 
@@ -62,6 +64,7 @@ type Window struct {
 	numSlots  int
 }
 
+// Init initializes a window as a view onto the given inventories.
 func (w *Window) Init(windowId WindowId, invTypeId InvTypeId, viewer IWindowViewer, title string, inventories ...*Inventory) {
 	w.windowId = windowId
 	w.invTypeId = invTypeId
@@ -71,8 +74,9 @@ func (w *Window) Init(windowId WindowId, invTypeId InvTypeId, viewer IWindowView
 	w.views = make([]inventoryView, len(inventories))
 	startSlot := 0
 	for index, inv := range inventories {
-		w.views[index].Init(w, inv, SlotId(startSlot))
-		startSlot += len(inv.slots)
+		endSlot := startSlot + len(inv.slots)
+		w.views[index].Init(w, inv, SlotId(startSlot), SlotId(endSlot))
+		startSlot = endSlot
 	}
 	w.numSlots = startSlot
 
@@ -97,19 +101,11 @@ func (w *Window) WriteWindowOpen(writer io.Writer) (err os.Error) {
 // WriteWindowItems writes a packet describing the window contents to the
 // writer. It assumes that any required locks on the inventories are held.
 func (w *Window) WriteWindowItems(writer io.Writer) (err os.Error) {
-	items := make([]proto.IWindowSlot, w.numSlots)
+	items := make([]proto.WindowSlot, w.numSlots)
 
-	slotIndex := 0
 	for i := range w.views {
-		inv := w.views[i].inventory
-		// TODO Acquiring multiple simultaneous locks is somewhat dodgy - as it
-		// can lead to deadlock. Find a better solution.
-		inv.lock.Lock()
-		defer inv.lock.Unlock()
-		for i := range inv.slots {
-			items[slotIndex] = &inv.slots[i]
-			slotIndex++
-		}
+		view := &w.views[i]
+		view.inventory.writeProtoSlots(items[view.startSlot:view.endSlot])
 	}
 
 	err = proto.WriteWindowItems(writer, w.windowId, items)
