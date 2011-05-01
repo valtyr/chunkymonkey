@@ -88,7 +88,7 @@ type PacketHandler interface {
 	PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face)
 	PacketPlayerBlockPlacement(itemTypeId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData)
 	PacketEntityAnimation(entityId EntityId, animation EntityAnimation)
-	PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool)
+	PacketUnknown0x1b(field1, field2 float32, field3, field4 bool, field5, field6 float32)
 	PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool)
 	PacketSignUpdate(position *BlockXyz, lines [4]string)
 	PacketDisconnect(reason string)
@@ -1482,8 +1482,9 @@ func readPaintingSpawn(reader io.Reader, handler ClientPacketHandler) (err os.Er
 
 func readUnknown0x1b(reader io.Reader, handler PacketHandler) (err os.Error) {
 	var packet struct {
-		field1, field2, field3, field4 float32
-		field5, field6                 byte
+		field1, field2 float32
+		field3, field4 byte
+		field5, field6 float32
 	}
 
 	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
@@ -1491,8 +1492,9 @@ func readUnknown0x1b(reader io.Reader, handler PacketHandler) (err os.Error) {
 	}
 
 	handler.PacketUnknown0x1b(
-		packet.field1, packet.field2, packet.field3, packet.field4,
-		byteToBool(packet.field5), byteToBool(packet.field6))
+		packet.field1, packet.field2,
+		byteToBool(packet.field3), byteToBool(packet.field4),
+		packet.field5, packet.field6)
 
 	return
 }

@@ -289,7 +289,7 @@ func (player *Player) PacketHoldingChange(slotId SlotId) {
 func (player *Player) PacketEntityAnimation(entityId EntityId, animation EntityAnimation) {
 }
 
-func (player *Player) PacketUnknown0x1b(field1, field2, field3, field4 float32, field5, field6 bool) {
+func (player *Player) PacketUnknown0x1b(field1, field2 float32, field3, field4 bool, field5, field6 float32) {
 }
 
 func (player *Player) PacketWindowClose(windowId WindowId) {
