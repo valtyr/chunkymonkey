@@ -127,7 +127,7 @@ func (chunk *Chunk) GetRand() *rand.Rand {
 }
 
 func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool) {
-	itemType, ok = chunk.mgr.itemTypes[itemTypeId]
+	itemType, ok = chunk.mgr.gameRules.ItemTypes[itemTypeId]
 	return
 }
 
@@ -185,7 +185,7 @@ func (chunk *Chunk) DigBlock(subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
 	blockTypeId := BlockId(chunk.blocks[index])
 	blockLoc := chunk.loc.ToBlockXyz(subLoc)
 
-	if blockType, ok := chunk.mgr.blockTypes.Get(blockTypeId); ok && blockType.Destructable {
+	if blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId); ok && blockType.Destructable {
 		if blockType.Aspect.Dig(chunk, blockLoc, digStatus) {
 			chunk.setBlock(blockLoc, subLoc, index, shift, BlockIdAir, 0)
 		}
@@ -228,7 +228,7 @@ func (chunk *Chunk) PlaceBlock(againstLoc *BlockXyz, againstFace Face, blockId B
 
 	// Blocks can only replace certain blocks.
 	blockTypeId := BlockId(chunk.blocks[index])
-	blockType, ok := chunk.mgr.blockTypes.Get(blockTypeId)
+	blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok {
 		return
 	}
@@ -273,7 +273,7 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 		}
 	}
 
-	blockType, ok = chunk.mgr.blockTypes.Get(blockTypeId)
+	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok {
 		log.Printf(
 			"Chunk/blockQuery found unknown block type Id %d at %+v",

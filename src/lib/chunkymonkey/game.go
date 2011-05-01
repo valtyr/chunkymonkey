@@ -9,9 +9,9 @@ import (
 	"rand"
 	"time"
 
-	"chunkymonkey/block"
 	"chunkymonkey/chunk"
 	. "chunkymonkey/entity"
+	"chunkymonkey/gamerules"
 	. "chunkymonkey/interfaces"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/player"
@@ -28,21 +28,20 @@ type Game struct {
 	entityManager EntityManager
 	players       map[EntityId]IPlayer
 	time          TimeOfDay
-	blockTypes    block.BlockTypeList
+	gameRules     *gamerules.GameRules
 	itemTypes     itemtype.ItemTypeMap
 	rand          *rand.Rand
 	serverId      string
 	worldStore    *worldstore.WorldStore
 }
 
-func NewGame(worldPath string, blockTypes block.BlockTypeList, itemTypes itemtype.ItemTypeMap) (game *Game, err os.Error) {
+func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err os.Error) {
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
 
 	game = &Game{
 		mainQueue:  make(chan func(IGame), 256),
 		players:    make(map[EntityId]IPlayer),
-		blockTypes: blockTypes,
-		itemTypes:  itemTypes,
+		gameRules:  gameRules,
 		rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
 		worldStore: worldStore,
 	}
@@ -128,12 +127,8 @@ func (game *Game) GetStartPosition() *AbsXyz {
 	return &game.worldStore.StartPosition
 }
 
-func (game *Game) GetBlockTypes() block.BlockTypeList {
-	return game.blockTypes
-}
-
-func (game *Game) GetItemTypes() itemtype.ItemTypeMap {
-	return game.itemTypes
+func (game *Game) GetGameRules() *gamerules.GameRules {
+	return game.gameRules
 }
 
 func (game *Game) GetChunkManager() IChunkManager {

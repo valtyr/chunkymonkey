@@ -3,9 +3,8 @@ package chunk
 import (
 	"log"
 
-	"chunkymonkey/block"
+	"chunkymonkey/gamerules"
 	. "chunkymonkey/interfaces"
-	"chunkymonkey/itemtype"
 	"chunkymonkey/chunkstore"
 	. "chunkymonkey/types"
 )
@@ -14,8 +13,7 @@ import (
 type ChunkManager struct {
 	game       IGame
 	chunkStore chunkstore.ChunkStore
-	blockTypes block.BlockTypeList
-	itemTypes  itemtype.ItemTypeMap
+	gameRules  *gamerules.GameRules
 	chunks     map[uint64]*Chunk
 }
 
@@ -23,8 +21,7 @@ func NewChunkManager(chunkStore chunkstore.ChunkStore, game IGame) *ChunkManager
 	return &ChunkManager{
 		game:       game,
 		chunkStore: chunkStore,
-		blockTypes: game.GetBlockTypes(),
-		itemTypes:  game.GetItemTypes(),
+		gameRules:  game.GetGameRules(),
 		chunks:     make(map[uint64]*Chunk),
 	}
 }

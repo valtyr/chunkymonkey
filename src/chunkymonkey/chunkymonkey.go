@@ -9,8 +9,7 @@ import (
 	"os"
 
 	"chunkymonkey"
-	"chunkymonkey/block"
-	"chunkymonkey/itemtype"
+	"chunkymonkey/gamerules"
 )
 
 var addr = flag.String(
@@ -28,6 +27,10 @@ var blockDefs = flag.String(
 var itemDefs = flag.String(
 	"items", "items.json",
 	"The JSON file containing item type definitions.")
+
+var recipeDefs = flag.String(
+	"recipes", "recipes.json",
+	"The JSON file containing recipe definitions.")
 
 func usage() {
 	os.Stderr.WriteString("usage: " + os.Args[0] + " [flags] <world>\n")
@@ -54,19 +57,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	blockTypes, err := block.LoadBlocksFromFile(*blockDefs)
+	gameRules, err := gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs)
 	if err != nil {
-		log.Print("Error loading block definitions: ", err)
+		log.Print("Error loading game rules: ", err)
 		os.Exit(1)
 	}
-
-	itemTypes, err := itemtype.LoadItemTypesFromFile(*itemDefs)
-	if err != nil {
-		log.Print("Error loading item definitions: ", err)
-		os.Exit(1)
-	}
-
-	blockTypes.CreateBlockItemTypes(itemTypes)
 
 	worldPath := flag.Arg(0)
 	fi, err := os.Stat(worldPath)
@@ -79,7 +74,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	game, err := chunkymonkey.NewGame(worldPath, blockTypes, itemTypes)
+	game, err := chunkymonkey.NewGame(worldPath, gameRules)
 	if err != nil {
 		log.Panic(err)
 	}

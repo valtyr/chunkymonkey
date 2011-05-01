@@ -5,10 +5,9 @@ import (
 	"os"
 	"rand"
 
-	"chunkymonkey/block"
 	"chunkymonkey/entity"
+	"chunkymonkey/gamerules"
 	"chunkymonkey/item"
-	"chunkymonkey/itemtype"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -90,8 +89,7 @@ type IGame interface {
 	// Safe to call from outside of Enqueue:
 	GetStartPosition() *AbsXyz      // Do not modify return value
 	GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
-	GetBlockTypes() block.BlockTypeList
-	GetItemTypes() itemtype.ItemTypeMap
+	GetGameRules() *gamerules.GameRules
 
 	Enqueue(f func(IGame))
 
