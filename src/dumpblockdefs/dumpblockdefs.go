@@ -1,38 +1,38 @@
 package main
 
 import (
-    "log"
-    "os"
+	"log"
+	"os"
 
-    "chunkymonkey/block"
+	"chunkymonkey/block"
 )
 
 func dumpBlocks(filename string) (err os.Error) {
-    outputFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
-    if err != nil {
-        return
-    }
-    defer outputFile.Close()
+	outputFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
+	if err != nil {
+		return
+	}
+	defer outputFile.Close()
 
-    blocks, _ := loadBlocks()
-    err = block.SaveBlockDefs(outputFile, blocks)
+	blocks, _ := loadBlocks()
+	err = block.SaveBlockDefs(outputFile, blocks)
 
-    return
+	return
 }
 
 func loadBlocks() (blocks block.BlockTypeList, err os.Error) {
-    file, err := os.Open("blocks.json")
-    if err != nil {
-        return
-    }
-    defer file.Close()
+	file, err := os.Open("blocks.json")
+	if err != nil {
+		return
+	}
+	defer file.Close()
 
-    return block.LoadBlockDefs(file)
+	return block.LoadBlockDefs(file)
 }
 
 func main() {
-    err := dumpBlocks("blocks2.json")
-    if err != nil {
-        log.Printf("Error: %v", err)
-    }
+	err := dumpBlocks("blocks2.json")
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
 }

@@ -13,7 +13,7 @@ clean:
 	@gd -q -clean src
 
 fmt:
-	@gd -q -fmt src
+	@gd -q -fmt --tab src
 
 test: datatests
 	@mkdir -p .test_obj

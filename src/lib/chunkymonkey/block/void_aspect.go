@@ -1,21 +1,21 @@
 package block
 
 import (
-    . "chunkymonkey/types"
+	. "chunkymonkey/types"
 )
 
 func makeVoidAspect() (aspect IBlockAspect) {
-    return &VoidAspect{}
+	return &VoidAspect{}
 }
 
 // Behaviour of a "void" block which has no behaviour.
 type VoidAspect struct{}
 
 func (aspect *VoidAspect) Name() string {
-    return "Void"
+	return "Void"
 }
 
 func (aspect *VoidAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
-    destroyed = false
-    return
+	destroyed = false
+	return
 }

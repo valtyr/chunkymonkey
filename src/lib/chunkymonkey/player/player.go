@@ -1,127 +1,127 @@
 package player
 
 import (
-    "bytes"
-    "expvar"
-    "log"
-    "io"
-    "math"
-    "net"
-    "os"
-    "sync"
+	"bytes"
+	"expvar"
+	"log"
+	"io"
+	"math"
+	"net"
+	"os"
+	"sync"
 
-    . "chunkymonkey/entity"
-    . "chunkymonkey/interfaces"
-    "chunkymonkey/inventory"
-    "chunkymonkey/proto"
-    "chunkymonkey/slot"
-    . "chunkymonkey/types"
+	. "chunkymonkey/entity"
+	. "chunkymonkey/interfaces"
+	"chunkymonkey/inventory"
+	"chunkymonkey/proto"
+	"chunkymonkey/slot"
+	. "chunkymonkey/types"
 )
 
 var (
-    expVarPlayerConnectionCount    *expvar.Int
-    expVarPlayerDisconnectionCount *expvar.Int
+	expVarPlayerConnectionCount    *expvar.Int
+	expVarPlayerDisconnectionCount *expvar.Int
 )
 
 const StanceNormal = 1.62
 
 func init() {
-    expVarPlayerConnectionCount = expvar.NewInt("player-connection-count")
-    expVarPlayerDisconnectionCount = expvar.NewInt("player-disconnection-count")
+	expVarPlayerConnectionCount = expvar.NewInt("player-connection-count")
+	expVarPlayerDisconnectionCount = expvar.NewInt("player-disconnection-count")
 }
 
 type Player struct {
-    Entity
-    game      IGame
-    conn      net.Conn
-    name      string
-    position  AbsXyz
-    look      LookDegrees
-    chunkSubs chunkSubscriptions
+	Entity
+	game      IGame
+	conn      net.Conn
+	name      string
+	position  AbsXyz
+	look      LookDegrees
+	chunkSubs chunkSubscriptions
 
-    cursor    slot.Slot // Item being moved by mouse cursor.
-    inventory inventory.PlayerInventory
+	cursor    slot.Slot // Item being moved by mouse cursor.
+	inventory inventory.PlayerInventory
 
-    mainQueue chan func(IPlayer)
-    txQueue   chan []byte
-    lock      sync.Mutex
+	mainQueue chan func(IPlayer)
+	txQueue   chan []byte
+	lock      sync.Mutex
 }
 
 func StartPlayer(game IGame, conn net.Conn, name string) {
-    player := &Player{
-        game:      game,
-        conn:      conn,
-        name:      name,
-        position:  *game.GetStartPosition(),
-        look:      LookDegrees{0, 0},
-        mainQueue: make(chan func(IPlayer), 128),
-        txQueue:   make(chan []byte, 128),
-    }
+	player := &Player{
+		game:      game,
+		conn:      conn,
+		name:      name,
+		position:  *game.GetStartPosition(),
+		look:      LookDegrees{0, 0},
+		mainQueue: make(chan func(IPlayer), 128),
+		txQueue:   make(chan []byte, 128),
+	}
 
-    player.chunkSubs.Init(player)
+	player.chunkSubs.Init(player)
 
-    player.cursor.Init()
-    player.inventory.Init(player.EntityId, player)
+	player.cursor.Init()
+	player.inventory.Init(player.EntityId, player)
 
-    game.Enqueue(func(game IGame) {
-        game.AddPlayer(player)
-        buf := &bytes.Buffer{}
-        // TODO pass proper dimension. This is low priority, because there is
-        // currently no way to update the client's dimension after login.
-        proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
-        proto.WriteSpawnPosition(buf, player.position.ToBlockXyz())
-        player.TransmitPacket(buf.Bytes())
-        player.start()
-    })
+	game.Enqueue(func(game IGame) {
+		game.AddPlayer(player)
+		buf := &bytes.Buffer{}
+		// TODO pass proper dimension. This is low priority, because there is
+		// currently no way to update the client's dimension after login.
+		proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
+		proto.WriteSpawnPosition(buf, player.position.ToBlockXyz())
+		player.TransmitPacket(buf.Bytes())
+		player.start()
+	})
 }
 
 func (player *Player) GetEntityId() EntityId {
-    return player.EntityId
+	return player.EntityId
 }
 
 func (player *Player) GetEntity() *Entity {
-    return &player.Entity
+	return &player.Entity
 }
 
 func (player *Player) LockedGetChunkPosition() *ChunkXz {
-    player.lock.Lock()
-    defer player.lock.Unlock()
-    return player.position.ToChunkXz()
+	player.lock.Lock()
+	defer player.lock.Unlock()
+	return player.position.ToChunkXz()
 }
 
 func (player *Player) IsWithin(p1, p2 *ChunkXz) bool {
-    p := player.position.ToChunkXz()
-    return (p.X >= p1.X && p.X <= p2.X &&
-        p.Z >= p1.Z && p.Z <= p2.Z)
+	p := player.position.ToChunkXz()
+	return (p.X >= p1.X && p.X <= p2.X &&
+		p.Z >= p1.Z && p.Z <= p2.Z)
 }
 
 func (player *Player) GetName() string {
-    return player.name
+	return player.name
 }
 
 func (player *Player) Enqueue(f func(IPlayer)) {
-    player.mainQueue <- f
+	player.mainQueue <- f
 }
 
 func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
-    heldSlot, _ := player.inventory.HeldItem()
+	heldSlot, _ := player.inventory.HeldItem()
 
-    err = proto.WriteNamedEntitySpawn(
-        writer,
-        player.EntityId, player.name,
-        player.position.ToAbsIntXyz(),
-        player.look.ToLookBytes(),
-        heldSlot.GetItemTypeId(),
-    )
-    if err != nil {
-        return
-    }
-    return player.inventory.SendFullEquipmentUpdate(writer)
+	err = proto.WriteNamedEntitySpawn(
+		writer,
+		player.EntityId, player.name,
+		player.position.ToAbsIntXyz(),
+		player.look.ToLookBytes(),
+		heldSlot.GetItemTypeId(),
+	)
+	if err != nil {
+		return
+	}
+	return player.inventory.SendFullEquipmentUpdate(writer)
 }
 
 func (player *Player) start() {
-    go player.receiveLoop()
-    go player.mainLoop()
+	go player.receiveLoop()
+	go player.mainLoop()
 }
 
 // Start of packet handling code
@@ -132,7 +132,7 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-    player.game.Enqueue(func(game IGame) { game.SendChatMessage(message) })
+	player.game.Enqueue(func(game IGame) { game.SendChatMessage(message) })
 }
 
 func (player *Player) PacketEntityAction(entityId EntityId, action EntityAction) {
@@ -148,142 +148,142 @@ func (player *Player) PacketPlayer(onGround bool) {
 }
 
 func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, onGround bool) {
-    player.lock.Lock()
-    defer player.lock.Unlock()
+	player.lock.Lock()
+	defer player.lock.Unlock()
 
-    var delta = AbsXyz{position.X - player.position.X,
-        position.Y - player.position.Y,
-        position.Z - player.position.Z}
-    distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
-    if distance > 10 {
-        log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
-            position.X, position.Y, position.Z)
-        return
-    }
-    player.position = *position
-    player.chunkSubs.Move(position, nil)
+	var delta = AbsXyz{position.X - player.position.X,
+		position.Y - player.position.Y,
+		position.Z - player.position.Z}
+	distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
+	if distance > 10 {
+		log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
+			position.X, position.Y, position.Z)
+		return
+	}
+	player.position = *position
+	player.chunkSubs.Move(position, nil)
 
-    // TODO: Should keep track of when players enter/leave their mutual radius
-    // of "awareness". I.e a client should receive a RemoveEntity packet when
-    // the player walks out of range, and no longer receive WriteEntityTeleport
-    // packets for them. The converse should happen when players come in range
-    // of each other.
+	// TODO: Should keep track of when players enter/leave their mutual radius
+	// of "awareness". I.e a client should receive a RemoveEntity packet when
+	// the player walks out of range, and no longer receive WriteEntityTeleport
+	// packets for them. The converse should happen when players come in range
+	// of each other.
 
-    buf := &bytes.Buffer{}
-    proto.WriteEntityTeleport(
-        buf,
-        player.EntityId,
-        player.position.ToAbsIntXyz(),
-        player.look.ToLookBytes())
+	buf := &bytes.Buffer{}
+	proto.WriteEntityTeleport(
+		buf,
+		player.EntityId,
+		player.position.ToAbsIntXyz(),
+		player.look.ToLookBytes())
 
-    player.game.Enqueue(func(game IGame) {
-        game.MulticastPacket(buf.Bytes(), player)
-    })
+	player.game.Enqueue(func(game IGame) {
+		game.MulticastPacket(buf.Bytes(), player)
+	})
 }
 
 func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
-    player.lock.Lock()
-    defer player.lock.Unlock()
+	player.lock.Lock()
+	defer player.lock.Unlock()
 
-    // TODO input validation
-    player.look = *look
+	// TODO input validation
+	player.look = *look
 
-    buf := &bytes.Buffer{}
-    proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
+	buf := &bytes.Buffer{}
+	proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
 
-    player.game.Enqueue(func(game IGame) {
-        game.MulticastPacket(buf.Bytes(), player)
-    })
+	player.game.Enqueue(func(game IGame) {
+		game.MulticastPacket(buf.Bytes(), player)
+	})
 }
 
 func (player *Player) PacketPlayerDigging(status DigStatus, blockLoc *BlockXyz, face Face) {
-    // TODO validate that the player is actually somewhere near the block
+	// TODO validate that the player is actually somewhere near the block
 
-    // TODO validate that the player has dug long enough to stop speed
-    // hacking (based on block type and tool used - non-trivial).
+	// TODO validate that the player has dug long enough to stop speed
+	// hacking (based on block type and tool used - non-trivial).
 
-    if face != FaceNull {
-        chunkLoc, subLoc := blockLoc.ToChunkLocal()
+	if face != FaceNull {
+		chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
-        player.game.Enqueue(func(game IGame) {
-            chunk := game.GetChunkManager().Get(chunkLoc)
+		player.game.Enqueue(func(game IGame) {
+			chunk := game.GetChunkManager().Get(chunkLoc)
 
-            if chunk == nil {
-                return
-            }
+			if chunk == nil {
+				return
+			}
 
-            chunk.Enqueue(func(chunk IChunk) {
-                chunk.DigBlock(subLoc, status)
-            })
-        })
-    } else {
-        // TODO player dropped item
-    }
+			chunk.Enqueue(func(chunk IChunk) {
+				chunk.DigBlock(subLoc, status)
+			})
+		})
+	} else {
+		// TODO player dropped item
+	}
 }
 
 func (player *Player) PacketPlayerBlockPlacement(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
-    if face < FaceMinValid || face > FaceMaxValid {
-        log.Printf("Player/PacketPlayerBlockPlacement: invalid face %d", face)
-        return
-    }
+	if face < FaceMinValid || face > FaceMaxValid {
+		log.Printf("Player/PacketPlayerBlockPlacement: invalid face %d", face)
+		return
+	}
 
-    // The position to put the block at.
-    dx, dy, dz := face.GetDxyz()
-    placeAtLoc := &BlockXyz{
-        blockLoc.X + dx,
-        blockLoc.Y + dy,
-        blockLoc.Z + dz,
-    }
-    placeChunkLoc, _ := placeAtLoc.ToChunkLocal()
+	// The position to put the block at.
+	dx, dy, dz := face.GetDxyz()
+	placeAtLoc := &BlockXyz{
+		blockLoc.X + dx,
+		blockLoc.Y + dy,
+		blockLoc.Z + dz,
+	}
+	placeChunkLoc, _ := placeAtLoc.ToChunkLocal()
 
-    player.lock.Lock()
-    defer player.lock.Unlock()
+	player.lock.Lock()
+	defer player.lock.Unlock()
 
-    heldSlot, heldSlotId := player.inventory.HeldItem()
+	heldSlot, heldSlotId := player.inventory.HeldItem()
 
-    // Make sure that it's a valid-looking block item.
-    itemType := heldSlot.ItemType
-    if itemType == nil || itemType.Id < ItemTypeId(BlockIdMin) || itemType.Id > ItemTypeId(BlockIdMax) {
-        log.Print("Player/PacketPlayerBlockPlacement: no or non-block item held")
-        return
-    }
+	// Make sure that it's a valid-looking block item.
+	itemType := heldSlot.ItemType
+	if itemType == nil || itemType.Id < ItemTypeId(BlockIdMin) || itemType.Id > ItemTypeId(BlockIdMax) {
+		log.Print("Player/PacketPlayerBlockPlacement: no or non-block item held")
+		return
+	}
 
-    // Take an item from the "held" slot.
-    tmpSlot := &slot.Slot{nil, 0, 0}
-    tmpSlot.AddOne(heldSlot)
+	// Take an item from the "held" slot.
+	tmpSlot := &slot.Slot{nil, 0, 0}
+	tmpSlot.AddOne(heldSlot)
 
-    buf := &bytes.Buffer{}
-    heldSlot.SendUpdate(buf, WindowIdInventory, heldSlotId)
-    player.TransmitPacket(buf.Bytes())
+	buf := &bytes.Buffer{}
+	heldSlot.SendUpdate(buf, WindowIdInventory, heldSlotId)
+	player.TransmitPacket(buf.Bytes())
 
-    player.game.Enqueue(func(game IGame) {
-        chunk := game.GetChunkManager().Get(placeChunkLoc)
+	player.game.Enqueue(func(game IGame) {
+		chunk := game.GetChunkManager().Get(placeChunkLoc)
 
-        if chunk == nil {
-            // Return item to player
-            // Note that this can technically fail, in which case the item vanishes.
-            log.Print("Player/PacketPlayerBlockPlacement: chunk not found")
-            player.OfferItem(tmpSlot)
-            return
-        }
+		if chunk == nil {
+			// Return item to player
+			// Note that this can technically fail, in which case the item vanishes.
+			log.Print("Player/PacketPlayerBlockPlacement: chunk not found")
+			player.OfferItem(tmpSlot)
+			return
+		}
 
-        chunk.Enqueue(func(chunk IChunk) {
-            // Note that we tell the chunk that the block is to get placed
-            // *into* to place it (rather than the block it's being attached
-            // to). The chunk itself determines if this will work.
-            if !chunk.PlaceBlock(blockLoc, face, BlockId(tmpSlot.ItemType.Id)) {
-                // Return item to player
-                // Note that this can technically fail, in which case the item vanishes.
-                player.OfferItem(tmpSlot)
-            }
-        })
-    })
+		chunk.Enqueue(func(chunk IChunk) {
+			// Note that we tell the chunk that the block is to get placed
+			// *into* to place it (rather than the block it's being attached
+			// to). The chunk itself determines if this will work.
+			if !chunk.PlaceBlock(blockLoc, face, BlockId(tmpSlot.ItemType.Id)) {
+				// Return item to player
+				// Note that this can technically fail, in which case the item vanishes.
+				player.OfferItem(tmpSlot)
+			}
+		})
+	})
 }
 
 func (player *Player) PacketHoldingChange(slotId SlotId) {
-    player.lock.Lock()
-    defer player.lock.Unlock()
-    player.inventory.SetHolding(slotId)
+	player.lock.Lock()
+	defer player.lock.Unlock()
+	player.inventory.SetHolding(slotId)
 }
 
 func (player *Player) PacketEntityAnimation(entityId EntityId, animation EntityAnimation) {
@@ -297,145 +297,145 @@ func (player *Player) PacketWindowClose(windowId WindowId) {
 
 func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, shiftClick bool, itemId ItemTypeId, amount ItemCount, uses ItemData) {
 
-    // Note that the parameters itemId, amount and uses are all currently
-    // ignored. The item(s) involved are worked out from the server-side data.
+	// Note that the parameters itemId, amount and uses are all currently
+	// ignored. The item(s) involved are worked out from the server-side data.
 
-    // Determine which inventory window is involved.
-    // TODO support for more windows
-    var clickedWindow inventory.IWindow
-    switch windowId {
-    case WindowIdInventory:
-        clickedWindow = &player.inventory
-    default:
-        // If this happens, then it's likely that either a client is trying to
-        // do something unusual, or that we haven't yet implemented something.
-        log.Printf(
-            "Warning: ignored window click on unknown window ID %d",
-            windowId)
-    }
+	// Determine which inventory window is involved.
+	// TODO support for more windows
+	var clickedWindow inventory.IWindow
+	switch windowId {
+	case WindowIdInventory:
+		clickedWindow = &player.inventory
+	default:
+		// If this happens, then it's likely that either a client is trying to
+		// do something unusual, or that we haven't yet implemented something.
+		log.Printf(
+			"Warning: ignored window click on unknown window ID %d",
+			windowId)
+	}
 
-    buf := &bytes.Buffer{}
-    accepted := false
+	buf := &bytes.Buffer{}
+	accepted := false
 
-    if clickedWindow != nil {
-        player.lock.Lock()
-        defer player.lock.Unlock()
-        accepted = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick)
+	if clickedWindow != nil {
+		player.lock.Lock()
+		defer player.lock.Unlock()
+		accepted = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick)
 
-        // We send slot updates in case we have custom max counts that differ
-        // from the client's own model.
-        player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
-    }
+		// We send slot updates in case we have custom max counts that differ
+		// from the client's own model.
+		player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
+	}
 
-    // Inform client of operation status.
-    proto.WriteWindowTransaction(buf, windowId, txId, accepted)
+	// Inform client of operation status.
+	proto.WriteWindowTransaction(buf, windowId, txId, accepted)
 
-    player.TransmitPacket(buf.Bytes())
+	player.TransmitPacket(buf.Bytes())
 }
 
 func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
-    // TODO investigate when this packet is sent from the client and what it
-    // means when it does get sent.
+	// TODO investigate when this packet is sent from the client and what it
+	// means when it does get sent.
 }
 
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 }
 
 func (player *Player) PacketDisconnect(reason string) {
-    log.Printf("Player %s disconnected reason=%s", player.name, reason)
-    player.game.Enqueue(func(game IGame) {
-        game.RemovePlayer(player)
-        player.txQueue <- nil
-        player.conn.Close()
-    })
+	log.Printf("Player %s disconnected reason=%s", player.name, reason)
+	player.game.Enqueue(func(game IGame) {
+		game.RemovePlayer(player)
+		player.txQueue <- nil
+		player.conn.Close()
+	})
 }
 
 func (player *Player) receiveLoop() {
-    for {
-        err := proto.ServerReadPacket(player.conn, player)
-        if err != nil {
-            if err != os.EOF {
-                log.Print("ReceiveLoop failed: ", err.String())
-            }
-            return
-        }
-    }
+	for {
+		err := proto.ServerReadPacket(player.conn, player)
+		if err != nil {
+			if err != os.EOF {
+				log.Print("ReceiveLoop failed: ", err.String())
+			}
+			return
+		}
+	}
 }
 
 // End of packet handling code
 
 func (player *Player) runQueuedCall(f func(IPlayer)) {
-    player.lock.Lock()
-    defer player.lock.Unlock()
-    f(player)
+	player.lock.Lock()
+	defer player.lock.Unlock()
+	f(player)
 }
 
 func (player *Player) mainLoop() {
-    expVarPlayerConnectionCount.Add(1)
-    defer func() {
-        expVarPlayerDisconnectionCount.Add(1)
-        player.chunkSubs.clear()
-    }()
+	expVarPlayerConnectionCount.Add(1)
+	defer func() {
+		expVarPlayerDisconnectionCount.Add(1)
+		player.chunkSubs.clear()
+	}()
 
-    player.postLogin()
+	player.postLogin()
 
-    for {
-        select {
-        case f := <-player.mainQueue:
-            player.runQueuedCall(f)
-        case bs := <-player.txQueue:
-            // TODO move txQueue handling to another goroutine to avoid
-            // needless deadlocking with player.Lock.
-            if bs == nil {
-                return // txQueue closed
-            }
+	for {
+		select {
+		case f := <-player.mainQueue:
+			player.runQueuedCall(f)
+		case bs := <-player.txQueue:
+			// TODO move txQueue handling to another goroutine to avoid
+			// needless deadlocking with player.Lock.
+			if bs == nil {
+				return // txQueue closed
+			}
 
-            _, err := player.conn.Write(bs)
-            if err != nil {
-                if err != os.EOF {
-                    log.Print("TransmitLoop failed: ", err.String())
-                }
-                return
-            }
-        }
-    }
+			_, err := player.conn.Write(bs)
+			if err != nil {
+				if err != os.EOF {
+					log.Print("TransmitLoop failed: ", err.String())
+				}
+				return
+			}
+		}
+	}
 }
 
 func (player *Player) TransmitPacket(packet []byte) {
-    if packet == nil {
-        return // skip empty packets
-    }
-    player.txQueue <- packet
+	if packet == nil {
+		return // skip empty packets
+	}
+	player.txQueue <- packet
 }
 
 // Used to receive items picked up from chunks.
 func (player *Player) OfferItem(item *slot.Slot) {
-    player.lock.Lock()
-    defer player.lock.Unlock()
+	player.lock.Lock()
+	defer player.lock.Unlock()
 
-    player.inventory.PutItem(item)
+	player.inventory.PutItem(item)
 
-    return
+	return
 }
 
 // Blocks until essential login packets have been transmitted.
 func (player *Player) postLogin() {
-    nearbySent := func() {
-        player.lock.Lock()
-        defer player.lock.Unlock()
+	nearbySent := func() {
+		player.lock.Lock()
+		defer player.lock.Unlock()
 
-        // Send player start position etc.
-        buf := &bytes.Buffer{}
-        proto.ServerWritePlayerPositionLook(
-            buf, &player.position, &player.look,
-            player.position.Y+StanceNormal, false)
+		// Send player start position etc.
+		buf := &bytes.Buffer{}
+		proto.ServerWritePlayerPositionLook(
+			buf, &player.position, &player.look,
+			player.position.Y+StanceNormal, false)
 
-        player.inventory.WriteWindowItems(buf)
+		player.inventory.WriteWindowItems(buf)
 
-        // FIXME: This could potentially deadlock with player.lock being held
-        // if the txQueue is full.
-        player.TransmitPacket(buf.Bytes())
-    }
+		// FIXME: This could potentially deadlock with player.lock being held
+		// if the txQueue is full.
+		player.TransmitPacket(buf.Bytes())
+	}
 
-    player.chunkSubs.Move(&player.position, nearbySent)
+	player.chunkSubs.Move(&player.position, nearbySent)
 }

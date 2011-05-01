@@ -1,11 +1,11 @@
 package block
 
 import (
-    . "chunkymonkey/types"
+	. "chunkymonkey/types"
 )
 
 func makeTodoAspect() (aspect IBlockAspect) {
-    return &TodoAspect{}
+	return &TodoAspect{}
 }
 
 // TodoAspect has the same behaviour as that of a "void" block -
@@ -13,14 +13,14 @@ func makeTodoAspect() (aspect IBlockAspect) {
 // whose behaviour is still to be implemented. A comment allows for
 // notes to be made, but provides no functional change.
 type TodoAspect struct {
-    Comment string
+	Comment string
 }
 
 func (aspect *TodoAspect) Name() string {
-    return "Todo"
+	return "Todo"
 }
 
 func (aspect *TodoAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
-    destroyed = false
-    return
+	destroyed = false
+	return
 }
