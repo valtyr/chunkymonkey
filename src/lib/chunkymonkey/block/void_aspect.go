@@ -15,7 +15,7 @@ func (aspect *VoidAspect) Name() string {
 	return "Void"
 }
 
-func (aspect *VoidAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
+func (aspect *VoidAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, blockData byte, digStatus DigStatus) (destroyed bool) {
 	destroyed = false
 	return
 }

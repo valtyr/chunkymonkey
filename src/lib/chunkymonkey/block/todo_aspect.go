@@ -20,7 +20,7 @@ func (aspect *TodoAspect) Name() string {
 	return "Todo"
 }
 
-func (aspect *TodoAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
+func (aspect *TodoAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, blockData byte, digStatus DigStatus) (destroyed bool) {
 	destroyed = false
 	return
 }
