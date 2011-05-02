@@ -13,6 +13,7 @@ import (
 	"chunkymonkey/entity"
 	. "chunkymonkey/interfaces"
 	"chunkymonkey/inventory"
+	"chunkymonkey/itemtype"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -115,6 +116,15 @@ func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
 	return player.inventory.SendFullEquipmentUpdate(writer)
 }
 
+func (player *Player) GetHeldItemType() *itemtype.ItemType {
+	slot, _ := player.inventory.HeldItem()
+	return slot.ItemType
+}
+
+func (player *Player) TakeOneHeldItem(into *slot.Slot) {
+	player.inventory.TakeOneHeldItem(into)
+}
+
 func (player *Player) start() {
 	go player.receiveLoop()
 	go player.transmitLoop()
@@ -210,7 +220,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz,
 			}
 
 			chunk.Enqueue(func(chunk IChunk) {
-				chunk.DigBlock(subLoc, status)
+				chunk.PlayerBlockHit(player, subLoc, status)
 			})
 		})
 	} else {
@@ -220,59 +230,22 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz,
 
 func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
 	if face < FaceMinValid || face > FaceMaxValid {
+		// TODO sometimes FaceNull means something. This case should be covered.
 		log.Printf("Player/PacketPlayerBlockInteract: invalid face %d", face)
 		return
 	}
 
-	// The position to put the block at.
-	dx, dy, dz := face.GetDxyz()
-	placeAtLoc := &BlockXyz{
-		blockLoc.X + dx,
-		blockLoc.Y + dy,
-		blockLoc.Z + dz,
-	}
-	placeChunkLoc, _ := placeAtLoc.ToChunkLocal()
-
-	player.lock.Lock()
-	defer player.lock.Unlock()
-
-	heldSlot, heldSlotId := player.inventory.HeldItem()
-
-	// Make sure that it's a valid-looking block item.
-	itemType := heldSlot.ItemType
-	if itemType == nil || itemType.Id < ItemTypeId(BlockIdMin) || itemType.Id > ItemTypeId(BlockIdMax) {
-		log.Print("Player/PacketPlayerBlockInteract: no or non-block item held")
-		return
-	}
-
-	// Take an item from the "held" slot.
-	tmpSlot := &slot.Slot{nil, 0, 0}
-	tmpSlot.AddOne(heldSlot)
-
-	buf := &bytes.Buffer{}
-	heldSlot.SendUpdate(buf, WindowIdInventory, heldSlotId)
-	player.TransmitPacket(buf.Bytes())
+	placeChunkLoc, _ := blockLoc.ToChunkLocal()
 
 	player.game.Enqueue(func(game IGame) {
 		chunk := game.GetChunkManager().Get(placeChunkLoc)
 
 		if chunk == nil {
-			// Return item to player
-			// Note that this can technically fail, in which case the item vanishes.
-			log.Print("Player/PacketPlayerBlockInteract: chunk not found")
-			player.OfferItem(tmpSlot)
 			return
 		}
 
 		chunk.Enqueue(func(chunk IChunk) {
-			// Note that we tell the chunk that the block is to get placed
-			// *into* to place it (rather than the block it's being attached
-			// to). The chunk itself determines if this will work.
-			if !chunk.PlaceBlock(blockLoc, face, BlockId(tmpSlot.ItemType.Id)) {
-				// Return item to player
-				// Note that this can technically fail, in which case the item vanishes.
-				player.OfferItem(tmpSlot)
-			}
+			chunk.PlayerBlockInteract(player, blockLoc, face)
 		})
 	})
 }
@@ -411,11 +384,20 @@ func (player *Player) mainLoop() {
 	}
 }
 
+// Enqueue queues a function to run with the player lock within the player's
+// mainloop.
 func (player *Player) Enqueue(f func(IPlayer)) {
 	if f == nil {
 		return
 	}
 	player.mainQueue <- f
+}
+
+// WithLock runs a function with the player lock within the calling goroutine.
+func (player *Player) WithLock(f func(IPlayer)) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+	f(player)
 }
 
 // Used to receive items picked up from chunks.

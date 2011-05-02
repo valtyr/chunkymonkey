@@ -78,9 +78,19 @@ func (w *PlayerInventory) SetHolding(holding SlotId) {
 // TODO need any changes to the held item slot to create notifications to
 // players.
 func (w *PlayerInventory) HeldItem() (slot *slot.Slot, slotId SlotId) {
-	slotId = playerInvHoldingStart + w.holdingIndex
+	slotId = w.holdingIndex
 	slot = &w.holding.slots[w.holdingIndex]
 	return
+}
+
+// TakeOneHeldItem takes one item from the stack of items the player is holding
+// and puts it in `into`. It does nothing if the player is holding no items, or
+// if `into` cannot take any items of that type.
+func (w *PlayerInventory) TakeOneHeldItem(into *slot.Slot) {
+	slot := &w.holding.slots[w.holdingIndex]
+	if into.AddOne(slot) {
+		w.holding.slotUpdate(slot, w.holdingIndex)
+	}
 }
 
 // Writes packets for other players to see the equipped items.
