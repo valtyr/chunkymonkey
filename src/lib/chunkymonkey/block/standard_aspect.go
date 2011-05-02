@@ -30,7 +30,7 @@ func (aspect *StandardAspect) Name() string {
 	return "Standard"
 }
 
-func (aspect *StandardAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
+func (aspect *StandardAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, digStatus DigStatus) (destroyed bool) {
 	if aspect.BreakOn != digStatus {
 		return
 	}
@@ -72,4 +72,7 @@ func (aspect *StandardAspect) Dig(chunk IChunkBlock, blockLoc *BlockXyz, digStat
 	}
 
 	return
+}
+
+func (aspect *StandardAspect) Interact(player IBlockPlayer) {
 }

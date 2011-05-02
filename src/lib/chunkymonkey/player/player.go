@@ -40,8 +40,10 @@ type Player struct {
 	look      LookDegrees
 	chunkSubs chunkSubscriptions
 
-	cursor    slot.Slot // Item being moved by mouse cursor.
-	inventory inventory.PlayerInventory
+	cursor       slot.Slot // Item being moved by mouse cursor.
+	inventory    inventory.PlayerInventory
+	curWindow    inventory.IWindow
+	nextWindowId WindowId
 
 	mainQueue chan func(IPlayer)
 	txQueue   chan []byte
@@ -50,11 +52,15 @@ type Player struct {
 
 func StartPlayer(game IGame, conn net.Conn, name string) {
 	player := &Player{
-		game:      game,
-		conn:      conn,
-		name:      name,
-		position:  *game.GetStartPosition(),
-		look:      LookDegrees{0, 0},
+		game:     game,
+		conn:     conn,
+		name:     name,
+		position: *game.GetStartPosition(),
+		look:     LookDegrees{0, 0},
+
+		curWindow:    nil,
+		nextWindowId: WindowIdFreeMin,
+
 		mainQueue: make(chan func(IPlayer), 128),
 		txQueue:   make(chan []byte, 128),
 	}
@@ -263,22 +269,30 @@ func (player *Player) PacketUnknown0x1b(field1, field2 float32, field3, field4 b
 }
 
 func (player *Player) PacketWindowClose(windowId WindowId) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
+	if player.curWindow != nil && player.curWindow.GetWindowId() == windowId {
+		player.curWindow.Finalize(false)
+	}
 }
 
 func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, shiftClick bool, itemId ItemTypeId, amount ItemCount, uses ItemData) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
 
 	// Note that the parameters itemId, amount and uses are all currently
 	// ignored. The item(s) involved are worked out from the server-side data.
 
 	// Determine which inventory window is involved.
 	// TODO support for more windows
+
 	var clickedWindow inventory.IWindow
-	switch windowId {
-	case WindowIdInventory:
+	if windowId == WindowIdInventory {
 		clickedWindow = &player.inventory
-	default:
-		// If this happens, then it's likely that either a client is trying to
-		// do something unusual, or that we haven't yet implemented something.
+	} else if player.curWindow != nil && player.curWindow.GetWindowId() == windowId {
+		clickedWindow = player.curWindow
+	} else {
 		log.Printf(
 			"Warning: ignored window click on unknown window ID %d",
 			windowId)
@@ -288,8 +302,6 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 	accepted := false
 
 	if clickedWindow != nil {
-		player.lock.Lock()
-		defer player.lock.Unlock()
 		accepted = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick)
 
 		// We send slot updates in case we have custom max counts that differ
@@ -400,7 +412,9 @@ func (player *Player) WithLock(f func(IPlayer)) {
 	f(player)
 }
 
-// Used to receive items picked up from chunks.
+// Used to receive items picked up from chunks. It is synchronous so that the
+// passed item can be looked at by the caller afterwards to see if it has been
+// consumed.
 func (player *Player) OfferItem(item *slot.Slot) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
@@ -408,6 +422,43 @@ func (player *Player) OfferItem(item *slot.Slot) {
 	player.inventory.PutItem(item)
 
 	return
+}
+
+// OpenWindow queues a request that the player opens the given window type.
+// TODO this should be passed an appropriate *Inventory for inventories that
+// are tied to the world (particularly for chests).
+func (player *Player) OpenWindow(invTypeId InvTypeId) {
+	player.Enqueue(func(_ IPlayer) {
+		player.closeCurrentWindow(true)
+		window := player.inventory.NewWindow(invTypeId, player.nextWindowId)
+
+		buf := &bytes.Buffer{}
+		if err := window.WriteWindowOpen(buf); err != nil {
+			window.Finalize(false)
+			return
+		}
+		if err := window.WriteWindowItems(buf); err != nil {
+			window.Finalize(false)
+			return
+		}
+		player.TransmitPacket(buf.Bytes())
+
+		player.curWindow = window
+		if player.nextWindowId >= WindowIdFreeMax {
+			player.nextWindowId = WindowIdFreeMin
+		} else {
+			player.nextWindowId++
+		}
+	})
+}
+
+// closeCurrentWindow closes any open window. It must be called with
+// player.lock held.
+func (player *Player) closeCurrentWindow(sendClosePacket bool) {
+	if player.curWindow != nil {
+		player.curWindow.Finalize(sendClosePacket)
+	}
+	player.curWindow = nil
 }
 
 // Blocks until essential login packets have been transmitted.

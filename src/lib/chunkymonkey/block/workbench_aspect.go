@@ -1,5 +1,9 @@
 package block
 
+import (
+	. "chunkymonkey/types"
+)
+
 func makeWorkbenchAspect() (aspect IBlockAspect) {
 	return &WorkbenchAspect{}
 }
@@ -12,4 +16,8 @@ type WorkbenchAspect struct {
 
 func (aspect *WorkbenchAspect) Name() string {
 	return "Workbench"
+}
+
+func (aspect *WorkbenchAspect) Interact(player IBlockPlayer) {
+	player.OpenWindow(InvTypeIdWorkbench)
 }

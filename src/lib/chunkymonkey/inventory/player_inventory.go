@@ -13,20 +13,20 @@ const (
 	playerInvCraftWidth  = 2
 	playerInvCraftHeight = 2
 	playerInvCraftNum    = 1 + playerInvCraftWidth + playerInvCraftHeight
-	playerInvCraftStart  = SlotId(0)
-	playerInvCraftEnd    = playerInvCraftStart + SlotId(playerInvCraftNum)
+	playerInvCraftStart  = 0
+	playerInvCraftEnd    = playerInvCraftStart + playerInvCraftNum
 
-	playerInvArmorStart = SlotId(5)
-	playerInvArmorEnd   = SlotId(9)
-	playerInvArmorNum   = int(playerInvArmorEnd - playerInvArmorStart)
+	playerInvArmorNum   = 4
+	playerInvArmorStart = playerInvCraftEnd
+	playerInvArmorEnd   = playerInvArmorStart + playerInvArmorNum
 
-	playerInvMainStart = SlotId(9)
-	playerInvMainEnd   = SlotId(36)
-	playerInvMainNum   = int(playerInvMainEnd - playerInvMainStart)
+	playerInvMainNum   = 3 * 9
+	playerInvMainStart = playerInvArmorEnd
+	playerInvMainEnd   = playerInvMainStart + playerInvMainNum
 
-	playerInvHoldingStart = SlotId(36)
-	playerInvHoldingEnd   = SlotId(45)
-	playerInvHoldingNum   = int(playerInvHoldingEnd - playerInvHoldingStart)
+	playerInvHoldingNum   = 9
+	playerInvHoldingStart = playerInvMainEnd
+	playerInvHoldingEnd   = playerInvHoldingStart + playerInvHoldingNum
 
 	playerInvSize = playerInvCraftNum + playerInvArmorNum + playerInvMainNum + playerInvHoldingNum
 )
@@ -65,6 +65,21 @@ func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, gameRule
 		&w.holding,
 	)
 	w.holdingIndex = 0
+}
+
+// NewWindow creates a new window for the player that shares its player
+// inventory sections with `w`. Returns nil for unrecognized inventory types.
+// TODO implement more inventory types.
+func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId) IWindow {
+	switch invTypeId {
+	case InvTypeIdWorkbench:
+		return NewWorkbenchWindow(
+			w.entityId, w.viewer, w.gameRules,
+			windowId,
+			&w.main, &w.holding)
+	default:
+	}
+	return nil
 }
 
 // SetHolding chooses the held item (0-8). Out of range values have no effect.

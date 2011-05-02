@@ -107,7 +107,7 @@ func (s *Slot) AddWhole(src *Slot) (changed bool) {
 
 	maxStack := src.ItemType.MaxStack
 
-	if src.Count + s.Count > maxStack {
+	if src.Count+s.Count > maxStack {
 		return
 	}
 

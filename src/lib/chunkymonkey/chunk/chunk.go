@@ -187,7 +187,7 @@ func (chunk *Chunk) PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatu
 	blockLoc := chunk.loc.ToBlockXyz(subLoc)
 
 	if blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId); ok && blockType.Destructable {
-		if blockType.Aspect.Dig(chunk, blockLoc, digStatus) {
+		if blockType.Aspect.Hit(chunk, blockLoc, digStatus) {
 			chunk.setBlock(blockLoc, subLoc, index, shift, BlockIdAir, 0)
 		}
 	} else {
@@ -254,7 +254,7 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 		}
 
 	} else {
-		// TODO Try block aspect interaction
+		blockType.Aspect.Interact(player)
 	}
 
 	return
