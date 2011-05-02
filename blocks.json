@@ -895,7 +895,7 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
+    "Aspect": "Workbench",
     "AspectArgs": {
       "DroppedItems": [
         {
