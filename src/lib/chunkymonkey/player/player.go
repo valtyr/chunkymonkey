@@ -431,6 +431,9 @@ func (player *Player) OpenWindow(invTypeId InvTypeId) {
 	player.Enqueue(func(_ IPlayer) {
 		player.closeCurrentWindow(true)
 		window := player.inventory.NewWindow(invTypeId, player.nextWindowId)
+		if window == nil {
+			return
+		}
 
 		buf := &bytes.Buffer{}
 		if err := window.WriteWindowOpen(buf); err != nil {
