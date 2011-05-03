@@ -104,6 +104,6 @@ Use netcat or a similar tool to start an otherwise idle TCP connection to the
 server.
 
 
-[1]: http://golang.org/doc/install.html#fetch    "Go toolchain installation"
+[1]: http://golang.org/doc/install.html          "Go toolchain installation"
 [2]: http://code.google.com/p/godag/wiki/Install "Godag builder"
 [3]: https://github.com/huin                     "Huin on Github"
