@@ -1225,6 +1225,9 @@ func readNamedEntitySpawn(reader io.Reader, handler ClientPacketHandler) (err os
 		Yaw, Pitch  AngleBytes
 		CurrentItem ItemTypeId
 	}
+	if err = binary.Read(reader, binary.BigEndian, &packetEnd); err != nil {
+		return
+	}
 
 	handler.PacketNamedEntitySpawn(
 		entityId,
