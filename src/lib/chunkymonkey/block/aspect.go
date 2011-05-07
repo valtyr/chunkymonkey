@@ -5,6 +5,7 @@ import (
 
 	"chunkymonkey/item"
 	"chunkymonkey/itemtype"
+	"chunkymonkey/recipe"
 	. "chunkymonkey/types"
 )
 
@@ -15,7 +16,7 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 // IBlockPlayer defines the interactions that a block aspect may have upon a
 // player.
 type IBlockPlayer interface {
-	OpenWindow(invTypeId InvTypeId)
+	OpenWindow(invTypeId InvTypeId, inventory interface{})
 }
 
 // The interface required of a chunk by block behaviour.
@@ -23,6 +24,9 @@ type IChunkBlock interface {
 	GetRand() *rand.Rand
 	GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
 	AddItem(item *item.Item)
+	GetBlockExtra(subLoc *SubChunkXyz) interface{}
+	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
+	GetRecipeSet() *recipe.RecipeSet
 }
 
 // BlockInstance represents the instance of a block within a chunk.

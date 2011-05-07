@@ -1,6 +1,7 @@
 package block
 
 import (
+	"chunkymonkey/inventory"
 	. "chunkymonkey/types"
 )
 
@@ -19,5 +20,13 @@ func (aspect *WorkbenchAspect) Name() string {
 }
 
 func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player IBlockPlayer) {
-	player.OpenWindow(InvTypeIdWorkbench)
+	workbenchInv, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
+	if !ok {
+		// TODO have the inventory stop existing when all players unsubscribe from
+		// it, and have it throw items out into the chunk it's in.
+		workbenchInv = inventory.NewWorkbenchInventory(instance.Chunk.GetRecipeSet())
+		instance.Chunk.SetBlockExtra(&instance.SubLoc, workbenchInv)
+		return
+	}
+	player.OpenWindow(InvTypeIdWorkbench, workbenchInv)
 }

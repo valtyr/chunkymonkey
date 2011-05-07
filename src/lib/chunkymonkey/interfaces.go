@@ -32,7 +32,7 @@ type IPlayer interface {
 	LockedGetChunkPosition() *ChunkXz
 	TransmitPacket(packet []byte)
 	OfferItem(item *slot.Slot)
-	OpenWindow(invTypeId InvTypeId)
+	OpenWindow(invTypeId InvTypeId, inventory interface{})
 
 	Enqueue(f func(IPlayer))
 	WithLock(f func(IPlayer))

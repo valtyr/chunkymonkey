@@ -6,6 +6,11 @@ import (
 	. "chunkymonkey/types"
 )
 
+const (
+	workbenchInvCraftWidth  = 3
+	workbenchInvCraftHeight = 3
+)
+
 // Inventory with extended function to perform crafting. It assumes that slot 0
 // is the output, and that the remaining slots are inputs.
 type CraftingInventory struct {
@@ -52,5 +57,19 @@ func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick
 	inv.slots[0] = inv.recipes.Match(inv.width, inv.height, inv.slots[1:])
 	inv.slotUpdate(&inv.slots[0], 0)
 
+	return
+}
+
+type WorkbenchInventory struct {
+	CraftingInventory
+}
+
+func NewWorkbenchInventory(recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
+	inv = new(WorkbenchInventory)
+	inv.CraftingInventory.Init(
+		workbenchInvCraftWidth,
+		workbenchInvCraftHeight,
+		recipes,
+	)
 	return
 }

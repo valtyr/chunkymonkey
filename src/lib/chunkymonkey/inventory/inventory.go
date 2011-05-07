@@ -18,6 +18,8 @@ type Inventory struct {
 	subscribers map[IInventorySubscriber]bool
 }
 
+// Init initializes the inventory. onUnsubscribed is called when the number of
+// subscribers to the inventory reaches zero (but is not called initially).
 func (inv *Inventory) Init(size int) {
 	inv.slots = make([]slot.Slot, size)
 	for i := range inv.slots {

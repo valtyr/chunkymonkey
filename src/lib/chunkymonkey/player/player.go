@@ -427,10 +427,10 @@ func (player *Player) OfferItem(item *slot.Slot) {
 // OpenWindow queues a request that the player opens the given window type.
 // TODO this should be passed an appropriate *Inventory for inventories that
 // are tied to the world (particularly for chests).
-func (player *Player) OpenWindow(invTypeId InvTypeId) {
+func (player *Player) OpenWindow(invTypeId InvTypeId, inventory interface{}) {
 	player.Enqueue(func(_ IPlayer) {
 		player.closeCurrentWindow(true)
-		window := player.inventory.NewWindow(invTypeId, player.nextWindowId)
+		window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
 		if window == nil {
 			return
 		}

@@ -15,6 +15,7 @@ import (
 	"chunkymonkey/item"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/proto"
+	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -37,6 +38,7 @@ type Chunk struct {
 	skyLight      []byte
 	heightMap     []byte
 	items         map[EntityId]*item.Item
+	blockExtra    map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand          *rand.Rand
 	neighbours    neighboursCache
 	cachedPacket  []byte                       // Cached packet data for this block.
@@ -55,6 +57,7 @@ func newChunkFromReader(reader chunkstore.ChunkReader, mgr *ChunkManager) (chunk
 		blockLight:    reader.BlockLight(),
 		heightMap:     reader.HeightMap(),
 		items:         make(map[EntityId]*item.Item),
+		blockExtra:    make(map[BlockIndex]interface{}),
 		rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
 		subscribers:   make(map[IChunkSubscriber]bool),
 		subscriberPos: make(map[IChunkSubscriber]*AbsXyz),
@@ -142,6 +145,21 @@ func (chunk *Chunk) TransferItem(item *item.Item) {
 	chunk.items[item.GetEntity().EntityId] = item
 }
 
+func (chunk *Chunk) GetBlockExtra(subLoc *SubChunkXyz) interface{} {
+	if index, ok := subLoc.BlockIndex(); ok {
+		if extra, ok := chunk.blockExtra[index]; ok {
+			return extra
+		}
+	}
+	return nil
+}
+
+func (chunk *Chunk) SetBlockExtra(subLoc *SubChunkXyz, extra interface{}) {
+	if index, ok := subLoc.BlockIndex(); ok {
+		chunk.blockExtra[index] = extra
+	}
+}
+
 func (chunk *Chunk) GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
 	index, ok := subLoc.BlockIndex()
 	if !ok {
@@ -151,6 +169,10 @@ func (chunk *Chunk) GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
 	blockType = index.GetBlockId(chunk.blocks)
 
 	return
+}
+
+func (chunk *Chunk) GetRecipeSet() *recipe.RecipeSet {
+	return chunk.mgr.gameRules.Recipes
 }
 
 func (chunk *Chunk) PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool) {
@@ -238,6 +260,7 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 		}
 
 	} else {
+		// Player is otherwise interacting with the block.
 		blockInstance := &block.BlockInstance{
 			Chunk:    chunk,
 			BlockLoc: *target,

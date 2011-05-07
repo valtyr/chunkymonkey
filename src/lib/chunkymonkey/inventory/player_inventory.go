@@ -34,7 +34,6 @@ const (
 type PlayerInventory struct {
 	Window
 	entityId     EntityId
-	recipes      *recipe.RecipeSet
 	crafting     CraftingInventory
 	armor        Inventory
 	main         Inventory
@@ -47,7 +46,6 @@ type PlayerInventory struct {
 func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *recipe.RecipeSet) {
 	w.entityId = entityId
 
-	w.recipes = recipes
 	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, recipes)
 	w.armor.Init(playerInvArmorNum)
 	w.main.Init(playerInvMainNum)
@@ -70,13 +68,15 @@ func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes 
 // NewWindow creates a new window for the player that shares its player
 // inventory sections with `w`. Returns nil for unrecognized inventory types.
 // TODO implement more inventory types.
-func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId) IWindow {
+func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId, inventory interface{}) IWindow {
 	switch invTypeId {
 	case InvTypeIdWorkbench:
-		return NewWorkbenchWindow(
-			w.entityId, w.viewer, w.recipes,
-			windowId,
-			&w.main, &w.holding)
+		if crafting, ok := inventory.(*WorkbenchInventory); ok && crafting != nil {
+			return NewWorkbenchWindow(
+				w.entityId, w.viewer,
+				windowId,
+				crafting, &w.main, &w.holding)
+		}
 	default:
 	}
 	return nil
