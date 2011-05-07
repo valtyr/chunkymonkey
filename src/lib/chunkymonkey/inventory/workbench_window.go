@@ -1,7 +1,7 @@
 package inventory
 
 import (
-	"chunkymonkey/gamerules"
+	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -22,19 +22,19 @@ const (
 
 type WorkbenchWindow struct {
 	Window
-	gameRules *gamerules.GameRules
+	recipes   *recipe.RecipeSet
 	crafting  CraftingInventory
 	main      *Inventory
 	holding   *Inventory
 }
 
-func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, gameRules *gamerules.GameRules, windowId WindowId, main, holding *Inventory) (w *WorkbenchWindow) {
+func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, recipes *recipe.RecipeSet, windowId WindowId, main, holding *Inventory) (w *WorkbenchWindow) {
 	w = &WorkbenchWindow{
-		gameRules: gameRules,
-		main:      main,
-		holding:   holding,
+		recipes: recipes,
+		main:    main,
+		holding: holding,
 	}
-	w.crafting.Init(workbenchInvCraftWidth, workbenchInvCraftHeight, gameRules)
+	w.crafting.Init(workbenchInvCraftWidth, workbenchInvCraftHeight, recipes)
 	w.Window.Init(
 		windowId,
 		InvTypeIdWorkbench,

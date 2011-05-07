@@ -68,7 +68,7 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 	player.chunkSubs.Init(player)
 
 	player.cursor.Init()
-	player.inventory.Init(player.EntityId, player, game.GetGameRules())
+	player.inventory.Init(player.EntityId, player, game.GetGameRules().Recipes)
 
 	game.Enqueue(func(game IGame) {
 		game.AddPlayer(player)

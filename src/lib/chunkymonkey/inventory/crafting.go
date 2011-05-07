@@ -1,7 +1,7 @@
 package inventory
 
 import (
-	"chunkymonkey/gamerules"
+	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -11,14 +11,14 @@ import (
 type CraftingInventory struct {
 	Inventory
 	width, height int
-	gameRules     *gamerules.GameRules
+	recipes       *recipe.RecipeSet
 }
 
-func (inv *CraftingInventory) Init(width, height int, gameRules *gamerules.GameRules) {
+func (inv *CraftingInventory) Init(width, height int, recipes *recipe.RecipeSet) {
 	inv.Inventory.Init(1 + width*height)
 	inv.width = width
 	inv.height = height
-	inv.gameRules = gameRules
+	inv.recipes = recipes
 }
 
 // Click handles window clicks from a user with special handling for crafting.
@@ -49,7 +49,7 @@ func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick
 	}
 
 	// Match recipe and set output slot.
-	inv.slots[0] = inv.gameRules.Recipes.Match(inv.width, inv.height, inv.slots[1:])
+	inv.slots[0] = inv.recipes.Match(inv.width, inv.height, inv.slots[1:])
 	inv.slotUpdate(&inv.slots[0], 0)
 
 	return

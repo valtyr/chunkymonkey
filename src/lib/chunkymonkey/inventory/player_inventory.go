@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"chunkymonkey/gamerules"
+	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -34,7 +34,7 @@ const (
 type PlayerInventory struct {
 	Window
 	entityId     EntityId
-	gameRules    *gamerules.GameRules
+	recipes      *recipe.RecipeSet
 	crafting     CraftingInventory
 	armor        Inventory
 	main         Inventory
@@ -44,11 +44,11 @@ type PlayerInventory struct {
 
 // Init initializes PlayerInventory.
 // entityId - The EntityId of the player who holds the inventory.
-func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, gameRules *gamerules.GameRules) {
+func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *recipe.RecipeSet) {
 	w.entityId = entityId
-	w.gameRules = gameRules
 
-	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, gameRules)
+	w.recipes = recipes
+	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, recipes)
 	w.armor.Init(playerInvArmorNum)
 	w.main.Init(playerInvMainNum)
 	w.holding.Init(playerInvHoldingNum)
@@ -74,7 +74,7 @@ func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId) IWin
 	switch invTypeId {
 	case InvTypeIdWorkbench:
 		return NewWorkbenchWindow(
-			w.entityId, w.viewer, w.gameRules,
+			w.entityId, w.viewer, w.recipes,
 			windowId,
 			&w.main, &w.holding)
 	default:
