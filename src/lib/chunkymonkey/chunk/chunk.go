@@ -166,10 +166,10 @@ func (chunk *Chunk) PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatu
 		blockLoc := chunk.loc.ToBlockXyz(subLoc)
 
 		blockInstance := &block.BlockInstance{
-			Chunk: chunk,
+			Chunk:    chunk,
 			BlockLoc: *blockLoc,
-			SubLoc: *subLoc,
-			Data: blockData,
+			SubLoc:   *subLoc,
+			Data:     blockData,
 		}
 		if blockType.Aspect.Hit(blockInstance, player, digStatus) {
 			chunk.setBlock(blockLoc, subLoc, index, BlockIdAir, 0)
@@ -239,10 +239,10 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 
 	} else {
 		blockInstance := &block.BlockInstance{
-			Chunk: chunk,
+			Chunk:    chunk,
 			BlockLoc: *target,
-			SubLoc: *subLoc,
-			Data: index.GetBlockData(chunk.blockData),
+			SubLoc:   *subLoc,
+			Data:     index.GetBlockData(chunk.blockData),
 		}
 		blockType.Aspect.Interact(blockInstance, player)
 	}
