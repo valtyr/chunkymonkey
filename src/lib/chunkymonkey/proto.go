@@ -821,19 +821,21 @@ func readPlayerLook(reader io.Reader, handler PacketHandler) (err os.Error) {
 
 // packetIdPlayerPositionLook
 
-func WritePlayerPositionLook(writer io.Writer, position *AbsXyz, stance AbsCoord, look *LookDegrees, onGround bool) (err os.Error) {
+// packetIdPlayerPositionLook
+
+func writePlayerPositionLookCommon(writer io.Writer, x, y1, y2, z AbsCoord, look *LookDegrees, onGround bool) (err os.Error) {
 	var packet = struct {
 		PacketId byte
 		X        AbsCoord
-		Y        AbsCoord
-		Stance   AbsCoord
+		Y1       AbsCoord
+		Y2       AbsCoord
 		Z        AbsCoord
 		Yaw      AngleDegrees
 		Pitch    AngleDegrees
 		OnGround byte
 	}{
 		packetIdPlayerPositionLook,
-		position.X, position.Y, stance, position.Z,
+		x, y1, y2, z,
 		look.Yaw, look.Pitch,
 		boolToByte(onGround),
 	}
@@ -841,11 +843,27 @@ func WritePlayerPositionLook(writer io.Writer, position *AbsXyz, stance AbsCoord
 	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readPlayerPositionLook(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
+func ClientWritePlayerPositionLook(writer io.Writer, position *AbsXyz, stance AbsCoord, look *LookDegrees, onGround bool) (err os.Error) {
+	return writePlayerPositionLookCommon(
+		writer,
+		position.X, position.Y, stance, position.Z,
+		look,
+		onGround)
+}
+
+func ServerWritePlayerPositionLook(writer io.Writer, position *AbsXyz, stance AbsCoord, look *LookDegrees, onGround bool) (err os.Error) {
+	return writePlayerPositionLookCommon(
+		writer,
+		position.X, stance, position.Y, position.Z,
+		look,
+		onGround)
+}
+
+func clientReadPlayerPositionLook(reader io.Reader, handler ClientPacketHandler) (err os.Error) {
 	var packet struct {
 		X        AbsCoord
-		Y        AbsCoord
 		Stance   AbsCoord
+		Y        AbsCoord
 		Z        AbsCoord
 		Yaw      AngleDegrees
 		Pitch    AngleDegrees
@@ -875,38 +893,11 @@ func readPlayerPositionLook(reader io.Reader, handler ClientPacketHandler) (err 
 	return
 }
 
-// packetIdPlayerPositionLook
-
-// TODO client versions, factor out common code
-
-func ServerWritePlayerPositionLook(writer io.Writer, position *AbsXyz, look *LookDegrees, stance AbsCoord, onGround bool) os.Error {
-	var packet = struct {
-		PacketId byte
-		X        AbsCoord
-		Y        AbsCoord
-		Stance   AbsCoord
-		Z        AbsCoord
-		Yaw      AngleDegrees
-		Pitch    AngleDegrees
-		OnGround byte
-	}{
-		packetIdPlayerPositionLook,
-		position.X,
-		position.Y,
-		stance,
-		position.Z,
-		look.Yaw,
-		look.Pitch,
-		boolToByte(onGround),
-	}
-	return binary.Write(writer, binary.BigEndian, &packet)
-}
-
-func serverPlayerPositionLook(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
+func serverReadPlayerPositionLook(reader io.Reader, handler ServerPacketHandler) (err os.Error) {
 	var packet struct {
 		X        AbsCoord
-		Stance   AbsCoord
 		Y        AbsCoord
+		Stance   AbsCoord
 		Z        AbsCoord
 		Yaw      AngleDegrees
 		Pitch    AngleDegrees
@@ -2739,7 +2730,7 @@ var commonReadFns = commonPacketReaderMap{
 // Client->server specific packet mapping
 var serverReadFns = serverPacketReaderMap{
 	packetIdPlayer:             readPlayer,
-	packetIdPlayerPositionLook: serverPlayerPositionLook,
+	packetIdPlayerPositionLook: serverReadPlayerPositionLook,
 	packetIdWindowClick:        readWindowClick,
 	packetIdHoldingChange:      readHoldingChange,
 	packetIdWindowClose:        readWindowClose,
@@ -2752,7 +2743,7 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdEntityEquipment:      readEntityEquipment,
 	packetIdSpawnPosition:        readSpawnPosition,
 	packetIdUpdateHealth:         readUpdateHealth,
-	packetIdPlayerPositionLook:   readPlayerPositionLook,
+	packetIdPlayerPositionLook:   clientReadPlayerPositionLook,
 	packetIdBedUse:               readBedUse,
 	packetIdNamedEntitySpawn:     readNamedEntitySpawn,
 	packetIdItemSpawn:            readItemSpawn,

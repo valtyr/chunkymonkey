@@ -473,8 +473,9 @@ func (player *Player) postLogin() {
 		// Send player start position etc.
 		buf := &bytes.Buffer{}
 		proto.ServerWritePlayerPositionLook(
-			buf, &player.position, &player.look,
-			player.position.Y+StanceNormal, false)
+			buf,
+			&player.position, player.position.Y+StanceNormal,
+			&player.look, false)
 
 		player.inventory.WriteWindowItems(buf)
 
