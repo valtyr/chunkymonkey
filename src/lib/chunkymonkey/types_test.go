@@ -31,6 +31,29 @@ func TestLookDegrees_ToLookBytes(t *testing.T) {
 	}
 }
 
+func TestChunkSideDir_GetOpposite(t *testing.T) {
+	type Test struct {
+		input, expected ChunkSideDir
+	}
+
+	tests := []Test{
+		{ChunkSideEast, ChunkSideWest},
+		{ChunkSideSouth, ChunkSideNorth},
+		{ChunkSideWest, ChunkSideEast},
+		{ChunkSideNorth, ChunkSideSouth},
+	}
+
+	for i := range tests {
+		input, expected := tests[i].input, tests[i].expected
+		result := input.GetOpposite()
+		if expected != result {
+			t.Errorf(
+				"%T(%v).GetOpposite()=>%d but expected %d",
+				input, input, result, expected)
+		}
+	}
+}
+
 func TestAbsXyz_UpdateChunkXz(t *testing.T) {
 	type Test struct {
 		input    AbsXyz

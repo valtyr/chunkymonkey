@@ -331,18 +331,7 @@ func (d ChunkSideDir) GetDxz() (dx, dz ChunkCoord) {
 }
 
 func (d ChunkSideDir) GetOpposite() ChunkSideDir {
-	switch d {
-	case ChunkSideEast:
-		return ChunkSideWest
-	case ChunkSideSouth:
-		return ChunkSideNorth
-	case ChunkSideWest:
-		return ChunkSideEast
-	case ChunkSideNorth:
-		return ChunkSideSouth
-	}
-	// Should not happen (should we panic on this?)
-	return ChunkSideNorth
+	return (d + 2) & 3
 }
 
 // Returns the direction that (dx,dz) is in. Exactly one of dx and dz must be
@@ -560,12 +549,7 @@ type BlockContext struct {
 	blockLoc BlockXyz
 	chunkLoc ChunkXz
 	subLoc   SubChunkXyz
-
-	// Index into Chunk.blocks.
-	index int32
-	// Bit shift for the block metadata inside the other block slices (blockData,
-	// blockLight, skyLight).
-	metadataShift byte
+	index    BlockIndex
 }
 
 // Test if a block location is not appropriate to the situation, but block
