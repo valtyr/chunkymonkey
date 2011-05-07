@@ -160,11 +160,18 @@ func (chunk *Chunk) PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatu
 	}
 
 	blockTypeId := index.GetBlockId(chunk.blocks)
-	blockData := index.GetBlockData(chunk.blockData)
-	blockLoc := chunk.loc.ToBlockXyz(subLoc)
 
 	if blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId); ok && blockType.Destructable {
-		if blockType.Aspect.Hit(chunk, blockLoc, blockData, digStatus) {
+		blockData := index.GetBlockData(chunk.blockData)
+		blockLoc := chunk.loc.ToBlockXyz(subLoc)
+
+		blockInstance := &block.BlockInstance{
+			Chunk: chunk,
+			BlockLoc: *blockLoc,
+			SubLoc: *subLoc,
+			Data: blockData,
+		}
+		if blockType.Aspect.Hit(blockInstance, player, digStatus) {
 			chunk.setBlock(blockLoc, subLoc, index, BlockIdAir, 0)
 		}
 	} else {
@@ -231,7 +238,13 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 		}
 
 	} else {
-		blockType.Aspect.Interact(player)
+		blockInstance := &block.BlockInstance{
+			Chunk: chunk,
+			BlockLoc: *target,
+			SubLoc: *subLoc,
+			Data: index.GetBlockData(chunk.blockData),
+		}
+		blockType.Aspect.Interact(blockInstance, player)
 	}
 
 	return

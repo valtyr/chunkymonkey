@@ -31,7 +31,7 @@ func (aspect *StandardAspect) Name() string {
 	return "Standard"
 }
 
-func (aspect *StandardAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, blockData byte, digStatus DigStatus) (destroyed bool) {
+func (aspect *StandardAspect) Hit(instance *BlockInstance, player IBlockPlayer, digStatus DigStatus) (destroyed bool) {
 	if aspect.BreakOn != digStatus {
 		return
 	}
@@ -39,12 +39,12 @@ func (aspect *StandardAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, blockDa
 	destroyed = true
 
 	if len(aspect.DroppedItems) > 0 {
-		rand := chunk.GetRand()
+		rand := instance.Chunk.GetRand()
 		// Possibly drop item(s)
 		r := byte(rand.Intn(100))
 		for _, dropItem := range aspect.DroppedItems {
 			if dropItem.Probability > r {
-				itemType, ok := chunk.GetItemType(dropItem.DroppedItem)
+				itemType, ok := instance.Chunk.GetItemType(dropItem.DroppedItem)
 
 				if !ok {
 					log.Printf(
@@ -57,17 +57,17 @@ func (aspect *StandardAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, blockDa
 
 				var itemData ItemData
 				if dropItem.CopyData {
-					itemData = ItemData(blockData)
+					itemData = ItemData(instance.Data)
 				} else {
 					itemData = 0
 				}
 
 				for i := dropItem.Count; i > 0; i-- {
-					position := blockLoc.ToAbsXyz()
+					position := instance.BlockLoc.ToAbsXyz()
 					position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
 					position.Y += AbsCoord(blockItemSpawnFromEdge)
 					position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
-					chunk.AddItem(
+					instance.Chunk.AddItem(
 						item.NewItem(
 							itemType, 1, itemData,
 							position,
@@ -82,5 +82,5 @@ func (aspect *StandardAspect) Hit(chunk IChunkBlock, blockLoc *BlockXyz, blockDa
 	return
 }
 
-func (aspect *StandardAspect) Interact(player IBlockPlayer) {
+func (aspect *StandardAspect) Interact(instance *BlockInstance, player IBlockPlayer) {
 }

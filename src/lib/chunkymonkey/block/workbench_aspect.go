@@ -18,6 +18,6 @@ func (aspect *WorkbenchAspect) Name() string {
 	return "Workbench"
 }
 
-func (aspect *WorkbenchAspect) Interact(player IBlockPlayer) {
+func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player IBlockPlayer) {
 	player.OpenWindow(InvTypeIdWorkbench)
 }

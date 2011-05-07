@@ -543,15 +543,6 @@ type BlockXyz struct {
 	Z BlockCoord
 }
 
-// BlockContext represents the position of an instance of a block within a
-// chunk.
-type BlockContext struct {
-	blockLoc BlockXyz
-	chunkLoc ChunkXz
-	subLoc   SubChunkXyz
-	index    BlockIndex
-}
-
 // Test if a block location is not appropriate to the situation, but block
 // location data passed (such as using an item not on a block).
 func (b *BlockXyz) IsNull() bool {
