@@ -156,7 +156,7 @@ func (chunk *Chunk) GetBlockExtra(subLoc *SubChunkXyz) interface{} {
 
 func (chunk *Chunk) SetBlockExtra(subLoc *SubChunkXyz, extra interface{}) {
 	if index, ok := subLoc.BlockIndex(); ok {
-		chunk.blockExtra[index] = extra
+		chunk.blockExtra[index] = extra, extra != nil
 	}
 }
 
