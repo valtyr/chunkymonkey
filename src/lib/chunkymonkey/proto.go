@@ -81,6 +81,10 @@ const (
 var checkChatMessageRegexp = regexp.MustCompile("[ !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×ƒáíóúñÑªº¿®¬½¼¡«»]*")
 var checkColorsRegexp = regexp.MustCompile("§.$")
 
+// Errors
+var illegalCharErr = os.NewError("Found one or more illegal characters. This could crash clients.")
+var colorTagEndErr = os.NewError("Found a color tag at the end of a message. This could crash clients.")
+
 // Packets commonly received by both client and server
 type PacketHandler interface {
 	PacketKeepAlive()
@@ -510,7 +514,7 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
 		// Check suffix against color tags eg. "This is a message §0"
 		if checkColorsRegexp.MatchString(message) {
 			// Found a color tag at the end
-			return os.NewError("Found a color tag at the end of the message. This crashes clients.")
+			return colorTagEndErr
 		} else {
 			err = binary.Write(writer, binary.BigEndian, byte(packetIdChatMessage))
 			if err != nil {
@@ -520,7 +524,7 @@ func WriteChatMessage(writer io.Writer, message string) (err os.Error) {
 			return
 		}
 	}
-	return os.NewError("Found an illegal character in the message. This crashes clients.")
+	return illegalCharErr
 }
 
 func readChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
@@ -532,13 +536,13 @@ func readChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
 		// Does not contain illegal chars
 		if checkColorsRegexp.MatchString(message) {
 			// Contains a color tag at the end
-			return os.NewError("Found a color tag at the end of the message. This crashes clients.")
+			return colorTagEndErr
 		}
 		// message is fine
 		handler.PacketChatMessage(message)
 		return
 	}
-	return os.NewError("Found an illegal character in the message. This crashes clients.")
+	return illegalCharErr
 }
 
 // packetIdTimeUpdate
