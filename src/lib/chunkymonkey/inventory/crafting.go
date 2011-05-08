@@ -50,6 +50,7 @@ func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick
 		// non-empty input slot.
 		for i := 1; i < len(inv.slots); i++ {
 			inv.slots[i].Decrement()
+			inv.slotUpdate(&inv.slots[i], SlotId(i))
 		}
 	}
 

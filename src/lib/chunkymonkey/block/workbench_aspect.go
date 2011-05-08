@@ -26,7 +26,6 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player IBlockPl
 		// it, and have it throw items out into the chunk it's in.
 		workbenchInv = inventory.NewWorkbenchInventory(instance.Chunk.GetRecipeSet())
 		instance.Chunk.SetBlockExtra(&instance.SubLoc, workbenchInv)
-		return
 	}
 	player.OpenWindow(InvTypeIdWorkbench, workbenchInv)
 }
