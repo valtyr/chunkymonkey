@@ -528,11 +528,17 @@ func readChatMessage(reader io.Reader, handler PacketHandler) (err os.Error) {
 	if err != nil {
 		return
 	}
-
-	// TODO sanitize chat message
-
-	handler.PacketChatMessage(message)
-	return
+	if checkChatMessageRegexp.MatchString(message) {
+		// Does not contain illegal chars
+		if checkColorsRegexp.MatchString(message) {
+			// Contains a color tag at the end
+			return os.NewError("Found a color tag at the end of the message. This crashes clients.")
+		}
+		// message is fine
+		handler.PacketChatMessage(message)
+		return
+	}
+	return os.NewError("Found an illegal character in the message. This crashes clients.")
 }
 
 // packetIdTimeUpdate
