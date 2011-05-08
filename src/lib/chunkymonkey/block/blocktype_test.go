@@ -26,6 +26,9 @@ func TestMergeBlockItems(t *testing.T) {
 			ToolType: 0,
 			ToolUses: 0,
 		},
+		5: &itemtype.ItemType{
+			Id: 5,
+		},
 	}
 
 	blockTypes := BlockTypeList{
@@ -41,10 +44,26 @@ func TestMergeBlockItems(t *testing.T) {
 				defined: true,
 			},
 		},
+		// These block types should not create an item, as they are not defined.
 		BlockType{
-			// This block type should not create an item, as it's not defined.
 			BlockAttrs: BlockAttrs{
 				defined: false,
+			},
+		},
+		BlockType{
+			BlockAttrs: BlockAttrs{
+				defined: false,
+			},
+		},
+		BlockType{
+			BlockAttrs: BlockAttrs{
+				defined: false,
+			},
+		},
+		BlockType{
+			BlockAttrs: BlockAttrs{
+				Name:    "wood plank",
+				defined: true,
 			},
 		},
 	}
@@ -55,8 +74,8 @@ func TestMergeBlockItems(t *testing.T) {
 		t.Logf("[%d] = %#v", id, itemType)
 	}
 
-	if 2 != len(itemTypes) {
-		t.Fatalf("Expected 2 item types to exist, but found %d", len(itemTypes))
+	if 3 != len(itemTypes) {
+		t.Fatalf("Expected 3 item types to exist, but found %d", len(itemTypes))
 	}
 
 	assertItemTypeEq(t,
@@ -80,5 +99,17 @@ func TestMergeBlockItems(t *testing.T) {
 			ToolUses: 0,
 		},
 		itemTypes[1],
+	)
+
+	// Plank should get its Name and MaxStack filled in.
+	assertItemTypeEq(t,
+		&itemtype.ItemType{
+			Id:       5,
+			Name:     "wood plank",
+			MaxStack: 64,
+			ToolType: 0,
+			ToolUses: 0,
+		},
+		itemTypes[5],
 	)
 }

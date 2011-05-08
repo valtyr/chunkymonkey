@@ -44,7 +44,13 @@ func (btl *BlockTypeList) CreateBlockItemTypes(itemTypes itemtype.ItemTypeMap) {
 		if !blockType.defined {
 			continue
 		}
-		if _, exists := itemTypes[ItemTypeId(id)]; exists {
+		if itemType, exists := itemTypes[ItemTypeId(id)]; exists {
+			if len(itemType.Name) == 0 {
+				itemType.Name = blockType.Name
+			}
+			if itemType.MaxStack == 0 {
+				itemType.MaxStack = itemtype.MaxStackDefault
+			}
 			continue
 		}
 
