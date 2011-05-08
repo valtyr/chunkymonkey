@@ -108,13 +108,17 @@ func (player *Player) GetName() string {
 
 func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
 	heldSlot, _ := player.inventory.HeldItem()
+	heldItemId := heldSlot.GetItemTypeId()
+	if heldItemId < 0 {
+		heldItemId = 0
+	}
 
 	err = proto.WriteNamedEntitySpawn(
 		writer,
 		player.EntityId, player.name,
 		player.position.ToAbsIntXyz(),
 		player.look.ToLookBytes(),
-		heldSlot.GetItemTypeId(),
+		heldItemId,
 	)
 	if err != nil {
 		return
