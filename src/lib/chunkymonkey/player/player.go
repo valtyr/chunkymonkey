@@ -353,12 +353,11 @@ func (player *Player) receiveLoop() {
 
 func (player *Player) transmitLoop() {
 	for {
-		bs := <-player.txQueue
+		bs, ok := <-player.txQueue
 
-		if bs == nil {
+		if !ok || bs == nil {
 			return // txQueue closed
 		}
-
 		_, err := player.conn.Write(bs)
 		if err != nil {
 			if err != os.EOF {
@@ -392,8 +391,8 @@ func (player *Player) mainLoop() {
 	player.postLogin()
 
 	for {
-		f := <-player.mainQueue
-		if f == nil {
+		f, ok := <-player.mainQueue
+		if !ok || f == nil {
 			return
 		}
 		player.runQueuedCall(f)
