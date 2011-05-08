@@ -46,10 +46,10 @@ type PlayerInventory struct {
 func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *recipe.RecipeSet) {
 	w.entityId = entityId
 
-	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, recipes)
-	w.armor.Init(playerInvArmorNum)
-	w.main.Init(playerInvMainNum)
-	w.holding.Init(playerInvHoldingNum)
+	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, nil, recipes)
+	w.armor.Init(playerInvArmorNum, nil)
+	w.main.Init(playerInvMainNum, nil)
+	w.holding.Init(playerInvHoldingNum, nil)
 	w.Window.Init(
 		WindowIdInventory,
 		// Note that we have no known value for invTypeId - but it's only used

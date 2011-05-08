@@ -1,6 +1,8 @@
 package block
 
 import (
+	"log"
+
 	"chunkymonkey/inventory"
 	. "chunkymonkey/types"
 )
@@ -23,9 +25,25 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player IBlockPl
 	workbenchInv, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
 	if !ok {
 		// TODO have the inventory stop existing when all players unsubscribe from
-		// it, and have it throw items out into the chunk it's in.
-		workbenchInv = inventory.NewWorkbenchInventory(instance.Chunk.GetRecipeSet())
+		// it. This is merely to reclaim a little memory.
+		ejectItems := func() { aspect.ejectItems(instance) }
+		workbenchInv = inventory.NewWorkbenchInventory(ejectItems, instance.Chunk.GetRecipeSet())
 		instance.Chunk.SetBlockExtra(&instance.SubLoc, workbenchInv)
 	}
 	player.OpenWindow(InvTypeIdWorkbench, workbenchInv)
+}
+
+func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
+	instance.Chunk.EnqueueGeneric(func(_ interface{}) {
+		workbenchInv, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
+		if !ok {
+			return
+		}
+
+		items := workbenchInv.TakeAllItems()
+		for _, slot := range items {
+			log.Printf("spawning from slot %#v", slot)
+			spawnItemInBlock(instance, slot.ItemType, slot.Count, slot.Data)
+		}
+	})
 }

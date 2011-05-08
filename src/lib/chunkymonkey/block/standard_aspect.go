@@ -1,18 +1,8 @@
 package block
 
 import (
-	"log"
-
-	"chunkymonkey/item"
 	. "chunkymonkey/types"
 )
-
-type BlockDropItem struct {
-	DroppedItem ItemTypeId
-	Probability byte // Probabilities specified as a percentage
-	Count       ItemCount
-	CopyData    bool
-}
 
 func makeStandardAspect() (aspect IBlockAspect) {
 	return &StandardAspect{}
@@ -23,7 +13,7 @@ func makeStandardAspect() (aspect IBlockAspect) {
 // use block metadata.
 type StandardAspect struct {
 	// Items, up to one of which will potentially spawn when block destroyed.
-	DroppedItems []BlockDropItem
+	DroppedItems []blockDropItem
 	BreakOn      DigStatus
 }
 
@@ -44,35 +34,7 @@ func (aspect *StandardAspect) Hit(instance *BlockInstance, player IBlockPlayer, 
 		r := byte(rand.Intn(100))
 		for _, dropItem := range aspect.DroppedItems {
 			if dropItem.Probability > r {
-				itemType, ok := instance.Chunk.GetItemType(dropItem.DroppedItem)
-
-				if !ok {
-					log.Printf(
-						"Warning: tried to create item with type ID #%d - "+
-							"but no such item type is defined. block and item "+
-							"definitions out of sync?",dropItem.DroppedItem)
-
-					break
-				}
-
-				var itemData ItemData
-				if dropItem.CopyData {
-					itemData = ItemData(instance.Data)
-				} else {
-					itemData = 0
-				}
-
-				for i := dropItem.Count; i > 0; i-- {
-					position := instance.BlockLoc.ToAbsXyz()
-					position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
-					position.Y += AbsCoord(blockItemSpawnFromEdge)
-					position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
-					instance.Chunk.AddItem(
-						item.NewItem(
-							itemType, 1, itemData,
-							position,
-							&AbsVelocity{0, 0, 0}))
-				}
+				dropItem.drop(instance)
 				break
 			}
 			r -= dropItem.Probability

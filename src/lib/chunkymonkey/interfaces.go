@@ -49,7 +49,8 @@ type IChunk interface {
 	// Safe to call from outside of Enqueue:
 	GetLoc() *ChunkXz // Do not modify return value
 
-	Enqueue(f func(IChunk))
+	Enqueue(f func(chunk IChunk))
+	EnqueueGeneric(f func(chunk interface{}))
 
 	// Everything below must be called from within Enqueue
 

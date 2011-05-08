@@ -19,8 +19,8 @@ type CraftingInventory struct {
 	recipes       *recipe.RecipeSet
 }
 
-func (inv *CraftingInventory) Init(width, height int, recipes *recipe.RecipeSet) {
-	inv.Inventory.Init(1 + width*height)
+func (inv *CraftingInventory) Init(width, height int, onUnsubscribed func(), recipes *recipe.RecipeSet) {
+	inv.Inventory.Init(1+width*height, onUnsubscribed)
 	inv.width = width
 	inv.height = height
 	inv.recipes = recipes
@@ -65,12 +65,41 @@ type WorkbenchInventory struct {
 	CraftingInventory
 }
 
-func NewWorkbenchInventory(recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
+func NewWorkbenchInventory(onUnsubscribed func(), recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
 	inv = new(WorkbenchInventory)
 	inv.CraftingInventory.Init(
 		workbenchInvCraftWidth,
 		workbenchInvCraftHeight,
+		onUnsubscribed,
 		recipes,
 	)
+	return
+}
+
+// TakeAllItems empties the inventory, and returns all items that were inside
+// it inside a slice of Slots.
+func (inv *WorkbenchInventory) TakeAllItems() (items []slot.Slot) {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
+	items = make([]slot.Slot, 0, len(inv.slots)-1)
+
+	// The output slot gets emptied, the only items that are to be ejected are
+	// those in the input slots.
+	output := &inv.slots[0]
+	output.Init()
+	inv.slotUpdate(output, 0)
+
+	for i := 1; i < len(inv.slots); i++ {
+		curSlot := &inv.slots[i]
+		if curSlot.Count > 0 {
+			var taken slot.Slot
+			taken.Init()
+			taken.Swap(curSlot)
+			items = append(items, taken)
+			inv.slotUpdate(curSlot, SlotId(i))
+		}
+	}
+
 	return
 }
