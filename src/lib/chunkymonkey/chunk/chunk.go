@@ -95,6 +95,12 @@ func (chunk *Chunk) Enqueue(f func(IChunk)) {
 	chunk.mainQueue <- f
 }
 
+func (chunk *Chunk) EnqueueGeneric(f func(interface{})) {
+	chunk.mainQueue <- func(chunk IChunk) {
+		f(chunk)
+	}
+}
+
 func (chunk *Chunk) mainLoop() {
 	for {
 		f := <-chunk.mainQueue

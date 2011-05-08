@@ -27,6 +27,11 @@ type IChunkBlock interface {
 	GetBlockExtra(subLoc *SubChunkXyz) interface{}
 	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
 	GetRecipeSet() *recipe.RecipeSet
+
+	// The above methods are freely callable in the goroutine context of a call
+	// to a IBlockAspect method (as the chunk itself calls that). But from any
+	// other goroutine they must be called via EnqueueGeneric().
+	EnqueueGeneric(f func(chunk interface{}))
 }
 
 // BlockInstance represents the instance of a block within a chunk.
