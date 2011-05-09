@@ -29,6 +29,9 @@ func newMob(id types.EntityMobType) Mob {
 	return m
 }
 
+// When using an object of type Mob or a sub-type, the caller must:
+// - set the entity ID using, for example, game.AddEntity(Mob.GetEntity()).
+// - set a valid position with Mob.SetPosition().
 type Mob struct {
 	entity.Entity
 	mobType  types.EntityMobType
