@@ -67,6 +67,11 @@ func (game *Game) Login(conn net.Conn) {
 		return
 	}
 	log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
+	if game.UnderMaintenanceMsg != "" {
+		log.Println("Server under maintenance, kicking player:", username)
+		proto.WriteDisconnect(conn, game.UnderMaintenanceMsg)
+		return
+	}
 
 	err = proto.ServerWriteHandshake(conn, game.serverId)
 	if err != nil {
@@ -75,11 +80,7 @@ func (game *Game) Login(conn net.Conn) {
 		conn.Close()
 		return
 	}
-	if game.UnderMaintenanceMsg != "" {
-		log.Println("Server under maintenance, kicking player: ", conn.RemoteAddr())
-		proto.WriteDisconnect(conn, game.UnderMaintenanceMsg)
-		return
-	}
+
 	// TODO put authentication into a seperate module behind an interface so
 	// that authentication is pluggable.
 	if game.serverId != "-" {
