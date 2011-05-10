@@ -68,7 +68,7 @@ func (game *Game) Login(conn net.Conn) {
 	}
 	log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
 	if game.UnderMaintenanceMsg != "" {
-		log.Println("Server under maintenance, kicking player:", username)
+		log.Println("Server under maintenance, kicking player: ", username)
 		proto.WriteDisconnect(conn, game.UnderMaintenanceMsg)
 		return
 	}
