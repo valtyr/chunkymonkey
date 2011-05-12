@@ -47,7 +47,7 @@ type Chunk struct {
 	// TODO: (discuss) Maybe split this back into mobs and items?
 	// There are many more users of "spawners" than of only mobs or items. So
 	// I'm inclined to leave it as is.
-	spawners      map[EntityId]entity.Spawner
+	spawners      map[EntityId]entity.ISpawn
 	blockExtra    map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand          *rand.Rand
 	neighbours    neighboursCache
@@ -66,7 +66,7 @@ func newChunkFromReader(reader chunkstore.ChunkReader, mgr *ChunkManager) (chunk
 		skyLight:      reader.SkyLight(),
 		blockLight:    reader.BlockLight(),
 		heightMap:     reader.HeightMap(),
-		spawners:      make(map[EntityId]entity.Spawner),
+		spawners:      make(map[EntityId]entity.ISpawn),
 		blockExtra:    make(map[BlockIndex]interface{}),
 		rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
 		subscribers:   make(map[IChunkSubscriber]bool),
@@ -129,13 +129,13 @@ func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemT
 	return
 }
 
-func (chunk *Chunk) TransferSpawner(s entity.Spawner) {
+func (chunk *Chunk) TransferSpawner(s entity.ISpawn) {
 	chunk.spawners[s.GetEntity().EntityId] = s
 }
 
 // AddSpawner creates a mob or item in this chunk and notifies the new spawn to
 // all chunk subscribers.
-func (chunk *Chunk) AddSpawner(s entity.Spawner) {
+func (chunk *Chunk) AddSpawner(s entity.ISpawn) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	chunk.mgr.game.Enqueue(func(game IGame) {
@@ -152,7 +152,7 @@ func (chunk *Chunk) AddSpawner(s entity.Spawner) {
 	chunk.multicastSubscribers(buf.Bytes())
 }
 
-func (chunk *Chunk) removeSpawner(s entity.Spawner) {
+func (chunk *Chunk) removeSpawner(s entity.ISpawn) {
 	e := s.GetEntity()
 	chunk.mgr.game.Enqueue(func(game IGame) {
 		game.RemoveEntity(e)
@@ -393,7 +393,7 @@ func (chunk *Chunk) Tick() {
 		}
 		return
 	}
-	spawnersRemaining := []entity.Spawner{}
+	outgoingSpawners := []entity.ISpawn{}
 
 	for _, e := range chunk.spawners {
 		if e.Tick(blockQuery) {
@@ -401,21 +401,21 @@ func (chunk *Chunk) Tick() {
 				// Item or mob fell out of the world.
 				chunk.removeSpawner(e)
 			} else {
-				spawnersRemaining = append(spawnersRemaining, e)
+				outgoingSpawners = append(outgoingSpawners, e)
 			}
 		}
 	}
 
-	if len(spawnersRemaining) > 0 {
+	if len(outgoingSpawners) > 0 {
 		// Remove mob/items from this chunk.
-		for _, e := range spawnersRemaining {
+		for _, e := range outgoingSpawners {
 			chunk.spawners[e.GetEntity().EntityId] = nil, false
 		}
 
 		// Send items to new chunk.
 		chunk.mgr.game.Enqueue(func(game IGame) {
 			mgr := game.GetChunkManager()
-			for _, e := range spawnersRemaining {
+			for _, e := range outgoingSpawners {
 				chunkLoc := e.GetPosition().ToChunkXz()
 				blockChunk := mgr.Get(chunkLoc)
 				blockChunk.Enqueue(func(blockChunk IChunk) {
@@ -429,7 +429,7 @@ func (chunk *Chunk) Tick() {
 		for _, playerPos := range chunk.subscriberPos {
 			loc, _ := playerPos.ToBlockXyz().ToChunkLocal()
 			if chunk.IsSameChunk(loc) {
-				ms := chunk.Mobs()
+				ms := chunk.mobs()
 				if len(ms) == 0 {
 					log.Println("spawning a mob", chunk.loc, "at", playerPos)
 					m := mob.NewPig(playerPos, &AbsVelocity{5, 5, 5})
@@ -441,23 +441,23 @@ func (chunk *Chunk) Tick() {
 	}
 }
 
-func (chunk *Chunk) Mobs() (mobs []*mob.Mob) {
-	mobs = make([]*mob.Mob, 0, 3)
+func (chunk *Chunk) mobs() (s []*mob.Mob) {
+	s = make([]*mob.Mob, 0, 3)
 	for _, e := range chunk.spawners {
 		switch e.(type) {
 		case *mob.Mob:
-			mobs = append(mobs, e.(*mob.Mob))
+			s = append(s, e.(*mob.Mob))
 		}
 	}
 	return
 }
 
-func (chunk *Chunk) Items() (items []*item.Item) {
-	items = make([]*item.Item, 0, 10)
+func (chunk *Chunk) items() (s []*item.Item) {
+	s = make([]*item.Item, 0, 10)
 	for _, e := range chunk.spawners {
 		switch e.(type) {
 		case *item.Item:
-			items = append(items, e.(*item.Item))
+			s = append(s, e.(*item.Item))
 		}
 	}
 	return
@@ -503,7 +503,7 @@ func (chunk *Chunk) SetSubscriberPosition(subscriber IChunkSubscriber, pos *AbsX
 		minY := pos.Y
 		maxY := pos.Y + playerAabY
 
-		for entityId, item := range chunk.Items() {
+		for entityId, item := range chunk.items() {
 			// TODO This check should be performed when items move as well.
 			pos := item.GetPosition()
 			if pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z >= minZ && pos.Z <= maxZ {

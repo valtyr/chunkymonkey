@@ -43,10 +43,10 @@ func (mgr *EntityManager) RemoveEntity(entity *Entity) {
 	mgr.entities[entity.EntityId] = nil, false
 }
 
-// Spawner has the ability to spawn an item or mob. It's used for example by the
+// ISpawn has the ability to spawn an item or mob. It's used for example by the
 // chunks.
 // This can't be on interfaces.go because it would create a dependency loop.
-type Spawner interface {
+type ISpawn interface {
 	SendSpawn(io.Writer) os.Error
 	GetEntity() *Entity
 	GetPosition() *AbsXyz

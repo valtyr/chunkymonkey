@@ -23,7 +23,7 @@ type IBlockPlayer interface {
 type IChunkBlock interface {
 	GetRand() *rand.Rand
 	GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
-	AddSpawner(s entity.Spawner)
+	AddSpawner(s entity.ISpawn)
 	GetBlockExtra(subLoc *SubChunkXyz) interface{}
 	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
 	GetRecipeSet() *recipe.RecipeSet
