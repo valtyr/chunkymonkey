@@ -1,5 +1,10 @@
 SERVER_BINARY=chunkymonkey
-EXTRA_BINARIES=intercept inspectlevel datatests
+EXTRA_BINARIES=\
+	datatests \
+	inspectlevel \
+	intercept \
+	style
+
 DIAGRAMS=diagrams/top-level-architecture.png
 
 server: $(SERVER_BINARY)
@@ -35,6 +40,9 @@ inspectlevel: libs
 	@gd -q -I src/lib -o $@ src/$@
 
 datatests: libs
+	@gd -q -I src/lib -o $@ src/$@
+
+style:
 	@gd -q -I src/lib -o $@ src/$@
 
 docs: $(DIAGRAMS)
