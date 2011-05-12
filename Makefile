@@ -17,25 +17,26 @@ fmt:
 	@gd -q -fmt --tab src
 
 test: datatests
+	@-rm -r src/tmp*
 	@-rm -r test_obj/tmp*
 	@mkdir -p test_obj
-	@gd -q -L test_obj -t src/lib
+	@gd -q -L test_obj -t src
 	@./datatests
 
 libs:
-	@gd -q src/lib
+	@gd -q src/chunkymonkey
 
 chunkymonkey: libs
-	@gd -q -I src/lib -o $@ src/$@
+	@gd -q -I src -o $@ src/main
 
 intercept: libs
-	@gd -q -I src/lib -o $@ src/$@
+	@gd -q -I src -o $@ src/util/$@
 
 inspectlevel: libs
-	@gd -q -I src/lib -o $@ src/$@
+	@gd -q -I src -o $@ src/util/$@
 
 datatests: libs
-	@gd -q -I src/lib -o $@ src/$@
+	@gd -q -I src -o $@ src/util/$@
 
 docs: $(DIAGRAMS)
 
