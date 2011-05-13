@@ -48,7 +48,7 @@ datatests: libs
 	@gd -q -I src -o $@ src/util/$@
 
 style:
-	@gd -q -I src/lib -o $@ src/$@
+	@gd -q -I src -o $@ src/util/$@
 
 docs: $(DIAGRAMS)
 
