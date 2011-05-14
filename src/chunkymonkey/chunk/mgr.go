@@ -35,6 +35,7 @@ func (mgr *ChunkManager) getShard(loc shardXz) *ChunkShard {
 	// Create shard.
 	shard := NewChunkShard(mgr, loc)
 	mgr.shards[shardKey] = shard
+	go shard.serve()
 
 	return shard
 }

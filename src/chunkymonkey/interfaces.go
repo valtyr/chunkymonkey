@@ -39,13 +39,11 @@ type IPlayer interface {
 }
 
 type IChunk interface {
-	// Safe to call from outside of Enqueue:
+	// Safe to call from outside of the shard's goroutine.:
 	GetLoc() *ChunkXz // Do not modify return value
 
-	Enqueue(f func(chunk IChunk))
-	EnqueueGeneric(f func(chunk interface{}))
-
-	// Everything below must be called from within Enqueue
+	// Everything below must be called from within the containing shard's
+	// goroutine.
 
 	// Called from game loop to run physics etc. within the chunk for a single
 	// tick.

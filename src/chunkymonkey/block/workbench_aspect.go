@@ -34,7 +34,7 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player IBlockPl
 		// it. This is merely to reclaim a little memory when no items are in the
 		// workbench.
 		ejectItems := func() {
-			instance.Chunk.EnqueueGeneric(func(_ interface{}) {
+			instance.Chunk.EnqueueGeneric(func() {
 				aspect.ejectItems(instance)
 			})
 		}

@@ -35,8 +35,8 @@ var enableMobs = flag.Bool(
 
 // A chunk is slice of the world map.
 type Chunk struct {
-	mainQueue  chan func(IChunk)
 	mgr        *ChunkManager
+	shard      *ChunkShard
 	loc        ChunkXz
 	blocks     []byte
 	blockData  []byte
@@ -57,10 +57,10 @@ type Chunk struct {
 	subscriberPos map[IPlayer]*AbsXyz // Player positions that are near or in the chunk.
 }
 
-func newChunkFromReader(reader chunkstore.IChunkReader, mgr *ChunkManager) (chunk *Chunk) {
+func newChunkFromReader(reader chunkstore.IChunkReader, mgr *ChunkManager, shard *ChunkShard) (chunk *Chunk) {
 	chunk = &Chunk{
-		mainQueue:     make(chan func(IChunk), 256),
 		mgr:           mgr,
+		shard:         shard,
 		loc:           *reader.ChunkLoc(),
 		blocks:        reader.Blocks(),
 		blockData:     reader.BlockData(),
@@ -74,7 +74,6 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *ChunkManager) (chun
 		subscriberPos: make(map[IPlayer]*AbsXyz),
 	}
 	chunk.neighbours.init()
-	go chunk.mainLoop()
 	return
 }
 
@@ -102,23 +101,6 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 
 func (chunk *Chunk) GetLoc() *ChunkXz {
 	return &chunk.loc
-}
-
-func (chunk *Chunk) Enqueue(f func(IChunk)) {
-	chunk.mainQueue <- f
-}
-
-func (chunk *Chunk) EnqueueGeneric(f func(interface{})) {
-	chunk.mainQueue <- func(chunk IChunk) {
-		f(chunk)
-	}
-}
-
-func (chunk *Chunk) mainLoop() {
-	for {
-		f := <-chunk.mainQueue
-		f(chunk)
-	}
 }
 
 func (chunk *Chunk) GetRand() *rand.Rand {
@@ -555,4 +537,8 @@ func (chunk *Chunk) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk) {
 
 func (chunk *Chunk) IsSameChunk(otherChunkLoc *ChunkXz) bool {
 	return otherChunkLoc.X == chunk.loc.X && otherChunkLoc.Z == chunk.loc.Z
+}
+
+func (chunk *Chunk) EnqueueGeneric(fn func()) {
+	chunk.shard.enqueueRequest(&runGeneric{fn})
 }

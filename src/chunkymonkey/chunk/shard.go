@@ -77,7 +77,10 @@ func NewChunkShard(mgr *ChunkManager, loc shardXz) (shard *ChunkShard) {
 
 // serve services shard requests in the foreground.
 func (shard *ChunkShard) serve() {
-	// TODO
+	for {
+		request := <-shard.requests
+		request.perform(shard)
+	}
 }
 
 func (shard *ChunkShard) String() string {
@@ -129,25 +132,25 @@ func (shard *ChunkShard) loadChunk(loc *ChunkXz, locDelta *ChunkXz) *Chunk {
 		}
 	}
 
-	chunk := newChunkFromReader(chunkReader, shard.mgr)
+	chunk := newChunkFromReader(chunkReader, shard.mgr, shard)
 
 	// Notify neighbouring chunk(s) (if any) that this chunk is now active, and
 	// notify this chunk of its active neighbours
 	linkNeighbours := func(from ChunkSideDir) {
 		dx, dz := from.GetDxz()
-		loc := ChunkXz{
+		nLoc := ChunkXz{
 			X: locDelta.X + dx,
 			Z: locDelta.Z + dz,
 		}
-		if loc.X < 0 || loc.Z < 0 || loc.X > ShardSize || loc.Z > ShardSize {
+		if nLoc.X < 0 || nLoc.Z < 0 || nLoc.X > ShardSize || nLoc.Z > ShardSize {
 			// Link to neighbouring chunk outside the shard.
 			// TODO This should also link to chunks outside the shard. Although the
 			// architecure of this is likely to change radically or go away.
 		} else {
 			// Link to neighbouring chunk within the shard.
-			chunkIndex := chunkXzToChunkIndex(&loc)
+			chunkIndex := chunkXzToChunkIndex(locDelta)
 			neighbour := shard.chunks[chunkIndex]
-			if chunk != nil {
+			if neighbour != nil {
 				to := from.GetOpposite()
 				chunk.sideCacheSetNeighbour(from, neighbour)
 				neighbour.sideCacheSetNeighbour(to, chunk)
@@ -176,4 +179,8 @@ func (shard *ChunkShard) EnqueueAllChunks(fn func(chunk IChunk)) {
 // chunk does not exist, it does nothing.
 func (shard *ChunkShard) EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk)) {
 	shard.requests <- &runOnChunk{loc, fn}
+}
+
+func (shard *ChunkShard) enqueueRequest(req iShardRequest) {
+	shard.requests <- req
 }
