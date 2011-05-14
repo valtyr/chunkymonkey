@@ -222,17 +222,10 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz,
 	if face != FaceNull {
 		chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
-		player.game.Enqueue(func(game IGame) {
-			chunk := game.GetChunkManager().Get(chunkLoc)
-
-			if chunk == nil {
-				return
-			}
-
-			chunk.Enqueue(func(chunk IChunk) {
-				chunk.PlayerBlockHit(player, subLoc, status)
-			})
+		player.game.GetChunkManager().EnqueueOnChunk(*chunkLoc, func(chunk IChunk) {
+			chunk.PlayerBlockHit(player, subLoc, status)
 		})
+
 	} else {
 		// TODO player dropped item
 	}
@@ -247,16 +240,8 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *Blo
 
 	placeChunkLoc, _ := blockLoc.ToChunkLocal()
 
-	player.game.Enqueue(func(game IGame) {
-		chunk := game.GetChunkManager().Get(placeChunkLoc)
-
-		if chunk == nil {
-			return
-		}
-
-		chunk.Enqueue(func(chunk IChunk) {
-			chunk.PlayerBlockInteract(player, blockLoc, face)
-		})
+	player.game.GetChunkManager().EnqueueOnChunk(*placeChunkLoc, func(chunk IChunk) {
+		chunk.PlayerBlockInteract(player, blockLoc, face)
 	})
 }
 

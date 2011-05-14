@@ -452,6 +452,23 @@ func (p *AbsIntXyz) ToBlockXyz() *BlockXyz {
 	}
 }
 
+// Convert (x, z) absolute integer coordinates to chunk coordinates
+func (abs *AbsIntXyz) ToChunkXz() *ChunkXz {
+	chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeH*PixelsPerBlock)
+	chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeH*PixelsPerBlock)
+
+	return &ChunkXz{
+		ChunkCoord(chunkX),
+		ChunkCoord(chunkZ),
+	}
+}
+
+func (abs *AbsIntXyz) IAdd(dx, dy, dz AbsIntCoord) {
+	abs.X += dx
+	abs.Y += dy
+	abs.Z += dz
+}
+
 // Coordinate of a chunk in the world (block / 16)
 type ChunkCoord int32
 
@@ -572,23 +589,6 @@ func (abs *AbsXyz) ToChunkXz() (chunkXz *ChunkXz) {
 		ChunkCoord(abs.X / ChunkSizeH),
 		ChunkCoord(abs.Z / ChunkSizeH),
 	}
-}
-
-// Convert (x, z) absolute integer coordinates to chunk coordinates
-func (abs *AbsIntXyz) ToChunkXz() *ChunkXz {
-	chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeH*PixelsPerBlock)
-	chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeH*PixelsPerBlock)
-
-	return &ChunkXz{
-		ChunkCoord(chunkX),
-		ChunkCoord(chunkZ),
-	}
-}
-
-func (abs *AbsIntXyz) IAdd(dx, dy, dz AbsIntCoord) {
-	abs.X += dx
-	abs.Y += dy
-	abs.Z += dz
 }
 
 func coordDivMod(num, denom int32) (div, mod int32) {

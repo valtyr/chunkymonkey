@@ -7,7 +7,7 @@ import (
 )
 
 type request struct {
-	chunkLoc *ChunkXz
+	chunkLoc     *ChunkXz
 	responseChan chan<- ChunkResult
 }
 
@@ -23,8 +23,8 @@ type chunkService struct {
 }
 
 func newChunkService(store iSerialChunkStore) *chunkService {
-	return &chunkService {
-		store: store,
+	return &chunkService{
+		store:    store,
 		requests: make(chan request),
 	}
 }
@@ -34,18 +34,17 @@ func (s *chunkService) serve() {
 	for {
 		request := <-s.requests
 		reader, err := s.store.loadChunk(request.chunkLoc)
-		request.responseChan<- ChunkResult{reader, err}
+		request.responseChan <- ChunkResult{reader, err}
 	}
 }
 
 func (s *chunkService) LoadChunk(chunkLoc *ChunkXz) <-chan ChunkResult {
 	responseChan := make(chan ChunkResult)
 
-	s.requests<-request{
-		chunkLoc: chunkLoc,
+	s.requests <- request{
+		chunkLoc:     chunkLoc,
 		responseChan: responseChan,
 	}
 
 	return responseChan
 }
-

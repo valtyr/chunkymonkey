@@ -81,9 +81,8 @@ type IChunk interface {
 
 type IChunkManager interface {
 	// Must currently be called from with the owning IGame's Enqueue:
-	Get(loc *ChunkXz) (chunk IChunk)
 	EnqueueAllChunks(fn func(chunk IChunk))
-	EnqueueOnChunk(loc *ChunkXz, fn func(chunk IChunk))
+	EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk))
 }
 
 type IGame interface {

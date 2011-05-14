@@ -47,11 +47,12 @@ type Chunk struct {
 	// TODO: (discuss) Maybe split this back into mobs and items?
 	// There are many more users of "spawners" than of only mobs or items. So
 	// I'm inclined to leave it as is.
+	// TODO Spawns should belong to shards, not chunks.
 	spawners      map[EntityId]entity.ISpawn
 	blockExtra    map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand          *rand.Rand
 	neighbours    neighboursCache
-	cachedPacket  []byte                       // Cached packet data for this block.
+	cachedPacket  []byte              // Cached packet data for this block.
 	subscribers   map[IPlayer]bool    // Players getting updates from the chunk.
 	subscriberPos map[IPlayer]*AbsXyz // Player positions that are near or in the chunk.
 }
@@ -271,9 +272,8 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 		if chunk.IsSameChunk(destChunkLoc) {
 			chunk.placeBlock(player, destLoc, destSubLoc, againstFace)
 		} else {
-			chunk.mgr.game.Enqueue(func(game IGame) {
-				destChunk := chunk.mgr.Get(destChunkLoc).(*Chunk)
-				if destChunk != nil {
+			chunk.mgr.EnqueueOnChunk(*destChunkLoc, func(destIChunk IChunk) {
+				if destChunk, ok := destIChunk.(*Chunk); ok {
 					destChunk.placeBlock(player, destLoc, destSubLoc, againstFace)
 				}
 			})
@@ -407,23 +407,22 @@ func (chunk *Chunk) Tick() {
 	}
 
 	if len(outgoingSpawners) > 0 {
-		// Remove mob/items from this chunk.
+		// Transfer spawns to new chunk.
 		for _, e := range outgoingSpawners {
+			// Remove mob/items from this chunk.
 			chunk.spawners[e.GetEntity().EntityId] = nil, false
-		}
 
-		// Send items to new chunk.
-		chunk.mgr.game.Enqueue(func(game IGame) {
-			mgr := game.GetChunkManager()
-			for _, e := range outgoingSpawners {
-				chunkLoc := e.GetPosition().ToChunkXz()
-				blockChunk := mgr.Get(chunkLoc)
-				blockChunk.Enqueue(func(blockChunk IChunk) {
-					blockChunk.AddSpawner(e)
-				})
-			}
-		})
+			// Transfer to other chunk.
+			chunkLoc := e.GetPosition().ToChunkXz()
+
+			// TODO Batch spawns up into a request per shard if there are efficiency
+			// concerns in sending them individually.
+			chunk.mgr.EnqueueOnChunk(*chunkLoc, func(blockChunk IChunk) {
+				blockChunk.TransferSpawner(e)
+			})
+		}
 	}
+
 	// XXX: Testing hack. If player is in a chunk with no mobs, spawn a pig.
 	if *enableMobs {
 		for _, playerPos := range chunk.subscriberPos {

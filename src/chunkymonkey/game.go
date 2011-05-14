@@ -271,8 +271,8 @@ func (game *Game) tick() {
 // Transmit a packet to all players near the sender (except the sender itself).
 func (game *Game) multicastRadiusPacket(packet []byte, sender IPlayer) {
 	game.chunkManager.EnqueueOnChunk(
-		sender.LockedGetChunkPosition(),
-		func (chunk IChunk) {
+		*sender.LockedGetChunkPosition(),
+		func(chunk IChunk) {
 			chunk.MulticastPlayers(sender, packet)
 		},
 	)
