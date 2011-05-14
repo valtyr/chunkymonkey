@@ -72,7 +72,7 @@ func (cs *chunkSubscriptions) clear() {
 	player := cs.player
 	for _, chunk := range cs.chunks {
 		chunk.Enqueue(func(chunk IChunk) {
-			chunk.RemoveSubscriber(player, false)
+			chunk.RemovePlayer(player, false)
 		})
 	}
 }
@@ -137,7 +137,7 @@ func (cs *chunkSubscriptions) updateChunksWithLoc(newPos *AbsXyz, changedChunk b
 			if dx > positionUpdateRadius || dz > positionUpdateRadius {
 				// Tell chunk to forget about player position.
 				chunk.Enqueue(func(chunk IChunk) {
-					chunk.SetSubscriberPosition(cs.player, nil)
+					chunk.SetPlayerPosition(cs.player, nil)
 				})
 				cs.chunksWithLoc[key] = nil, false
 			}
@@ -163,7 +163,7 @@ func (cs *chunkSubscriptions) updateChunksWithLoc(newPos *AbsXyz, changedChunk b
 	posCopy := newPos.Copy()
 	for _, chunk := range cs.chunksWithLoc {
 		chunk.Enqueue(func(chunk IChunk) {
-			chunk.SetSubscriberPosition(cs.player, posCopy)
+			chunk.SetPlayerPosition(cs.player, posCopy)
 		})
 	}
 }
@@ -240,7 +240,7 @@ func addRemoveChunkSubs(player IPlayer, curChunk ChunkXz, nearbySent func(), chu
 				chunksSent++
 				waitChunks.Add(1)
 				chunk.Enqueue(func(chunk IChunk) {
-					chunk.AddSubscriber(player)
+					chunk.AddPlayer(player)
 					waitChunks.Done()
 				})
 			}
@@ -253,7 +253,7 @@ func addRemoveChunkSubs(player IPlayer, curChunk ChunkXz, nearbySent func(), chu
 		// before continuing with talking to the client.
 		for _, chunk := range chunksToAdd[chunksSent:] {
 			chunk.Enqueue(func(chunk IChunk) {
-				chunk.AddSubscriber(player)
+				chunk.AddPlayer(player)
 			})
 		}
 	}
@@ -261,7 +261,7 @@ func addRemoveChunkSubs(player IPlayer, curChunk ChunkXz, nearbySent func(), chu
 	// Unsubscribe from old chunks
 	for _, chunk := range chunksToRemove {
 		chunk.Enqueue(func(chunk IChunk) {
-			chunk.RemoveSubscriber(player, true)
+			chunk.RemovePlayer(player, true)
 		})
 	}
 }

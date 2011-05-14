@@ -12,17 +12,6 @@ import (
 	. "chunkymonkey/types"
 )
 
-// Subset of player methods used by chunks.
-type IChunkSubscriber interface {
-	GetEntityId() EntityId
-	TransmitPacket(packet []byte)
-	// Offers an item to the subscriber. If the subscriber completely consumes
-	// it, then item.Count will be 0 afterwards. This function is called from
-	// the item's parent chunk's goroutine, so all methods are safely
-	// accessible.
-	OfferItem(item *slot.Slot)
-}
-
 type IPlayer interface {
 	// Safe to call from outside of player's own goroutine.
 	GetEntityId() EntityId
@@ -30,6 +19,11 @@ type IPlayer interface {
 	GetName() string           // Do not modify return value
 	LockedGetChunkPosition() *ChunkXz
 	TransmitPacket(packet []byte)
+	TransmitPacketExclude(exclude IPlayer, packet []byte)
+	// Offers an item to the player. If the player completely consumes
+	// it, then item.Count will be 0 afterwards. This function is called from
+	// the item's parent chunk's goroutine, so all methods are safely
+	// accessible.
 	OfferItem(item *slot.Slot)
 	OpenWindow(invTypeId InvTypeId, inventory interface{})
 
@@ -66,18 +60,20 @@ type IChunk interface {
 	PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
 	PlayerBlockInteract(player IPlayer, target *BlockXyz, againstFace Face)
 
-	// Register subscribers to receive information about the chunk. When added,
-	// a subscriber will immediately receive complete chunk information via
+	// Register players to receive information about the chunk. When added,
+	// a player will immediately receive complete chunk information via
 	// their TransmitPacket method, and changes thereafter via the same
 	// mechanism.
-	AddSubscriber(subscriber IChunkSubscriber)
-	// Removes a previously registered subscriber to updates from the chunk. If
+	AddPlayer(player IPlayer)
+	// Removes a previously registered player to updates from the chunk. If
 	// sendPacket is true, then an unload-chunk packet is sent.
-	RemoveSubscriber(subscriber IChunkSubscriber, sendPacket bool)
+	RemovePlayer(player IPlayer, sendPacket bool)
+
+	MulticastPlayers(exclude IPlayer, packet []byte)
 
 	// Tells the chunk about the position of a player in/near the chunk. pos =
 	// nil indicates that the player is no longer nearby.
-	SetSubscriberPosition(subscriber IChunkSubscriber, pos *AbsXyz)
+	SetPlayerPosition(player IPlayer, pos *AbsXyz)
 
 	// Get packet data for the chunk
 	SendUpdate()
@@ -86,8 +82,8 @@ type IChunk interface {
 type IChunkManager interface {
 	// Must currently be called from with the owning IGame's Enqueue:
 	Get(loc *ChunkXz) (chunk IChunk)
-	ChunksInRadius(loc *ChunkXz) <-chan IChunk
-	ChunksActive() <-chan IChunk
+	EnqueueAllChunks(fn func(chunk IChunk))
+	EnqueueOnChunk(loc *ChunkXz, fn func(chunk IChunk))
 }
 
 type IGame interface {

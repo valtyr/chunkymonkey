@@ -81,29 +81,21 @@ func (mgr *ChunkManager) Get(loc *ChunkXz) (c IChunk) {
 	return
 }
 
-func (mgr *ChunkManager) ChunksActive() <-chan IChunk {
-	c := make(chan IChunk)
-	go func() {
+func (mgr *ChunkManager) EnqueueAllChunks(fn func(chunk IChunk)) {
+	mgr.game.Enqueue(func(_ IGame) {
 		for _, chunk := range mgr.chunks {
-			c <- chunk
+			chunk.Enqueue(fn)
 		}
-		close(c)
-	}()
-	return c
+	})
 }
 
-// Return a channel to iterate over all chunks within a chunk's radius
-func (mgr *ChunkManager) ChunksInRadius(loc *ChunkXz) <-chan IChunk {
-	c := make(chan IChunk)
-	go func() {
-		curChunkXz := ChunkXz{0, 0}
-		for z := loc.Z - ChunkRadius; z <= loc.Z+ChunkRadius; z++ {
-			for x := loc.X - ChunkRadius; x <= loc.X+ChunkRadius; x++ {
-				curChunkXz.X, curChunkXz.Z = x, z
-				c <- mgr.Get(&curChunkXz)
-			}
+// Enqueues a function to run on the chunk at the given location. If the chunk
+// does not exist, it does nothing.
+func (mgr *ChunkManager) EnqueueOnChunk(loc *ChunkXz, fn func(chunk IChunk)) {
+	mgr.game.Enqueue(func(_ IGame) {
+		chunk := mgr.Get(loc)
+		if chunk != nil {
+			chunk.Enqueue(fn)
 		}
-		close(c)
-	}()
-	return c
+	})
 }

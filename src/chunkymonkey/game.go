@@ -247,22 +247,17 @@ func (game *Game) sendTimeUpdate() {
 
 	game.MulticastPacket(buf.Bytes(), nil)
 
-	// Get chunks to send various updates
-	for chunk := range game.chunkManager.ChunksActive() {
-		chunk.Enqueue(func(chunk IChunk) {
-			chunk.SendUpdate()
-		})
-	}
+	// TODO: Make chunk shards responsible for sending updates.
+	game.chunkManager.EnqueueAllChunks(func(chunk IChunk) {
+		chunk.SendUpdate()
+	})
 }
 
 func (game *Game) physicsTick() {
-	// TODO: consider using sync.Cond to broadcast ticks to chunks instead
-	// of channels
-	for chunk := range game.chunkManager.ChunksActive() {
-		chunk.Enqueue(func(chunk IChunk) {
-			chunk.Tick()
-		})
-	}
+	// TODO: Make chunk shards responsible for ticks.
+	game.chunkManager.EnqueueAllChunks(func(chunk IChunk) {
+		chunk.Tick()
+	})
 }
 
 func (game *Game) tick() {
@@ -275,17 +270,12 @@ func (game *Game) tick() {
 
 // Transmit a packet to all players near the sender (except the sender itself).
 func (game *Game) multicastRadiusPacket(packet []byte, sender IPlayer) {
-	p1, p2 := getChunkRadius(sender.LockedGetChunkPosition())
-
-	for _, receiver := range game.players {
-		if receiver != sender {
-			receiver.Enqueue(func(receiver IPlayer) {
-				if receiver.IsWithin(p1, p2) {
-					receiver.TransmitPacket(packet)
-				}
-			})
-		}
-	}
+	game.chunkManager.EnqueueOnChunk(
+		sender.LockedGetChunkPosition(),
+		func (chunk IChunk) {
+			chunk.MulticastPlayers(sender, packet)
+		},
+	)
 }
 
 func getChunkRadius(loc *ChunkXz) (p1, p2 *ChunkXz) {

@@ -375,6 +375,13 @@ func (player *Player) TransmitPacket(packet []byte) {
 	player.txQueue <- packet
 }
 
+func (player *Player) TransmitPacketExclude(exclude IPlayer, packet []byte) {
+	if p, ok := exclude.(*Player); ok && p == player {
+		return // excludes this player
+	}
+	player.TransmitPacket(packet)
+}
+
 func (player *Player) runQueuedCall(f func(IPlayer)) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
