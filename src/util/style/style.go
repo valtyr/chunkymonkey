@@ -7,44 +7,8 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"regexp"
 )
-
-type PackageVisitor struct {}
-
-func (v *PackageVisitor) Visit(node ast.Node) (w ast.Visitor) {
-	switch n := node.(type) {
-	case *ast.TypeSpec:
-		w = &TypeVisitor{
-			typeSpec: n,
-		}
-	default:
-		w = v
-	}
-	return
-}
-
-type TypeVisitor struct {
-	typeSpec *ast.TypeSpec
-}
-
-func (v *TypeVisitor) Visit(node ast.Node) (w ast.Visitor) {
-	switch n := node.(type) {
-	case *ast.ArrayType:
-	case *ast.ChanType:
-	case *ast.FuncType:
-	case *ast.InterfaceType:
-		fmt.Printf("node inside type spec %q: %#v\n", v.typeSpec.Name.Name, n)
-	case *ast.MapType:
-	case *ast.StructType:
-	default:
-		return v
-	}
-	return
-}
-
-func errPrintf(format string, args... interface{}) {
-	fmt.Fprintf(os.Stderr, format, args...)
-}
 
 func main() {
 	flag.Parse()
@@ -52,11 +16,58 @@ func main() {
 	fset := token.NewFileSet()
 	pkgMap, firstErr := parser.ParseFiles(fset, filenames, 0)
 	if firstErr != nil {
-		errPrintf("Error while parsing: %v\n", firstErr)
+		fmt.Fprintf(os.Stderr, "Error while parsing: %v\n", firstErr)
 	}
-	v := new(PackageVisitor)
-	for pkgName, pkg := range pkgMap {
+
+	v := NewNodeChecker(fset)
+	v.InterfaceName = regexp.MustCompile("I[A-Z][A-Za-z]+")
+
+	for _, pkg := range pkgMap {
 		ast.Walk(v, pkg)
-		fmt.Printf("package %q found\n", pkgName)
+	}
+}
+
+type NodeChecker struct {
+	fset          *token.FileSet
+	InterfaceName *regexp.Regexp
+}
+
+func NewNodeChecker(fset *token.FileSet) *NodeChecker {
+	return &NodeChecker{
+		fset: fset,
+	}
+}
+
+func (v *NodeChecker) Visit(node ast.Node) (w ast.Visitor) {
+	switch n := node.(type) {
+	case *ast.TypeSpec:
+		v.checkTypeName(n)
+	}
+	return v
+}
+
+// report displays a message about a particular position in the fileset.
+func (v *NodeChecker) report(pos token.Pos, format string, args ...interface{}) {
+	position := v.fset.Position(pos)
+	allArgs := make([]interface{}, len(args)+3)
+
+	allArgs[0] = position.Filename
+	allArgs[1] = position.Line
+	allArgs[2] = position.Column
+	copy(allArgs[3:], args)
+
+	fmt.Fprintf(
+		os.Stderr,
+		"%s:%d:%d: " + format,
+		allArgs...)
+}
+
+func (v *NodeChecker) checkTypeName(typeSpec *ast.TypeSpec) {
+	name := typeSpec.Name.Name
+	switch t := typeSpec.Type.(type) {
+	case *ast.InterfaceType:
+		if !v.InterfaceName.MatchString(name) {
+			v.report(typeSpec.Name.NamePos, "Bad name for interface %q\n", name)
+		}
 	}
 }

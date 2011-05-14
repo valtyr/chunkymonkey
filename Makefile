@@ -25,6 +25,9 @@ clean:
 fmt:
 	@gd -q -fmt --tab src
 
+check: style
+	@./style `find . -name \*.go`
+
 test: cleantmp datatests
 	@-rm -rf test_obj/tmp*
 	@mkdir -p test_obj
