@@ -11,10 +11,11 @@ import (
 
 type chunkStoreAlpha struct {
 	worldPath string
+	requests  chan *ChunkXz
 }
 
 // Creates a IChunkStore that reads the Minecraft Alpha world format.
-func NewChunkStoreAlpha(worldPath string) IChunkStore {
+func newChunkStoreAlpha(worldPath string) *chunkStoreAlpha {
 	return &chunkStoreAlpha{
 		worldPath: worldPath,
 	}
@@ -28,12 +29,7 @@ func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXz) string {
 		"c."+base36Encode(int32(chunkLoc.X))+"."+base36Encode(int32(chunkLoc.Z))+".dat")
 }
 
-// Load a chunk from its NBT representation
-func (s *chunkStoreAlpha) LoadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error) {
-	if err != nil {
-		return
-	}
-
+func (s *chunkStoreAlpha) loadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error) {
 	file, err := os.Open(s.chunkPath(chunkLoc))
 	if err != nil {
 		if sysErr, ok := err.(*os.SyscallError); ok && sysErr.Errno == os.ENOENT {

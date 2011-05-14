@@ -37,7 +37,9 @@ func (mgr *ChunkManager) Get(loc *ChunkXz) (c IChunk) {
 		return
 	}
 
-	chunkReader, err := mgr.chunkStore.LoadChunk(loc)
+	chunkResult := <-mgr.chunkStore.LoadChunk(loc)
+
+	chunkReader, err := chunkResult.Reader, chunkResult.Err
 	if err != nil {
 		if _, ok := err.(chunkstore.NoSuchChunkError); !ok {
 			log.Printf("ChunkManager.Get(%+v): %s", loc, err.String())

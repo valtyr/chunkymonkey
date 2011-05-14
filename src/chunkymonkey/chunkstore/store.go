@@ -8,8 +8,13 @@ import (
 	"chunkymonkey/nbt"
 )
 
+type ChunkResult struct {
+	Reader IChunkReader
+	Err    os.Error
+}
+
 type IChunkStore interface {
-	LoadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error)
+	LoadChunk(chunkLoc *ChunkXz) (result <-chan ChunkResult)
 }
 
 type IChunkReader interface {
@@ -38,17 +43,24 @@ type IChunkReader interface {
 
 // Given the NamedTag for a level.dat, returns an appropriate ChunkStore.
 func ChunkStoreForLevel(worldPath string, levelData *nbt.NamedTag) (store IChunkStore, err os.Error) {
+	var serialStore iSerialChunkStore
 	versionTag, ok := levelData.Lookup("/Data/version").(*nbt.Int)
 
 	if !ok {
-		store = NewChunkStoreAlpha(worldPath)
+		serialStore = newChunkStoreAlpha(worldPath)
 	} else {
 		switch version := versionTag.Value; version {
 		case 19132:
-			store = NewChunkStoreBeta(worldPath)
+			serialStore = newChunkStoreBeta(worldPath)
 		default:
 			err = UnknownLevelVersion(version)
 		}
+	}
+
+	if serialStore != nil {
+		service := newChunkService(serialStore)
+		store = service
+		go service.serve()
 	}
 
 	return

@@ -24,14 +24,14 @@ type chunkStoreBeta struct {
 }
 
 // Creates a ChunkStore that reads the Minecraft Beta world format.
-func NewChunkStoreBeta(worldPath string) IChunkStore {
+func newChunkStoreBeta(worldPath string) *chunkStoreBeta {
 	return &chunkStoreBeta{
 		worldPath:   worldPath,
 		regionFiles: make(map[uint64]*regionFileReader),
 	}
 }
 
-func (s *chunkStoreBeta) LoadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error) {
+func (s *chunkStoreBeta) loadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error) {
 	regionLoc := regionLocForChunkXz(chunkLoc)
 
 	var cfr *regionFileReader
