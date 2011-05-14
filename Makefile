@@ -47,7 +47,7 @@ inspectlevel: libs
 datatests: libs
 	@gd -q -I src -o $@ src/util/$@
 
-style:
+style: src/util/style/style.go
 	@gd -q -I src -o $@ src/util/$@
 
 docs: $(DIAGRAMS)
