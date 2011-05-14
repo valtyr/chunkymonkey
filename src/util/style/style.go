@@ -20,7 +20,7 @@ func main() {
 	}
 
 	v := NewNodeChecker(fset)
-	v.InterfaceName = regexp.MustCompile("I[A-Z][A-Za-z]+")
+	v.InterfaceName = regexp.MustCompile("[Ii][A-Z][A-Za-z]+")
 
 	for _, pkg := range pkgMap {
 		ast.Walk(v, pkg)
