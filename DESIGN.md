@@ -61,8 +61,8 @@ Pretty informal, as few decisions have been made here as yet. Note that this is
 a statement of intent, rather than reality, as the codebase needs some
 improvement in the following regards.
 
-*   Use gofmt to format code before pushing to the master repository. 4 space
-    characters per indent is the indentation style used (use `make fmt`).
+*   Use gofmt to format code before pushing to the master repository. 1 tab
+    character per indent is the indentation style used (use `make fmt`).
 *   Unit tests must pass before pushing to the master repository (use
     `make test`).
 *   Unit test code where possible/reasonable to do so. It is likely that a
