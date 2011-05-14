@@ -58,7 +58,7 @@ func (v *NodeChecker) report(pos token.Pos, format string, args ...interface{}) 
 
 	fmt.Fprintf(
 		os.Stderr,
-		"%s:%d:%d: " + format,
+		"%s:%d:%d: "+format,
 		allArgs...)
 }
 
