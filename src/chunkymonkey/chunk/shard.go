@@ -23,6 +23,11 @@ func (loc *ShardXz) toChunkXz() ChunkXz {
 	}
 }
 
+// Converts a ShardXz location into a key suitable for using in a hash.
+func (loc *ShardXz) Key() uint64 {
+	return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
+}
+
 type ChunkShard struct {
 	mgr            *ChunkManager
 	loc            ShardXz
