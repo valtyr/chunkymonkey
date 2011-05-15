@@ -20,14 +20,14 @@ func chunkXzToChunkIndex(locDelta *ChunkXz) int {
 // ChunkShard represents a square shard of chunks that share a master
 // goroutine.
 type ChunkShard struct {
-	mgr            *ChunkManager
+	mgr            *LocalShardManager
 	loc            ShardXz
 	originChunkLoc ChunkXz // The lowest X and Z located chunk in the shard.
 	chunks         [chunksPerShard]*Chunk
 	requests       chan iShardRequest
 }
 
-func NewChunkShard(mgr *ChunkManager, loc ShardXz) (shard *ChunkShard) {
+func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
 	shard = &ChunkShard{
 		mgr:            mgr,
 		loc:            loc,

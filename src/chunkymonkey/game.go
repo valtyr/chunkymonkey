@@ -23,7 +23,7 @@ import (
 )
 
 type Game struct {
-	chunkManager  *chunk.ChunkManager
+	chunkManager  *chunk.LocalShardManager
 	mainQueue     chan func(IGame)
 	entityManager EntityManager
 	players       map[EntityId]IPlayer
@@ -51,7 +51,7 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	game.serverId = fmt.Sprintf("%x", game.rand.Int63())
 	//game.serverId = "-"
 
-	game.chunkManager = chunk.NewChunkManager(worldStore.ChunkStore, game)
+	game.chunkManager = chunk.NewLocalShardManager(worldStore.ChunkStore, game)
 
 	go game.mainLoop()
 	go game.timer()
@@ -138,7 +138,7 @@ func (game *Game) GetGameRules() *gamerules.GameRules {
 	return &game.gameRules
 }
 
-func (game *Game) GetChunkManager() IChunkManager {
+func (game *Game) GetChunkManager() IShardConnecter {
 	return game.chunkManager
 }
 

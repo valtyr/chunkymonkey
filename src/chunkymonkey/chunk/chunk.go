@@ -35,7 +35,7 @@ var enableMobs = flag.Bool(
 
 // A chunk is slice of the world map.
 type Chunk struct {
-	mgr        *ChunkManager
+	mgr        *LocalShardManager
 	shard      *ChunkShard
 	loc        ChunkXz
 	blocks     []byte
@@ -57,7 +57,7 @@ type Chunk struct {
 	subscriberPos map[IPlayer]*AbsXyz // Player positions that are near or in the chunk.
 }
 
-func newChunkFromReader(reader chunkstore.IChunkReader, mgr *ChunkManager, shard *ChunkShard) (chunk *Chunk) {
+func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {
 	chunk = &Chunk{
 		mgr:           mgr,
 		shard:         shard,

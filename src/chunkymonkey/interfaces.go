@@ -96,17 +96,21 @@ type IShardConnection interface {
 	Disconnect()
 }
 
-type IChunkManager interface {
+// IShardConnecter is used to look up shards and connect to them.
+type IShardConnecter interface {
 	// Must currently be called from with the owning IGame's Enqueue:
-	ConnectShard(player ITransmitter, shardLoc ShardXz) IShardConnection
+	ShardConnect(player ITransmitter, shardLoc ShardXz) IShardConnection
+
+	// TODO Eventually remove these methods - everything should go through
+	// IShardConnection.
 	EnqueueAllChunks(fn func(chunk IChunk))
 	EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk))
 }
 
 type IGame interface {
 	// Safe to call from outside of Enqueue:
-	GetStartPosition() *AbsXyz      // Do not modify return value
-	GetChunkManager() IChunkManager // Respect calling methods on the return value within Enqueue
+	GetStartPosition() *AbsXyz // Do not modify return value
+	GetChunkManager() IShardConnecter
 	GetGameRules() *gamerules.GameRules
 
 	Enqueue(f func(IGame))

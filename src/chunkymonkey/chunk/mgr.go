@@ -23,17 +23,18 @@ func (conn *localShardConnection) TransferPlayerTo(shardLoc ShardXz) {
 func (conn *localShardConnection) Disconnect() {
 }
 
-// ChunkManager contains all chunk shards and can look them up.
-// TODO Rename to LocalShardManager.
-type ChunkManager struct {
+// LocalShardManager contains all chunk shards and can look them up. It
+// implements IShardConnecter and is for use in hosting all shards in the local
+// process.
+type LocalShardManager struct {
 	game       IGame
 	chunkStore chunkstore.IChunkStore
 	gameRules  *gamerules.GameRules
 	shards     map[uint64]*ChunkShard
 }
 
-func NewChunkManager(chunkStore chunkstore.IChunkStore, game IGame) *ChunkManager {
-	return &ChunkManager{
+func NewLocalShardManager(chunkStore chunkstore.IChunkStore, game IGame) *LocalShardManager {
+	return &LocalShardManager{
 		game:       game,
 		chunkStore: chunkStore,
 		gameRules:  game.GetGameRules(),
@@ -41,7 +42,7 @@ func NewChunkManager(chunkStore chunkstore.IChunkStore, game IGame) *ChunkManage
 	}
 }
 
-func (mgr *ChunkManager) getShard(loc ShardXz) *ChunkShard {
+func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
 	shardKey := loc.Key()
 	if shard, ok := mgr.shards[shardKey]; ok {
 		// Shard already exists.
@@ -56,13 +57,13 @@ func (mgr *ChunkManager) getShard(loc ShardXz) *ChunkShard {
 	return shard
 }
 
-func (mgr *ChunkManager) ConnectShard(player ITransmitter, shardLoc ShardXz) IShardConnection {
+func (mgr *LocalShardManager) ShardConnect(player ITransmitter, shardLoc ShardXz) IShardConnection {
 	// TODO
 	return nil
 }
 
 // EnqueueAllChunks runs a given function on all loaded chunks.
-func (mgr *ChunkManager) EnqueueAllChunks(fn func(chunk IChunk)) {
+func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk IChunk)) {
 	mgr.game.Enqueue(func(_ IGame) {
 		for _, shard := range mgr.shards {
 			shard.EnqueueAllChunks(fn)
@@ -72,7 +73,7 @@ func (mgr *ChunkManager) EnqueueAllChunks(fn func(chunk IChunk)) {
 
 // EnqueueOnChunk runs a function on the chunk at the given location. If the
 // chunk does not exist, it does nothing.
-func (mgr *ChunkManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk)) {
+func (mgr *LocalShardManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk)) {
 	mgr.game.Enqueue(func(_ IGame) {
 		shard := mgr.getShard(loc.ToShardXz())
 		shard.EnqueueOnChunk(loc, fn)
