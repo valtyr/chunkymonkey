@@ -405,14 +405,17 @@ type AbsXyz struct {
 	X, Y, Z AbsCoord
 }
 
+// TODO Remove - this method is wasted space.
 func (p *AbsXyz) Copy() *AbsXyz {
 	return &AbsXyz{p.X, p.Y, p.Z}
 }
 
-// Updates a ChunkXz with the chunk position that the AbsXyz is within.
-func (p *AbsXyz) UpdateChunkXz(chunkLoc *ChunkXz) {
-	chunkLoc.X = ChunkCoord(math.Floor(float64(p.X / ChunkSizeH)))
-	chunkLoc.Z = ChunkCoord(math.Floor(float64(p.Z / ChunkSizeH)))
+// Convert an (x, z) absolute coordinate pair to chunk coordinates
+func (p *AbsXyz) ToChunkXz() ChunkXz {
+	return ChunkXz{
+		X: ChunkCoord(math.Floor(float64(p.X / ChunkSizeH))),
+		Z: ChunkCoord(math.Floor(float64(p.Z / ChunkSizeH))),
+	}
 }
 
 func (p *AbsXyz) ApplyVelocity(dt TickTime, v *AbsVelocity) {
@@ -629,14 +632,6 @@ type BlockXyz struct {
 // location data passed (such as using an item not on a block).
 func (b *BlockXyz) IsNull() bool {
 	return b.Y == -1 && b.X == -1 && b.Z == -1
-}
-
-// Convert an (x, z) absolute coordinate pair to chunk coordinates
-func (abs *AbsXyz) ToChunkXz() (chunkXz *ChunkXz) {
-	return &ChunkXz{
-		ChunkCoord(abs.X / ChunkSizeH),
-		ChunkCoord(abs.Z / ChunkSizeH),
-	}
 }
 
 func coordDivMod(num, denom int32) (div, mod int32) {

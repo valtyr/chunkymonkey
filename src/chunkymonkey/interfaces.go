@@ -17,7 +17,7 @@ type IPlayer interface {
 	GetEntityId() EntityId
 	GetEntity() *entity.Entity // Only the game mainloop may modify the return value
 	GetName() string           // Do not modify return value
-	LockedGetChunkPosition() *ChunkXz
+	LockedGetChunkPosition() ChunkXz
 	TransmitPacket(packet []byte)
 	TransmitPacketExclude(exclude IPlayer, packet []byte)
 	// Offers an item to the player. If the player completely consumes
@@ -77,8 +77,28 @@ type IChunk interface {
 	SendUpdate()
 }
 
+// ITransmitter is the interface by which shards communicate packets to
+// players.
+type ITransmitter interface {
+	TransmitPacket(packet []byte)
+}
+
+// IShardConnection is the interface by which shards can be communicated to by
+// player frontend code.
+type IShardConnection interface {
+	SubscribeChunk(chunkLoc ChunkXz)
+	UnsubscribeChunk(chunkLoc ChunkXz)
+	TransferPlayerTo(shardLoc ShardXz)
+	// TODO method to send events to chunks from player frontend.
+
+	// Removes connection to shard, and removes all subscriptions to chunks in
+	// the shard.
+	Disconnect()
+}
+
 type IChunkManager interface {
 	// Must currently be called from with the owning IGame's Enqueue:
+	ConnectShard(player ITransmitter, shardLoc ShardXz) IShardConnection
 	EnqueueAllChunks(fn func(chunk IChunk))
 	EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk))
 }

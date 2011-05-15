@@ -1,173 +1,176 @@
 package player
 
 import (
-	"bytes"
-	"sync"
+	"log"
 
 	. "chunkymonkey/interfaces"
-	"chunkymonkey/proto"
 	. "chunkymonkey/types"
 )
 
-const (
-	// The radius within which player's exact location is relayed to chunks.
-	// For item pickup the only values that make any sense are 0 or 1.
-	positionUpdateRadius = ChunkCoord(1)
-	numPosChunksEdge     = positionUpdateRadius*2 + 1
-	numPosChunks         = numPosChunksEdge * numPosChunksEdge
-)
+// shardRef holds a reference to a shard connection and context for the number
+// of subscribed chunks inside the shard.
+type shardRef struct {
+	shard IShardConnection
+	count int
+}
 
-// Keeps track of chunks that the player is subscribed to, and adds/removes the
-// player from chunks as they move around. Also keeps nearby chunks up to date
-// with the player's position.
+// chunkSubscriptions is part of the player frontend code, and maintains:
+// * the shards to be connected to,
+// * the chunks that to be subscribed to (via their shards),
+// * and moving the player from one shard to another.
 type chunkSubscriptions struct {
-	player        *Player
-	chunks        map[uint64]ChunkXz // Map from ChunkKeys to chunk locations subscribed to.
-	chunksWithLoc map[uint64]ChunkXz // Chunks that have previously received a position update.
-	curChunk      ChunkXz            // Current chunk that the player is on.
-	curChunkValid bool               // States if curChunkValid is valid.
+	mgr         IChunkManager
+	player      ITransmitter
+	curShardLoc ShardXz             // Shard the player is currently in.
+	curChunkLoc ChunkXz             // Chunk the player is currently in.
+	curShard    IShardConnection    // Shard the player is hosted on.
+	shards      map[uint64]shardRef // Connections to shards.
 }
 
-func (cs *chunkSubscriptions) Init(player *Player) {
-	cs.player = player
-	cs.chunks = make(map[uint64]ChunkXz)
-	cs.chunksWithLoc = make(map[uint64]ChunkXz)
-	cs.curChunkValid = false
+func (sub *chunkSubscriptions) Init(mgr IChunkManager, player ITransmitter, initialPos *AbsXyz) {
+	sub.mgr = mgr
+	sub.player = player
+	sub.curShardLoc = initialPos.ToShardXz()
+	sub.curChunkLoc = initialPos.ToChunkXz()
+	sub.shards = make(map[uint64]shardRef)
+
+	initialChunkLocs := orderedChunkSquare(sub.curChunkLoc, ChunkRadius)
+	sub.subscribeToChunks(initialChunkLocs)
+
+	sub.curShard = sub.shards[sub.curShardLoc.Key()].shard
 }
 
-// Updates the player's location to the new position, and
-// subscribes/unsubscribes to chunks as necessary.
+func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
+	newChunkLoc := newLoc.ToChunkXz()
+	if newChunkLoc.X == sub.curChunkLoc.X && newChunkLoc.Z == sub.curChunkLoc.Z {
+		return
+	}
+	sub.moveToChunk(newChunkLoc)
+
+	newShardLoc := newLoc.ToShardXz()
+	if newShardLoc.X == sub.curShardLoc.X && newShardLoc.Z == sub.curShardLoc.Z {
+		return
+	}
+	sub.moveToShard(newShardLoc)
+}
+
+// Close closes down all shard connections. Use when the player is
+// disconnected.
+func (sub *chunkSubscriptions) Close() {
+	for key, ref := range sub.shards {
+		ref.shard.Disconnect()
+		sub.shards[key] = shardRef{}, false
+	}
+}
+
+// subscribeToChunks connects to shards and subscribes to chunks for the chunk
+// locations given.
+func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
+	for _, chunkLoc := range chunkLocs {
+		shardLoc := chunkLoc.ToShardXz()
+		shardKey := shardLoc.Key()
+		ref, ok := sub.shards[shardKey]
+		if !ok {
+			ref = shardRef{
+				shard: sub.mgr.ConnectShard(sub.player, shardLoc),
+				count: 0,
+			}
+			sub.shards[shardKey] = ref
+		}
+		ref.shard.SubscribeChunk(chunkLoc)
+		ref.count++
+	}
+}
+
+// unsubscribeFromChunks unsubscribes from chunks for the chunk locations
+// given, and disconnects from shards where there are no subscribed chunks.
+func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
+	for _, chunkLoc := range chunkLocs {
+		shardLoc := chunkLoc.ToShardXz()
+		shardKey := shardLoc.Key()
+		if ref, ok := sub.shards[shardKey]; ok {
+			ref.shard.UnsubscribeChunk(chunkLoc)
+			ref.count--
+			if ref.count <= 0 {
+				ref.shard.Disconnect()
+				sub.shards[shardKey] = shardRef{}, false
+			}
+		} else {
+			// Odd - we don't have a shard connection for that chunk.
+			log.Print("chunkSubscriptions.unsubscribeFromChunks() attempted to " +
+				"unsubscribe from chunk in unconnected shard.")
+		}
+	}
+}
+
+// moveToChunk subscribes to chunks that are newly in range, and unsubscribes
+// to those that have just left.
+func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz) {
+	addChunkLocs := squareDifference(newChunkLoc, sub.curChunkLoc, ChunkRadius)
+	sub.subscribeToChunks(addChunkLocs)
+
+	delChunkLocs := squareDifference(sub.curChunkLoc, newChunkLoc, ChunkRadius)
+	sub.unsubscribeFromChunks(delChunkLocs)
+}
+
+func (sub *chunkSubscriptions) moveToShard(newShardLoc ShardXz) {
+	sub.curShard.TransferPlayerTo(newShardLoc)
+
+	// The new current shard is assumed to be present in sub.shards already.
+	sub.curShard = sub.shards[newShardLoc.Key()].shard
+}
+
+// squareDifference computes the ChunkXz values that are in "square radius" of
+// centerA, but not in "square radius" of centerB.
 //
-// Subscribes to all chunks in MinChunkRadius, then calls nearbySent(), then
-// subscribes to the remaining chunks out to ChunkRadius. Note that the bulk of
-// this work happens in a seperate goroutine (including the call to nearbySent).
-func (cs *chunkSubscriptions) Move(newPos *AbsXyz, nearbySent func()) {
-	chunkLocsToAdd, chunkLocsToRemove, changedChunk := cs.moveChunkLocs(newPos)
-
-	// Subscribe/unsubscribe from chunk updates.
-	if len(chunkLocsToAdd) > 0 || len(chunkLocsToRemove) > 0 {
-		// Remember the chunks that we're going to be subscribed to.
-		for _, chunkLoc := range chunkLocsToAdd {
-			cs.chunks[chunkLoc.ChunkKey()] = chunkLoc
+// E.g, input squares:
+// centerA={1,1}, centerB={2,2}, radius = 1
+// A = in square A, B = in square B, C = in both
+//
+// AAA
+// ACCB
+// ACCB
+//  BBB
+//
+// Results will be:
+//
+// AAA
+// A
+// A
+func squareDifference(centerA, centerB ChunkXz, radius ChunkCoord) []ChunkXz {
+	// TODO Currently this is the exact same slow simple O(n²) algorithm used in
+	// the test to produce the expected result. This could be optimized somewhat.
+	// Even if a general optimization is too much effort, the trivial cases of
+	// moving ±1X and/or ±1Z are the very common cases, and the simple dumb
+	// algorithm can be used otherwise.
+	areaEdgeSize := radius*2 + 1
+	result := make([]ChunkXz, 0, areaEdgeSize)
+	for x := centerA.X - radius; x <= centerA.X+radius; x++ {
+		for z := centerA.Z - radius; z <= centerA.Z+radius; z++ {
+			if x >= centerB.X-radius && x <= centerB.X+radius && z >= centerB.Z-radius && z <= centerB.Z+radius {
+				// {x, z} is within square B. Don't include this.
+				continue
+			}
+			result = append(result, ChunkXz{x, z})
 		}
-		// Forget the chunks that we're removing subscription from.
-		for _, chunkLoc := range chunkLocsToRemove {
-			cs.chunks[chunkLoc.ChunkKey()] = ChunkXz{}, false
-		}
-
-		// Send subscribe/unsubscribe messages in the background.
-		go addRemoveChunkSubs(cs.player, cs.curChunk, nearbySent, chunkLocsToAdd, chunkLocsToRemove)
 	}
-
-	cs.updateChunksWithLoc(newPos, changedChunk)
+	return result
 }
 
-// Removes all subscriptions to chunks without sending packets to "unload" the
-// chunks from the client.
-func (cs *chunkSubscriptions) clear() {
-	player := cs.player
-	for _, chunkLoc := range cs.chunks {
-		player.game.GetChunkManager().EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
-			chunk.RemovePlayer(player, false)
-		})
-	}
-}
-
-// Work out which chunks to send following a move, and in which order. Also
-// returns the chunks that should be removed.
-func (cs *chunkSubscriptions) moveChunkLocs(newPos *AbsXyz) (chunkLocsToAdd []ChunkXz, chunkLocsToRemove []ChunkXz, changedChunk bool) {
-	if cs.curChunkValid {
-		// Player moving within the world. We remove old chunks and add new ones.
-		var newChunkLoc ChunkXz
-		newPos.UpdateChunkXz(&newChunkLoc)
-
-		if newChunkLoc.X == cs.curChunk.X && newChunkLoc.Z == cs.curChunk.Z {
-			// Still on the same chunk - nothing to be done.
-			return nil, nil, false
-		}
-
-		// Very sub-optimal way to determine new chunks to load and their
-		// order, but should be correct in all general cases.
-		// TODO work out a more optimal method
-		allChunkLocs := chunkOrder(ChunkRadius, &newChunkLoc)
-		chunkLocsToAdd = make([]ChunkXz, 0, len(allChunkLocs))
-		for _, chunkLoc := range allChunkLocs {
-			dx := (chunkLoc.X - newChunkLoc.X).Abs()
-			dz := (chunkLoc.Z - newChunkLoc.Z).Abs()
-			_, haveChunk := cs.chunks[chunkLoc.ChunkKey()]
-			if dx <= ChunkRadius && dz <= ChunkRadius && !haveChunk {
-				chunkLocsToAdd = append(chunkLocsToAdd, chunkLoc)
-			}
-		}
-		// Remove old chunks
-		// TODO work out a more optimal method
-		chunkLocsToRemove = make([]ChunkXz, 0, len(allChunkLocs))
-		for _, chunkLoc := range cs.chunks {
-			dx := (chunkLoc.X - newChunkLoc.X).Abs()
-			dz := (chunkLoc.Z - newChunkLoc.Z).Abs()
-			if dx > ChunkRadius || dz > ChunkRadius {
-				chunkLocsToRemove = append(chunkLocsToRemove, chunkLoc)
-			}
-		}
-
-		cs.curChunk = newChunkLoc
-	} else {
-		// Player arriving in the world. We send all nearby chunks.
-		newPos.UpdateChunkXz(&cs.curChunk)
-		cs.curChunkValid = true
-		chunkLocsToAdd = chunkOrder(ChunkRadius, &cs.curChunk)
-	}
-	changedChunk = true
-	return
-}
-
-func (cs *chunkSubscriptions) updateChunksWithLoc(newPos *AbsXyz, changedChunk bool) {
-	mgr := cs.player.game.GetChunkManager()
-
-	// Update immediately adjacent chunks with player position.
-	if changedChunk {
-		// Remove previously adjacent chunks.
-		for key, chunkLoc := range cs.chunksWithLoc {
-			dx := (chunkLoc.X - cs.curChunk.X).Abs()
-			dz := (chunkLoc.Z - cs.curChunk.Z).Abs()
-			if dx > positionUpdateRadius || dz > positionUpdateRadius {
-				// Tell chunk to forget about player position.
-				mgr.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
-					chunk.SetPlayerPosition(cs.player, nil)
-				})
-				cs.chunksWithLoc[key] = ChunkXz{}, false
-			}
-		}
-
-		// Add newly adjacent chunks.
-		var cursor ChunkXz
-		// Assumes that ChunkRadius > positionUpdateRadius to avoid doing
-		// additional chunkmanager lookups.
-		for cursor.X = cs.curChunk.X - positionUpdateRadius; cursor.X <= cs.curChunk.X+positionUpdateRadius; cursor.X++ {
-			for cursor.Z = cs.curChunk.Z - positionUpdateRadius; cursor.Z <= cs.curChunk.Z+positionUpdateRadius; cursor.Z++ {
-				key := cursor.ChunkKey()
-				if chunk, ok := cs.chunksWithLoc[key]; !ok {
-					if chunk, ok = cs.chunks[key]; ok {
-						cs.chunksWithLoc[key] = chunk
-					}
-				}
-			}
-		}
-	}
-
-	// Send player position updates to adjacent chunks.
-	posCopy := newPos.Copy()
-	for _, chunkLoc := range cs.chunksWithLoc {
-		mgr.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
-			chunk.SetPlayerPosition(cs.player, posCopy)
-		})
-	}
-}
-
-func chunkOrder(radius ChunkCoord, center *ChunkXz) (locs []ChunkXz) {
+// orderedChunkSquare creates a slice of chunk locations in a square centered
+// on `center`, with sides `radius` chunks away from the center. The chunk
+// locations are output in approx this order for radius=2 (where lower numbered
+// chunks are earlier):
+//
+// 33333
+// 32223
+// 32123
+// 32223
+// 33333
+func orderedChunkSquare(center ChunkXz, radius ChunkCoord) (locs []ChunkXz) {
 	areaEdgeSize := radius*2 + 1
 	locs = make([]ChunkXz, areaEdgeSize*areaEdgeSize)
-	locs[0] = *center
+	locs[0] = center
 	index := 1
 	for curRadius := ChunkCoord(1); curRadius <= radius; curRadius++ {
 		xMin := ChunkCoord(-curRadius + center.X)
@@ -193,57 +196,4 @@ func chunkOrder(radius ChunkCoord, center *ChunkXz) (locs []ChunkXz) {
 		}
 	}
 	return
-}
-
-func addRemoveChunkSubs(player *Player, curChunk ChunkXz, nearbySent func(), chunkLocsToAdd []ChunkXz, chunkLocsToRemove []ChunkXz) {
-	mgr := player.game.GetChunkManager()
-
-	if len(chunkLocsToAdd) > 0 {
-		chunksSent := 0
-		if nearbySent != nil {
-			// Warn client to allocate memory for the chunks we're sending.
-			buf := &bytes.Buffer{}
-			for _, chunkLoc := range chunkLocsToAdd {
-				proto.WritePreChunk(buf, &chunkLoc, ChunkInit)
-			}
-			player.TransmitPacket(buf.Bytes())
-
-			// Send the important chunks.
-			waitChunks := &sync.WaitGroup{}
-			for _, chunkLoc := range chunkLocsToAdd {
-				dx := (chunkLoc.X - curChunk.X).Abs()
-				dz := (chunkLoc.Z - curChunk.Z).Abs()
-				if dx > MinChunkRadius || dz > MinChunkRadius {
-					// This chunk isn't important, wait until after other login
-					// data has been sent before sending this and chunks
-					// following.
-					break
-				}
-				chunksSent++
-				waitChunks.Add(1)
-				mgr.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
-					chunk.AddPlayer(player)
-					waitChunks.Done()
-				})
-			}
-			waitChunks.Wait()
-
-			nearbySent()
-		}
-
-		// Send the remaining chunks. We don't need to wait for these to complete
-		// before continuing with talking to the client.
-		for _, chunkLoc := range chunkLocsToAdd[chunksSent:] {
-			mgr.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
-				chunk.AddPlayer(player)
-			})
-		}
-	}
-
-	// Unsubscribe from old chunks
-	for _, chunkLoc := range chunkLocsToRemove {
-		mgr.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
-			chunk.RemovePlayer(player, true)
-		})
-	}
 }

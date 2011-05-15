@@ -54,7 +54,7 @@ func TestChunkSideDir_GetOpposite(t *testing.T) {
 	}
 }
 
-func TestAbsXyz_UpdateChunkXz(t *testing.T) {
+func TestAbsXyz_ToChunkXz(t *testing.T) {
 	type Test struct {
 		input    AbsXyz
 		expected ChunkXz
@@ -70,8 +70,7 @@ func TestAbsXyz_UpdateChunkXz(t *testing.T) {
 
 	for _, test := range tests {
 		input, expected := test.input, test.expected
-		var result ChunkXz
-		input.UpdateChunkXz(&result)
+		result := input.ToChunkXz()
 		if expected.X != result.X || expected.Z != result.Z {
 			t.Errorf("AbsXyz%+v.UpdateChunkXz() expected ChunkXz%+v got ChunkXz%+v",
 				input, expected, result)

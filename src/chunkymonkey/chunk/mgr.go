@@ -7,8 +7,24 @@ import (
 	. "chunkymonkey/types"
 )
 
+// localShardConnection implements IShardConnection for LocalShardManager.
+type localShardConnection struct {
+}
+
+func (conn *localShardConnection) SubscribeChunk(chunkLoc ChunkXz) {
+}
+
+func (conn *localShardConnection) UnsubscribeChunk(chunkLoc ChunkXz) {
+}
+
+func (conn *localShardConnection) TransferPlayerTo(shardLoc ShardXz) {
+}
+
+func (conn *localShardConnection) Disconnect() {
+}
+
 // ChunkManager contains all chunk shards and can look them up.
-// TODO Rename to ShardManager.
+// TODO Rename to LocalShardManager.
 type ChunkManager struct {
 	game       IGame
 	chunkStore chunkstore.IChunkStore
@@ -38,6 +54,11 @@ func (mgr *ChunkManager) getShard(loc ShardXz) *ChunkShard {
 	go shard.serve()
 
 	return shard
+}
+
+func (mgr *ChunkManager) ConnectShard(player ITransmitter, shardLoc ShardXz) IShardConnection {
+	// TODO
+	return nil
 }
 
 // EnqueueAllChunks runs a given function on all loaded chunks.

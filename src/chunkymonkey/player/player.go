@@ -65,7 +65,7 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 		txQueue:   make(chan []byte, 128),
 	}
 
-	player.chunkSubs.Init(player)
+	player.chunkSubs.Init(game.GetChunkManager(), player, &player.position)
 
 	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player, game.GetGameRules().Recipes)
@@ -90,7 +90,7 @@ func (player *Player) GetEntity() *entity.Entity {
 	return &player.Entity
 }
 
-func (player *Player) LockedGetChunkPosition() *ChunkXz {
+func (player *Player) LockedGetChunkPosition() ChunkXz {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 	return player.position.ToChunkXz()
@@ -178,7 +178,7 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
 		return
 	}
 	player.position = *position
-	player.chunkSubs.Move(position, nil)
+	player.chunkSubs.Move(position)
 
 	// TODO: Should keep track of when players enter/leave their mutual radius
 	// of "awareness". I.e a client should receive a RemoveEntity packet when
@@ -377,7 +377,7 @@ func (player *Player) mainLoop() {
 	expVarPlayerConnectionCount.Add(1)
 	defer func() {
 		expVarPlayerDisconnectionCount.Add(1)
-		player.chunkSubs.clear()
+		player.chunkSubs.Close()
 	}()
 
 	player.postLogin()
@@ -461,21 +461,23 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 
 // Blocks until essential login packets have been transmitted.
 func (player *Player) postLogin() {
-	nearbySent := func() {
-		player.lock.Lock()
-		defer player.lock.Unlock()
+	// TODO Old version of chunkSubscriptions.Move() that was called here had
+	// stuff for a callback when the nearest chunks had been sent so that player
+	// position would only be sent when nearby chunks were out. Some replacement
+	// for this will be needed. Possibly a message could be queued to the current
+	// shard following on from chunkSubscriptions's initialization that would ask
+	// the shard to send out the following packets - this would result in them
+	// being sent at least after the chunks that are in the current shard have
+	// been sent.
 
-		// Send player start position etc.
-		buf := &bytes.Buffer{}
-		proto.ServerWritePlayerPositionLook(
-			buf,
-			&player.position, player.position.Y+StanceNormal,
-			&player.look, false)
+	// Send player start position etc.
+	buf := &bytes.Buffer{}
+	proto.ServerWritePlayerPositionLook(
+		buf,
+		&player.position, player.position.Y+StanceNormal,
+		&player.look, false)
 
-		player.inventory.WriteWindowItems(buf)
+	player.inventory.WriteWindowItems(buf)
 
-		player.TransmitPacket(buf.Bytes())
-	}
-
-	player.chunkSubs.Move(&player.position, nearbySent)
+	player.TransmitPacket(buf.Bytes())
 }
