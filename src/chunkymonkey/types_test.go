@@ -164,7 +164,7 @@ func TestCoordDivMod(t *testing.T) {
 	}
 }
 
-func TestShardCoordFromChunkCoord(t *testing.T) {
+func TestChunkCoord_ToShardCoord(t *testing.T) {
 	type Test struct {
 		input    ChunkCoord
 		expected ShardCoord
@@ -184,7 +184,7 @@ func TestShardCoordFromChunkCoord(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := shardCoordFromChunkCoord(test.input)
+		result := test.input.ToShardCoord()
 		if test.expected != result {
 			t.Errorf(
 				"ChunkCoord(%d) expected %d, but got %d",

@@ -437,6 +437,13 @@ func (p *AbsXyz) ToBlockXyz() *BlockXyz {
 	}
 }
 
+func (p *AbsXyz) ToShardXz() ShardXz {
+	return ShardXz{
+		X: ShardCoord(math.Floor(float64(p.X / (ChunkSizeH * ShardSize)))),
+		Z: ShardCoord(math.Floor(float64(p.Z / (ChunkSizeH * ShardSize)))),
+	}
+}
+
 // Specifies approximate world distance in pixels (absolute / PixelsPerBlock)
 type AbsIntCoord int32
 
