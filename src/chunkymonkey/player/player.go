@@ -65,8 +65,6 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 		txQueue:   make(chan []byte, 128),
 	}
 
-	player.chunkSubs.Init(game.GetChunkManager(), player, &player.position)
-
 	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player, game.GetGameRules().Recipes)
 
@@ -360,13 +358,6 @@ func (player *Player) TransmitPacket(packet []byte) {
 	player.txQueue <- packet
 }
 
-func (player *Player) TransmitPacketExclude(exclude IPlayer, packet []byte) {
-	if p, ok := exclude.(*Player); ok && p == player {
-		return // excludes this player
-	}
-	player.TransmitPacket(packet)
-}
-
 func (player *Player) runQueuedCall(f func(IPlayer)) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
@@ -375,10 +366,10 @@ func (player *Player) runQueuedCall(f func(IPlayer)) {
 
 func (player *Player) mainLoop() {
 	expVarPlayerConnectionCount.Add(1)
-	defer func() {
-		expVarPlayerDisconnectionCount.Add(1)
-		player.chunkSubs.Close()
-	}()
+	defer expVarPlayerDisconnectionCount.Add(1)
+
+	player.chunkSubs.Init(player.game.GetChunkManager(), player.EntityId, player, &player.position)
+	defer player.chunkSubs.Close()
 
 	player.postLogin()
 
@@ -471,13 +462,18 @@ func (player *Player) postLogin() {
 	// been sent.
 
 	// Send player start position etc.
-	buf := &bytes.Buffer{}
+	buf := new(bytes.Buffer)
 	proto.ServerWritePlayerPositionLook(
 		buf,
 		&player.position, player.position.Y+StanceNormal,
 		&player.look, false)
-
 	player.inventory.WriteWindowItems(buf)
+	packet := buf.Bytes()
 
-	player.TransmitPacket(buf.Bytes())
+	// Enqueue on the shard as a hacky way to defer the packet send until after
+	// the initial chunk data has been sent.
+	curShard := player.chunkSubs.curShard
+	curShard.Enqueue(func() {
+		player.TransmitPacket(packet)
+	})
 }

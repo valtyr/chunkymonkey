@@ -21,15 +21,17 @@ type shardRef struct {
 type chunkSubscriptions struct {
 	connecter   IShardConnecter
 	player      ITransmitter
+	entityId    EntityId
 	curShardLoc ShardXz             // Shard the player is currently in.
 	curChunkLoc ChunkXz             // Chunk the player is currently in.
 	curShard    IShardConnection    // Shard the player is hosted on.
 	shards      map[uint64]shardRef // Connections to shards.
 }
 
-func (sub *chunkSubscriptions) Init(connecter IShardConnecter, player ITransmitter, initialPos *AbsXyz) {
+func (sub *chunkSubscriptions) Init(connecter IShardConnecter, entityId EntityId, player ITransmitter, initialPos *AbsXyz) {
 	sub.connecter = connecter
 	sub.player = player
+	sub.entityId = entityId
 	sub.curShardLoc = initialPos.ToShardXz()
 	sub.curChunkLoc = initialPos.ToChunkXz()
 	sub.shards = make(map[uint64]shardRef)
@@ -72,7 +74,7 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
 		ref, ok := sub.shards[shardKey]
 		if !ok {
 			ref = shardRef{
-				shard: sub.connecter.ShardConnect(sub.player, shardLoc),
+				shard: sub.connecter.ShardConnect(sub.entityId, sub.player, shardLoc),
 				count: 0,
 			}
 			sub.shards[shardKey] = ref

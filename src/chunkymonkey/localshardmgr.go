@@ -9,18 +9,46 @@ import (
 
 // localShardConnection implements IShardConnection for LocalShardManager.
 type localShardConnection struct {
+	entityId EntityId
+	player   ITransmitter
+	shard    *ChunkShard
+}
+
+func newLocalShardConnection(entityId EntityId, player ITransmitter, shard *ChunkShard) *localShardConnection {
+	return &localShardConnection{
+		entityId: entityId,
+		player:   player,
+		shard:    shard,
+	}
 }
 
 func (conn *localShardConnection) SubscribeChunk(chunkLoc ChunkXz) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
+		chunk.AddPlayer(conn.entityId, conn.player)
+	})
 }
 
 func (conn *localShardConnection) UnsubscribeChunk(chunkLoc ChunkXz) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
+		chunk.RemovePlayer(conn.entityId, true)
+	})
 }
 
 func (conn *localShardConnection) TransferPlayerTo(shardLoc ShardXz) {
+	// TODO Implement this when player data is on the shard and needs to be
+	// moved.
+}
+
+func (conn *localShardConnection) Enqueue(fn func()) {
+	conn.shard.Enqueue(fn)
 }
 
 func (conn *localShardConnection) Disconnect() {
+	// TODO This inefficiently unsubscribes from all chunks, even if not
+	// subscribed to.
+	conn.shard.EnqueueAllChunks(func(chunk IChunk) {
+		chunk.RemovePlayer(conn.entityId, false)
+	})
 }
 
 // LocalShardManager contains all chunk shards and can look them up. It
@@ -57,9 +85,9 @@ func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
 	return shard
 }
 
-func (mgr *LocalShardManager) ShardConnect(player ITransmitter, shardLoc ShardXz) IShardConnection {
-	// TODO
-	return nil
+func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player ITransmitter, shardLoc ShardXz) IShardConnection {
+	shard := mgr.getShard(shardLoc)
+	return newLocalShardConnection(entityId, player, shard)
 }
 
 // EnqueueAllChunks runs a given function on all loaded chunks.

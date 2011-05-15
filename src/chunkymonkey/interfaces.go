@@ -19,7 +19,6 @@ type IPlayer interface {
 	GetName() string           // Do not modify return value
 	LockedGetChunkPosition() ChunkXz
 	TransmitPacket(packet []byte)
-	TransmitPacketExclude(exclude IPlayer, packet []byte)
 	// Offers an item to the player. If the player completely consumes
 	// it, then item.Count will be 0 afterwards. This function is called from
 	// the item's parent chunk's goroutine, so all methods are safely
@@ -62,12 +61,12 @@ type IChunk interface {
 	// a player will immediately receive complete chunk information via
 	// their TransmitPacket method, and changes thereafter via the same
 	// mechanism.
-	AddPlayer(player IPlayer)
+	AddPlayer(entityId EntityId, player ITransmitter)
 	// Removes a previously registered player to updates from the chunk. If
 	// sendPacket is true, then an unload-chunk packet is sent.
-	RemovePlayer(player IPlayer, sendPacket bool)
+	RemovePlayer(entityId EntityId, sendPacket bool)
 
-	MulticastPlayers(exclude IPlayer, packet []byte)
+	MulticastPlayers(exclude EntityId, packet []byte)
 
 	// Tells the chunk about the position of a player in/near the chunk. pos =
 	// nil indicates that the player is no longer nearby.
@@ -89,17 +88,20 @@ type IShardConnection interface {
 	SubscribeChunk(chunkLoc ChunkXz)
 	UnsubscribeChunk(chunkLoc ChunkXz)
 	TransferPlayerTo(shardLoc ShardXz)
-	// TODO method to send events to chunks from player frontend.
+
+	// TODO better method to send events to chunks from player frontend.
+	Enqueue(fn func())
 
 	// Removes connection to shard, and removes all subscriptions to chunks in
-	// the shard.
+	// the shard. Note that this does *not* send packets to tell the client to
+	// unload the subscribed chunks.
 	Disconnect()
 }
 
 // IShardConnecter is used to look up shards and connect to them.
 type IShardConnecter interface {
 	// Must currently be called from with the owning IGame's Enqueue:
-	ShardConnect(player ITransmitter, shardLoc ShardXz) IShardConnection
+	ShardConnect(entityId EntityId, player ITransmitter, shardLoc ShardXz) IShardConnection
 
 	// TODO Eventually remove these methods - everything should go through
 	// IShardConnection.

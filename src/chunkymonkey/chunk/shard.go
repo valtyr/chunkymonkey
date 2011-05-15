@@ -144,6 +144,10 @@ func (shard *ChunkShard) EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk)) {
 	shard.requests <- &runOnChunk{loc, fn}
 }
 
+func (shard *ChunkShard) Enqueue(fn func()) {
+	shard.requests <- &runGeneric{fn}
+}
+
 func (shard *ChunkShard) enqueueRequest(req iShardRequest) {
 	shard.requests <- req
 }

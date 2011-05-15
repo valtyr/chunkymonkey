@@ -52,9 +52,9 @@ type Chunk struct {
 	blockExtra    map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand          *rand.Rand
 	neighbours    neighboursCache
-	cachedPacket  []byte              // Cached packet data for this block.
-	subscribers   map[IPlayer]bool    // Players getting updates from the chunk.
-	subscriberPos map[IPlayer]*AbsXyz // Player positions that are near or in the chunk.
+	cachedPacket  []byte                    // Cached packet data for this block.
+	subscribers   map[EntityId]ITransmitter // Players getting updates from the chunk.
+	subscriberPos map[EntityId]*AbsXyz      // Player positions that are near or in the chunk.
 }
 
 func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {
@@ -70,8 +70,8 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		spawners:      make(map[EntityId]entity.ISpawn),
 		blockExtra:    make(map[BlockIndex]interface{}),
 		rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers:   make(map[IPlayer]bool),
-		subscriberPos: make(map[IPlayer]*AbsXyz),
+		subscribers:   make(map[EntityId]ITransmitter),
+		subscriberPos: make(map[EntityId]*AbsXyz),
 	}
 	chunk.neighbours.init()
 	return
@@ -91,7 +91,7 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 	// Tell players that the block changed.
 	packet := &bytes.Buffer{}
 	proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
-	chunk.MulticastPlayers(nil, packet.Bytes())
+	chunk.MulticastPlayers(-1, packet.Bytes())
 
 	// Update neighbour caches of this change.
 	chunk.neighbours.setBlock(subLoc, blockType)
@@ -132,7 +132,7 @@ func (chunk *Chunk) AddSpawner(s entity.ISpawn) {
 	// Spawn new item/mob for players.
 	buf := &bytes.Buffer{}
 	s.SendSpawn(buf)
-	chunk.MulticastPlayers(nil, buf.Bytes())
+	chunk.MulticastPlayers(-1, buf.Bytes())
 }
 
 func (chunk *Chunk) removeSpawner(s entity.ISpawn) {
@@ -145,7 +145,7 @@ func (chunk *Chunk) removeSpawner(s entity.ISpawn) {
 	// destroyed.
 	buf := &bytes.Buffer{}
 	proto.WriteEntityDestroy(buf, e.EntityId)
-	chunk.MulticastPlayers(nil, buf.Bytes())
+	chunk.MulticastPlayers(-1, buf.Bytes())
 }
 
 func (chunk *Chunk) GetBlockExtra(subLoc *SubChunkXyz) interface{} {
@@ -444,8 +444,13 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) AddPlayer(player IPlayer) {
-	chunk.subscribers[player] = true
+func (chunk *Chunk) AddPlayer(entityId EntityId, player ITransmitter) {
+	chunk.subscribers[entityId] = player
+
+	buf := new(bytes.Buffer)
+	proto.WritePreChunk(buf, &chunk.loc, ChunkInit)
+	player.TransmitPacket(buf.Bytes())
+
 	player.TransmitPacket(chunk.chunkPacket())
 
 	// Send spawns of all mobs/items in the chunk.
@@ -458,23 +463,28 @@ func (chunk *Chunk) AddPlayer(player IPlayer) {
 	}
 }
 
-func (chunk *Chunk) RemovePlayer(player IPlayer, sendPacket bool) {
-	chunk.subscribers[player] = false, false
-	if sendPacket {
+func (chunk *Chunk) RemovePlayer(entityId EntityId, sendPacket bool) {
+	player, ok := chunk.subscribers[entityId]
+
+	if ok && sendPacket {
+		chunk.subscribers[entityId] = nil, false
 		buf := &bytes.Buffer{}
 		proto.WritePreChunk(buf, &chunk.loc, ChunkUnload)
+		// TODO send PacketEntityDestroy packets for spawns in this chunk.
 		player.TransmitPacket(buf.Bytes())
 	}
 }
 
-func (chunk *Chunk) MulticastPlayers(exclude IPlayer, packet []byte) {
-	for player, _ := range chunk.subscribers {
-		player.TransmitPacketExclude(exclude, packet)
+func (chunk *Chunk) MulticastPlayers(exclude EntityId, packet []byte) {
+	for entityId, player := range chunk.subscribers {
+		if entityId != exclude {
+			player.TransmitPacket(packet)
+		}
 	}
 }
 
 func (chunk *Chunk) SetPlayerPosition(player IPlayer, pos *AbsXyz) {
-	chunk.subscriberPos[player] = pos, pos != nil
+	chunk.subscriberPos[player.GetEntityId()] = pos, pos != nil
 	if pos != nil {
 		// Does the player overlap with any items?
 		minX := pos.X - playerAabH
@@ -498,7 +508,7 @@ func (chunk *Chunk) SetPlayerPosition(player IPlayer, pos *AbsXyz) {
 					// Tell all subscribers to animate the item flying at the
 					// player.
 					proto.WriteItemCollect(buf, EntityId(entityId), player.GetEntityId())
-					chunk.MulticastPlayers(nil, buf.Bytes())
+					chunk.MulticastPlayers(-1, buf.Bytes())
 					chunk.removeSpawner(item)
 				}
 
@@ -515,7 +525,7 @@ func (chunk *Chunk) SetPlayerPosition(player IPlayer, pos *AbsXyz) {
 
 func (chunk *Chunk) chunkPacket() []byte {
 	if chunk.cachedPacket == nil {
-		buf := &bytes.Buffer{}
+		buf := new(bytes.Buffer)
 		proto.WriteMapChunk(buf, &chunk.loc, chunk.blocks, chunk.blockData, chunk.blockLight, chunk.skyLight)
 		chunk.cachedPacket = buf.Bytes()
 	}
@@ -528,7 +538,7 @@ func (chunk *Chunk) SendUpdate() {
 	for _, e := range chunk.spawners {
 		e.SendUpdate(buf)
 	}
-	chunk.MulticastPlayers(nil, buf.Bytes())
+	chunk.MulticastPlayers(-1, buf.Bytes())
 }
 
 func (chunk *Chunk) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk) {

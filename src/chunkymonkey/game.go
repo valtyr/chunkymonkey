@@ -273,7 +273,7 @@ func (game *Game) multicastRadiusPacket(packet []byte, sender IPlayer) {
 	game.chunkManager.EnqueueOnChunk(
 		sender.LockedGetChunkPosition(),
 		func(chunk IChunk) {
-			chunk.MulticastPlayers(sender, packet)
+			chunk.MulticastPlayers(sender.GetEntityId(), packet)
 		},
 	)
 }
