@@ -469,7 +469,32 @@ func (abs *AbsIntXyz) IAdd(dx, dy, dz AbsIntCoord) {
 	abs.Z += dz
 }
 
-// Coordinate of a chunk in the world (block / 16)
+// Shard types and data.
+
+const (
+	// Each shard is ShardSize * ShardSize chunks square.
+	ShardSize = 16
+)
+
+type ShardCoord int32
+
+type ShardXz struct {
+	X, Z ShardCoord
+}
+
+func (loc *ShardXz) ToChunkXz() ChunkXz {
+	return ChunkXz{
+		X: ChunkCoord(loc.X * ShardSize),
+		Z: ChunkCoord(loc.Z * ShardSize),
+	}
+}
+
+// Converts a ShardXz location into a key suitable for using in a hash.
+func (loc *ShardXz) Key() uint64 {
+	return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
+}
+
+// Coordinate of a chunk in the world (block / 16).
 type ChunkCoord int32
 
 func (c ChunkCoord) Abs() ChunkCoord {
@@ -477,6 +502,14 @@ func (c ChunkCoord) Abs() ChunkCoord {
 		return -c
 	}
 	return c
+}
+
+func (c ChunkCoord) ToShardCoord() (s ShardCoord) {
+	s = ShardCoord(c / ShardSize)
+	if c%ShardSize < 0 {
+		s--
+	}
+	return
 }
 
 // ChunkXz represents the position of a chunk within the world.
@@ -505,6 +538,14 @@ func (chunkLoc *ChunkXz) ToBlockXyz(subLoc *SubChunkXyz) *BlockXyz {
 // Converts a chunk location into a key suitable for using in a hash.
 func (chunkLoc *ChunkXz) ChunkKey() uint64 {
 	return uint64(chunkLoc.X)<<32 | uint64(uint32(chunkLoc.Z))
+}
+
+// ToShardXz returns the location of the shard that the chunk is within.
+func (chunkLoc *ChunkXz) ToShardXz() ShardXz {
+	return ShardXz{
+		X: chunkLoc.X.ToShardCoord(),
+		Z: chunkLoc.Z.ToShardCoord(),
+	}
 }
 
 // Size of a sub-chunk

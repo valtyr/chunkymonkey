@@ -9,44 +9,7 @@ import (
 	. "chunkymonkey/types"
 )
 
-const (
-	// Each shard is ShardSize * ShardSize chunks square.
-	ShardSize      = 16
-	chunksPerShard = ShardSize * ShardSize
-)
-
-type shardCoord int32
-
-func shardCoordFromChunkCoord(c ChunkCoord) (s shardCoord) {
-	s = shardCoord(c / ShardSize)
-	if c%ShardSize < 0 {
-		s--
-	}
-	return
-}
-
-type shardXz struct {
-	X, Z shardCoord
-}
-
-func (loc *shardXz) toChunkXz() ChunkXz {
-	return ChunkXz{
-		X: ChunkCoord(loc.X * ShardSize),
-		Z: ChunkCoord(loc.Z * ShardSize),
-	}
-}
-
-func shardXzForChunkXz(loc *ChunkXz) shardXz {
-	return shardXz{
-		X: shardCoordFromChunkCoord(loc.X),
-		Z: shardCoordFromChunkCoord(loc.Z),
-	}
-}
-
-// Converts a ShardXz location into a key suitable for using in a hash.
-func (loc *shardXz) Key() uint64 {
-	return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
-}
+const chunksPerShard = ShardSize * ShardSize
 
 // chunkXzToChunkIndex assumes that locDelta is offset relative to the shard
 // origin.
@@ -58,17 +21,17 @@ func chunkXzToChunkIndex(locDelta *ChunkXz) int {
 // goroutine.
 type ChunkShard struct {
 	mgr            *ChunkManager
-	loc            shardXz
+	loc            ShardXz
 	originChunkLoc ChunkXz // The lowest X and Z located chunk in the shard.
 	chunks         [chunksPerShard]*Chunk
 	requests       chan iShardRequest
 }
 
-func NewChunkShard(mgr *ChunkManager, loc shardXz) (shard *ChunkShard) {
+func NewChunkShard(mgr *ChunkManager, loc ShardXz) (shard *ChunkShard) {
 	shard = &ChunkShard{
 		mgr:            mgr,
 		loc:            loc,
-		originChunkLoc: loc.toChunkXz(),
+		originChunkLoc: loc.ToChunkXz(),
 		requests:       make(chan iShardRequest, 256),
 	}
 

@@ -25,7 +25,7 @@ func NewChunkManager(chunkStore chunkstore.IChunkStore, game IGame) *ChunkManage
 	}
 }
 
-func (mgr *ChunkManager) getShard(loc shardXz) *ChunkShard {
+func (mgr *ChunkManager) getShard(loc ShardXz) *ChunkShard {
 	shardKey := loc.Key()
 	if shard, ok := mgr.shards[shardKey]; ok {
 		// Shard already exists.
@@ -53,7 +53,7 @@ func (mgr *ChunkManager) EnqueueAllChunks(fn func(chunk IChunk)) {
 // chunk does not exist, it does nothing.
 func (mgr *ChunkManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk)) {
 	mgr.game.Enqueue(func(_ IGame) {
-		shard := mgr.getShard(shardXzForChunkXz(&loc))
+		shard := mgr.getShard(loc.ToShardXz())
 		shard.EnqueueOnChunk(loc, fn)
 	})
 }
