@@ -14,7 +14,6 @@ type IPlayer interface {
 	// Safe to call from outside of player's own goroutine.
 	GetEntityId() EntityId
 	GetEntity() *entity.Entity // Only the game mainloop may modify the return value
-	GetName() string           // Do not modify return value
 	LockedGetChunkPosition() ChunkXz
 	TransmitPacket(packet []byte)
 	// Offers an item to the player. If the player completely consumes
@@ -40,8 +39,6 @@ type IGame interface {
 
 	// Everything below must be called from within Enqueue
 
-	AddPlayer(player IPlayer)
 	RemovePlayer(player IPlayer)
 	MulticastPacket(packet []byte, except interface{})
-	SendChatMessage(message string)
 }

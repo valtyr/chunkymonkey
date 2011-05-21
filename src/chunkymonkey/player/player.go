@@ -3,6 +3,7 @@ package player
 import (
 	"bytes"
 	"expvar"
+	"fmt"
 	"log"
 	"io"
 	"math"
@@ -142,7 +143,7 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-	player.game.Enqueue(func(game IGame) { game.SendChatMessage(message) })
+	player.sendChatMessage(message)
 }
 
 func (player *Player) PacketEntityAction(entityId EntityId, action EntityAction) {
@@ -307,6 +308,20 @@ func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 
 func (player *Player) PacketDisconnect(reason string) {
 	log.Printf("Player %s disconnected reason=%s", player.name, reason)
+
+	// Destroy player for other players
+	buf := new(bytes.Buffer)
+	entity := player.GetEntity()
+	proto.WriteEntityDestroy(buf, entity.EntityId)
+
+	player.chunkSubs.curShard.MulticastPlayers(
+		player.position.ToChunkXz(),
+		player.EntityId,
+		buf.Bytes(),
+	)
+
+	player.sendChatMessage(fmt.Sprintf("%s has left", player.name))
+
 	player.game.Enqueue(func(game IGame) {
 		game.RemovePlayer(player)
 	})
@@ -436,6 +451,17 @@ func (player *Player) OpenWindow(invTypeId InvTypeId, inventory interface{}) {
 	})
 }
 
+func (player *Player) sendChatMessage(message string) {
+	buf := new(bytes.Buffer)
+	proto.WriteChatMessage(buf, message)
+
+	player.chunkSubs.curShard.MulticastPlayers(
+		player.chunkSubs.curChunkLoc,
+		player.EntityId,
+		buf.Bytes(),
+	)
+}
+
 // closeCurrentWindow closes any open window. It must be called with
 // player.lock held.
 func (player *Player) closeCurrentWindow(sendClosePacket bool) {
@@ -445,7 +471,6 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 	player.curWindow = nil
 }
 
-// Blocks until essential login packets have been transmitted.
 func (player *Player) postLogin() {
 	// TODO Old version of chunkSubscriptions.Move() that was called here had
 	// stuff for a callback when the nearest chunks had been sent so that player
@@ -455,6 +480,8 @@ func (player *Player) postLogin() {
 	// the shard to send out the following packets - this would result in them
 	// being sent at least after the chunks that are in the current shard have
 	// been sent.
+
+	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name))
 
 	// Send player start position etc.
 	buf := new(bytes.Buffer)

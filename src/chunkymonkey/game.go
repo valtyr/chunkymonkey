@@ -186,21 +186,12 @@ func (game *Game) AddPlayer(newPlayer IPlayer) {
 // RemovePlayer sends destroy messages so the other players see the player
 // disappear.
 func (game *Game) RemovePlayer(player IPlayer) {
-	// Destroy player for other players
-	buf := &bytes.Buffer{}
 	entity := player.GetEntity()
-	proto.WriteEntityDestroy(buf, entity.EntityId)
-	game.multicastRadiusPacket(buf.Bytes(), player)
-
 	game.players[entity.EntityId] = nil, false
 	game.entityManager.RemoveEntity(entity)
-	game.SendChatMessage(fmt.Sprintf("%s has left", player.GetName()))
 }
 
 func (game *Game) spawnPlayer(newPlayer IPlayer) {
-	name := newPlayer.GetName()
-	game.SendChatMessage(fmt.Sprintf("%s has joined", name))
-
 	// Spawn new player for existing players.
 	newPlayer.Enqueue(func(newPlayer IPlayer) {
 		buf := &bytes.Buffer{}
@@ -239,12 +230,6 @@ func (game *Game) MulticastPacket(packet []byte, except interface{}) {
 
 		player.TransmitPacket(packet)
 	}
-}
-
-func (game *Game) SendChatMessage(message string) {
-	buf := &bytes.Buffer{}
-	proto.WriteChatMessage(buf, message)
-	game.MulticastPacket(buf.Bytes(), nil)
 }
 
 func (game *Game) Enqueue(f func(IGame)) {
