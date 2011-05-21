@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"rand"
-	"sync"
 	"time"
 
 	"chunkymonkey/block"
@@ -118,15 +117,8 @@ func (chunk *Chunk) TransferSpawner(s entity.ISpawn) {
 // AddSpawner creates a mob or item in this chunk and notifies the new spawn to
 // all chunk subscribers.
 func (chunk *Chunk) AddSpawner(s entity.ISpawn) {
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	chunk.mgr.game.Enqueue(func(game IGame) {
-		e := s.GetEntity()
-		game.AddEntity(e)
-		chunk.spawners[e.EntityId] = s
-		wg.Done()
-	})
-	wg.Wait()
+	e := s.GetEntity()
+	chunk.mgr.entityMgr.AddEntity(e)
 
 	// Spawn new item/mob for players.
 	buf := &bytes.Buffer{}
@@ -136,9 +128,7 @@ func (chunk *Chunk) AddSpawner(s entity.ISpawn) {
 
 func (chunk *Chunk) removeSpawner(s entity.ISpawn) {
 	e := s.GetEntity()
-	chunk.mgr.game.Enqueue(func(game IGame) {
-		game.RemoveEntity(e)
-	})
+	chunk.mgr.entityMgr.RemoveEntity(e)
 	chunk.spawners[e.EntityId] = nil, false
 	// Tell all subscribers that the spawner's entity is
 	// destroyed.

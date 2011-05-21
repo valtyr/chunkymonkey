@@ -38,15 +38,12 @@ type IPlayer interface {
 
 type IGame interface {
 	// Safe to call from outside of Enqueue:
-	GetStartPosition() AbsXyz // Do not modify return value
 	GetGameRules() *gamerules.GameRules
 
 	Enqueue(f func(IGame))
 
 	// Everything below must be called from within Enqueue
 
-	AddEntity(entity *entity.Entity)
-	RemoveEntity(entity *entity.Entity)
 	AddPlayer(player IPlayer)
 	RemovePlayer(player IPlayer)
 	MulticastPacket(packet []byte, except interface{})

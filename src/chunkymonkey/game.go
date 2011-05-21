@@ -54,7 +54,7 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	game.serverId = fmt.Sprintf("%x", game.rand.Int63())
 	//game.serverId = "-"
 
-	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, game)
+	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, &game.entityManager, &game.gameRules)
 
 	go game.mainLoop()
 	go game.timer()
