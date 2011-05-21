@@ -17,16 +17,21 @@ type ITransmitter interface {
 // IShardConnection is the interface by which shards can be communicated to by
 // player frontend code.
 type IShardConnection interface {
-	SubscribeChunk(chunkLoc ChunkXz)
-	UnsubscribeChunk(chunkLoc ChunkXz)
-
-	// TODO better method to send events to chunks from player frontend.
-	Enqueue(fn func())
-
 	// Removes connection to shard, and removes all subscriptions to chunks in
 	// the shard. Note that this does *not* send packets to tell the client to
 	// unload the subscribed chunks.
 	Disconnect()
+
+	// TODO better method to send events to chunks from player frontend.
+	Enqueue(fn func())
+
+	// The following methods are requests upon chunks.
+
+	SubscribeChunk(chunkLoc ChunkXz)
+
+	UnsubscribeChunk(chunkLoc ChunkXz)
+
+	MulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte)
 }
 
 // IShardConnecter is used to look up shards and connect to them.

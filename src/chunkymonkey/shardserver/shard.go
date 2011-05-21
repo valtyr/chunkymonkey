@@ -129,9 +129,8 @@ func (shard *ChunkShard) loadChunk(loc *ChunkXz, locDelta *ChunkXz) *Chunk {
 	return chunk
 }
 
-// TODO Consider replacing all uses of Enqueue* to implementations of
-// iShardRequest without closures. We'll probably need to do this when
-// distributing anyway.
+// TODO Make all Enqueue* methods private, and take *Chunk instead of
+// shardserver_external.IChunk.
 
 // EnqueueAllChunks runs a given function on all loaded chunks in the shard.
 func (shard *ChunkShard) EnqueueAllChunks(fn func(chunk shardserver_external.IChunk)) {
