@@ -1,11 +1,8 @@
 package entity
 
 import (
-	"io"
-	"os"
 	"sync"
 
-	"chunkymonkey/physics"
 	. "chunkymonkey/types"
 )
 
@@ -13,6 +10,10 @@ import (
 
 type Entity struct {
 	EntityId EntityId
+}
+
+func (entity *Entity) GetEntityId() EntityId {
+	return entity.EntityId
 }
 
 // TODO EntityManager should be a service in its own right, able to hand out
@@ -73,15 +74,4 @@ func (mgr *EntityManager) RemoveEntityById(entityId EntityId) {
 	defer mgr.lock.Unlock()
 
 	mgr.entities[entityId] = nil, false
-}
-
-// ISpawn has the ability to spawn an item or mob. It's used for example by the
-// chunks.
-// TODO move into shard server
-type ISpawn interface {
-	SendSpawn(io.Writer) os.Error
-	GetEntity() *Entity
-	GetPosition() *AbsXyz
-	SendUpdate(io.Writer) os.Error
-	Tick(physics.BlockQueryFn) (leftBlock bool)
 }

@@ -9,7 +9,6 @@ import (
 
 	"chunkymonkey/block"
 	"chunkymonkey/chunkstore"
-	"chunkymonkey/entity"
 	. "chunkymonkey/interfaces"
 	"chunkymonkey/item"
 	"chunkymonkey/itemtype"
@@ -30,7 +29,6 @@ const (
 var enableMobs = flag.Bool(
 	"enableMobs", false, "EXPERIMENTAL: spawn mobs.")
 
-
 // A chunk is slice of the world map.
 type Chunk struct {
 	mgr        *LocalShardManager
@@ -41,12 +39,12 @@ type Chunk struct {
 	blockLight []byte
 	skyLight   []byte
 	heightMap  []byte
-	// spawners are typically mobs or items.
+	// spawn are typically mobs or items.
 	// TODO: (discuss) Maybe split this back into mobs and items?
-	// There are many more users of "spawners" than of only mobs or items. So
+	// There are many more users of "spawn" than of only mobs or items. So
 	// I'm inclined to leave it as is.
 	// TODO Spawns should belong to shards, not chunks.
-	spawners      map[EntityId]entity.ISpawn
+	spawn         map[EntityId]shardserver_external.INonPlayerSpawn
 	blockExtra    map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand          *rand.Rand
 	neighbours    neighboursCache
@@ -65,7 +63,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		skyLight:      reader.SkyLight(),
 		blockLight:    reader.BlockLight(),
 		heightMap:     reader.HeightMap(),
-		spawners:      make(map[EntityId]entity.ISpawn),
+		spawn:         make(map[EntityId]shardserver_external.INonPlayerSpawn),
 		blockExtra:    make(map[BlockIndex]interface{}),
 		rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
 		subscribers:   make(map[EntityId]shardserver_external.ITransmitter),
@@ -110,13 +108,13 @@ func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemT
 	return
 }
 
-func (chunk *Chunk) TransferSpawner(s entity.ISpawn) {
-	chunk.spawners[s.GetEntity().EntityId] = s
+func (chunk *Chunk) TransferSpawn(s shardserver_external.INonPlayerSpawn) {
+	chunk.spawn[s.GetEntity().EntityId] = s
 }
 
-// AddSpawner creates a mob or item in this chunk and notifies the new spawn to
+// AddSpawn creates a mob or item in this chunk and notifies the new spawn to
 // all chunk subscribers.
-func (chunk *Chunk) AddSpawner(s entity.ISpawn) {
+func (chunk *Chunk) AddSpawn(s shardserver_external.INonPlayerSpawn) {
 	e := s.GetEntity()
 	chunk.mgr.entityMgr.AddEntity(e)
 
@@ -126,12 +124,11 @@ func (chunk *Chunk) AddSpawner(s entity.ISpawn) {
 	chunk.MulticastPlayers(-1, buf.Bytes())
 }
 
-func (chunk *Chunk) removeSpawner(s entity.ISpawn) {
+func (chunk *Chunk) removeSpawn(s shardserver_external.INonPlayerSpawn) {
 	e := s.GetEntity()
 	chunk.mgr.entityMgr.RemoveEntity(e)
-	chunk.spawners[e.EntityId] = nil, false
-	// Tell all subscribers that the spawner's entity is
-	// destroyed.
+	chunk.spawn[e.EntityId] = nil, false
+	// Tell all subscribers that the spawn's entity is destroyed.
 	buf := &bytes.Buffer{}
 	proto.WriteEntityDestroy(buf, e.EntityId)
 	chunk.MulticastPlayers(-1, buf.Bytes())
@@ -364,32 +361,32 @@ func (chunk *Chunk) Tick() {
 		}
 		return
 	}
-	outgoingSpawners := []entity.ISpawn{}
+	outgoingSpawns := []shardserver_external.INonPlayerSpawn{}
 
-	for _, e := range chunk.spawners {
+	for _, e := range chunk.spawn {
 		if e.Tick(blockQuery) {
-			if e.GetPosition().Y <= 0 {
+			if e.Position().Y <= 0 {
 				// Item or mob fell out of the world.
-				chunk.removeSpawner(e)
+				chunk.removeSpawn(e)
 			} else {
-				outgoingSpawners = append(outgoingSpawners, e)
+				outgoingSpawns = append(outgoingSpawns, e)
 			}
 		}
 	}
 
-	if len(outgoingSpawners) > 0 {
+	if len(outgoingSpawns) > 0 {
 		// Transfer spawns to new chunk.
-		for _, e := range outgoingSpawners {
+		for _, e := range outgoingSpawns {
 			// Remove mob/items from this chunk.
-			chunk.spawners[e.GetEntity().EntityId] = nil, false
+			chunk.spawn[e.GetEntity().EntityId] = nil, false
 
 			// Transfer to other chunk.
-			chunkLoc := e.GetPosition().ToChunkXz()
+			chunkLoc := e.Position().ToChunkXz()
 
 			// TODO Batch spawns up into a request per shard if there are efficiency
 			// concerns in sending them individually.
 			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk shardserver_external.IChunk) {
-				blockChunk.TransferSpawner(e)
+				blockChunk.TransferSpawn(e)
 			})
 		}
 	}
@@ -403,7 +400,7 @@ func (chunk *Chunk) Tick() {
 				if len(ms) == 0 {
 					log.Println("spawning a mob", chunk.loc, "at", playerPos)
 					m := mob.NewPig(playerPos, &AbsVelocity{5, 5, 5})
-					chunk.AddSpawner(&m.Mob)
+					chunk.AddSpawn(&m.Mob)
 				}
 				break
 			}
@@ -413,7 +410,7 @@ func (chunk *Chunk) Tick() {
 
 func (chunk *Chunk) mobs() (s []*mob.Mob) {
 	s = make([]*mob.Mob, 0, 3)
-	for _, e := range chunk.spawners {
+	for _, e := range chunk.spawn {
 		switch e.(type) {
 		case *mob.Mob:
 			s = append(s, e.(*mob.Mob))
@@ -424,7 +421,7 @@ func (chunk *Chunk) mobs() (s []*mob.Mob) {
 
 func (chunk *Chunk) items() (s []*item.Item) {
 	s = make([]*item.Item, 0, 10)
-	for _, e := range chunk.spawners {
+	for _, e := range chunk.spawn {
 		switch e.(type) {
 		case *item.Item:
 			s = append(s, e.(*item.Item))
@@ -443,9 +440,9 @@ func (chunk *Chunk) AddPlayer(entityId EntityId, player shardserver_external.ITr
 	player.TransmitPacket(chunk.chunkPacket())
 
 	// Send spawns of all mobs/items in the chunk.
-	if len(chunk.spawners) > 0 {
+	if len(chunk.spawn) > 0 {
 		buf := &bytes.Buffer{}
-		for _, e := range chunk.spawners {
+		for _, e := range chunk.spawn {
 			e.SendSpawn(buf)
 		}
 		player.TransmitPacket(buf.Bytes())
@@ -485,7 +482,7 @@ func (chunk *Chunk) SetPlayerPosition(player IPlayer, pos *AbsXyz) {
 
 		for entityId, item := range chunk.items() {
 			// TODO This check should be performed when items move as well.
-			pos := item.GetPosition()
+			pos := item.Position()
 			if pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z >= minZ && pos.Z <= maxZ {
 				slot := item.GetSlot()
 				player.OfferItem(slot)
@@ -498,7 +495,7 @@ func (chunk *Chunk) SetPlayerPosition(player IPlayer, pos *AbsXyz) {
 					// player.
 					proto.WriteItemCollect(buf, EntityId(entityId), player.GetEntityId())
 					chunk.MulticastPlayers(-1, buf.Bytes())
-					chunk.removeSpawner(item)
+					chunk.removeSpawn(item)
 				}
 
 				// TODO Check for how to properly handle partially consumed
@@ -524,7 +521,7 @@ func (chunk *Chunk) chunkPacket() []byte {
 
 func (chunk *Chunk) SendUpdate() {
 	buf := &bytes.Buffer{}
-	for _, e := range chunk.spawners {
+	for _, e := range chunk.spawn {
 		e.SendUpdate(buf)
 	}
 	chunk.MulticastPlayers(-1, buf.Bytes())

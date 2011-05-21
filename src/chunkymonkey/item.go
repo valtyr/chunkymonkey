@@ -51,7 +51,7 @@ func (item *Item) SetCount(count ItemCount) {
 	item.Count = count
 }
 
-func (item *Item) GetPosition() *AbsXyz {
+func (item *Item) Position() *AbsXyz {
 	return &item.physObj.Position
 }
 

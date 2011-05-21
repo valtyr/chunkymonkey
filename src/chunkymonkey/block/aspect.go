@@ -3,9 +3,9 @@ package block
 import (
 	"rand"
 
-	"chunkymonkey/entity"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/recipe"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -23,7 +23,7 @@ type IBlockPlayer interface {
 type IChunkBlock interface {
 	GetRand() *rand.Rand
 	GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
-	AddSpawner(s entity.ISpawn)
+	AddSpawn(s shardserver_external.INonPlayerSpawn)
 	GetBlockExtra(subLoc *SubChunkXyz) interface{}
 	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
 	GetRecipeSet() *recipe.RecipeSet

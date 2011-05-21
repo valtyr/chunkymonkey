@@ -1,12 +1,30 @@
 package shardserver_external
 
 import (
+	"io"
+	"os"
 	"rand"
 
 	"chunkymonkey/entity"
-	. "chunkymonkey/types"
 	"chunkymonkey/interfaces"
+	"chunkymonkey/physics"
+	. "chunkymonkey/types"
 )
+
+// ISpawn represents common elements to all types of entities that can be
+// present in a chunk.
+type ISpawn interface {
+	GetEntityId() EntityId
+	SendSpawn(io.Writer) os.Error
+	SendUpdate(io.Writer) os.Error
+	Position() *AbsXyz
+}
+
+type INonPlayerSpawn interface {
+	ISpawn
+	GetEntity() *entity.Entity
+	Tick(physics.BlockQueryFn) (leftBlock bool)
+}
 
 // ITransmitter is the interface by which shards communicate packets to
 // players.
@@ -59,9 +77,9 @@ type IChunk interface {
 
 	// Intended for use by blocks/entities within the chunk.
 	GetRand() *rand.Rand
-	AddSpawner(spawner entity.ISpawn)
+	AddSpawn(spawn INonPlayerSpawn)
 	// Tells the chunk to take posession of the item/mob.
-	TransferSpawner(e entity.ISpawn)
+	TransferSpawn(e INonPlayerSpawn)
 	// Tells the chunk to take posession of the item/mob.
 	GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
 	PlayerBlockHit(player interfaces.IPlayer, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
