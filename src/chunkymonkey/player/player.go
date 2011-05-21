@@ -15,6 +15,7 @@ import (
 	"chunkymonkey/inventory"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/proto"
+	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
@@ -34,13 +35,13 @@ func init() {
 
 type Player struct {
 	entity.Entity
-	game      IGame
+	game           IGame
 	shardConnecter shardserver_external.IShardConnecter
-	conn      net.Conn
-	name      string
-	position  AbsXyz
-	look      LookDegrees
-	chunkSubs chunkSubscriptions
+	conn           net.Conn
+	name           string
+	position       AbsXyz
+	look           LookDegrees
+	chunkSubs      chunkSubscriptions
 
 	cursor       slot.Slot // Item being moved by mouse cursor.
 	inventory    inventory.PlayerInventory
@@ -52,14 +53,14 @@ type Player struct {
 	lock      sync.Mutex
 }
 
-func NewPlayer(game IGame, shardConnecter shardserver_external.IShardConnecter, conn net.Conn, name string, position AbsXyz) *Player {
+func NewPlayer(game IGame, shardConnecter shardserver_external.IShardConnecter, recipes *recipe.RecipeSet, conn net.Conn, name string, position AbsXyz) *Player {
 	player := &Player{
-		game:     game,
+		game:           game,
 		shardConnecter: shardConnecter,
-		conn:     conn,
-		name:     name,
-		position: position,
-		look:     LookDegrees{0, 0},
+		conn:           conn,
+		name:           name,
+		position:       position,
+		look:           LookDegrees{0, 0},
 
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
@@ -69,7 +70,7 @@ func NewPlayer(game IGame, shardConnecter shardserver_external.IShardConnecter, 
 	}
 
 	player.cursor.Init()
-	player.inventory.Init(player.EntityId, player, game.GetGameRules().Recipes)
+	player.inventory.Init(player.EntityId, player, recipes)
 
 	return player
 }

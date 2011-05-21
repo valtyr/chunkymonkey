@@ -85,4 +85,3 @@ type IChunk interface {
 	// Get packet data for the chunk
 	SendUpdate()
 }
-

@@ -22,10 +22,10 @@ type chunkSubscriptions struct {
 	connecter   shardserver_external.IShardConnecter
 	player      shardserver_external.ITransmitter
 	entityId    EntityId
-	curShardLoc ShardXz             // Shard the player is currently in.
-	curChunkLoc ChunkXz             // Chunk the player is currently in.
-	curShard    shardserver_external.IShardConnection    // Shard the player is hosted on.
-	shards      map[uint64]shardRef // Connections to shards.
+	curShardLoc ShardXz                               // Shard the player is currently in.
+	curChunkLoc ChunkXz                               // Chunk the player is currently in.
+	curShard    shardserver_external.IShardConnection // Shard the player is hosted on.
+	shards      map[uint64]shardRef                   // Connections to shards.
 }
 
 func (sub *chunkSubscriptions) Init(connecter shardserver_external.IShardConnecter, entityId EntityId, player shardserver_external.ITransmitter, initialPos *AbsXyz) {
