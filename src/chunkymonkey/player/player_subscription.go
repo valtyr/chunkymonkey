@@ -43,6 +43,8 @@ func (sub *chunkSubscriptions) Init(connecter shardserver_external.IShardConnect
 }
 
 func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
+	// TODO re-enable sending player position to chunks
+
 	newChunkLoc := newLoc.ToChunkXz()
 	if newChunkLoc.X == sub.curChunkLoc.X && newChunkLoc.Z == sub.curChunkLoc.Z {
 		return
