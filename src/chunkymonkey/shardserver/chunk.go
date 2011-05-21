@@ -1,6 +1,4 @@
-// Map chunks
-
-package chunk
+package shardserver
 
 import (
 	"bytes"

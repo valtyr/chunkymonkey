@@ -1,4 +1,4 @@
-package chunk
+package shardserver
 
 import (
 	. "chunkymonkey/types"

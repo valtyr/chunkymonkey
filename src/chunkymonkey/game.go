@@ -9,7 +9,7 @@ import (
 	"rand"
 	"time"
 
-	"chunkymonkey/chunk"
+	"chunkymonkey/shardserver"
 	. "chunkymonkey/entity"
 	"chunkymonkey/gamerules"
 	. "chunkymonkey/interfaces"
@@ -23,7 +23,7 @@ import (
 )
 
 type Game struct {
-	chunkManager  *chunk.LocalShardManager
+	chunkManager  *shardserver.LocalShardManager
 	mainQueue     chan func(IGame)
 	entityManager EntityManager
 	players       map[EntityId]IPlayer
@@ -53,7 +53,7 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	game.serverId = fmt.Sprintf("%x", game.rand.Int63())
 	//game.serverId = "-"
 
-	game.chunkManager = chunk.NewLocalShardManager(worldStore.ChunkStore, game)
+	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, game)
 
 	go game.mainLoop()
 	go game.timer()
