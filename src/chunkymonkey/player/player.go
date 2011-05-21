@@ -36,7 +36,6 @@ func init() {
 
 type Player struct {
 	entity.Entity
-	game           IGame
 	shardConnecter shardserver_external.IShardConnecter
 	conn           net.Conn
 	name           string
@@ -52,11 +51,12 @@ type Player struct {
 	mainQueue chan func(IPlayer)
 	txQueue   chan []byte
 	lock      sync.Mutex
+
+	onDisconnect chan<- EntityId
 }
 
-func NewPlayer(game IGame, shardConnecter shardserver_external.IShardConnecter, recipes *recipe.RecipeSet, conn net.Conn, name string, position AbsXyz) *Player {
+func NewPlayer(shardConnecter shardserver_external.IShardConnecter, recipes *recipe.RecipeSet, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
 	player := &Player{
-		game:           game,
 		shardConnecter: shardConnecter,
 		conn:           conn,
 		name:           name,
@@ -68,6 +68,8 @@ func NewPlayer(game IGame, shardConnecter shardserver_external.IShardConnecter, 
 
 		mainQueue: make(chan func(IPlayer), 128),
 		txQueue:   make(chan []byte, 128),
+
+		onDisconnect: onDisconnect,
 	}
 
 	player.cursor.Init()
@@ -180,16 +182,18 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
 	// packets for them. The converse should happen when players come in range
 	// of each other.
 
-	buf := &bytes.Buffer{}
+	buf := new(bytes.Buffer)
 	proto.WriteEntityTeleport(
 		buf,
 		player.EntityId,
 		player.position.ToAbsIntXyz(),
 		player.look.ToLookBytes())
 
-	player.game.Enqueue(func(game IGame) {
-		game.MulticastPacket(buf.Bytes(), player)
-	})
+	player.chunkSubs.curShard.MulticastPlayers(
+		player.chunkSubs.curChunkLoc,
+		player.EntityId,
+		buf.Bytes(),
+	)
 }
 
 func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
@@ -199,12 +203,14 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	// TODO input validation
 	player.look = *look
 
-	buf := &bytes.Buffer{}
+	buf := new(bytes.Buffer)
 	proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
 
-	player.game.Enqueue(func(game IGame) {
-		game.MulticastPacket(buf.Bytes(), player)
-	})
+	player.chunkSubs.curShard.MulticastPlayers(
+		player.chunkSubs.curChunkLoc,
+		player.EntityId,
+		buf.Bytes(),
+	)
 }
 
 func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face) {
@@ -322,9 +328,7 @@ func (player *Player) PacketDisconnect(reason string) {
 
 	player.sendChatMessage(fmt.Sprintf("%s has left", player.name))
 
-	player.game.Enqueue(func(game IGame) {
-		game.RemovePlayer(player)
-	})
+	player.onDisconnect <- player.EntityId
 	player.txQueue <- nil
 	player.mainQueue <- nil
 	player.conn.Close()

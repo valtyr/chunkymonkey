@@ -33,12 +33,3 @@ type IPlayer interface {
 	GetHeldItemType() *itemtype.ItemType
 	TakeOneHeldItem(into *slot.Slot)
 }
-
-type IGame interface {
-	Enqueue(f func(IGame))
-
-	// Everything below must be called from within Enqueue
-
-	RemovePlayer(player IPlayer)
-	MulticastPacket(packet []byte, except interface{})
-}

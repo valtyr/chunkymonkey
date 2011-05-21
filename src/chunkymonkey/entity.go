@@ -62,11 +62,17 @@ func (mgr *EntityManager) AddEntity(entity *Entity) {
 }
 
 // RemoveEntity removes an entity from the manager.
+// TODO deprecate
 func (mgr *EntityManager) RemoveEntity(entity *Entity) {
+	mgr.RemoveEntityById(entity.EntityId)
+}
+
+// RemoveEntity removes an entity from the manager.
+func (mgr *EntityManager) RemoveEntityById(entityId EntityId) {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
-	mgr.entities[entity.EntityId] = nil, false
+	mgr.entities[entityId] = nil, false
 }
 
 // ISpawn has the ability to spawn an item or mob. It's used for example by the

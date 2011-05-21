@@ -24,16 +24,17 @@ import (
 )
 
 type Game struct {
-	chunkManager  *shardserver.LocalShardManager
-	mainQueue     chan func(IGame)
-	entityManager EntityManager
-	players       map[EntityId]IPlayer
-	time          TimeOfDay
-	gameRules     gamerules.GameRules
-	itemTypes     itemtype.ItemTypeMap
-	rand          *rand.Rand
-	serverId      string
-	worldStore    *worldstore.WorldStore
+	chunkManager     *shardserver.LocalShardManager
+	mainQueue        chan func(*Game)
+	playerDisconnect chan EntityId
+	entityManager    EntityManager
+	players          map[EntityId]IPlayer
+	time             TimeOfDay
+	gameRules        gamerules.GameRules
+	itemTypes        itemtype.ItemTypeMap
+	rand             *rand.Rand
+	serverId         string
+	worldStore       *worldstore.WorldStore
 	// If set, logins are not allowed.
 	UnderMaintenanceMsg string
 }
@@ -42,11 +43,12 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
 
 	game = &Game{
-		mainQueue:  make(chan func(IGame), 256),
-		players:    make(map[EntityId]IPlayer),
-		gameRules:  *gameRules,
-		rand:       rand.New(rand.NewSource(time.UTC().Seconds())),
-		worldStore: worldStore,
+		mainQueue:        make(chan func(*Game), 256),
+		playerDisconnect: make(chan EntityId),
+		players:          make(map[EntityId]IPlayer),
+		gameRules:        *gameRules,
+		rand:             rand.New(rand.NewSource(time.UTC().Seconds())),
+		worldStore:       worldStore,
 	}
 
 	game.entityManager.Init()
@@ -57,7 +59,6 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, &game.entityManager, &game.gameRules)
 
 	go game.mainLoop()
-	go game.timer()
 	return
 }
 
@@ -114,15 +115,15 @@ func (game *Game) login(conn net.Conn) {
 		return
 	}
 
-	startPosition := game.GetStartPosition()
+	startPosition := game.worldStore.StartPosition
 
 	// TODO pass player's last position in the world, not necessarily the spawn
 	// position.
-	player := player.NewPlayer(game, game.chunkManager, game.gameRules.Recipes, conn, username, startPosition)
+	player := player.NewPlayer(game.chunkManager, game.gameRules.Recipes, conn, username, startPosition, game.playerDisconnect)
 
 	addedChan := make(chan struct{})
-	game.Enqueue(func(game IGame) {
-		game.AddPlayer(player)
+	game.enqueue(func(_ *Game) {
+		game.addPlayer(player)
 		addedChan <- struct{}{}
 	})
 	_ = <-addedChan
@@ -136,7 +137,7 @@ func (game *Game) login(conn net.Conn) {
 	proto.WriteSpawnPosition(buf, startPosition.ToBlockXyz())
 	player.TransmitPacket(buf.Bytes())
 
-	game.Enqueue(func(_ IGame) {
+	game.enqueue(func(_ *Game) {
 		game.spawnPlayer(player)
 	})
 }
@@ -159,36 +160,17 @@ func (game *Game) Serve(addr string) {
 	}
 }
 
-func (game *Game) GetStartPosition() AbsXyz {
-	return game.worldStore.StartPosition
-}
-
-func (game *Game) GetGameRules() *gamerules.GameRules {
-	return &game.gameRules
-}
-
-func (game *Game) AddEntity(entity *Entity) {
-	game.entityManager.AddEntity(entity)
-}
-
-func (game *Game) RemoveEntity(entity *Entity) {
-	game.entityManager.RemoveEntity(entity)
-}
-
-// AddPlayer sends spawn messages to all players in range. It also spawns all
+// addPlayer sends spawn messages to all players in range. It also spawns all
 // existing players so the new player can see them.
-func (game *Game) AddPlayer(newPlayer IPlayer) {
+func (game *Game) addPlayer(newPlayer IPlayer) {
 	entity := newPlayer.GetEntity()
-	game.AddEntity(entity)
+	game.entityManager.AddEntity(entity)
 	game.players[entity.EntityId] = newPlayer
 }
 
-// RemovePlayer sends destroy messages so the other players see the player
-// disappear.
-func (game *Game) RemovePlayer(player IPlayer) {
-	entity := player.GetEntity()
-	game.players[entity.EntityId] = nil, false
-	game.entityManager.RemoveEntity(entity)
+func (game *Game) removePlayer(entityId EntityId) {
+	game.players[entityId] = nil, false
+	game.entityManager.RemoveEntityById(entityId)
 }
 
 func (game *Game) spawnPlayer(newPlayer IPlayer) {
@@ -198,7 +180,7 @@ func (game *Game) spawnPlayer(newPlayer IPlayer) {
 		if err := newPlayer.SendSpawn(buf); err != nil {
 			return
 		}
-		game.Enqueue(func(_ IGame) {
+		game.enqueue(func(_ *Game) {
 			game.multicastRadiusPacket(buf.Bytes(), newPlayer)
 		})
 	})
@@ -220,9 +202,7 @@ func (game *Game) spawnPlayer(newPlayer IPlayer) {
 	}
 }
 
-// TODO use of MulticastPacket should be removed in favour of chunk multicast
-// packets. (apply this to chat as well, or use some other solution?)
-func (game *Game) MulticastPacket(packet []byte, except interface{}) {
+func (game *Game) multicastPacket(packet []byte, except interface{}) {
 	for _, player := range game.players {
 		if player == except {
 			continue
@@ -232,22 +212,22 @@ func (game *Game) MulticastPacket(packet []byte, except interface{}) {
 	}
 }
 
-func (game *Game) Enqueue(f func(IGame)) {
+func (game *Game) enqueue(f func(*Game)) {
 	game.mainQueue <- f
 }
 
 func (game *Game) mainLoop() {
-	for {
-		f := <-game.mainQueue
-		f(game)
-	}
-}
-
-func (game *Game) timer() {
 	ticker := time.NewTicker(NanosecondsInSecond / TicksPerSecond)
+
 	for {
-		<-ticker.C
-		game.Enqueue(func(igame IGame) { game.tick() })
+		select {
+		case f := <-game.mainQueue:
+			f(game)
+		case <-ticker.C:
+			game.tick()
+		case entityId := <-game.playerDisconnect:
+			game.removePlayer(entityId)
+		}
 	}
 }
 
@@ -260,7 +240,7 @@ func (game *Game) sendTimeUpdate() {
 	// for now.
 	proto.WriteKeepAlive(buf)
 
-	game.MulticastPacket(buf.Bytes(), nil)
+	game.multicastPacket(buf.Bytes(), nil)
 
 	// TODO: Make chunk shards responsible for sending updates.
 	game.chunkManager.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
