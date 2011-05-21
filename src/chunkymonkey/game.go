@@ -9,7 +9,6 @@ import (
 	"rand"
 	"time"
 
-	"chunkymonkey/shardserver"
 	. "chunkymonkey/entity"
 	"chunkymonkey/gamerules"
 	. "chunkymonkey/interfaces"
@@ -18,6 +17,8 @@ import (
 	"chunkymonkey/proto"
 	"chunkymonkey/record"
 	"chunkymonkey/server_auth"
+	"chunkymonkey/shardserver"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 	"chunkymonkey/worldstore"
 )
@@ -117,12 +118,12 @@ func (game *Game) login(conn net.Conn) {
 
 	// TODO pass player's last position in the world, not necessarily the spawn
 	// position.
-	player := player.NewPlayer(game, conn, username, startPosition)
+	player := player.NewPlayer(game, game.chunkManager, conn, username, startPosition)
 
 	addedChan := make(chan struct{})
 	game.Enqueue(func(game IGame) {
 		game.AddPlayer(player)
-		addedChan<- struct{}{}
+		addedChan <- struct{}{}
 	})
 	_ = <-addedChan
 
@@ -164,10 +165,6 @@ func (game *Game) GetStartPosition() AbsXyz {
 
 func (game *Game) GetGameRules() *gamerules.GameRules {
 	return &game.gameRules
-}
-
-func (game *Game) GetChunkManager() IShardConnecter {
-	return game.chunkManager
 }
 
 func (game *Game) AddEntity(entity *Entity) {
@@ -281,14 +278,14 @@ func (game *Game) sendTimeUpdate() {
 	game.MulticastPacket(buf.Bytes(), nil)
 
 	// TODO: Make chunk shards responsible for sending updates.
-	game.chunkManager.EnqueueAllChunks(func(chunk IChunk) {
+	game.chunkManager.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
 		chunk.SendUpdate()
 	})
 }
 
 func (game *Game) physicsTick() {
 	// TODO: Make chunk shards responsible for ticks.
-	game.chunkManager.EnqueueAllChunks(func(chunk IChunk) {
+	game.chunkManager.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
 		chunk.Tick()
 	})
 }
@@ -305,7 +302,7 @@ func (game *Game) tick() {
 func (game *Game) multicastRadiusPacket(packet []byte, sender IPlayer) {
 	game.chunkManager.EnqueueOnChunk(
 		sender.LockedGetChunkPosition(),
-		func(chunk IChunk) {
+		func(chunk shardserver_external.IChunk) {
 			chunk.MulticastPlayers(sender.GetEntityId(), packet)
 		},
 	)

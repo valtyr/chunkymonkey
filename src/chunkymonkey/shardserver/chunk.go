@@ -18,6 +18,7 @@ import (
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -51,7 +52,7 @@ type Chunk struct {
 	rand          *rand.Rand
 	neighbours    neighboursCache
 	cachedPacket  []byte                    // Cached packet data for this block.
-	subscribers   map[EntityId]ITransmitter // Players getting updates from the chunk.
+	subscribers   map[EntityId]shardserver_external.ITransmitter // Players getting updates from the chunk.
 	subscriberPos map[EntityId]*AbsXyz      // Player positions that are near or in the chunk.
 }
 
@@ -68,7 +69,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		spawners:      make(map[EntityId]entity.ISpawn),
 		blockExtra:    make(map[BlockIndex]interface{}),
 		rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers:   make(map[EntityId]ITransmitter),
+		subscribers:   make(map[EntityId]shardserver_external.ITransmitter),
 		subscriberPos: make(map[EntityId]*AbsXyz),
 	}
 	chunk.neighbours.init()
@@ -252,7 +253,7 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 		if chunk.IsSameChunk(destChunkLoc) {
 			chunk.placeBlock(player, destLoc, destSubLoc, againstFace)
 		} else {
-			chunk.mgr.EnqueueOnChunk(*destChunkLoc, func(destIChunk IChunk) {
+			chunk.mgr.EnqueueOnChunk(*destChunkLoc, func(destIChunk shardserver_external.IChunk) {
 				if destChunk, ok := destIChunk.(*Chunk); ok {
 					destChunk.placeBlock(player, destLoc, destSubLoc, againstFace)
 				}
@@ -397,7 +398,7 @@ func (chunk *Chunk) Tick() {
 
 			// TODO Batch spawns up into a request per shard if there are efficiency
 			// concerns in sending them individually.
-			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk IChunk) {
+			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk shardserver_external.IChunk) {
 				blockChunk.TransferSpawner(e)
 			})
 		}
@@ -442,7 +443,7 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) AddPlayer(entityId EntityId, player ITransmitter) {
+func (chunk *Chunk) AddPlayer(entityId EntityId, player shardserver_external.ITransmitter) {
 	chunk.subscribers[entityId] = player
 
 	buf := new(bytes.Buffer)

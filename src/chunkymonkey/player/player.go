@@ -16,6 +16,7 @@ import (
 	"chunkymonkey/itemtype"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -34,6 +35,7 @@ func init() {
 type Player struct {
 	entity.Entity
 	game      IGame
+	shardConnecter shardserver_external.IShardConnecter
 	conn      net.Conn
 	name      string
 	position  AbsXyz
@@ -50,9 +52,10 @@ type Player struct {
 	lock      sync.Mutex
 }
 
-func NewPlayer(game IGame, conn net.Conn, name string, position AbsXyz) *Player {
+func NewPlayer(game IGame, shardConnecter shardserver_external.IShardConnecter, conn net.Conn, name string, position AbsXyz) *Player {
 	player := &Player{
 		game:     game,
+		shardConnecter: shardConnecter,
 		conn:     conn,
 		name:     name,
 		position: position,
@@ -211,7 +214,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz,
 	if face != FaceNull {
 		chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
-		player.game.GetChunkManager().EnqueueOnChunk(*chunkLoc, func(chunk IChunk) {
+		player.shardConnecter.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
 			chunk.PlayerBlockHit(player, subLoc, status)
 		})
 
@@ -229,7 +232,7 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *Blo
 
 	placeChunkLoc, _ := blockLoc.ToChunkLocal()
 
-	player.game.GetChunkManager().EnqueueOnChunk(*placeChunkLoc, func(chunk IChunk) {
+	player.shardConnecter.EnqueueOnChunk(*placeChunkLoc, func(chunk shardserver_external.IChunk) {
 		chunk.PlayerBlockInteract(player, blockLoc, face)
 	})
 }
@@ -359,7 +362,7 @@ func (player *Player) mainLoop() {
 	expVarPlayerConnectionCount.Add(1)
 	defer expVarPlayerDisconnectionCount.Add(1)
 
-	player.chunkSubs.Init(player.game.GetChunkManager(), player.EntityId, player, &player.position)
+	player.chunkSubs.Init(player.shardConnecter, player.EntityId, player, &player.position)
 	defer player.chunkSubs.Close()
 
 	player.postLogin()
@@ -463,8 +466,7 @@ func (player *Player) postLogin() {
 
 	// Enqueue on the shard as a hacky way to defer the packet send until after
 	// the initial chunk data has been sent.
-	curShard := player.chunkSubs.curShard
-	curShard.Enqueue(func() {
+	player.chunkSubs.curShard.Enqueue(func() {
 		player.TransmitPacket(packet)
 	})
 }

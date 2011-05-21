@@ -1,20 +1,21 @@
 package shardserver
 
 import (
+	"chunkymonkey/chunkstore"
 	"chunkymonkey/gamerules"
 	. "chunkymonkey/interfaces"
-	"chunkymonkey/chunkstore"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
 // localShardConnection implements IShardConnection for LocalShardManager.
 type localShardConnection struct {
 	entityId EntityId
-	player   ITransmitter
+	player   shardserver_external.ITransmitter
 	shard    *ChunkShard
 }
 
-func newLocalShardConnection(entityId EntityId, player ITransmitter, shard *ChunkShard) *localShardConnection {
+func newLocalShardConnection(entityId EntityId, player shardserver_external.ITransmitter, shard *ChunkShard) *localShardConnection {
 	return &localShardConnection{
 		entityId: entityId,
 		player:   player,
@@ -23,13 +24,13 @@ func newLocalShardConnection(entityId EntityId, player ITransmitter, shard *Chun
 }
 
 func (conn *localShardConnection) SubscribeChunk(chunkLoc ChunkXz) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
 		chunk.AddPlayer(conn.entityId, conn.player)
 	})
 }
 
 func (conn *localShardConnection) UnsubscribeChunk(chunkLoc ChunkXz) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
 		chunk.RemovePlayer(conn.entityId, true)
 	})
 }
@@ -41,7 +42,7 @@ func (conn *localShardConnection) Enqueue(fn func()) {
 func (conn *localShardConnection) Disconnect() {
 	// TODO This inefficiently unsubscribes from all chunks, even if not
 	// subscribed to.
-	conn.shard.EnqueueAllChunks(func(chunk IChunk) {
+	conn.shard.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
 		chunk.RemovePlayer(conn.entityId, false)
 	})
 }
@@ -80,13 +81,15 @@ func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
 	return shard
 }
 
-func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player ITransmitter, shardLoc ShardXz) IShardConnection {
+func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player shardserver_external.ITransmitter, shardLoc ShardXz) shardserver_external.IShardConnection {
 	shard := mgr.getShard(shardLoc)
 	return newLocalShardConnection(entityId, player, shard)
 }
 
+// TODO remove Enqueue* methods
+
 // EnqueueAllChunks runs a given function on all loaded chunks.
-func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk IChunk)) {
+func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk shardserver_external.IChunk)) {
 	mgr.game.Enqueue(func(_ IGame) {
 		for _, shard := range mgr.shards {
 			shard.EnqueueAllChunks(fn)
@@ -96,7 +99,7 @@ func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk IChunk)) {
 
 // EnqueueOnChunk runs a function on the chunk at the given location. If the
 // chunk does not exist, it does nothing.
-func (mgr *LocalShardManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk)) {
+func (mgr *LocalShardManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk shardserver_external.IChunk)) {
 	mgr.game.Enqueue(func(_ IGame) {
 		shard := mgr.getShard(loc.ToShardXz())
 		shard.EnqueueOnChunk(loc, fn)

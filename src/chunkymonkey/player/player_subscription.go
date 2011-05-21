@@ -3,14 +3,14 @@ package player
 import (
 	"log"
 
-	. "chunkymonkey/interfaces"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
 // shardRef holds a reference to a shard connection and context for the number
 // of subscribed chunks inside the shard.
 type shardRef struct {
-	shard IShardConnection
+	shard shardserver_external.IShardConnection
 	count int
 }
 
@@ -19,16 +19,16 @@ type shardRef struct {
 // * the chunks that to be subscribed to (via their shards),
 // * and moving the player from one shard to another.
 type chunkSubscriptions struct {
-	connecter   IShardConnecter
-	player      ITransmitter
+	connecter   shardserver_external.IShardConnecter
+	player      shardserver_external.ITransmitter
 	entityId    EntityId
 	curShardLoc ShardXz             // Shard the player is currently in.
 	curChunkLoc ChunkXz             // Chunk the player is currently in.
-	curShard    IShardConnection    // Shard the player is hosted on.
+	curShard    shardserver_external.IShardConnection    // Shard the player is hosted on.
 	shards      map[uint64]shardRef // Connections to shards.
 }
 
-func (sub *chunkSubscriptions) Init(connecter IShardConnecter, entityId EntityId, player ITransmitter, initialPos *AbsXyz) {
+func (sub *chunkSubscriptions) Init(connecter shardserver_external.IShardConnecter, entityId EntityId, player shardserver_external.ITransmitter, initialPos *AbsXyz) {
 	sub.connecter = connecter
 	sub.player = player
 	sub.entityId = entityId
