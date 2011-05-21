@@ -116,8 +116,6 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz) {
 }
 
 func (sub *chunkSubscriptions) moveToShard(newShardLoc ShardXz) {
-	sub.curShard.TransferPlayerTo(newShardLoc)
-
 	// The new current shard is assumed to be present in sub.shards already.
 	sub.curShard = sub.shards[newShardLoc.Key()].shard
 }

@@ -34,11 +34,6 @@ func (conn *localShardConnection) UnsubscribeChunk(chunkLoc ChunkXz) {
 	})
 }
 
-func (conn *localShardConnection) TransferPlayerTo(shardLoc ShardXz) {
-	// TODO Implement this when player data is on the shard and needs to be
-	// moved.
-}
-
 func (conn *localShardConnection) Enqueue(fn func()) {
 	conn.shard.Enqueue(fn)
 }

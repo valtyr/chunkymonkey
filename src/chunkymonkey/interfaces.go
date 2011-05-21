@@ -87,7 +87,6 @@ type ITransmitter interface {
 type IShardConnection interface {
 	SubscribeChunk(chunkLoc ChunkXz)
 	UnsubscribeChunk(chunkLoc ChunkXz)
-	TransferPlayerTo(shardLoc ShardXz)
 
 	// TODO better method to send events to chunks from player frontend.
 	Enqueue(fn func())
