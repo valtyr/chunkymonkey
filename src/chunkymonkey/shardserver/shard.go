@@ -3,6 +3,7 @@ package shardserver
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/shardserver_external"
@@ -20,19 +21,21 @@ func chunkXzToChunkIndex(locDelta *ChunkXz) int {
 // ChunkShard represents a square shard of chunks that share a master
 // goroutine.
 type ChunkShard struct {
-	mgr            *LocalShardManager
-	loc            ShardXz
-	originChunkLoc ChunkXz // The lowest X and Z located chunk in the shard.
-	chunks         [chunksPerShard]*Chunk
-	requests       chan iShardRequest
+	mgr              *LocalShardManager
+	loc              ShardXz
+	originChunkLoc   ChunkXz // The lowest X and Z located chunk in the shard.
+	chunks           [chunksPerShard]*Chunk
+	requests         chan iShardRequest
+	ticksSinceUpdate int
 }
 
 func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
 	shard = &ChunkShard{
-		mgr:            mgr,
-		loc:            loc,
-		originChunkLoc: loc.ToChunkXz(),
-		requests:       make(chan iShardRequest, 256),
+		mgr:              mgr,
+		loc:              loc,
+		originChunkLoc:   loc.ToChunkXz(),
+		requests:         make(chan iShardRequest, 256),
+		ticksSinceUpdate: 0,
 	}
 
 	return
@@ -40,9 +43,35 @@ func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
 
 // serve services shard requests in the foreground.
 func (shard *ChunkShard) serve() {
+	ticker := time.NewTicker(NanosecondsInSecond / TicksPerSecond)
+
 	for {
-		request := <-shard.requests
-		request.perform(shard)
+		select {
+		case <-ticker.C:
+			shard.tick()
+
+		case request := <-shard.requests:
+			request.perform(shard)
+		}
+	}
+}
+
+func (shard *ChunkShard) tick() {
+	shard.ticksSinceUpdate++
+
+	for _, chunk := range shard.chunks {
+		if chunk != nil {
+			chunk.Tick()
+		}
+	}
+
+	if shard.ticksSinceUpdate >= TicksPerSecond {
+		for _, chunk := range shard.chunks {
+			if chunk != nil {
+				chunk.SendUpdate()
+			}
+		}
+		shard.ticksSinceUpdate = 0
 	}
 }
 

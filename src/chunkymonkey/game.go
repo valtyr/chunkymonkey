@@ -232,7 +232,7 @@ func (game *Game) mainLoop() {
 }
 
 func (game *Game) sendTimeUpdate() {
-	buf := &bytes.Buffer{}
+	buf := new(bytes.Buffer)
 	proto.ServerWriteTimeUpdate(buf, game.time)
 
 	// The "keep-alive" packet to client(s) sent here as well, as there
@@ -241,18 +241,6 @@ func (game *Game) sendTimeUpdate() {
 	proto.WriteKeepAlive(buf)
 
 	game.multicastPacket(buf.Bytes(), nil)
-
-	// TODO: Make chunk shards responsible for sending updates.
-	game.chunkManager.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
-		chunk.SendUpdate()
-	})
-}
-
-func (game *Game) physicsTick() {
-	// TODO: Make chunk shards responsible for ticks.
-	game.chunkManager.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
-		chunk.Tick()
-	})
 }
 
 func (game *Game) tick() {
@@ -260,7 +248,6 @@ func (game *Game) tick() {
 	if game.time%DayTicksPerSecond == 0 {
 		game.sendTimeUpdate()
 	}
-	game.physicsTick()
 }
 
 // Transmit a packet to all players near the sender (except the sender itself).
