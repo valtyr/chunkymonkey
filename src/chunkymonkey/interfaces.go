@@ -111,7 +111,7 @@ type IShardConnecter interface {
 
 type IGame interface {
 	// Safe to call from outside of Enqueue:
-	GetStartPosition() *AbsXyz // Do not modify return value
+	GetStartPosition() AbsXyz // Do not modify return value
 	GetChunkManager() IShardConnecter
 	GetGameRules() *gamerules.GameRules
 

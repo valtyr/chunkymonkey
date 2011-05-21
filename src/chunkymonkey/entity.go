@@ -3,49 +3,75 @@ package entity
 import (
 	"io"
 	"os"
+	"sync"
+
 	"chunkymonkey/physics"
 	. "chunkymonkey/types"
 )
+
+// TODO Should EntityManager hold interfaces to Entity-like objects instead?
 
 type Entity struct {
 	EntityId EntityId
 }
 
+// TODO EntityManager should be a service in its own right, able to hand out
+// blocks of IDs and running its own goroutine (potentially shardable by
+// entityId if necessary). Right now taking the easy option of using a simple
+// lock.
 type EntityManager struct {
 	nextEntityId EntityId
 	entities     map[EntityId]*Entity
+	lock         sync.Mutex
 }
 
-// Allocate and assign a new entity ID
-func (mgr *EntityManager) AddEntity(entity *Entity) {
-	// EntityManager starts initialized to zero
-	if mgr.entities == nil {
-		mgr.entities = make(map[EntityId]*Entity)
-	}
+func (mgr *EntityManager) Init() {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
 
+	mgr.nextEntityId = 0
+	mgr.entities = make(map[EntityId]*Entity)
+}
+
+func (mgr *EntityManager) createEntityId() EntityId {
 	// Search for next free ID
 	entityId := mgr.nextEntityId
 	_, exists := mgr.entities[entityId]
 	for exists {
 		entityId++
 		if entityId == mgr.nextEntityId {
+			// TODO Better handling of this? It shouldn't happen, realistically - but
+			// neither should it explode.
 			panic("EntityId space exhausted")
 		}
 		_, exists = mgr.entities[entityId]
 	}
-
-	entity.EntityId = entityId
-	mgr.entities[entityId] = entity
 	mgr.nextEntityId = entityId + 1
+
+	return entityId
 }
 
+// AddEntity adds an entity to the manager, and assigns it a world-unique
+// EntityId.
+func (mgr *EntityManager) AddEntity(entity *Entity) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+
+	entity.EntityId = mgr.createEntityId()
+	mgr.entities[entity.EntityId] = entity
+}
+
+// RemoveEntity removes an entity from the manager.
 func (mgr *EntityManager) RemoveEntity(entity *Entity) {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+
 	mgr.entities[entity.EntityId] = nil, false
 }
 
 // ISpawn has the ability to spawn an item or mob. It's used for example by the
 // chunks.
-// This can't be on interfaces.go because it would create a dependency loop.
+// TODO move into shard server
 type ISpawn interface {
 	SendSpawn(io.Writer) os.Error
 	GetEntity() *Entity

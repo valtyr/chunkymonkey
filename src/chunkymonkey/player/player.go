@@ -50,12 +50,12 @@ type Player struct {
 	lock      sync.Mutex
 }
 
-func StartPlayer(game IGame, conn net.Conn, name string) {
+func NewPlayer(game IGame, conn net.Conn, name string, position AbsXyz) *Player {
 	player := &Player{
 		game:     game,
 		conn:     conn,
 		name:     name,
-		position: *game.GetStartPosition(),
+		position: position,
 		look:     LookDegrees{0, 0},
 
 		curWindow:    nil,
@@ -68,16 +68,7 @@ func StartPlayer(game IGame, conn net.Conn, name string) {
 	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player, game.GetGameRules().Recipes)
 
-	game.Enqueue(func(game IGame) {
-		game.AddPlayer(player)
-		buf := &bytes.Buffer{}
-		// TODO pass proper dimension. This is low priority, because there is
-		// currently no way to update the client's dimension after login.
-		proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
-		proto.WriteSpawnPosition(buf, player.position.ToBlockXyz())
-		player.TransmitPacket(buf.Bytes())
-		player.start()
-	})
+	return player
 }
 
 func (player *Player) GetEntityId() EntityId {
@@ -133,7 +124,7 @@ func (player *Player) TakeOneHeldItem(into *slot.Slot) {
 	player.inventory.TakeOneHeldItem(into)
 }
 
-func (player *Player) start() {
+func (player *Player) Start() {
 	go player.receiveLoop()
 	go player.transmitLoop()
 	go player.mainLoop()

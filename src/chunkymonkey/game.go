@@ -48,6 +48,8 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 		worldStore: worldStore,
 	}
 
+	game.entityManager.Init()
+
 	game.serverId = fmt.Sprintf("%x", game.rand.Int63())
 	//game.serverId = "-"
 
@@ -58,7 +60,9 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	return
 }
 
-func (game *Game) Login(conn net.Conn) {
+// login negotiates a player client login, and adds a new player if successful.
+// Note that it does not run in the game's goroutine.
+func (game *Game) login(conn net.Conn) {
 	username, err := proto.ServerReadHandshake(conn)
 	if err != nil {
 		log.Print("ServerReadHandshake: ", err.String())
@@ -109,7 +113,31 @@ func (game *Game) Login(conn net.Conn) {
 		return
 	}
 
-	player.StartPlayer(game, conn, username)
+	startPosition := game.GetStartPosition()
+
+	// TODO pass player's last position in the world, not necessarily the spawn
+	// position.
+	player := player.NewPlayer(game, conn, username, startPosition)
+
+	addedChan := make(chan struct{})
+	game.Enqueue(func(game IGame) {
+		game.AddPlayer(player)
+		addedChan<- struct{}{}
+	})
+	_ = <-addedChan
+
+	player.Start()
+
+	buf := &bytes.Buffer{}
+	// TODO pass proper dimension. This is low priority, because there is
+	// currently no way to update the client's dimension after login.
+	proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
+	proto.WriteSpawnPosition(buf, startPosition.ToBlockXyz())
+	player.TransmitPacket(buf.Bytes())
+
+	game.Enqueue(func(_ IGame) {
+		game.spawnPlayer(player)
+	})
 }
 
 func (game *Game) Serve(addr string) {
@@ -126,12 +154,12 @@ func (game *Game) Serve(addr string) {
 			continue
 		}
 
-		go game.Login(record.WrapConn(conn))
+		go game.login(record.WrapConn(conn))
 	}
 }
 
-func (game *Game) GetStartPosition() *AbsXyz {
-	return &game.worldStore.StartPosition
+func (game *Game) GetStartPosition() AbsXyz {
+	return game.worldStore.StartPosition
 }
 
 func (game *Game) GetGameRules() *gamerules.GameRules {
@@ -156,6 +184,23 @@ func (game *Game) AddPlayer(newPlayer IPlayer) {
 	entity := newPlayer.GetEntity()
 	game.AddEntity(entity)
 	game.players[entity.EntityId] = newPlayer
+}
+
+// RemovePlayer sends destroy messages so the other players see the player
+// disappear.
+func (game *Game) RemovePlayer(player IPlayer) {
+	// Destroy player for other players
+	buf := &bytes.Buffer{}
+	entity := player.GetEntity()
+	proto.WriteEntityDestroy(buf, entity.EntityId)
+	game.multicastRadiusPacket(buf.Bytes(), player)
+
+	game.players[entity.EntityId] = nil, false
+	game.entityManager.RemoveEntity(entity)
+	game.SendChatMessage(fmt.Sprintf("%s has left", player.GetName()))
+}
+
+func (game *Game) spawnPlayer(newPlayer IPlayer) {
 	name := newPlayer.GetName()
 	game.SendChatMessage(fmt.Sprintf("%s has joined", name))
 
@@ -187,20 +232,8 @@ func (game *Game) AddPlayer(newPlayer IPlayer) {
 	}
 }
 
-// RemovePlayer sends destroy messages so the other players see the player
-// disappear.
-func (game *Game) RemovePlayer(player IPlayer) {
-	// Destroy player for other players
-	buf := &bytes.Buffer{}
-	entity := player.GetEntity()
-	proto.WriteEntityDestroy(buf, entity.EntityId)
-	game.multicastRadiusPacket(buf.Bytes(), player)
-
-	game.players[entity.EntityId] = nil, false
-	game.entityManager.RemoveEntity(entity)
-	game.SendChatMessage(fmt.Sprintf("%s has left", player.GetName()))
-}
-
+// TODO use of MulticastPacket should be removed in favour of chunk multicast
+// packets. (apply this to chat as well, or use some other solution?)
 func (game *Game) MulticastPacket(packet []byte, except interface{}) {
 	for _, player := range game.players {
 		if player == except {
