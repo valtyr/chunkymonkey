@@ -98,7 +98,7 @@ type IChunk interface {
 
 	// Tells the chunk about the position of a player in/near the chunk. pos =
 	// nil indicates that the player is no longer nearby.
-	SetPlayerPosition(player interfaces.IPlayer, pos *AbsXyz)
+	SetPlayerPosition(entityId EntityId, pos *AbsXyz)
 
 	// Get packet data for the chunk
 	SendUpdate()

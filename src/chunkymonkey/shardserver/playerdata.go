@@ -4,8 +4,15 @@ import (
 	"io"
 	"os"
 
+	"chunkymonkey/item"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
+)
+
+const (
+	// Assumed values for size of player axis-aligned bounding box (AAB).
+	playerAabH = AbsCoord(0.75) // Each side of player.
+	playerAabY = AbsCoord(2.00) // From player's feet position upwards.
 )
 
 // playerData represents a Chunk's knowledge about a player. Only one Chunk has
@@ -28,4 +35,21 @@ func (player *playerData) SendSpawn(writer io.Writer) (err os.Error) {
 		&player.look,
 		player.heldItemId,
 	)
+}
+
+func (player *playerData) OverlapsItem(item *item.Item) bool {
+	// TODO note that calling this function repeatedly is not as efficient as it
+	// could be.
+
+	// Does the player overlap with any items?
+	minX := player.position.X - playerAabH
+	maxX := player.position.X + playerAabH
+	minZ := player.position.Z - playerAabH
+	maxZ := player.position.Z + playerAabH
+	minY := player.position.Y
+	maxY := player.position.Y + playerAabY
+
+	pos := item.Position()
+
+	return pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z >= minZ && pos.Z <= maxZ
 }

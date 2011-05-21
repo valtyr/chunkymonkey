@@ -20,12 +20,6 @@ import (
 	. "chunkymonkey/types"
 )
 
-const (
-	// Assumed values for size of player axis-aligned bounding box (AAB).
-	playerAabH = AbsCoord(0.75) // Each side of player.
-	playerAabY = AbsCoord(2.00) // From player's feet position upwards.
-)
-
 var enableMobs = flag.Bool(
 	"enableMobs", false, "EXPERIMENTAL: spawn mobs.")
 
@@ -44,30 +38,30 @@ type Chunk struct {
 	// There are many more users of "spawn" than of only mobs or items. So
 	// I'm inclined to leave it as is.
 	// TODO Spawns should belong to shards, not chunks.
-	spawn         map[EntityId]shardserver_external.INonPlayerSpawn
-	blockExtra    map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
-	rand          *rand.Rand
-	neighbours    neighboursCache
-	cachedPacket  []byte                                         // Cached packet data for this block.
-	subscribers   map[EntityId]shardserver_external.ITransmitter // Players getting updates from the chunk.
-	subscriberPos map[EntityId]*AbsXyz                           // Player positions that are near or in the chunk.
+	spawn        map[EntityId]shardserver_external.INonPlayerSpawn
+	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
+	rand         *rand.Rand
+	neighbours   neighboursCache
+	cachedPacket []byte                                         // Cached packet data for this block.
+	subscribers  map[EntityId]shardserver_external.ITransmitter // Players getting updates from the chunk.
+	playersData  map[EntityId]*playerData                       // Some player data for player(s) in the chunk.
 }
 
 func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {
 	chunk = &Chunk{
-		mgr:           mgr,
-		shard:         shard,
-		loc:           *reader.ChunkLoc(),
-		blocks:        reader.Blocks(),
-		blockData:     reader.BlockData(),
-		skyLight:      reader.SkyLight(),
-		blockLight:    reader.BlockLight(),
-		heightMap:     reader.HeightMap(),
-		spawn:         make(map[EntityId]shardserver_external.INonPlayerSpawn),
-		blockExtra:    make(map[BlockIndex]interface{}),
-		rand:          rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers:   make(map[EntityId]shardserver_external.ITransmitter),
-		subscriberPos: make(map[EntityId]*AbsXyz),
+		mgr:         mgr,
+		shard:       shard,
+		loc:         *reader.ChunkLoc(),
+		blocks:      reader.Blocks(),
+		blockData:   reader.BlockData(),
+		skyLight:    reader.SkyLight(),
+		blockLight:  reader.BlockLight(),
+		heightMap:   reader.HeightMap(),
+		spawn:       make(map[EntityId]shardserver_external.INonPlayerSpawn),
+		blockExtra:  make(map[BlockIndex]interface{}),
+		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
+		subscribers: make(map[EntityId]shardserver_external.ITransmitter),
+		playersData: make(map[EntityId]*playerData),
 	}
 	chunk.neighbours.init()
 	return
@@ -393,13 +387,13 @@ func (chunk *Chunk) Tick() {
 
 	// XXX: Testing hack. If player is in a chunk with no mobs, spawn a pig.
 	if *enableMobs {
-		for _, playerPos := range chunk.subscriberPos {
-			loc, _ := playerPos.ToBlockXyz().ToChunkLocal()
-			if chunk.IsSameChunk(loc) {
+		for _, playerData := range chunk.playersData {
+			loc := playerData.position.ToChunkXz()
+			if chunk.IsSameChunk(&loc) {
 				ms := chunk.mobs()
 				if len(ms) == 0 {
-					log.Println("spawning a mob", chunk.loc, "at", playerPos)
-					m := mob.NewPig(playerPos, &AbsVelocity{5, 5, 5})
+					log.Println("spawning a mob", chunk.loc, "at", playerData.position)
+					m := mob.NewPig(&playerData.position, &AbsVelocity{5, 5, 5})
 					chunk.AddSpawn(&m.Mob)
 				}
 				break
@@ -469,44 +463,56 @@ func (chunk *Chunk) MulticastPlayers(exclude EntityId, packet []byte) {
 	}
 }
 
-func (chunk *Chunk) SetPlayerPosition(player IPlayer, pos *AbsXyz) {
-	chunk.subscriberPos[player.GetEntityId()] = pos, pos != nil
-	if pos != nil {
-		// Does the player overlap with any items?
-		minX := pos.X - playerAabH
-		maxX := pos.X + playerAabH
-		minZ := pos.Z - playerAabH
-		maxZ := pos.Z + playerAabH
-		minY := pos.Y
-		maxY := pos.Y + playerAabY
+func (chunk *Chunk) AddPlayerData(entityId EntityId, pos *AbsXyz) {
+	// TODO add other initial data in here.
+	chunk.playersData[entityId] = &playerData{
+		position: *pos,
+	}
+}
 
-		for entityId, item := range chunk.items() {
-			// TODO This check should be performed when items move as well.
-			pos := item.Position()
-			if pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY && pos.Z >= minZ && pos.Z <= maxZ {
-				slot := item.GetSlot()
-				player.OfferItem(slot)
-				if slot.Count == 0 {
-					// The item has been accepted and completely consumed.
 
-					buf := &bytes.Buffer{}
+func (chunk *Chunk) RemovePlayerData(entityId EntityId) {
+	chunk.playersData[entityId] = nil, false
+}
 
-					// Tell all subscribers to animate the item flying at the
-					// player.
-					proto.WriteItemCollect(buf, EntityId(entityId), player.GetEntityId())
-					chunk.MulticastPlayers(-1, buf.Bytes())
-					chunk.removeSpawn(item)
-				}
+func (chunk *Chunk) SetPlayerPosition(entityId EntityId, pos *AbsXyz) {
+	data, ok := chunk.playersData[entityId]
 
-				// TODO Check for how to properly handle partially consumed
-				// items? Probably not high priority since all dropped items
-				// have a count of 1 at the moment. Might need to respawn the
-				// item with a new count. Do the clients even care what the
-				// count is or if it changes? Or if an item is "collected" but
-				// still exists?
+	if !ok {
+		log.Print("SetPlayerPosition called for EntityId not present.")
+		return
+	}
+
+	data.position = *pos
+
+	/* TODO
+	// Does the player overlap with any items?
+	for _, item := range chunk.items() {
+		// TODO This check should be performed when items move as well.
+		if data.OverlapsItem(item) {
+			slot := item.GetSlot()
+			player.OfferItem(slot)
+			if slot.Count == 0 {
+				// The item has been accepted and completely consumed.
+
+				buf := &bytes.Buffer{}
+
+				// Tell all subscribers to animate the item flying at the
+				// player.
+				proto.WriteItemCollect(buf, EntityId(entityId), player.GetEntityId())
+				chunk.MulticastPlayers(-1, buf.Bytes())
+				chunk.removeSpawn(item)
 			}
+
+			// TODO Check for how to properly handle partially consumed
+			// items? Probably not high priority since all dropped items
+			// have a count of 1 at the moment. Might need to respawn the
+			// item with a new count. Do the clients even care what the
+			// count is or if it changes? Or if an item is "collected" but
+			// still exists?
 		}
 	}
+	*/
 }
 
 func (chunk *Chunk) chunkPacket() []byte {
