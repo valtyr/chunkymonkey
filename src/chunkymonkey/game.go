@@ -11,7 +11,6 @@ import (
 
 	. "chunkymonkey/entity"
 	"chunkymonkey/gamerules"
-	. "chunkymonkey/interfaces"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/player"
 	"chunkymonkey/proto"
@@ -28,7 +27,7 @@ type Game struct {
 	mainQueue        chan func(*Game)
 	playerDisconnect chan EntityId
 	entityManager    EntityManager
-	players          map[EntityId]IPlayer
+	players          map[EntityId]*player.Player
 	time             TimeOfDay
 	gameRules        gamerules.GameRules
 	itemTypes        itemtype.ItemTypeMap
@@ -45,7 +44,7 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	game = &Game{
 		mainQueue:        make(chan func(*Game), 256),
 		playerDisconnect: make(chan EntityId),
-		players:          make(map[EntityId]IPlayer),
+		players:          make(map[EntityId]*player.Player),
 		gameRules:        *gameRules,
 		rand:             rand.New(rand.NewSource(time.UTC().Seconds())),
 		worldStore:       worldStore,
@@ -162,7 +161,7 @@ func (game *Game) Serve(addr string) {
 
 // addPlayer sends spawn messages to all players in range. It also spawns all
 // existing players so the new player can see them.
-func (game *Game) addPlayer(newPlayer IPlayer) {
+func (game *Game) addPlayer(newPlayer *player.Player) {
 	entity := newPlayer.GetEntity()
 	game.entityManager.AddEntity(entity)
 	game.players[entity.EntityId] = newPlayer
@@ -173,9 +172,9 @@ func (game *Game) removePlayer(entityId EntityId) {
 	game.entityManager.RemoveEntityById(entityId)
 }
 
-func (game *Game) spawnPlayer(newPlayer IPlayer) {
+func (game *Game) spawnPlayer(newPlayer *player.Player) {
 	// Spawn new player for existing players.
-	newPlayer.Enqueue(func(newPlayer IPlayer) {
+	newPlayer.Enqueue(func(newPlayer *player.Player) {
 		buf := &bytes.Buffer{}
 		if err := newPlayer.SendSpawn(buf); err != nil {
 			return
@@ -189,7 +188,7 @@ func (game *Game) spawnPlayer(newPlayer IPlayer) {
 	p1, p2 := getChunkRadius(newPlayer.LockedGetChunkPosition())
 	for _, existing := range game.players {
 		if existing != newPlayer {
-			existing.Enqueue(func(existing IPlayer) {
+			existing.Enqueue(func(existing *player.Player) {
 				if existing.IsWithin(p1, p2) {
 					buf := &bytes.Buffer{}
 					if err := existing.SendSpawn(buf); err != nil {
@@ -251,7 +250,7 @@ func (game *Game) tick() {
 }
 
 // Transmit a packet to all players near the sender (except the sender itself).
-func (game *Game) multicastRadiusPacket(packet []byte, sender IPlayer) {
+func (game *Game) multicastRadiusPacket(packet []byte, sender *player.Player) {
 	game.chunkManager.EnqueueOnChunk(
 		sender.LockedGetChunkPosition(),
 		func(chunk shardserver_external.IChunk) {

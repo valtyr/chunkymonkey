@@ -1,7 +1,6 @@
 package player
 
 import (
-	. "chunkymonkey/interfaces"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -29,7 +28,7 @@ func (psr *playerShardReceiver) InventoryUpdate(shardInvId int32, slotIds []Slot
 }
 
 func (psr *playerShardReceiver) RequestPlaceHeldItem(target BlockXyz) {
-	psr.player.Enqueue(func(_ IPlayer) {
+	psr.player.Enqueue(func(_ *Player) {
 		psr.player.RequestPlaceHeldItem(&target)
 	})
 }

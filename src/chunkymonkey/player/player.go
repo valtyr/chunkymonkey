@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"chunkymonkey/entity"
-	. "chunkymonkey/interfaces"
 	"chunkymonkey/inventory"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/proto"
@@ -49,7 +48,7 @@ type Player struct {
 	curWindow    inventory.IWindow
 	nextWindowId WindowId
 
-	mainQueue chan func(IPlayer)
+	mainQueue chan func(*Player)
 	txQueue   chan []byte
 	lock      sync.Mutex
 
@@ -67,7 +66,7 @@ func NewPlayer(shardConnecter shardserver_external.IShardConnecter, recipes *rec
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
 
-		mainQueue: make(chan func(IPlayer), 128),
+		mainQueue: make(chan func(*Player), 128),
 		txQueue:   make(chan []byte, 128),
 
 		onDisconnect: onDisconnect,
@@ -386,7 +385,7 @@ func (player *Player) TransmitPacket(packet []byte) {
 	player.txQueue <- packet
 }
 
-func (player *Player) runQueuedCall(f func(IPlayer)) {
+func (player *Player) runQueuedCall(f func(*Player)) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 	f(player)
@@ -427,7 +426,7 @@ func (player *Player) RequestPlaceHeldItem(target *BlockXyz) {
 
 // Enqueue queues a function to run with the player lock within the player's
 // mainloop.
-func (player *Player) Enqueue(f func(IPlayer)) {
+func (player *Player) Enqueue(f func(*Player)) {
 	if f == nil {
 		return
 	}
@@ -435,7 +434,7 @@ func (player *Player) Enqueue(f func(IPlayer)) {
 }
 
 // WithLock runs a function with the player lock within the calling goroutine.
-func (player *Player) WithLock(f func(IPlayer)) {
+func (player *Player) WithLock(f func(*Player)) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 	f(player)
@@ -457,7 +456,7 @@ func (player *Player) OfferItem(item *slot.Slot) {
 // TODO this should be passed an appropriate *Inventory for inventories that
 // are tied to the world (particularly for chests).
 func (player *Player) OpenWindow(invTypeId InvTypeId, inventory interface{}) {
-	player.Enqueue(func(_ IPlayer) {
+	player.Enqueue(func(_ *Player) {
 		player.closeCurrentWindow(true)
 		window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
 		if window == nil {
