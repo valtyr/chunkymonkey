@@ -462,19 +462,18 @@ func (chunk *Chunk) MulticastPlayers(exclude EntityId, packet []byte) {
 	}
 }
 
-func (chunk *Chunk) AddPlayerData(entityId EntityId, pos *AbsXyz) {
+func (chunk *Chunk) AddPlayerData(entityId EntityId, pos AbsXyz) {
 	// TODO add other initial data in here.
 	chunk.playersData[entityId] = &playerData{
-		position: *pos,
+		position: pos,
 	}
 }
-
 
 func (chunk *Chunk) RemovePlayerData(entityId EntityId) {
 	chunk.playersData[entityId] = nil, false
 }
 
-func (chunk *Chunk) SetPlayerPosition(entityId EntityId, pos *AbsXyz) {
+func (chunk *Chunk) SetPlayerPosition(entityId EntityId, pos AbsXyz) {
 	data, ok := chunk.playersData[entityId]
 
 	if !ok {
@@ -482,7 +481,7 @@ func (chunk *Chunk) SetPlayerPosition(entityId EntityId, pos *AbsXyz) {
 		return
 	}
 
-	data.position = *pos
+	data.position = pos
 
 	/* TODO
 	// Does the player overlap with any items?

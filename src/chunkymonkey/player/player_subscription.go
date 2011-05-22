@@ -40,22 +40,23 @@ func (sub *chunkSubscriptions) Init(connecter shardserver_external.IShardConnect
 	sub.subscribeToChunks(initialChunkLocs)
 
 	sub.curShard = sub.shards[sub.curShardLoc.Key()].shard
+	sub.curShard.AddPlayerData(sub.curChunkLoc, *initialPos)
 }
 
 func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 	// TODO re-enable sending player position to chunks
 
 	newChunkLoc := newLoc.ToChunkXz()
-	if newChunkLoc.X == sub.curChunkLoc.X && newChunkLoc.Z == sub.curChunkLoc.Z {
-		return
-	}
-	sub.moveToChunk(newChunkLoc)
+	if newChunkLoc.X != sub.curChunkLoc.X || newChunkLoc.Z != sub.curChunkLoc.Z {
+		sub.moveToChunk(newChunkLoc, newLoc)
 
-	newShardLoc := newLoc.ToShardXz()
-	if newShardLoc.X == sub.curShardLoc.X && newShardLoc.Z == sub.curShardLoc.Z {
-		return
+		newShardLoc := newLoc.ToShardXz()
+		if newShardLoc.X != sub.curShardLoc.X || newShardLoc.Z != sub.curShardLoc.Z {
+			sub.moveToShard(newShardLoc)
+		}
+	} else {
+		sub.curShard.SetPlayerPosition(sub.curChunkLoc, *newLoc)
 	}
-	sub.moveToShard(newShardLoc)
 }
 
 // Close closes down all shard connections. Use when the player is
@@ -109,12 +110,24 @@ func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
 
 // moveToChunk subscribes to chunks that are newly in range, and unsubscribes
 // to those that have just left.
-func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz) {
+func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) {
 	addChunkLocs := squareDifference(newChunkLoc, sub.curChunkLoc, ChunkRadius)
 	sub.subscribeToChunks(addChunkLocs)
 
+	newShardLoc := newChunkLoc.ToShardXz()
+	if ref, ok := sub.shards[newShardLoc.Key()]; ok {
+		ref.shard.AddPlayerData(sub.curChunkLoc, *newLoc)
+	}
+
+	curShardLoc := sub.curChunkLoc.ToShardXz()
+	if ref, ok := sub.shards[curShardLoc.Key()]; ok {
+		ref.shard.RemovePlayerData(sub.curChunkLoc)
+	}
+
 	delChunkLocs := squareDifference(sub.curChunkLoc, newChunkLoc, ChunkRadius)
 	sub.unsubscribeFromChunks(delChunkLocs)
+
+	sub.curChunkLoc = newChunkLoc
 }
 
 func (sub *chunkSubscriptions) moveToShard(newShardLoc ShardXz) {

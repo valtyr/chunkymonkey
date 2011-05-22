@@ -50,6 +50,12 @@ type IShardConnection interface {
 	UnsubscribeChunk(chunkLoc ChunkXz)
 
 	MulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte)
+
+	AddPlayerData(chunkLoc ChunkXz, position AbsXyz)
+
+	RemovePlayerData(chunkLoc ChunkXz)
+
+	SetPlayerPosition(chunkLoc ChunkXz, position AbsXyz)
 }
 
 // IShardConnecter is used to look up shards and connect to them.
@@ -85,20 +91,7 @@ type IChunk interface {
 	PlayerBlockHit(player interfaces.IPlayer, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
 	PlayerBlockInteract(player interfaces.IPlayer, target *BlockXyz, againstFace Face)
 
-	// Register players to receive information about the chunk. When added,
-	// a player will immediately receive complete chunk information via
-	// their TransmitPacket method, and changes thereafter via the same
-	// mechanism.
-	AddPlayer(entityId EntityId, player ITransmitter)
-	// Removes a previously registered player to updates from the chunk. If
-	// sendPacket is true, then an unload-chunk packet is sent.
-	RemovePlayer(entityId EntityId, sendPacket bool)
-
 	MulticastPlayers(exclude EntityId, packet []byte)
-
-	// Tells the chunk about the position of a player in/near the chunk. pos =
-	// nil indicates that the player is no longer nearby.
-	SetPlayerPosition(entityId EntityId, pos *AbsXyz)
 
 	// Get packet data for the chunk
 	SendUpdate()

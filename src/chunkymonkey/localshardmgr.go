@@ -29,7 +29,7 @@ func (conn *localShardConnection) Disconnect() {
 	// TODO This inefficiently unsubscribes from all chunks, even if not
 	// subscribed to.
 	conn.shard.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
-		chunk.RemovePlayer(conn.entityId, false)
+		chunk.(*Chunk).RemovePlayer(conn.entityId, false)
 	})
 }
 
@@ -39,19 +39,37 @@ func (conn *localShardConnection) Enqueue(fn func()) {
 
 func (conn *localShardConnection) SubscribeChunk(chunkLoc ChunkXz) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.AddPlayer(conn.entityId, conn.player)
+		chunk.(*Chunk).AddPlayer(conn.entityId, conn.player)
 	})
 }
 
 func (conn *localShardConnection) UnsubscribeChunk(chunkLoc ChunkXz) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.RemovePlayer(conn.entityId, true)
+		chunk.(*Chunk).RemovePlayer(conn.entityId, true)
 	})
 }
 
 func (conn *localShardConnection) MulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
 		chunk.(*Chunk).MulticastPlayers(exclude, packet)
+	})
+}
+
+func (conn *localShardConnection) AddPlayerData(chunkLoc ChunkXz, position AbsXyz) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+		chunk.(*Chunk).AddPlayerData(conn.entityId, position)
+	})
+}
+
+func (conn *localShardConnection) RemovePlayerData(chunkLoc ChunkXz) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+		chunk.(*Chunk).RemovePlayerData(conn.entityId)
+	})
+}
+
+func (conn *localShardConnection) SetPlayerPosition(chunkLoc ChunkXz, position AbsXyz) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+		chunk.(*Chunk).SetPlayerPosition(conn.entityId, position)
 	})
 }
 
