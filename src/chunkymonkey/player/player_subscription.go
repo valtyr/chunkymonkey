@@ -25,7 +25,7 @@ type chunkSubscriptions struct {
 	curShardLoc ShardXz                               // Shard the player is currently in.
 	curChunkLoc ChunkXz                               // Chunk the player is currently in.
 	curShard    shardserver_external.IShardConnection // Shard the player is hosted on.
-	shards      map[uint64]shardRef                   // Connections to shards.
+	shards      map[uint64]*shardRef                  // Connections to shards.
 }
 
 func (sub *chunkSubscriptions) Init(connecter shardserver_external.IShardConnecter, entityId EntityId, player shardserver_external.ITransmitter, initialPos *AbsXyz) {
@@ -34,7 +34,7 @@ func (sub *chunkSubscriptions) Init(connecter shardserver_external.IShardConnect
 	sub.entityId = entityId
 	sub.curShardLoc = initialPos.ToShardXz()
 	sub.curChunkLoc = initialPos.ToChunkXz()
-	sub.shards = make(map[uint64]shardRef)
+	sub.shards = make(map[uint64]*shardRef)
 
 	initialChunkLocs := orderedChunkSquare(sub.curChunkLoc, ChunkRadius)
 	sub.subscribeToChunks(initialChunkLocs)
@@ -64,7 +64,7 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 func (sub *chunkSubscriptions) Close() {
 	for key, ref := range sub.shards {
 		ref.shard.Disconnect()
-		sub.shards[key] = shardRef{}, false
+		sub.shards[key] = nil, false
 	}
 }
 
@@ -76,7 +76,7 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
 		shardKey := shardLoc.Key()
 		ref, ok := sub.shards[shardKey]
 		if !ok {
-			ref = shardRef{
+			ref = &shardRef{
 				shard: sub.connecter.ShardConnect(sub.entityId, sub.player, shardLoc),
 				count: 0,
 			}
@@ -98,12 +98,12 @@ func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
 			ref.count--
 			if ref.count <= 0 {
 				ref.shard.Disconnect()
-				sub.shards[shardKey] = shardRef{}, false
+				sub.shards[shardKey] = nil, false
 			}
 		} else {
 			// Odd - we don't have a shard connection for that chunk.
-			log.Print("chunkSubscriptions.unsubscribeFromChunks() attempted to " +
-				"unsubscribe from chunk in unconnected shard.")
+			log.Printf("chunkSubscriptions.unsubscribeFromChunks() attempted to "+
+				"unsubscribe from chunk @%v in unconnected shard @%v.",chunkLoc, shardLoc)
 		}
 	}
 }
@@ -116,7 +116,7 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 
 	newShardLoc := newChunkLoc.ToShardXz()
 	if ref, ok := sub.shards[newShardLoc.Key()]; ok {
-		ref.shard.AddPlayerData(sub.curChunkLoc, *newLoc)
+		ref.shard.AddPlayerData(newChunkLoc, *newLoc)
 	}
 
 	curShardLoc := sub.curChunkLoc.ToShardXz()

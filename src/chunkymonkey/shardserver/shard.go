@@ -87,7 +87,7 @@ func (shard *ChunkShard) Get(loc *ChunkXz) shardserver_external.IChunk {
 		Z: loc.Z - shard.originChunkLoc.Z,
 	}
 
-	if locDelta.X < 0 || locDelta.Z < 0 || locDelta.X > ShardSize || locDelta.Z > ShardSize {
+	if locDelta.X < 0 || locDelta.Z < 0 || locDelta.X >= ShardSize || locDelta.Z >= ShardSize {
 		log.Printf("%v.Get(%#v): chunk requested from outside of shard", shard, loc)
 		return nil
 	}
@@ -102,6 +102,13 @@ func (shard *ChunkShard) Get(loc *ChunkXz) shardserver_external.IChunk {
 	}
 
 	chunk = shard.loadChunk(loc, &locDelta)
+
+	if chunk == nil {
+		// No chunk available at that location. (Return nil explicitly - interfaces
+		// containing nil pointer don't equal nil).
+		return nil
+	}
+
 	shard.chunks[chunkIndex] = chunk
 
 	return chunk

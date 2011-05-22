@@ -3,6 +3,7 @@ package shardserver
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"log"
 	"rand"
 	"time"
@@ -64,6 +65,10 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 	}
 	chunk.neighbours.init()
 	return
+}
+
+func (chunk *Chunk) String() string {
+	return fmt.Sprintf("Chunk[%d,%d]", chunk.loc.X, chunk.loc.Z)
 }
 
 // Sets a block and its data. Returns true if the block was not changed.
@@ -179,7 +184,7 @@ func (chunk *Chunk) PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatu
 			chunk.setBlock(blockLoc, subLoc, index, BlockIdAir, 0)
 		}
 	} else {
-		log.Printf("Chunk/PlayerBlockHit: Attempted to destroy unknown block Id %d", blockTypeId)
+		log.Printf("%v.PlayerBlockHit: Attempted to destroy unknown block Id %d", chunk, blockTypeId)
 		ok = false
 	}
 
@@ -195,15 +200,15 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 	chunkLoc, subLoc := target.ToChunkLocal()
 	if chunkLoc.X != chunk.loc.X || chunkLoc.Z != chunk.loc.Z {
 		log.Printf(
-			"Chunk/PlayerBlockInteract: target position (%#v) is not within chunk (%#v)",
-			target, chunk.loc)
+			"%v.PlayerBlockInteract: target position (%#v) is not within chunk",
+			chunk, target)
 		return
 	}
 	index, ok := subLoc.BlockIndex()
 	if !ok {
 		log.Printf(
-			"Chunk/PlayerBlockInteract: invalid target position (%#v) within chunk (%#v)",
-			target, chunk.loc)
+			"%v.PlayerBlockInteract: invalid target position (%#v) within chunk",
+			chunk, target)
 		return
 	}
 
@@ -211,8 +216,8 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 	blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok {
 		log.Printf(
-			"Chunk/PlayerBlockInteract: unknown target block type %d at target position (%#v)",
-			blockTypeId, target)
+			"%v.PlayerBlockInteract: unknown target block type %d at target position (%#v)",
+			chunk, blockTypeId, target)
 		return
 	}
 
@@ -330,8 +335,8 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok {
 		log.Printf(
-			"Chunk/blockQuery found unknown block type Id %d at %+v",
-			blockTypeId, blockLoc)
+			"%v.blockQuery found unknown block type Id %d at %+v",
+			chunk, blockTypeId, blockLoc)
 		blockUnknownId = true
 	}
 
@@ -391,7 +396,7 @@ func (chunk *Chunk) Tick() {
 			if chunk.IsSameChunk(&loc) {
 				ms := chunk.mobs()
 				if len(ms) == 0 {
-					log.Println("spawning a mob", chunk.loc, "at", playerData.position)
+					log.Printf("%v.Tick: spawning a mob at %v", chunk, playerData.position)
 					m := mob.NewPig(&playerData.position, &AbsVelocity{5, 5, 5})
 					chunk.AddSpawn(&m.Mob)
 				}
@@ -477,7 +482,10 @@ func (chunk *Chunk) SetPlayerPosition(entityId EntityId, pos AbsXyz) {
 	data, ok := chunk.playersData[entityId]
 
 	if !ok {
-		log.Print("SetPlayerPosition called for EntityId not present.")
+		log.Printf(
+			"%v.SetPlayerPosition: called for EntityId (%d) not present as playerData.",
+			chunk, entityId,
+		)
 		return
 	}
 
