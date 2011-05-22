@@ -37,7 +37,6 @@ type Chunk struct {
 	// TODO: (discuss) Maybe split this back into mobs and items?
 	// There are many more users of "spawn" than of only mobs or items. So
 	// I'm inclined to leave it as is.
-	// TODO Spawns should belong to shards, not chunks.
 	spawn        map[EntityId]shardserver_external.INonPlayerSpawn
 	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand

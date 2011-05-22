@@ -41,7 +41,6 @@ func (player *playerData) OverlapsItem(item *item.Item) bool {
 	// TODO note that calling this function repeatedly is not as efficient as it
 	// could be.
 
-	// Does the player overlap with any items?
 	minX := player.position.X - playerAabH
 	maxX := player.position.X + playerAabH
 	minZ := player.position.Z - playerAabH
