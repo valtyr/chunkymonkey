@@ -10,7 +10,6 @@ import (
 
 	"chunkymonkey/block"
 	"chunkymonkey/chunkstore"
-	. "chunkymonkey/interfaces"
 	"chunkymonkey/item"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/mob"
@@ -42,9 +41,9 @@ type Chunk struct {
 	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	neighbours   neighboursCache
-	cachedPacket []byte                                         // Cached packet data for this block.
-	subscribers  map[EntityId]shardserver_external.ITransmitter // Players getting updates from the chunk.
-	playersData  map[EntityId]*playerData                       // Some player data for player(s) in the chunk.
+	cachedPacket []byte                                              // Cached packet data for this block.
+	subscribers  map[EntityId]shardserver_external.IPlayerConnection // Players getting updates from the chunk.
+	playersData  map[EntityId]*playerData                            // Some player data for player(s) in the chunk.
 }
 
 func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {
@@ -60,7 +59,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		spawn:       make(map[EntityId]shardserver_external.INonPlayerSpawn),
 		blockExtra:  make(map[BlockIndex]interface{}),
 		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers: make(map[EntityId]shardserver_external.ITransmitter),
+		subscribers: make(map[EntityId]shardserver_external.IPlayerConnection),
 		playersData: make(map[EntityId]*playerData),
 	}
 	chunk.neighbours.init()
@@ -147,6 +146,26 @@ func (chunk *Chunk) SetBlockExtra(subLoc *SubChunkXyz, extra interface{}) {
 	}
 }
 
+func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockIndex, subLoc *SubChunkXyz, ok bool) {
+	chunkLoc, subLoc := blockLoc.ToChunkLocal()
+
+	if chunkLoc.X != chunk.loc.X || chunkLoc.Z != chunk.loc.Z {
+		log.Printf(
+			"%v.getBlockIndexByBlockXyz: position (%T%#v) is not within chunk",
+			chunk, blockLoc, blockLoc)
+		return 0, nil, false
+	}
+
+	index, ok = subLoc.BlockIndex()
+	if !ok {
+		log.Printf(
+			"%v.getBlockIndexByBlockXyz: invalid position (%T%#v) within chunk",
+			chunk, blockLoc, blockLoc)
+	}
+
+	return
+}
+
 func (chunk *Chunk) GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
 	index, ok := subLoc.BlockIndex()
 	if !ok {
@@ -162,7 +181,7 @@ func (chunk *Chunk) GetRecipeSet() *recipe.RecipeSet {
 	return chunk.mgr.gameRules.Recipes
 }
 
-func (chunk *Chunk) PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool) {
+func (chunk *Chunk) PlayerBlockHit(player shardserver_external.IPlayerConnection, held slot.Slot, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool) {
 	index, ok := subLoc.BlockIndex()
 	if !ok {
 		return
@@ -191,24 +210,14 @@ func (chunk *Chunk) PlayerBlockHit(player IPlayer, subLoc *SubChunkXyz, digStatu
 	return
 }
 
-func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, againstFace Face) {
-	// TODO pass in currently held item to allow better checking of if the player
-	// is trying to place a block vs. perform some other interaction (e.g hoeing
-	// dirt). placeBlock() will need to check again for the purposes of *taking*
-	// a block for placement, of course.
+func (chunk *Chunk) PlayerBlockInteract(player shardserver_external.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
+	// TODO use held item to better check of if the player is trying to place a
+	// block vs. perform some other interaction (e.g hoeing dirt).
+	// RequestPlaceItem() will need to check again as the item might have changed
+	// in the meantime, of course.
 
-	chunkLoc, subLoc := target.ToChunkLocal()
-	if chunkLoc.X != chunk.loc.X || chunkLoc.Z != chunk.loc.Z {
-		log.Printf(
-			"%v.PlayerBlockInteract: target position (%#v) is not within chunk",
-			chunk, target)
-		return
-	}
-	index, ok := subLoc.BlockIndex()
+	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
 	if !ok {
-		log.Printf(
-			"%v.PlayerBlockInteract: invalid target position (%#v) within chunk",
-			chunk, target)
 		return
 	}
 
@@ -227,24 +236,13 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 		// Work out the position to put the block at.
 		// TODO check for overflow, especially in Y.
 		dx, dy, dz := againstFace.GetDxyz()
-		destLoc := &BlockXyz{
+		destLoc := BlockXyz{
 			target.X + dx,
 			target.Y + dy,
 			target.Z + dz,
 		}
-		destChunkLoc, destSubLoc := destLoc.ToChunkLocal()
 
-		// Place the block.
-		if chunk.IsSameChunk(destChunkLoc) {
-			chunk.placeBlock(player, destLoc, destSubLoc, againstFace)
-		} else {
-			chunk.mgr.EnqueueOnChunk(*destChunkLoc, func(destIChunk shardserver_external.IChunk) {
-				if destChunk, ok := destIChunk.(*Chunk); ok {
-					destChunk.placeBlock(player, destLoc, destSubLoc, againstFace)
-				}
-			})
-		}
-
+		player.RequestPlaceHeldItem(destLoc)
 	} else {
 		// Player is otherwise interacting with the block.
 		blockInstance := &block.BlockInstance{
@@ -262,8 +260,11 @@ func (chunk *Chunk) PlayerBlockInteract(player IPlayer, target *BlockXyz, agains
 // placeBlock attempts to place a block. This is called by PlayerBlockInteract
 // in the situation where the player interacts with an attachable block
 // (potentially in a different chunk to the one where the block gets placed).
-func (chunk *Chunk) placeBlock(player IPlayer, destLoc *BlockXyz, destSubLoc *SubChunkXyz, face Face) {
-	index, ok := destSubLoc.BlockIndex()
+func (chunk *Chunk) RequestPlaceItem(player shardserver_external.IPlayerConnection, target BlockXyz, slot slot.Slot) {
+	// TODO defer a check for remaining items in slot, and do something with them
+	// (send to player or drop on the ground).
+
+	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(&target)
 	if !ok {
 		return
 	}
@@ -275,32 +276,19 @@ func (chunk *Chunk) placeBlock(player IPlayer, destLoc *BlockXyz, destSubLoc *Su
 		return
 	}
 
-	var takenItem slot.Slot
-	takenItem.Init()
-
-	// Final check that the player is holding a placeable block item. We use
-	// WithLock so that things happen synchronously for a transactional item take
-	// and placement.
-	player.WithLock(func(player IPlayer) {
-		heldItemType := player.GetHeldItemType()
-		// TODO more flexible item checking for block placement (e.g placing seed
-		// items on farmland doesn't fit this current simplistic model). The block
-		// type for the block being placed against should probably contain this
-		// logic (i.e farmland block should know about the seed item).
-		if heldItemType == nil || heldItemType.Id < BlockIdMin || heldItemType.Id > BlockIdMax {
-			// Not a placeable item.
-			return
-		}
-
-		player.TakeOneHeldItem(&takenItem)
-	})
-
-	if takenItem.Count < 1 || takenItem.ItemType == nil {
+	// TODO more flexible item checking for block placement (e.g placing seed
+	// items on farmland doesn't fit this current simplistic model). The block
+	// type for the block being placed against should probably contain this logic
+	// (i.e farmland block should know about the seed item).
+	if slot.Count < 1 || slot.ItemType == nil || slot.ItemType.Id < BlockIdMin || slot.ItemType.Id > BlockIdMax {
+		// Not a placeable item.
 		return
 	}
 
 	// TODO block metadata
-	chunk.setBlock(destLoc, destSubLoc, index, BlockId(takenItem.ItemType.Id), 0)
+	chunk.setBlock(&target, subLoc, index, BlockId(slot.ItemType.Id), 0)
+
+	slot.Decrement()
 }
 
 // Used to read the BlockId of a block that's either in the chunk, or
@@ -428,7 +416,7 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) AddPlayer(entityId EntityId, player shardserver_external.ITransmitter) {
+func (chunk *Chunk) AddPlayer(entityId EntityId, player shardserver_external.IPlayerConnection) {
 	chunk.subscribers[entityId] = player
 
 	buf := new(bytes.Buffer)

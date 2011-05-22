@@ -1,6 +1,7 @@
 package block
 
 import (
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -21,7 +22,7 @@ func (aspect *StandardAspect) Name() string {
 	return "Standard"
 }
 
-func (aspect *StandardAspect) Hit(instance *BlockInstance, player IBlockPlayer, digStatus DigStatus) (destroyed bool) {
+func (aspect *StandardAspect) Hit(instance *BlockInstance, player shardserver_external.IPlayerConnection, digStatus DigStatus) (destroyed bool) {
 	if aspect.BreakOn != digStatus {
 		return
 	}
@@ -44,5 +45,5 @@ func (aspect *StandardAspect) Hit(instance *BlockInstance, player IBlockPlayer, 
 	return
 }
 
-func (aspect *StandardAspect) Interact(instance *BlockInstance, player IBlockPlayer) {
+func (aspect *StandardAspect) Interact(instance *BlockInstance, player shardserver_external.IPlayerConnection) {
 }

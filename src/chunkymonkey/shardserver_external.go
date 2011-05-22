@@ -6,8 +6,8 @@ import (
 	"rand"
 
 	"chunkymonkey/entity"
-	"chunkymonkey/interfaces"
 	"chunkymonkey/physics"
+	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
@@ -26,10 +26,20 @@ type INonPlayerSpawn interface {
 	Tick(physics.BlockQueryFn) (leftBlock bool)
 }
 
-// ITransmitter is the interface by which shards communicate packets to
-// players.
-type ITransmitter interface {
+// IPlayerConnection is the interface by which shards communicate to players on
+// the frontend.
+type IPlayerConnection interface {
 	TransmitPacket(packet []byte)
+
+	InventorySubscribed(shardInvId int32, invTypeId InvTypeId)
+
+	InventoryUpdate(shardInvId int32, slotIds []SlotId, slots []slot.Slot)
+
+	// RequestPlaceHeldItem requests that the player frontend take one item from
+	// the held item stack and send it in a RequestPlaceItem to the target block.
+	// The player code may *not* honour this request (e.g there might be no
+	// suitable held item).
+	RequestPlaceHeldItem(target BlockXyz)
 }
 
 // IShardConnection is the interface by which shards can be communicated to by
@@ -56,12 +66,20 @@ type IShardConnection interface {
 	RemovePlayerData(chunkLoc ChunkXz)
 
 	SetPlayerPosition(chunkLoc ChunkXz, position AbsXyz)
+
+	PlayerBlockHit(held slot.Slot, target BlockXyz, digStatus DigStatus)
+
+	// RequestPlaceItem requests that the item passed be placed at the given
+	// target location. The shard *may* choose not to do this, but if it cannot,
+	// then it *must* account for the item in some way (maybe hand it back to the
+	// player or just drop it on the ground).
+	RequestPlaceItem(target BlockXyz, slot slot.Slot)
 }
 
 // IShardConnecter is used to look up shards and connect to them.
 type IShardConnecter interface {
 	// Must currently be called from with the owning IGame's Enqueue:
-	ShardConnect(entityId EntityId, player ITransmitter, shardLoc ShardXz) IShardConnection
+	ShardConnect(entityId EntityId, player IPlayerConnection, shardLoc ShardXz) IShardConnection
 
 	// TODO Eventually remove these methods - everything should go through
 	// IShardConnection.
@@ -88,8 +106,8 @@ type IChunk interface {
 	TransferSpawn(e INonPlayerSpawn)
 	// Tells the chunk to take posession of the item/mob.
 	GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
-	PlayerBlockHit(player interfaces.IPlayer, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
-	PlayerBlockInteract(player interfaces.IPlayer, target *BlockXyz, againstFace Face)
+	PlayerBlockHit(player IPlayerConnection, held slot.Slot, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
+	PlayerBlockInteract(player IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face)
 
 	MulticastPlayers(exclude EntityId, packet []byte)
 

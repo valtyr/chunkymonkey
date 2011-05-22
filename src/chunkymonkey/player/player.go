@@ -36,6 +36,7 @@ func init() {
 
 type Player struct {
 	entity.Entity
+	shardReceiver  playerShardReceiver
 	shardConnecter shardserver_external.IShardConnecter
 	conn           net.Conn
 	name           string
@@ -72,6 +73,7 @@ func NewPlayer(shardConnecter shardserver_external.IShardConnecter, recipes *rec
 		onDisconnect: onDisconnect,
 	}
 
+	player.shardReceiver.Init(player)
 	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player, recipes)
 
@@ -214,6 +216,12 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 }
 
 func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
+	heldPtr, _ := player.inventory.HeldItem()
+	held := *heldPtr
+
 	// TODO validate that the player is actually somewhere near the block
 
 	// TODO validate that the player has dug long enough to stop speed
@@ -223,7 +231,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz,
 		chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
 		player.shardConnecter.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
-			chunk.PlayerBlockHit(player, subLoc, status)
+			chunk.PlayerBlockHit(&player.shardReceiver, held, subLoc, status)
 		})
 
 	} else {
@@ -238,10 +246,16 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *Blo
 		return
 	}
 
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
+	heldPtr, _ := player.inventory.HeldItem()
+	held := *heldPtr
+
 	placeChunkLoc, _ := blockLoc.ToChunkLocal()
 
 	player.shardConnecter.EnqueueOnChunk(*placeChunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.PlayerBlockInteract(player, blockLoc, face)
+		chunk.PlayerBlockInteract(&player.shardReceiver, held, blockLoc, face)
 	})
 }
 
@@ -382,7 +396,7 @@ func (player *Player) mainLoop() {
 	expVarPlayerConnectionCount.Add(1)
 	defer expVarPlayerDisconnectionCount.Add(1)
 
-	player.chunkSubs.Init(player.shardConnecter, player.EntityId, player, &player.position)
+	player.chunkSubs.Init(&player.shardReceiver, player.shardConnecter, player.EntityId, &player.position)
 	defer player.chunkSubs.Close()
 
 	player.postLogin()

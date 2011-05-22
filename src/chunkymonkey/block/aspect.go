@@ -13,12 +13,6 @@ import (
 // blocks.
 const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
-// IBlockPlayer defines the interactions that a block aspect may have upon a
-// player.
-type IBlockPlayer interface {
-	OpenWindow(invTypeId InvTypeId, inventory interface{})
-}
-
 // The interface required of a chunk by block behaviour.
 type IChunkBlock interface {
 	GetRand() *rand.Rand
@@ -47,6 +41,6 @@ type BlockInstance struct {
 // Defines the behaviour of a block.
 type IBlockAspect interface {
 	Name() string
-	Hit(instance *BlockInstance, player IBlockPlayer, digStatus DigStatus) (destroyed bool)
-	Interact(instance *BlockInstance, player IBlockPlayer)
+	Hit(instance *BlockInstance, player shardserver_external.IPlayerConnection, digStatus DigStatus) (destroyed bool)
+	Interact(instance *BlockInstance, player shardserver_external.IPlayerConnection)
 }

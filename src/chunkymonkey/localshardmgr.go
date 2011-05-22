@@ -7,17 +7,18 @@ import (
 	"chunkymonkey/entity"
 	"chunkymonkey/gamerules"
 	"chunkymonkey/shardserver_external"
+	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
 // localShardConnection implements IShardConnection for LocalShardManager.
 type localShardConnection struct {
 	entityId EntityId
-	player   shardserver_external.ITransmitter
+	player   shardserver_external.IPlayerConnection
 	shard    *ChunkShard
 }
 
-func newLocalShardConnection(entityId EntityId, player shardserver_external.ITransmitter, shard *ChunkShard) *localShardConnection {
+func newLocalShardConnection(entityId EntityId, player shardserver_external.IPlayerConnection, shard *ChunkShard) *localShardConnection {
 	return &localShardConnection{
 		entityId: entityId,
 		player:   player,
@@ -73,6 +74,23 @@ func (conn *localShardConnection) SetPlayerPosition(chunkLoc ChunkXz, position A
 	})
 }
 
+func (conn *localShardConnection) PlayerBlockHit(held slot.Slot, target BlockXyz, digStatus DigStatus) {
+	chunkLoc, subLoc := target.ToChunkLocal()
+
+	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
+		chunk.(*Chunk).PlayerBlockHit(conn.player, held, subLoc, digStatus)
+	})
+}
+
+
+func (conn *localShardConnection) RequestPlaceItem(target BlockXyz, slot slot.Slot) {
+	chunkLoc, _ := target.ToChunkLocal()
+
+	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
+		// TODO
+	})
+}
+
 // LocalShardManager contains all chunk shards and can look them up. It
 // implements IShardConnecter and is for use in hosting all shards in the local
 // process.
@@ -108,7 +126,7 @@ func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
 	return shard
 }
 
-func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player shardserver_external.ITransmitter, shardLoc ShardXz) shardserver_external.IShardConnection {
+func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player shardserver_external.IPlayerConnection, shardLoc ShardXz) shardserver_external.IShardConnection {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 

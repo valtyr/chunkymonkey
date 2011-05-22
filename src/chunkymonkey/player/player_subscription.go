@@ -19,18 +19,18 @@ type shardRef struct {
 // * the chunks that to be subscribed to (via their shards),
 // * and moving the player from one shard to another.
 type chunkSubscriptions struct {
-	connecter   shardserver_external.IShardConnecter
-	player      shardserver_external.ITransmitter
-	entityId    EntityId
-	curShardLoc ShardXz                               // Shard the player is currently in.
-	curChunkLoc ChunkXz                               // Chunk the player is currently in.
-	curShard    shardserver_external.IShardConnection // Shard the player is hosted on.
-	shards      map[uint64]*shardRef                  // Connections to shards.
+	shardConnecter shardserver_external.IShardConnecter
+	shardReceiver  shardserver_external.IPlayerConnection
+	entityId       EntityId
+	curShardLoc    ShardXz                               // Shard the player is currently in.
+	curChunkLoc    ChunkXz                               // Chunk the player is currently in.
+	curShard       shardserver_external.IShardConnection // Shard the player is hosted on.
+	shards         map[uint64]*shardRef                  // Connections to shards.
 }
 
-func (sub *chunkSubscriptions) Init(connecter shardserver_external.IShardConnecter, entityId EntityId, player shardserver_external.ITransmitter, initialPos *AbsXyz) {
-	sub.connecter = connecter
-	sub.player = player
+func (sub *chunkSubscriptions) Init(shardReceiver shardserver_external.IPlayerConnection, shardConnecter shardserver_external.IShardConnecter, entityId EntityId, initialPos *AbsXyz) {
+	sub.shardReceiver = shardReceiver
+	sub.shardConnecter = shardConnecter
 	sub.entityId = entityId
 	sub.curShardLoc = initialPos.ToShardXz()
 	sub.curChunkLoc = initialPos.ToChunkXz()
@@ -77,7 +77,7 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
 		ref, ok := sub.shards[shardKey]
 		if !ok {
 			ref = &shardRef{
-				shard: sub.connecter.ShardConnect(sub.entityId, sub.player, shardLoc),
+				shard: sub.shardConnecter.ShardConnect(sub.entityId, sub.shardReceiver, shardLoc),
 				count: 0,
 			}
 			sub.shards[shardKey] = ref

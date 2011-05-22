@@ -2,6 +2,7 @@ package block
 
 import (
 	"chunkymonkey/inventory"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -19,7 +20,7 @@ func (aspect *WorkbenchAspect) Name() string {
 	return "Workbench"
 }
 
-func (aspect *WorkbenchAspect) Hit(instance *BlockInstance, player IBlockPlayer, digStatus DigStatus) (destroyed bool) {
+func (aspect *WorkbenchAspect) Hit(instance *BlockInstance, player shardserver_external.IPlayerConnection, digStatus DigStatus) (destroyed bool) {
 	destroyed = aspect.StandardAspect.Hit(instance, player, digStatus)
 	if destroyed {
 		aspect.ejectItems(instance)
@@ -27,7 +28,8 @@ func (aspect *WorkbenchAspect) Hit(instance *BlockInstance, player IBlockPlayer,
 	return
 }
 
-func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player IBlockPlayer) {
+func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player shardserver_external.IPlayerConnection) {
+	/* TODO get workbenches working with IPlayerConnection
 	workbenchInv, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
 	if !ok {
 		// TODO have the inventory stop existing when all players unsubscribe from
@@ -42,6 +44,7 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player IBlockPl
 		instance.Chunk.SetBlockExtra(&instance.SubLoc, workbenchInv)
 	}
 	player.OpenWindow(InvTypeIdWorkbench, workbenchInv)
+	*/
 }
 
 func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
