@@ -21,7 +21,7 @@ func main() {
 
 	v := NewNodeChecker(fset)
 	v.InterfaceName = regexp.MustCompile("[Ii][A-Z][A-Za-z]+")
-	v.InvalidFuncName = regexp.MustCompile("^Get") // can't do negative match in Go's regexp?
+	v.InvalidFuncName = regexp.MustCompile("^Get.+") // can't do negative match in Go's regexp?
 
 	for _, pkg := range pkgMap {
 		ast.Walk(v, pkg)
