@@ -61,14 +61,14 @@ func (shard *ChunkShard) tick() {
 
 	for _, chunk := range shard.chunks {
 		if chunk != nil {
-			chunk.Tick()
+			chunk.tick()
 		}
 	}
 
 	if shard.ticksSinceUpdate >= TicksPerSecond {
 		for _, chunk := range shard.chunks {
 			if chunk != nil {
-				chunk.SendUpdate()
+				chunk.sendUpdate()
 			}
 		}
 		shard.ticksSinceUpdate = 0

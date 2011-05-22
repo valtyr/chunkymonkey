@@ -92,10 +92,6 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 	return
 }
 
-func (chunk *Chunk) GetLoc() *ChunkXz {
-	return &chunk.loc
-}
-
 func (chunk *Chunk) GetRand() *rand.Rand {
 	return chunk.rand
 }
@@ -331,7 +327,7 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 	return
 }
 
-func (chunk *Chunk) Tick() {
+func (chunk *Chunk) tick() {
 	// Update neighbouring chunks of block changes in this chunk
 	chunk.neighbours.flush()
 
@@ -381,7 +377,7 @@ func (chunk *Chunk) Tick() {
 	if *enableMobs {
 		for _, playerData := range chunk.playersData {
 			loc := playerData.position.ToChunkXz()
-			if chunk.IsSameChunk(&loc) {
+			if chunk.isSameChunk(&loc) {
 				ms := chunk.mobs()
 				if len(ms) == 0 {
 					log.Printf("%v.Tick: spawning a mob at %v", chunk, playerData.position)
@@ -416,7 +412,7 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) AddPlayer(entityId EntityId, player shardserver_external.IPlayerConnection) {
+func (chunk *Chunk) addPlayer(entityId EntityId, player shardserver_external.IPlayerConnection) {
 	chunk.subscribers[entityId] = player
 
 	buf := new(bytes.Buffer)
@@ -435,7 +431,7 @@ func (chunk *Chunk) AddPlayer(entityId EntityId, player shardserver_external.IPl
 	}
 }
 
-func (chunk *Chunk) RemovePlayer(entityId EntityId, sendPacket bool) {
+func (chunk *Chunk) removePlayer(entityId EntityId, sendPacket bool) {
 	player, ok := chunk.subscribers[entityId]
 
 	if ok && sendPacket {
@@ -455,18 +451,18 @@ func (chunk *Chunk) MulticastPlayers(exclude EntityId, packet []byte) {
 	}
 }
 
-func (chunk *Chunk) AddPlayerData(entityId EntityId, pos AbsXyz) {
+func (chunk *Chunk) addPlayerData(entityId EntityId, pos AbsXyz) {
 	// TODO add other initial data in here.
 	chunk.playersData[entityId] = &playerData{
 		position: pos,
 	}
 }
 
-func (chunk *Chunk) RemovePlayerData(entityId EntityId) {
+func (chunk *Chunk) removePlayerData(entityId EntityId) {
 	chunk.playersData[entityId] = nil, false
 }
 
-func (chunk *Chunk) SetPlayerPosition(entityId EntityId, pos AbsXyz) {
+func (chunk *Chunk) setPlayerPosition(entityId EntityId, pos AbsXyz) {
 	data, ok := chunk.playersData[entityId]
 
 	if !ok {
@@ -519,7 +515,7 @@ func (chunk *Chunk) chunkPacket() []byte {
 	return chunk.cachedPacket
 }
 
-func (chunk *Chunk) SendUpdate() {
+func (chunk *Chunk) sendUpdate() {
 	buf := &bytes.Buffer{}
 	for _, e := range chunk.spawn {
 		e.SendUpdate(buf)
@@ -531,7 +527,7 @@ func (chunk *Chunk) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk) {
 	chunk.neighbours.sideCacheSetNeighbour(side, neighbour, chunk.blocks)
 }
 
-func (chunk *Chunk) IsSameChunk(otherChunkLoc *ChunkXz) bool {
+func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
 	return otherChunkLoc.X == chunk.loc.X && otherChunkLoc.Z == chunk.loc.Z
 }
 
