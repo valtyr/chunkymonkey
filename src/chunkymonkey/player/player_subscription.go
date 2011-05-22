@@ -68,6 +68,26 @@ func (sub *chunkSubscriptions) Close() {
 	}
 }
 
+// ShardConnForBlockXyz is a convenience function to get the correct shard
+// connection and the ChunkXz within that chunk for a given BlockXyz position.
+// Returns ok = false if there is no open connection for that shard. Note that
+// this doesn't check if the chunk actually exists.
+func (sub *chunkSubscriptions) ShardConnForBlockXyz(blockLoc *BlockXyz) (conn shardserver_external.IShardConnection, chunkLoc *ChunkXz, ok bool) {
+
+	chunkLoc = blockLoc.ToChunkXz()
+
+	shardLoc := chunkLoc.ToShardXz()
+	ref, ok := sub.shards[shardLoc.Key()]
+	if !ok {
+		return
+	}
+
+	conn = ref.shard
+	ok = true
+
+	return
+}
+
 // subscribeToChunks connects to shards and subscribes to chunks for the chunk
 // locations given.
 func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {

@@ -644,7 +644,16 @@ func coordDivMod(num, denom int32) (div, mod int32) {
 	return
 }
 
-// Convert an (x, z) block coordinate pair to chunk coordinates and the
+// Convert an (x, y, z) block coordinate to chunk coordinates.
+func (blockLoc *BlockXyz) ToChunkXz() (chunkLoc *ChunkXz) {
+	chunkX, _ := coordDivMod(int32(blockLoc.X), ChunkSizeH)
+	chunkZ, _ := coordDivMod(int32(blockLoc.Z), ChunkSizeH)
+
+	chunkLoc = &ChunkXz{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
+	return
+}
+
+// Convert an (x, y, z) block coordinate to chunk coordinates and the
 // coordinates of the block within the chunk
 func (blockLoc *BlockXyz) ToChunkLocal() (chunkLoc *ChunkXz, subLoc *SubChunkXyz) {
 	chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeH)

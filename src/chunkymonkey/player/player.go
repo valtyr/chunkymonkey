@@ -410,6 +410,21 @@ func (player *Player) mainLoop() {
 	}
 }
 
+func (player *Player) RequestPlaceHeldItem(target *BlockXyz) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
+	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	if ok {
+		var into slot.Slot
+		into.Init()
+
+		player.inventory.TakeOneHeldItem(&into)
+
+		shardConn.RequestPlaceItem(*target, into)
+	}
+}
+
 // Enqueue queues a function to run with the player lock within the player's
 // mainloop.
 func (player *Player) Enqueue(f func(IPlayer)) {
