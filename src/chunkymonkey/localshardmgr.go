@@ -74,14 +74,21 @@ func (conn *localShardConnection) SetPlayerPosition(chunkLoc ChunkXz, position A
 	})
 }
 
-func (conn *localShardConnection) PlayerBlockHit(held slot.Slot, target BlockXyz, digStatus DigStatus) {
-	chunkLoc, subLoc := target.ToChunkLocal()
+func (conn *localShardConnection) RequestHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face) {
+	chunkLoc := target.ToChunkXz()
 
 	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.(*Chunk).PlayerBlockHit(conn.player, held, subLoc, digStatus)
+		chunk.(*Chunk).hitBlock(conn.player, held, digStatus, &target, face)
 	})
 }
 
+func (conn *localShardConnection) RequestInteractBlock(held slot.Slot, target BlockXyz, face Face) {
+	chunkLoc := target.ToChunkXz()
+
+	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
+		chunk.(*Chunk).interactBlock(conn.player, held, &target, face)
+	})
+}
 
 func (conn *localShardConnection) RequestPlaceItem(target BlockXyz, slot slot.Slot) {
 	chunkLoc, _ := target.ToChunkLocal()

@@ -214,31 +214,24 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	)
 }
 
-func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face) {
+func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, face Face) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
-	heldPtr, _ := player.inventory.HeldItem()
-	held := *heldPtr
-
 	// TODO validate that the player is actually somewhere near the block
 
-	// TODO validate that the player has dug long enough to stop speed
-	// hacking (based on block type and tool used - non-trivial).
+	// TODO measure the dig time on the target block and relay to the shard to
+	// stop speed hacking (based on block type and tool used - non-trivial).
 
-	if face != FaceNull {
-		chunkLoc, subLoc := blockLoc.ToChunkLocal()
-
-		player.shardConnecter.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
-			chunk.PlayerBlockHit(&player.shardReceiver, held, subLoc, status)
-		})
-
-	} else {
-		// TODO player dropped item
+	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	if ok {
+		heldPtr, _ := player.inventory.HeldItem()
+		held := *heldPtr
+		shardConn.RequestHitBlock(held, *target, status, face)
 	}
 }
 
-func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
+func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, target *BlockXyz, face Face, amount ItemCount, uses ItemData) {
 	if face < FaceMinValid || face > FaceMaxValid {
 		// TODO sometimes FaceNull means something. This case should be covered.
 		log.Printf("Player/PacketPlayerBlockInteract: invalid face %d", face)
@@ -248,14 +241,12 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *Blo
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
-	heldPtr, _ := player.inventory.HeldItem()
-	held := *heldPtr
-
-	placeChunkLoc, _ := blockLoc.ToChunkLocal()
-
-	player.shardConnecter.EnqueueOnChunk(*placeChunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.PlayerBlockInteract(&player.shardReceiver, held, blockLoc, face)
-	})
+	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	if ok {
+		heldPtr, _ := player.inventory.HeldItem()
+		held := *heldPtr
+		shardConn.RequestInteractBlock(held, *target, face)
+	}
 }
 
 func (player *Player) PacketHoldingChange(slotId SlotId) {

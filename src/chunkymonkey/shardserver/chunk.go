@@ -181,8 +181,9 @@ func (chunk *Chunk) GetRecipeSet() *recipe.RecipeSet {
 	return chunk.mgr.gameRules.Recipes
 }
 
-func (chunk *Chunk) PlayerBlockHit(player shardserver_external.IPlayerConnection, held slot.Slot, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool) {
-	index, ok := subLoc.BlockIndex()
+func (chunk *Chunk) hitBlock(player shardserver_external.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
+
+	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
 	if !ok {
 		return
 	}
@@ -203,14 +204,13 @@ func (chunk *Chunk) PlayerBlockHit(player shardserver_external.IPlayerConnection
 			chunk.setBlock(blockLoc, subLoc, index, BlockIdAir, 0)
 		}
 	} else {
-		log.Printf("%v.PlayerBlockHit: Attempted to destroy unknown block Id %d", chunk, blockTypeId)
-		ok = false
+		log.Printf("%v.HitBlock: Attempted to destroy unknown block Id %d", chunk, blockTypeId)
 	}
 
 	return
 }
 
-func (chunk *Chunk) PlayerBlockInteract(player shardserver_external.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
+func (chunk *Chunk) interactBlock(player shardserver_external.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
 	// TODO use held item to better check of if the player is trying to place a
 	// block vs. perform some other interaction (e.g hoeing dirt).
 	// RequestPlaceItem() will need to check again as the item might have changed
@@ -260,7 +260,7 @@ func (chunk *Chunk) PlayerBlockInteract(player shardserver_external.IPlayerConne
 // placeBlock attempts to place a block. This is called by PlayerBlockInteract
 // in the situation where the player interacts with an attachable block
 // (potentially in a different chunk to the one where the block gets placed).
-func (chunk *Chunk) RequestPlaceItem(player shardserver_external.IPlayerConnection, target BlockXyz, slot slot.Slot) {
+func (chunk *Chunk) placeItem(player shardserver_external.IPlayerConnection, target BlockXyz, slot slot.Slot) {
 	// TODO defer a check for remaining items in slot, and do something with them
 	// (send to player or drop on the ground).
 

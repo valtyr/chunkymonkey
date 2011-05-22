@@ -67,7 +67,11 @@ type IShardConnection interface {
 
 	SetPlayerPosition(chunkLoc ChunkXz, position AbsXyz)
 
-	PlayerBlockHit(held slot.Slot, target BlockXyz, digStatus DigStatus)
+	// RequestHitBlock requests that the targetted block be hit.
+	RequestHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face)
+
+	// RequestHitBlock requests that the targetted block be interacted with.
+	RequestInteractBlock(held slot.Slot, target BlockXyz, face Face)
 
 	// RequestPlaceItem requests that the item passed be placed at the given
 	// target location. The shard *may* choose not to do this, but if it cannot,
@@ -106,8 +110,6 @@ type IChunk interface {
 	TransferSpawn(e INonPlayerSpawn)
 	// Tells the chunk to take posession of the item/mob.
 	GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
-	PlayerBlockHit(player IPlayerConnection, held slot.Slot, subLoc *SubChunkXyz, digStatus DigStatus) (ok bool)
-	PlayerBlockInteract(player IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face)
 
 	MulticastPlayers(exclude EntityId, packet []byte)
 
