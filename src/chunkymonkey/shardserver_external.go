@@ -3,7 +3,6 @@ package shardserver_external
 import (
 	"io"
 	"os"
-	"rand"
 
 	"chunkymonkey/entity"
 	"chunkymonkey/physics"
@@ -84,35 +83,15 @@ type IShardConnection interface {
 type IShardConnecter interface {
 	// Must currently be called from with the owning IGame's Enqueue:
 	ShardConnect(entityId EntityId, player IPlayerConnection, shardLoc ShardXz) IShardConnection
-
-	// TODO Eventually remove these methods - everything should go through
-	// IShardConnection.
-	EnqueueAllChunks(fn func(chunk IChunk))
-	EnqueueOnChunk(loc ChunkXz, fn func(chunk IChunk))
 }
 
 // TODO remove this interface when Enqueue* removed from IShardConnection
 type IChunk interface {
-	// Safe to call from outside of the shard's goroutine.:
-	GetLoc() *ChunkXz // Do not modify return value
-
 	// Everything below must be called from within the containing shard's
 	// goroutine.
 
-	// Called from game loop to run physics etc. within the chunk for a single
-	// tick.
-	Tick()
-
-	// Intended for use by blocks/entities within the chunk.
-	GetRand() *rand.Rand
-	AddSpawn(spawn INonPlayerSpawn)
 	// Tells the chunk to take posession of the item/mob.
 	TransferSpawn(e INonPlayerSpawn)
-	// Tells the chunk to take posession of the item/mob.
-	GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool)
 
 	MulticastPlayers(exclude EntityId, packet []byte)
-
-	// Get packet data for the chunk
-	SendUpdate()
 }
