@@ -5,7 +5,6 @@ import (
 	"expvar"
 	"fmt"
 	"log"
-	"io"
 	"math"
 	"net"
 	"os"
@@ -103,29 +102,18 @@ func (player *Player) GetName() string {
 	return player.name
 }
 
-func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
-	heldSlot, _ := player.inventory.HeldItem()
-	heldItemId := heldSlot.GetItemTypeId()
-	if heldItemId < 0 {
-		heldItemId = 0
-	}
-
-	err = proto.WriteNamedEntitySpawn(
-		writer,
-		player.EntityId, player.name,
-		player.position.ToAbsIntXyz(),
-		player.look.ToLookBytes(),
-		heldItemId,
-	)
-	if err != nil {
-		return
-	}
-	return player.inventory.SendFullEquipmentUpdate(writer)
-}
-
 func (player *Player) GetHeldItemType() *itemtype.ItemType {
 	slot, _ := player.inventory.HeldItem()
 	return slot.ItemType
+}
+
+func (player *Player) getHeldItemTypeId() ItemTypeId {
+	heldSlot, _ := player.inventory.HeldItem()
+	heldItemId := heldSlot.GetItemTypeId()
+	if heldItemId < 0 {
+		return 0
+	}
+	return heldItemId
 }
 
 func (player *Player) TakeOneHeldItem(into *slot.Slot) {
@@ -182,19 +170,6 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
 	// the player walks out of range, and no longer receive WriteEntityTeleport
 	// packets for them. The converse should happen when players come in range
 	// of each other.
-
-	buf := new(bytes.Buffer)
-	proto.WriteEntityTeleport(
-		buf,
-		player.EntityId,
-		player.position.ToAbsIntXyz(),
-		player.look.ToLookBytes())
-
-	player.chunkSubs.curShard.MulticastPlayers(
-		player.chunkSubs.curChunkLoc,
-		player.EntityId,
-		buf.Bytes(),
-	)
 }
 
 func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
@@ -386,7 +361,7 @@ func (player *Player) mainLoop() {
 	expVarPlayerConnectionCount.Add(1)
 	defer expVarPlayerDisconnectionCount.Add(1)
 
-	player.chunkSubs.Init(&player.shardReceiver, player.shardConnecter, player.EntityId, &player.position)
+	player.chunkSubs.Init(player)
 	defer player.chunkSubs.Close()
 
 	player.postLogin()

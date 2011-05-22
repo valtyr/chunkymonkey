@@ -27,7 +27,7 @@ type playerData struct {
 	// TODO Armor data.
 }
 
-func (player *playerData) SendSpawn(writer io.Writer) (err os.Error) {
+func (player *playerData) sendSpawn(writer io.Writer) os.Error {
 	return proto.WriteNamedEntitySpawn(
 		writer,
 		player.entityId, player.name,
@@ -35,6 +35,15 @@ func (player *playerData) SendSpawn(writer io.Writer) (err os.Error) {
 		&player.look,
 		player.heldItemId,
 	)
+	// TODO Armor packet(s).
+}
+
+func (player *playerData) sendPositionLook(writer io.Writer) os.Error {
+	return proto.WriteEntityTeleport(
+		writer,
+		player.entityId,
+		player.position.ToAbsIntXyz(),
+		&player.look)
 }
 
 func (player *playerData) OverlapsItem(item *item.Item) bool {

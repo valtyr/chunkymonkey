@@ -423,11 +423,22 @@ func (chunk *Chunk) addPlayer(entityId EntityId, player shardserver_external.IPl
 
 	// Send spawns of all mobs/items in the chunk.
 	if len(chunk.spawn) > 0 {
-		buf := &bytes.Buffer{}
+		buf := new(bytes.Buffer)
 		for _, e := range chunk.spawn {
 			e.SendSpawn(buf)
 		}
 		player.TransmitPacket(buf.Bytes())
+	}
+
+	// Spawn existing players for new player.
+	if len(chunk.playersData) > 0 {
+		playersPacket := new(bytes.Buffer)
+		for _, existing := range chunk.playersData {
+			if existing.entityId != entityId {
+				existing.sendSpawn(playersPacket)
+			}
+		}
+		player.TransmitPacket(playersPacket.Bytes())
 	}
 }
 
@@ -451,58 +462,76 @@ func (chunk *Chunk) MulticastPlayers(exclude EntityId, packet []byte) {
 	}
 }
 
-func (chunk *Chunk) addPlayerData(entityId EntityId, pos AbsXyz) {
+func (chunk *Chunk) addPlayerData(entityId EntityId, name string, pos AbsXyz, look LookBytes, held ItemTypeId) {
 	// TODO add other initial data in here.
-	chunk.playersData[entityId] = &playerData{
-		position: pos,
+	newPlayerData := &playerData{
+		entityId:   entityId,
+		name:       name,
+		position:   pos,
+		look:       look,
+		heldItemId: held,
 	}
+	chunk.playersData[entityId] = newPlayerData
+
+	// Spawn new player for existing players.
+	newPlayerPacket := new(bytes.Buffer)
+	newPlayerData.sendSpawn(newPlayerPacket)
+	chunk.MulticastPlayers(entityId, newPlayerPacket.Bytes())
 }
 
 func (chunk *Chunk) removePlayerData(entityId EntityId) {
 	chunk.playersData[entityId] = nil, false
 }
 
-func (chunk *Chunk) setPlayerPosition(entityId EntityId, pos AbsXyz) {
+func (chunk *Chunk) setPlayerPositionLook(entityId EntityId, pos AbsXyz, look LookBytes, moved bool) {
 	data, ok := chunk.playersData[entityId]
 
 	if !ok {
 		log.Printf(
-			"%v.SetPlayerPosition: called for EntityId (%d) not present as playerData.",
+			"%v.setPlayerPosition: called for EntityId (%d) not present as playerData.",
 			chunk, entityId,
 		)
 		return
 	}
 
 	data.position = pos
+	data.look = look
 
-	/* TODO
-	// Does the player overlap with any items?
-	for _, item := range chunk.items() {
-		// TODO This check should be performed when items move as well.
-		if data.OverlapsItem(item) {
-			slot := item.GetSlot()
-			player.OfferItem(slot)
-			if slot.Count == 0 {
-				// The item has been accepted and completely consumed.
+	// Update subscribers.
+	buf := new(bytes.Buffer)
+	data.sendPositionLook(buf)
+	chunk.MulticastPlayers(entityId, buf.Bytes())
 
-				buf := &bytes.Buffer{}
+	if moved {
+		/* TODO
+		// Does the player overlap with any items?
+		for _, item := range chunk.items() {
+			// TODO This check should be performed when items move as well.
+			if data.OverlapsItem(item) {
+				slot := item.GetSlot()
+				player.OfferItem(slot)
+				if slot.Count == 0 {
+					// The item has been accepted and completely consumed.
 
-				// Tell all subscribers to animate the item flying at the
-				// player.
-				proto.WriteItemCollect(buf, EntityId(entityId), player.GetEntityId())
-				chunk.MulticastPlayers(-1, buf.Bytes())
-				chunk.removeSpawn(item)
+					buf := &bytes.Buffer{}
+
+					// Tell all subscribers to animate the item flying at the
+					// player.
+					proto.WriteItemCollect(buf, EntityId(entityId), player.GetEntityId())
+					chunk.MulticastPlayers(-1, buf.Bytes())
+					chunk.removeSpawn(item)
+				}
+
+				// TODO Check for how to properly handle partially consumed
+				// items? Probably not high priority since all dropped items
+				// have a count of 1 at the moment. Might need to respawn the
+				// item with a new count. Do the clients even care what the
+				// count is or if it changes? Or if an item is "collected" but
+				// still exists?
 			}
-
-			// TODO Check for how to properly handle partially consumed
-			// items? Probably not high priority since all dropped items
-			// have a count of 1 at the moment. Might need to respawn the
-			// item with a new count. Do the clients even care what the
-			// count is or if it changes? Or if an item is "collected" but
-			// still exists?
 		}
+		*/
 	}
-	*/
 }
 
 func (chunk *Chunk) chunkPacket() []byte {

@@ -19,6 +19,7 @@ type shardRef struct {
 // * the chunks that to be subscribed to (via their shards),
 // * and moving the player from one shard to another.
 type chunkSubscriptions struct {
+	player         *Player
 	shardConnecter shardserver_external.IShardConnecter
 	shardReceiver  shardserver_external.IPlayerConnection
 	entityId       EntityId
@@ -28,19 +29,26 @@ type chunkSubscriptions struct {
 	shards         map[uint64]*shardRef                  // Connections to shards.
 }
 
-func (sub *chunkSubscriptions) Init(shardReceiver shardserver_external.IPlayerConnection, shardConnecter shardserver_external.IShardConnecter, entityId EntityId, initialPos *AbsXyz) {
-	sub.shardReceiver = shardReceiver
-	sub.shardConnecter = shardConnecter
-	sub.entityId = entityId
-	sub.curShardLoc = initialPos.ToShardXz()
-	sub.curChunkLoc = initialPos.ToChunkXz()
+func (sub *chunkSubscriptions) Init(player *Player) {
+	sub.player = player
+	sub.shardReceiver = &player.shardReceiver
+	sub.shardConnecter = player.shardConnecter
+	sub.entityId = player.EntityId
+	sub.curShardLoc = player.position.ToShardXz()
+	sub.curChunkLoc = player.position.ToChunkXz()
 	sub.shards = make(map[uint64]*shardRef)
 
 	initialChunkLocs := orderedChunkSquare(sub.curChunkLoc, ChunkRadius)
 	sub.subscribeToChunks(initialChunkLocs)
 
 	sub.curShard = sub.shards[sub.curShardLoc.Key()].shard
-	sub.curShard.AddPlayerData(sub.curChunkLoc, *initialPos)
+	sub.curShard.AddPlayerData(
+		sub.curChunkLoc,
+		player.name,
+		player.position,
+		*player.look.ToLookBytes(),
+		player.getHeldItemTypeId(),
+	)
 }
 
 func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
@@ -55,7 +63,7 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 			sub.moveToShard(newShardLoc)
 		}
 	} else {
-		sub.curShard.SetPlayerPosition(sub.curChunkLoc, *newLoc)
+		sub.curShard.SetPlayerPositionLook(sub.curChunkLoc, *newLoc, *sub.player.look.ToLookBytes(), true)
 	}
 }
 
@@ -136,7 +144,13 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 
 	newShardLoc := newChunkLoc.ToShardXz()
 	if ref, ok := sub.shards[newShardLoc.Key()]; ok {
-		ref.shard.AddPlayerData(newChunkLoc, *newLoc)
+		ref.shard.AddPlayerData(
+			newChunkLoc,
+			sub.player.name,
+			sub.player.position,
+			*sub.player.look.ToLookBytes(),
+			sub.player.getHeldItemTypeId(),
+		)
 	}
 
 	curShardLoc := sub.curChunkLoc.ToShardXz()

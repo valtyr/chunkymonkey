@@ -60,11 +60,11 @@ type IShardConnection interface {
 
 	MulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte)
 
-	AddPlayerData(chunkLoc ChunkXz, position AbsXyz)
+	AddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId)
 
 	RemovePlayerData(chunkLoc ChunkXz)
 
-	SetPlayerPosition(chunkLoc ChunkXz, position AbsXyz)
+	SetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool)
 
 	// RequestHitBlock requests that the targetted block be hit.
 	RequestHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face)

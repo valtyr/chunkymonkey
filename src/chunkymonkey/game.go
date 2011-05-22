@@ -135,10 +135,6 @@ func (game *Game) login(conn net.Conn) {
 	proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
 	proto.WriteSpawnPosition(buf, startPosition.ToBlockXyz())
 	player.TransmitPacket(buf.Bytes())
-
-	game.enqueue(func(_ *Game) {
-		game.spawnPlayer(player)
-	})
 }
 
 func (game *Game) Serve(addr string) {
@@ -170,35 +166,6 @@ func (game *Game) addPlayer(newPlayer *player.Player) {
 func (game *Game) removePlayer(entityId EntityId) {
 	game.players[entityId] = nil, false
 	game.entityManager.RemoveEntityById(entityId)
-}
-
-func (game *Game) spawnPlayer(newPlayer *player.Player) {
-	// Spawn new player for existing players.
-	newPlayer.Enqueue(func(newPlayer *player.Player) {
-		buf := &bytes.Buffer{}
-		if err := newPlayer.SendSpawn(buf); err != nil {
-			return
-		}
-		game.enqueue(func(_ *Game) {
-			game.multicastRadiusPacket(buf.Bytes(), newPlayer)
-		})
-	})
-
-	// Spawn existing players for new player.
-	p1, p2 := getChunkRadius(newPlayer.LockedGetChunkPosition())
-	for _, existing := range game.players {
-		if existing != newPlayer {
-			existing.Enqueue(func(existing *player.Player) {
-				if existing.IsWithin(p1, p2) {
-					buf := &bytes.Buffer{}
-					if err := existing.SendSpawn(buf); err != nil {
-						return
-					}
-					newPlayer.TransmitPacket(buf.Bytes())
-				}
-			})
-		}
-	}
 }
 
 func (game *Game) multicastPacket(packet []byte, except interface{}) {

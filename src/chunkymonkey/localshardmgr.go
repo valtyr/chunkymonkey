@@ -56,9 +56,9 @@ func (conn *localShardConnection) MulticastPlayers(chunkLoc ChunkXz, exclude Ent
 	})
 }
 
-func (conn *localShardConnection) AddPlayerData(chunkLoc ChunkXz, position AbsXyz) {
+func (conn *localShardConnection) AddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.(*Chunk).addPlayerData(conn.entityId, position)
+		chunk.(*Chunk).addPlayerData(conn.entityId, name, position, look, held)
 	})
 }
 
@@ -68,9 +68,9 @@ func (conn *localShardConnection) RemovePlayerData(chunkLoc ChunkXz) {
 	})
 }
 
-func (conn *localShardConnection) SetPlayerPosition(chunkLoc ChunkXz, position AbsXyz) {
+func (conn *localShardConnection) SetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.(*Chunk).setPlayerPosition(conn.entityId, position)
+		chunk.(*Chunk).setPlayerPositionLook(conn.entityId, position, look, moved)
 	})
 }
 
