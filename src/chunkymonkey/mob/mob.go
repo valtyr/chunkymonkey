@@ -40,7 +40,7 @@ func (mob *Mob) Init(id types.EntityMobType, position *types.AbsXyz, velocity *t
 	}
 }
 
-func (mob *Mob) GetPosition() *types.AbsXyz {
+func (mob *Mob) Position() *types.AbsXyz {
 	return &mob.physObj.Position
 }
 

@@ -54,7 +54,7 @@ func TestChunkSideDir_GetOpposite(t *testing.T) {
 	}
 }
 
-func TestAbsXyz_UpdateChunkXz(t *testing.T) {
+func TestAbsXyz_ToChunkXz(t *testing.T) {
 	type Test struct {
 		input    AbsXyz
 		expected ChunkXz
@@ -70,8 +70,7 @@ func TestAbsXyz_UpdateChunkXz(t *testing.T) {
 
 	for _, test := range tests {
 		input, expected := test.input, test.expected
-		var result ChunkXz
-		input.UpdateChunkXz(&result)
+		result := input.ToChunkXz()
 		if expected.X != result.X || expected.Z != result.Z {
 			t.Errorf("AbsXyz%+v.UpdateChunkXz() expected ChunkXz%+v got ChunkXz%+v",
 				input, expected, result)
@@ -160,6 +159,36 @@ func TestCoordDivMod(t *testing.T) {
 		if r.expected_div != div || r.expected_mod != mod {
 			t.Errorf("coordDivMod(%d, %d) expected (%d, %d) got (%d, %d)",
 				r.num, r.denom, r.expected_div, r.expected_mod, div, mod)
+		}
+	}
+}
+
+func TestChunkCoord_ToShardCoord(t *testing.T) {
+	type Test struct {
+		input    ChunkCoord
+		expected ShardCoord
+	}
+
+	tests := []Test{
+		{-2*ShardSize - 1, -3},
+		{-2 * ShardSize, -2},
+		{-ShardSize - 1, -2},
+		{-ShardSize, -1},
+		{-1, -1},
+		{0, 0},
+		{ShardSize - 1, 0},
+		{ShardSize, 1},
+		{2*ShardSize - 1, 1},
+		{2 * ShardSize, 2},
+	}
+
+	for _, test := range tests {
+		result := test.input.ToShardCoord()
+		if test.expected != result {
+			t.Errorf(
+				"ChunkCoord(%d) expected %d, but got %d",
+				test.input, test.expected, result,
+			)
 		}
 	}
 }

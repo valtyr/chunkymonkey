@@ -1,6 +1,7 @@
 package block
 
 import (
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -15,10 +16,10 @@ func (aspect *VoidAspect) Name() string {
 	return "Void"
 }
 
-func (aspect *VoidAspect) Hit(instance *BlockInstance, player IBlockPlayer, digStatus DigStatus) (destroyed bool) {
+func (aspect *VoidAspect) Hit(instance *BlockInstance, player shardserver_external.IPlayerConnection, digStatus DigStatus) (destroyed bool) {
 	destroyed = false
 	return
 }
 
-func (aspect *VoidAspect) Interact(instance *BlockInstance, player IBlockPlayer) {
+func (aspect *VoidAspect) Interact(instance *BlockInstance, player shardserver_external.IPlayerConnection) {
 }

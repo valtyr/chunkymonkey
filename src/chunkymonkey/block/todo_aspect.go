@@ -1,6 +1,7 @@
 package block
 
 import (
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -20,10 +21,10 @@ func (aspect *TodoAspect) Name() string {
 	return "Todo"
 }
 
-func (aspect *TodoAspect) Hit(instance *BlockInstance, player IBlockPlayer, digStatus DigStatus) (destroyed bool) {
+func (aspect *TodoAspect) Hit(instance *BlockInstance, player shardserver_external.IPlayerConnection, digStatus DigStatus) (destroyed bool) {
 	destroyed = false
 	return
 }
 
-func (aspect *TodoAspect) Interact(instance *BlockInstance, player IBlockPlayer) {
+func (aspect *TodoAspect) Interact(instance *BlockInstance, player shardserver_external.IPlayerConnection) {
 }

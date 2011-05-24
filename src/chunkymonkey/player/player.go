@@ -3,19 +3,20 @@ package player
 import (
 	"bytes"
 	"expvar"
+	"fmt"
 	"log"
-	"io"
 	"math"
 	"net"
 	"os"
 	"sync"
 
 	"chunkymonkey/entity"
-	. "chunkymonkey/interfaces"
 	"chunkymonkey/inventory"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/proto"
+	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
+	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 )
 
@@ -33,53 +34,48 @@ func init() {
 
 type Player struct {
 	entity.Entity
-	game      IGame
-	conn      net.Conn
-	name      string
-	position  AbsXyz
-	look      LookDegrees
-	chunkSubs chunkSubscriptions
+	shardReceiver  playerShardReceiver
+	shardConnecter shardserver_external.IShardConnecter
+	conn           net.Conn
+	name           string
+	position       AbsXyz
+	look           LookDegrees
+	chunkSubs      chunkSubscriptions
 
 	cursor       slot.Slot // Item being moved by mouse cursor.
 	inventory    inventory.PlayerInventory
 	curWindow    inventory.IWindow
 	nextWindowId WindowId
 
-	mainQueue chan func(IPlayer)
+	mainQueue chan func(*Player)
 	txQueue   chan []byte
 	lock      sync.Mutex
+
+	onDisconnect chan<- EntityId
 }
 
-func StartPlayer(game IGame, conn net.Conn, name string) {
+func NewPlayer(shardConnecter shardserver_external.IShardConnecter, recipes *recipe.RecipeSet, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
 	player := &Player{
-		game:     game,
-		conn:     conn,
-		name:     name,
-		position: *game.GetStartPosition(),
-		look:     LookDegrees{0, 0},
+		shardConnecter: shardConnecter,
+		conn:           conn,
+		name:           name,
+		position:       position,
+		look:           LookDegrees{0, 0},
 
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
 
-		mainQueue: make(chan func(IPlayer), 128),
+		mainQueue: make(chan func(*Player), 128),
 		txQueue:   make(chan []byte, 128),
+
+		onDisconnect: onDisconnect,
 	}
 
-	player.chunkSubs.Init(player)
-
+	player.shardReceiver.Init(player)
 	player.cursor.Init()
-	player.inventory.Init(player.EntityId, player, game.GetGameRules().Recipes)
+	player.inventory.Init(player.EntityId, player, recipes)
 
-	game.Enqueue(func(game IGame) {
-		game.AddPlayer(player)
-		buf := &bytes.Buffer{}
-		// TODO pass proper dimension. This is low priority, because there is
-		// currently no way to update the client's dimension after login.
-		proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
-		proto.WriteSpawnPosition(buf, player.position.ToBlockXyz())
-		player.TransmitPacket(buf.Bytes())
-		player.start()
-	})
+	return player
 }
 
 func (player *Player) GetEntityId() EntityId {
@@ -90,7 +86,7 @@ func (player *Player) GetEntity() *entity.Entity {
 	return &player.Entity
 }
 
-func (player *Player) LockedGetChunkPosition() *ChunkXz {
+func (player *Player) LockedGetChunkPosition() ChunkXz {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 	return player.position.ToChunkXz()
@@ -106,36 +102,25 @@ func (player *Player) GetName() string {
 	return player.name
 }
 
-func (player *Player) SendSpawn(writer io.Writer) (err os.Error) {
-	heldSlot, _ := player.inventory.HeldItem()
-	heldItemId := heldSlot.GetItemTypeId()
-	if heldItemId < 0 {
-		heldItemId = 0
-	}
-
-	err = proto.WriteNamedEntitySpawn(
-		writer,
-		player.EntityId, player.name,
-		player.position.ToAbsIntXyz(),
-		player.look.ToLookBytes(),
-		heldItemId,
-	)
-	if err != nil {
-		return
-	}
-	return player.inventory.SendFullEquipmentUpdate(writer)
-}
-
 func (player *Player) GetHeldItemType() *itemtype.ItemType {
 	slot, _ := player.inventory.HeldItem()
 	return slot.ItemType
+}
+
+func (player *Player) getHeldItemTypeId() ItemTypeId {
+	heldSlot, _ := player.inventory.HeldItem()
+	heldItemId := heldSlot.GetItemTypeId()
+	if heldItemId < 0 {
+		return 0
+	}
+	return heldItemId
 }
 
 func (player *Player) TakeOneHeldItem(into *slot.Slot) {
 	player.inventory.TakeOneHeldItem(into)
 }
 
-func (player *Player) start() {
+func (player *Player) Start() {
 	go player.receiveLoop()
 	go player.transmitLoop()
 	go player.mainLoop()
@@ -149,7 +134,7 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-	player.game.Enqueue(func(game IGame) { game.SendChatMessage(message) })
+	player.sendChatMessage(message)
 }
 
 func (player *Player) PacketEntityAction(entityId EntityId, action EntityAction) {
@@ -178,24 +163,13 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
 		return
 	}
 	player.position = *position
-	player.chunkSubs.Move(position, nil)
+	player.chunkSubs.Move(position)
 
 	// TODO: Should keep track of when players enter/leave their mutual radius
 	// of "awareness". I.e a client should receive a RemoveEntity packet when
 	// the player walks out of range, and no longer receive WriteEntityTeleport
 	// packets for them. The converse should happen when players come in range
 	// of each other.
-
-	buf := &bytes.Buffer{}
-	proto.WriteEntityTeleport(
-		buf,
-		player.EntityId,
-		player.position.ToAbsIntXyz(),
-		player.look.ToLookBytes())
-
-	player.game.Enqueue(func(game IGame) {
-		game.MulticastPacket(buf.Bytes(), player)
-	})
 }
 
 func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
@@ -205,59 +179,49 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	// TODO input validation
 	player.look = *look
 
-	buf := &bytes.Buffer{}
+	buf := new(bytes.Buffer)
 	proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
 
-	player.game.Enqueue(func(game IGame) {
-		game.MulticastPacket(buf.Bytes(), player)
-	})
+	player.chunkSubs.curShard.MulticastPlayers(
+		player.chunkSubs.curChunkLoc,
+		player.EntityId,
+		buf.Bytes(),
+	)
 }
 
-func (player *Player) PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face) {
+func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, face Face) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
 	// TODO validate that the player is actually somewhere near the block
 
-	// TODO validate that the player has dug long enough to stop speed
-	// hacking (based on block type and tool used - non-trivial).
+	// TODO measure the dig time on the target block and relay to the shard to
+	// stop speed hacking (based on block type and tool used - non-trivial).
 
-	if face != FaceNull {
-		chunkLoc, subLoc := blockLoc.ToChunkLocal()
-
-		player.game.Enqueue(func(game IGame) {
-			chunk := game.GetChunkManager().Get(chunkLoc)
-
-			if chunk == nil {
-				return
-			}
-
-			chunk.Enqueue(func(chunk IChunk) {
-				chunk.PlayerBlockHit(player, subLoc, status)
-			})
-		})
-	} else {
-		// TODO player dropped item
+	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	if ok {
+		heldPtr, _ := player.inventory.HeldItem()
+		held := *heldPtr
+		shardConn.RequestHitBlock(held, *target, status, face)
 	}
 }
 
-func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, uses ItemData) {
+func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, target *BlockXyz, face Face, amount ItemCount, uses ItemData) {
 	if face < FaceMinValid || face > FaceMaxValid {
 		// TODO sometimes FaceNull means something. This case should be covered.
 		log.Printf("Player/PacketPlayerBlockInteract: invalid face %d", face)
 		return
 	}
 
-	placeChunkLoc, _ := blockLoc.ToChunkLocal()
+	player.lock.Lock()
+	defer player.lock.Unlock()
 
-	player.game.Enqueue(func(game IGame) {
-		chunk := game.GetChunkManager().Get(placeChunkLoc)
-
-		if chunk == nil {
-			return
-		}
-
-		chunk.Enqueue(func(chunk IChunk) {
-			chunk.PlayerBlockInteract(player, blockLoc, face)
-		})
-	})
+	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	if ok {
+		heldPtr, _ := player.inventory.HeldItem()
+		held := *heldPtr
+		shardConn.RequestInteractBlock(held, *target, face)
+	}
 }
 
 func (player *Player) PacketHoldingChange(slotId SlotId) {
@@ -329,9 +293,21 @@ func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 
 func (player *Player) PacketDisconnect(reason string) {
 	log.Printf("Player %s disconnected reason=%s", player.name, reason)
-	player.game.Enqueue(func(game IGame) {
-		game.RemovePlayer(player)
-	})
+
+	// Destroy player for other players
+	buf := new(bytes.Buffer)
+	entity := player.GetEntity()
+	proto.WriteEntityDestroy(buf, entity.EntityId)
+
+	player.chunkSubs.curShard.MulticastPlayers(
+		player.position.ToChunkXz(),
+		player.EntityId,
+		buf.Bytes(),
+	)
+
+	player.sendChatMessage(fmt.Sprintf("%s has left", player.name))
+
+	player.onDisconnect <- player.EntityId
 	player.txQueue <- nil
 	player.mainQueue <- nil
 	player.conn.Close()
@@ -375,7 +351,7 @@ func (player *Player) TransmitPacket(packet []byte) {
 	player.txQueue <- packet
 }
 
-func (player *Player) runQueuedCall(f func(IPlayer)) {
+func (player *Player) runQueuedCall(f func(*Player)) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 	f(player)
@@ -383,10 +359,10 @@ func (player *Player) runQueuedCall(f func(IPlayer)) {
 
 func (player *Player) mainLoop() {
 	expVarPlayerConnectionCount.Add(1)
-	defer func() {
-		expVarPlayerDisconnectionCount.Add(1)
-		player.chunkSubs.clear()
-	}()
+	defer expVarPlayerDisconnectionCount.Add(1)
+
+	player.chunkSubs.Init(player)
+	defer player.chunkSubs.Close()
 
 	player.postLogin()
 
@@ -399,9 +375,24 @@ func (player *Player) mainLoop() {
 	}
 }
 
+func (player *Player) RequestPlaceHeldItem(target *BlockXyz) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
+	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	if ok {
+		var into slot.Slot
+		into.Init()
+
+		player.inventory.TakeOneHeldItem(&into)
+
+		shardConn.RequestPlaceItem(*target, into)
+	}
+}
+
 // Enqueue queues a function to run with the player lock within the player's
 // mainloop.
-func (player *Player) Enqueue(f func(IPlayer)) {
+func (player *Player) Enqueue(f func(*Player)) {
 	if f == nil {
 		return
 	}
@@ -409,7 +400,7 @@ func (player *Player) Enqueue(f func(IPlayer)) {
 }
 
 // WithLock runs a function with the player lock within the calling goroutine.
-func (player *Player) WithLock(f func(IPlayer)) {
+func (player *Player) WithLock(f func(*Player)) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 	f(player)
@@ -431,7 +422,7 @@ func (player *Player) OfferItem(item *slot.Slot) {
 // TODO this should be passed an appropriate *Inventory for inventories that
 // are tied to the world (particularly for chests).
 func (player *Player) OpenWindow(invTypeId InvTypeId, inventory interface{}) {
-	player.Enqueue(func(_ IPlayer) {
+	player.Enqueue(func(_ *Player) {
 		player.closeCurrentWindow(true)
 		window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
 		if window == nil {
@@ -458,6 +449,17 @@ func (player *Player) OpenWindow(invTypeId InvTypeId, inventory interface{}) {
 	})
 }
 
+func (player *Player) sendChatMessage(message string) {
+	buf := new(bytes.Buffer)
+	proto.WriteChatMessage(buf, message)
+
+	player.chunkSubs.curShard.MulticastPlayers(
+		player.chunkSubs.curChunkLoc,
+		player.EntityId,
+		buf.Bytes(),
+	)
+}
+
 // closeCurrentWindow closes any open window. It must be called with
 // player.lock held.
 func (player *Player) closeCurrentWindow(sendClosePacket bool) {
@@ -467,23 +469,30 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 	player.curWindow = nil
 }
 
-// Blocks until essential login packets have been transmitted.
 func (player *Player) postLogin() {
-	nearbySent := func() {
-		player.lock.Lock()
-		defer player.lock.Unlock()
+	// TODO Old version of chunkSubscriptions.Move() that was called here had
+	// stuff for a callback when the nearest chunks had been sent so that player
+	// position would only be sent when nearby chunks were out. Some replacement
+	// for this will be needed. Possibly a message could be queued to the current
+	// shard following on from chunkSubscriptions's initialization that would ask
+	// the shard to send out the following packets - this would result in them
+	// being sent at least after the chunks that are in the current shard have
+	// been sent.
 
-		// Send player start position etc.
-		buf := &bytes.Buffer{}
-		proto.ServerWritePlayerPositionLook(
-			buf,
-			&player.position, player.position.Y+StanceNormal,
-			&player.look, false)
+	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name))
 
-		player.inventory.WriteWindowItems(buf)
+	// Send player start position etc.
+	buf := new(bytes.Buffer)
+	proto.ServerWritePlayerPositionLook(
+		buf,
+		&player.position, player.position.Y+StanceNormal,
+		&player.look, false)
+	player.inventory.WriteWindowItems(buf)
+	packet := buf.Bytes()
 
-		player.TransmitPacket(buf.Bytes())
-	}
-
-	player.chunkSubs.Move(&player.position, nearbySent)
+	// Enqueue on the shard as a hacky way to defer the packet send until after
+	// the initial chunk data has been sent.
+	player.chunkSubs.curShard.Enqueue(func() {
+		player.TransmitPacket(packet)
+	})
 }

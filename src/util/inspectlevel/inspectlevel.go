@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"chunkymonkey/worldstore"
-	. "chunkymonkey/types"
 	"chunkymonkey/nbt"
+	. "chunkymonkey/types"
+	"chunkymonkey/worldstore"
 )
 
 func usage() {
@@ -74,11 +74,12 @@ func main() {
 	fmt.Print("Level data:\n")
 	displayNbt(1, worldStore.LevelData)
 
-	chunkReader, err := worldStore.ChunkStore.LoadChunk(&ChunkXz{0, 0})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading chunk: %s\n", err)
+	chunkResult := <-worldStore.ChunkStore.LoadChunk(&ChunkXz{0, 0})
+	if chunkResult.Err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading chunk: %s\n", chunkResult.Err)
 		return
 	}
+
 	fmt.Print("Chunk {0, 0} data:\n")
-	displayNbt(1, chunkReader.GetRootTag())
+	displayNbt(1, chunkResult.Reader.GetRootTag())
 }

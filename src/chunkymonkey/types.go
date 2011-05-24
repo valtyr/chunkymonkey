@@ -405,14 +405,17 @@ type AbsXyz struct {
 	X, Y, Z AbsCoord
 }
 
+// TODO Remove - this method is wasted space.
 func (p *AbsXyz) Copy() *AbsXyz {
 	return &AbsXyz{p.X, p.Y, p.Z}
 }
 
-// Updates a ChunkXz with the chunk position that the AbsXyz is within.
-func (p *AbsXyz) UpdateChunkXz(chunkLoc *ChunkXz) {
-	chunkLoc.X = ChunkCoord(math.Floor(float64(p.X / ChunkSizeH)))
-	chunkLoc.Z = ChunkCoord(math.Floor(float64(p.Z / ChunkSizeH)))
+// Convert an (x, z) absolute coordinate pair to chunk coordinates
+func (p *AbsXyz) ToChunkXz() ChunkXz {
+	return ChunkXz{
+		X: ChunkCoord(math.Floor(float64(p.X / ChunkSizeH))),
+		Z: ChunkCoord(math.Floor(float64(p.Z / ChunkSizeH))),
+	}
 }
 
 func (p *AbsXyz) ApplyVelocity(dt TickTime, v *AbsVelocity) {
@@ -437,6 +440,13 @@ func (p *AbsXyz) ToBlockXyz() *BlockXyz {
 	}
 }
 
+func (p *AbsXyz) ToShardXz() ShardXz {
+	return ShardXz{
+		X: ShardCoord(math.Floor(float64(p.X / (ChunkSizeH * ShardSize)))),
+		Z: ShardCoord(math.Floor(float64(p.Z / (ChunkSizeH * ShardSize)))),
+	}
+}
+
 // Specifies approximate world distance in pixels (absolute / PixelsPerBlock)
 type AbsIntCoord int32
 
@@ -452,7 +462,49 @@ func (p *AbsIntXyz) ToBlockXyz() *BlockXyz {
 	}
 }
 
-// Coordinate of a chunk in the world (block / 16)
+// Convert (x, z) absolute integer coordinates to chunk coordinates
+func (abs *AbsIntXyz) ToChunkXz() *ChunkXz {
+	chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeH*PixelsPerBlock)
+	chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeH*PixelsPerBlock)
+
+	return &ChunkXz{
+		ChunkCoord(chunkX),
+		ChunkCoord(chunkZ),
+	}
+}
+
+func (abs *AbsIntXyz) IAdd(dx, dy, dz AbsIntCoord) {
+	abs.X += dx
+	abs.Y += dy
+	abs.Z += dz
+}
+
+// Shard types and data.
+
+const (
+	// Each shard is ShardSize * ShardSize chunks square.
+	ShardSize = 16
+)
+
+type ShardCoord int32
+
+type ShardXz struct {
+	X, Z ShardCoord
+}
+
+func (loc *ShardXz) ToChunkXz() ChunkXz {
+	return ChunkXz{
+		X: ChunkCoord(loc.X * ShardSize),
+		Z: ChunkCoord(loc.Z * ShardSize),
+	}
+}
+
+// Converts a ShardXz location into a key suitable for using in a hash.
+func (loc *ShardXz) Key() uint64 {
+	return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
+}
+
+// Coordinate of a chunk in the world (block / 16).
 type ChunkCoord int32
 
 func (c ChunkCoord) Abs() ChunkCoord {
@@ -460,6 +512,14 @@ func (c ChunkCoord) Abs() ChunkCoord {
 		return -c
 	}
 	return c
+}
+
+func (c ChunkCoord) ToShardCoord() (s ShardCoord) {
+	s = ShardCoord(c / ShardSize)
+	if c%ShardSize < 0 {
+		s--
+	}
+	return
 }
 
 // ChunkXz represents the position of a chunk within the world.
@@ -488,6 +548,14 @@ func (chunkLoc *ChunkXz) ToBlockXyz(subLoc *SubChunkXyz) *BlockXyz {
 // Converts a chunk location into a key suitable for using in a hash.
 func (chunkLoc *ChunkXz) ChunkKey() uint64 {
 	return uint64(chunkLoc.X)<<32 | uint64(uint32(chunkLoc.Z))
+}
+
+// ToShardXz returns the location of the shard that the chunk is within.
+func (chunkLoc *ChunkXz) ToShardXz() ShardXz {
+	return ShardXz{
+		X: chunkLoc.X.ToShardCoord(),
+		Z: chunkLoc.Z.ToShardCoord(),
+	}
 }
 
 // Size of a sub-chunk
@@ -566,31 +634,6 @@ func (b *BlockXyz) IsNull() bool {
 	return b.Y == -1 && b.X == -1 && b.Z == -1
 }
 
-// Convert an (x, z) absolute coordinate pair to chunk coordinates
-func (abs *AbsXyz) ToChunkXz() (chunkXz *ChunkXz) {
-	return &ChunkXz{
-		ChunkCoord(abs.X / ChunkSizeH),
-		ChunkCoord(abs.Z / ChunkSizeH),
-	}
-}
-
-// Convert (x, z) absolute integer coordinates to chunk coordinates
-func (abs *AbsIntXyz) ToChunkXz() *ChunkXz {
-	chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeH*PixelsPerBlock)
-	chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeH*PixelsPerBlock)
-
-	return &ChunkXz{
-		ChunkCoord(chunkX),
-		ChunkCoord(chunkZ),
-	}
-}
-
-func (abs *AbsIntXyz) IAdd(dx, dy, dz AbsIntCoord) {
-	abs.X += dx
-	abs.Y += dy
-	abs.Z += dz
-}
-
 func coordDivMod(num, denom int32) (div, mod int32) {
 	div = num / denom
 	mod = num % denom
@@ -601,7 +644,16 @@ func coordDivMod(num, denom int32) (div, mod int32) {
 	return
 }
 
-// Convert an (x, z) block coordinate pair to chunk coordinates and the
+// Convert an (x, y, z) block coordinate to chunk coordinates.
+func (blockLoc *BlockXyz) ToChunkXz() (chunkLoc *ChunkXz) {
+	chunkX, _ := coordDivMod(int32(blockLoc.X), ChunkSizeH)
+	chunkZ, _ := coordDivMod(int32(blockLoc.Z), ChunkSizeH)
+
+	chunkLoc = &ChunkXz{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
+	return
+}
+
+// Convert an (x, y, z) block coordinate to chunk coordinates and the
 // coordinates of the block within the chunk
 func (blockLoc *BlockXyz) ToChunkLocal() (chunkLoc *ChunkXz, subLoc *SubChunkXyz) {
 	chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeH)

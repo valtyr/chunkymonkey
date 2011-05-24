@@ -1,7 +1,6 @@
-package chunk
+package shardserver
 
 import (
-	. "chunkymonkey/interfaces"
 	. "chunkymonkey/types"
 )
 
@@ -82,7 +81,7 @@ func (n *neighboursCache) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Ch
 		}
 	}
 
-	neighbour.Enqueue(func(_ IChunk) {
+	neighbour.EnqueueGeneric(func() {
 		neighbour.neighbours.sideCacheFullUpdate(side.GetOpposite(), update)
 	})
 }
@@ -186,7 +185,7 @@ func (updater *neighbourUpdater) flush() {
 			changes: updater.changes,
 		}
 		neighbour := updater.neighbour
-		neighbour.Enqueue(func(_ IChunk) {
+		neighbour.EnqueueGeneric(func() {
 			neighbour.neighbours.sideCacheUpdate(updater.side, update)
 		})
 		updater.changes = nil
