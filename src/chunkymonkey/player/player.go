@@ -294,17 +294,6 @@ func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 func (player *Player) PacketDisconnect(reason string) {
 	log.Printf("Player %s disconnected reason=%s", player.name, reason)
 
-	// Destroy player for other players
-	buf := new(bytes.Buffer)
-	entity := player.GetEntity()
-	proto.WriteEntityDestroy(buf, entity.EntityId)
-
-	player.chunkSubs.curShard.MulticastPlayers(
-		player.position.ToChunkXz(),
-		player.EntityId,
-		buf.Bytes(),
-	)
-
 	player.sendChatMessage(fmt.Sprintf("%s has left", player.name))
 
 	player.onDisconnect <- player.EntityId
@@ -375,7 +364,7 @@ func (player *Player) mainLoop() {
 	}
 }
 
-func (player *Player) RequestPlaceHeldItem(target *BlockXyz) {
+func (player *Player) requestPlaceHeldItem(target *BlockXyz) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
@@ -388,6 +377,33 @@ func (player *Player) RequestPlaceHeldItem(target *BlockXyz) {
 
 		shardConn.RequestPlaceItem(*target, into)
 	}
+}
+
+// Used to receive items picked up from chunks. It is synchronous so that the
+// passed item can be looked at by the caller afterwards to see if it has been
+// consumed.
+func (player *Player) requestOfferItem(fromChunk *ChunkXz, entityId EntityId, item *slot.Slot) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
+	if player.inventory.CanTakeItem(item) {
+		shardConn, ok := player.chunkSubs.ShardConnForChunkXz(fromChunk)
+		if ok {
+			shardConn.RequestTakeItem(*fromChunk, entityId)
+		}
+	}
+
+	return
+}
+
+func (player *Player) requestGiveItem(atPosition *AbsXyz, item *slot.Slot) {
+	player.lock.Lock()
+	defer player.lock.Unlock()
+
+	player.inventory.PutItem(item)
+
+	// TODO Check if item not fully consumed. If it is not, then throw the
+	// remains back to the chunk.
 }
 
 // Enqueue queues a function to run with the player lock within the player's
@@ -404,18 +420,6 @@ func (player *Player) WithLock(f func(*Player)) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 	f(player)
-}
-
-// Used to receive items picked up from chunks. It is synchronous so that the
-// passed item can be looked at by the caller afterwards to see if it has been
-// consumed.
-func (player *Player) OfferItem(item *slot.Slot) {
-	player.lock.Lock()
-	defer player.lock.Unlock()
-
-	player.inventory.PutItem(item)
-
-	return
 }
 
 // OpenWindow queues a request that the player opens the given window type.

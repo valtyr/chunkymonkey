@@ -39,6 +39,12 @@ type IPlayerConnection interface {
 	// The player code may *not* honour this request (e.g there might be no
 	// suitable held item).
 	RequestPlaceHeldItem(target BlockXyz)
+
+	// RequestOfferItem requests that the player check if it can take the item.
+	// If it can then it should RequestTakeItem from the chunk.
+	RequestOfferItem(fromChunk ChunkXz, entityId EntityId, item slot.Slot)
+
+	RequestGiveItem(atPosition AbsXyz, item slot.Slot)
 }
 
 // IShardConnection is the interface by which shards can be communicated to by
@@ -62,7 +68,7 @@ type IShardConnection interface {
 
 	AddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId)
 
-	RemovePlayerData(chunkLoc ChunkXz)
+	RemovePlayerData(chunkLoc ChunkXz, isDisconnect bool)
 
 	SetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool)
 
@@ -77,6 +83,11 @@ type IShardConnection interface {
 	// then it *must* account for the item in some way (maybe hand it back to the
 	// player or just drop it on the ground).
 	RequestPlaceItem(target BlockXyz, slot slot.Slot)
+
+	// RequestTakeItem requests that the item with the specified entityId is
+	// given to the player. The chunk doesn't have to respect this (particularly
+	// if the item no longer exists).
+	RequestTakeItem(chunkLoc ChunkXz, entityId EntityId)
 }
 
 // IShardConnecter is used to look up shards and connect to them.

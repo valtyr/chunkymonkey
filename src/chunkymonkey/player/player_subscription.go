@@ -70,6 +70,11 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 // Close closes down all shard connections. Use when the player is
 // disconnected.
 func (sub *chunkSubscriptions) Close() {
+	curShardLoc := sub.curChunkLoc.ToShardXz()
+	if ref, ok := sub.shards[curShardLoc.Key()]; ok {
+		ref.shard.RemovePlayerData(sub.curChunkLoc, true)
+	}
+
 	for key, ref := range sub.shards {
 		ref.shard.Disconnect()
 		sub.shards[key] = nil, false
@@ -83,6 +88,24 @@ func (sub *chunkSubscriptions) Close() {
 func (sub *chunkSubscriptions) ShardConnForBlockXyz(blockLoc *BlockXyz) (conn shardserver_external.IShardConnection, chunkLoc *ChunkXz, ok bool) {
 
 	chunkLoc = blockLoc.ToChunkXz()
+
+	shardLoc := chunkLoc.ToShardXz()
+	ref, ok := sub.shards[shardLoc.Key()]
+	if !ok {
+		return
+	}
+
+	conn = ref.shard
+	ok = true
+
+	return
+}
+
+// ShardConnForChunkXz is a convenience function to get the correct shard
+// connection for a given ChunkXz position. Returns ok = false if there is no
+// open connection for that shard. Note that this doesn't check if the chunk
+// actually exists.
+func (sub *chunkSubscriptions) ShardConnForChunkXz(chunkLoc *ChunkXz) (conn shardserver_external.IShardConnection, ok bool) {
 
 	shardLoc := chunkLoc.ToShardXz()
 	ref, ok := sub.shards[shardLoc.Key()]
@@ -155,7 +178,7 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 
 	curShardLoc := sub.curChunkLoc.ToShardXz()
 	if ref, ok := sub.shards[curShardLoc.Key()]; ok {
-		ref.shard.RemovePlayerData(sub.curChunkLoc)
+		ref.shard.RemovePlayerData(sub.curChunkLoc, false)
 	}
 
 	delChunkLocs := squareDifference(sub.curChunkLoc, newChunkLoc, ChunkRadius)

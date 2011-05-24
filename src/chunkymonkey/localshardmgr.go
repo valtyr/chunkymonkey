@@ -62,9 +62,9 @@ func (conn *localShardConnection) AddPlayerData(chunkLoc ChunkXz, name string, p
 	})
 }
 
-func (conn *localShardConnection) RemovePlayerData(chunkLoc ChunkXz) {
+func (conn *localShardConnection) RemovePlayerData(chunkLoc ChunkXz, isDisconnect bool) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
-		chunk.(*Chunk).removePlayerData(conn.entityId)
+		chunk.(*Chunk).removePlayerData(conn.entityId, isDisconnect)
 	})
 }
 
@@ -95,6 +95,12 @@ func (conn *localShardConnection) RequestPlaceItem(target BlockXyz, slot slot.Sl
 
 	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
 		// TODO
+	})
+}
+
+func (conn *localShardConnection) RequestTakeItem(chunkLoc ChunkXz, entityId EntityId) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+		chunk.(*Chunk).requestTakeItem(conn.player, entityId)
 	})
 }
 

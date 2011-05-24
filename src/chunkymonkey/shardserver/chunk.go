@@ -122,7 +122,7 @@ func (chunk *Chunk) removeSpawn(s shardserver_external.INonPlayerSpawn) {
 	chunk.mgr.entityMgr.RemoveEntity(e)
 	chunk.spawn[e.EntityId] = nil, false
 	// Tell all subscribers that the spawn's entity is destroyed.
-	buf := &bytes.Buffer{}
+	buf := new(bytes.Buffer)
 	proto.WriteEntityDestroy(buf, e.EntityId)
 	chunk.MulticastPlayers(-1, buf.Bytes())
 }
@@ -285,6 +285,21 @@ func (chunk *Chunk) placeItem(player shardserver_external.IPlayerConnection, tar
 	chunk.setBlock(&target, subLoc, index, BlockId(slot.ItemType.Id), 0)
 
 	slot.Decrement()
+}
+
+func (chunk *Chunk) requestTakeItem(player shardserver_external.IPlayerConnection, entityId EntityId) {
+	if spawn, ok := chunk.spawn[entityId]; ok {
+		if item, ok := spawn.(*item.Item); ok {
+			player.RequestGiveItem(*item.Position(), *item.GetSlot())
+
+			// Tell all subscribers to animate the item flying at the
+			// player.
+			buf := new(bytes.Buffer)
+			proto.WriteItemCollect(buf, EntityId(entityId), entityId)
+			chunk.MulticastPlayers(-1, buf.Bytes())
+			chunk.removeSpawn(item)
+		}
+	}
 }
 
 // Used to read the BlockId of a block that's either in the chunk, or
@@ -479,8 +494,14 @@ func (chunk *Chunk) addPlayerData(entityId EntityId, name string, pos AbsXyz, lo
 	chunk.MulticastPlayers(entityId, newPlayerPacket.Bytes())
 }
 
-func (chunk *Chunk) removePlayerData(entityId EntityId) {
+func (chunk *Chunk) removePlayerData(entityId EntityId, isDisconnect bool) {
 	chunk.playersData[entityId] = nil, false
+
+	if isDisconnect {
+		buf := new(bytes.Buffer)
+		proto.WriteEntityDestroy(buf, entityId)
+		chunk.MulticastPlayers(entityId, buf.Bytes())
+	}
 }
 
 func (chunk *Chunk) setPlayerPositionLook(entityId EntityId, pos AbsXyz, look LookBytes, moved bool) {
@@ -503,34 +524,18 @@ func (chunk *Chunk) setPlayerPositionLook(entityId EntityId, pos AbsXyz, look Lo
 	chunk.MulticastPlayers(entityId, buf.Bytes())
 
 	if moved {
-		/* TODO
-		// Does the player overlap with any items?
-		for _, item := range chunk.items() {
-			// TODO This check should be performed when items move as well.
-			if data.OverlapsItem(item) {
-				slot := item.GetSlot()
-				player.OfferItem(slot)
-				if slot.Count == 0 {
-					// The item has been accepted and completely consumed.
+		player, ok := chunk.subscribers[entityId]
 
-					buf := &bytes.Buffer{}
-
-					// Tell all subscribers to animate the item flying at the
-					// player.
-					proto.WriteItemCollect(buf, EntityId(entityId), player.GetEntityId())
-					chunk.MulticastPlayers(-1, buf.Bytes())
-					chunk.removeSpawn(item)
+		if ok {
+			// Does the player overlap with any items?
+			for _, item := range chunk.items() {
+				// TODO This check should be performed when items move as well.
+				if data.OverlapsItem(item) {
+					slot := item.GetSlot()
+					player.RequestOfferItem(chunk.loc, item.EntityId, *slot)
 				}
-
-				// TODO Check for how to properly handle partially consumed
-				// items? Probably not high priority since all dropped items
-				// have a count of 1 at the moment. Might need to respawn the
-				// item with a new count. Do the clients even care what the
-				// count is or if it changes? Or if an item is "collected" but
-				// still exists?
 			}
 		}
-		*/
 	}
 }
 

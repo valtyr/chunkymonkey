@@ -17,7 +17,6 @@ import (
 	"chunkymonkey/record"
 	"chunkymonkey/server_auth"
 	"chunkymonkey/shardserver"
-	"chunkymonkey/shardserver_external"
 	. "chunkymonkey/types"
 	"chunkymonkey/worldstore"
 )
@@ -214,27 +213,4 @@ func (game *Game) tick() {
 	if game.time%DayTicksPerSecond == 0 {
 		game.sendTimeUpdate()
 	}
-}
-
-// Transmit a packet to all players near the sender (except the sender itself).
-func (game *Game) multicastRadiusPacket(packet []byte, sender *player.Player) {
-	game.chunkManager.EnqueueOnChunk(
-		sender.LockedGetChunkPosition(),
-		func(chunk shardserver_external.IChunk) {
-			chunk.MulticastPlayers(sender.GetEntityId(), packet)
-		},
-	)
-}
-
-func getChunkRadius(loc ChunkXz) (p1, p2 *ChunkXz) {
-
-	p1 = &ChunkXz{
-		loc.X - ChunkRadius,
-		loc.Z - ChunkRadius,
-	}
-	p2 = &ChunkXz{
-		loc.X + ChunkRadius,
-		loc.Z + ChunkRadius,
-	}
-	return
 }

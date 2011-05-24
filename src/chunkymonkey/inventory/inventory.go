@@ -118,13 +118,33 @@ func (inv *Inventory) PutItem(item *slot.Slot) {
 			break
 		}
 		slot := &inv.slots[slotIndex]
-		if slot.ItemType == nil || slot.ItemType == item.ItemType {
-			if slot.Add(item) {
-				inv.slotUpdate(slot, SlotId(slotIndex))
-			}
+		if slot.Add(item) {
+			inv.slotUpdate(slot, SlotId(slotIndex))
 		}
 	}
-	return
+}
+
+// CanTakeItem returns true if it can take at least one item from the passed
+// Slot.
+func (inv *Inventory) CanTakeItem(item *slot.Slot) bool {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
+	if item.Count <= 0 {
+		return false
+	}
+
+	itemCopy := *item
+
+	for slotIndex := range inv.slots {
+		slotCopy := inv.slots[slotIndex]
+
+		if slotCopy.Add(&itemCopy) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // WriteProtoSlots stores into the slots parameter the proto version of the

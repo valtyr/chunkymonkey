@@ -133,6 +133,12 @@ func (w *PlayerInventory) PutItem(item *slot.Slot) {
 	return
 }
 
+// CanTakeItem returns true if it can take at least one item from the passed
+// Slot.
+func (w *PlayerInventory) CanTakeItem(item *slot.Slot) bool {
+	return w.holding.CanTakeItem(item) || w.main.CanTakeItem(item)
+}
+
 func (w *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
 	switch {
 	case slotId < 0:
