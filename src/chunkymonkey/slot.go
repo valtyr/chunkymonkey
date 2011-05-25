@@ -13,6 +13,8 @@ import (
 // chest.
 type Slot struct {
 	// ItemType can be nil, specifically for empty slots.
+	// TODO: change ItemType back to an ID, passing around as a pointer will
+	// produce slightly odd results when passing over a network connection.
 	ItemType *itemtype.ItemType
 	Count    ItemCount
 	Data     ItemData
