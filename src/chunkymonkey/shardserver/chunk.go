@@ -111,6 +111,8 @@ func (chunk *Chunk) AddSpawn(s shardserver_external.INonPlayerSpawn) {
 	e := s.GetEntity()
 	chunk.mgr.entityMgr.AddEntity(e)
 
+	chunk.spawn[s.GetEntityId()] = s
+
 	// Spawn new item/mob for players.
 	buf := &bytes.Buffer{}
 	s.SendSpawn(buf)
@@ -295,7 +297,7 @@ func (chunk *Chunk) requestTakeItem(player shardserver_external.IPlayerConnectio
 			// Tell all subscribers to animate the item flying at the
 			// player.
 			buf := new(bytes.Buffer)
-			proto.WriteItemCollect(buf, EntityId(entityId), entityId)
+			proto.WriteItemCollect(buf, entityId, player.GetEntityId())
 			chunk.MulticastPlayers(-1, buf.Bytes())
 			chunk.removeSpawn(item)
 		}

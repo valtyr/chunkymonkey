@@ -28,6 +28,8 @@ type INonPlayerSpawn interface {
 // IPlayerConnection is the interface by which shards communicate to players on
 // the frontend.
 type IPlayerConnection interface {
+	GetEntityId() EntityId
+
 	TransmitPacket(packet []byte)
 
 	InventorySubscribed(shardInvId int32, invTypeId InvTypeId)

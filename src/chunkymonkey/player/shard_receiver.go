@@ -15,6 +15,10 @@ func (psr *playerShardReceiver) Init(player *Player) {
 	psr.player = player
 }
 
+func (psr *playerShardReceiver) GetEntityId() EntityId {
+	return psr.player.EntityId
+}
+
 func (psr *playerShardReceiver) TransmitPacket(packet []byte) {
 	psr.player.TransmitPacket(packet)
 }
