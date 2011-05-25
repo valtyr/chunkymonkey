@@ -182,6 +182,8 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	buf := new(bytes.Buffer)
 	proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
 
+	// TODO update playerData on current chunk
+
 	player.chunkSubs.curShard.MulticastPlayers(
 		player.chunkSubs.curChunkLoc,
 		player.EntityId,
@@ -365,9 +367,6 @@ func (player *Player) mainLoop() {
 }
 
 func (player *Player) requestPlaceHeldItem(target *BlockXyz) {
-	player.lock.Lock()
-	defer player.lock.Unlock()
-
 	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
 	if ok {
 		var into slot.Slot
@@ -383,9 +382,6 @@ func (player *Player) requestPlaceHeldItem(target *BlockXyz) {
 // passed item can be looked at by the caller afterwards to see if it has been
 // consumed.
 func (player *Player) requestOfferItem(fromChunk *ChunkXz, entityId EntityId, item *slot.Slot) {
-	player.lock.Lock()
-	defer player.lock.Unlock()
-
 	if player.inventory.CanTakeItem(item) {
 		shardConn, ok := player.chunkSubs.ShardConnForChunkXz(fromChunk)
 		if ok {
@@ -397,9 +393,6 @@ func (player *Player) requestOfferItem(fromChunk *ChunkXz, entityId EntityId, it
 }
 
 func (player *Player) requestGiveItem(atPosition *AbsXyz, item *slot.Slot) {
-	player.lock.Lock()
-	defer player.lock.Unlock()
-
 	player.inventory.PutItem(item)
 
 	// TODO Check if item not fully consumed. If it is not, then throw the
@@ -415,16 +408,8 @@ func (player *Player) Enqueue(f func(*Player)) {
 	player.mainQueue <- f
 }
 
-// WithLock runs a function with the player lock within the calling goroutine.
-func (player *Player) WithLock(f func(*Player)) {
-	player.lock.Lock()
-	defer player.lock.Unlock()
-	f(player)
-}
-
 // OpenWindow queues a request that the player opens the given window type.
-// TODO this should be passed an appropriate *Inventory for inventories that
-// are tied to the world (particularly for chests).
+// TODO update for altered chunk interaction.
 func (player *Player) OpenWindow(invTypeId InvTypeId, inventory interface{}) {
 	player.Enqueue(func(_ *Player) {
 		player.closeCurrentWindow(true)
