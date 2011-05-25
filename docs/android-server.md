@@ -51,4 +51,4 @@ Run chunkymonkey:
 
 	adb shell "cd /data/local/bin ; chmod 700 chunkymonkey; ./chunkymonkey /data/local/minecraft-save/"
 
-[1]: ../../raw/master/docs/android.png  "Chunkymonkey on Android"
+[1]: ../../../raw/master/docs/android.png  "Chunkymonkey running in a Nexus One. (ddms screenshot)"
