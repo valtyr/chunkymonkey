@@ -12,7 +12,6 @@ import (
 
 	"chunkymonkey/entity"
 	"chunkymonkey/inventory"
-	"chunkymonkey/itemtype"
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
@@ -49,7 +48,7 @@ type Player struct {
 
 	mainQueue chan func(*Player)
 	txQueue   chan []byte
-	lock      sync.Mutex
+	lock      sync.Mutex // TODO remove this lock, packet handling shouldn't use it.
 
 	onDisconnect chan<- EntityId
 }
@@ -78,35 +77,6 @@ func NewPlayer(shardConnecter shardserver_external.IShardConnecter, recipes *rec
 	return player
 }
 
-func (player *Player) GetEntityId() EntityId {
-	return player.EntityId
-}
-
-func (player *Player) GetEntity() *entity.Entity {
-	return &player.Entity
-}
-
-func (player *Player) LockedGetChunkPosition() ChunkXz {
-	player.lock.Lock()
-	defer player.lock.Unlock()
-	return player.position.ToChunkXz()
-}
-
-func (player *Player) IsWithin(p1, p2 *ChunkXz) bool {
-	p := player.position.ToChunkXz()
-	return (p.X >= p1.X && p.X <= p2.X &&
-		p.Z >= p1.Z && p.Z <= p2.Z)
-}
-
-func (player *Player) GetName() string {
-	return player.name
-}
-
-func (player *Player) GetHeldItemType() *itemtype.ItemType {
-	slot, _ := player.inventory.HeldItem()
-	return slot.ItemType
-}
-
 func (player *Player) getHeldItemTypeId() ItemTypeId {
 	heldSlot, _ := player.inventory.HeldItem()
 	heldItemId := heldSlot.GetItemTypeId()
@@ -114,10 +84,6 @@ func (player *Player) getHeldItemTypeId() ItemTypeId {
 		return 0
 	}
 	return heldItemId
-}
-
-func (player *Player) TakeOneHeldItem(into *slot.Slot) {
-	player.inventory.TakeOneHeldItem(into)
 }
 
 func (player *Player) Start() {
@@ -366,11 +332,42 @@ func (player *Player) mainLoop() {
 	}
 }
 
+func (player *Player) postLogin() {
+	// TODO Old version of chunkSubscriptions.Move() that was called here had
+	// stuff for a callback when the nearest chunks had been sent so that player
+	// position would only be sent when nearby chunks were out. Some replacement
+	// for this will be needed. Possibly a message could be queued to the current
+	// shard following on from chunkSubscriptions's initialization that would ask
+	// the shard to send out the following packets - this would result in them
+	// being sent at least after the chunks that are in the current shard have
+	// been sent.
+
+	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name))
+
+	// Send player start position etc.
+	buf := new(bytes.Buffer)
+	proto.ServerWritePlayerPositionLook(
+		buf,
+		&player.position, player.position.Y+StanceNormal,
+		&player.look, false)
+	player.inventory.WriteWindowItems(buf)
+	packet := buf.Bytes()
+
+	// Enqueue on the shard as a hacky way to defer the packet send until after
+	// the initial chunk data has been sent.
+	player.chunkSubs.curShard.Enqueue(func() {
+		player.TransmitPacket(packet)
+	})
+}
+
 func (player *Player) requestPlaceHeldItem(target *BlockXyz) {
 	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
 	if ok {
 		var into slot.Slot
 		into.Init()
+
+		// TODO Check that the item can be placed? or maybe have the item type
+		// passed from the chunk to check that it's the same.
 
 		player.inventory.TakeOneHeldItem(&into)
 
@@ -456,32 +453,4 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 		player.curWindow.Finalize(sendClosePacket)
 	}
 	player.curWindow = nil
-}
-
-func (player *Player) postLogin() {
-	// TODO Old version of chunkSubscriptions.Move() that was called here had
-	// stuff for a callback when the nearest chunks had been sent so that player
-	// position would only be sent when nearby chunks were out. Some replacement
-	// for this will be needed. Possibly a message could be queued to the current
-	// shard following on from chunkSubscriptions's initialization that would ask
-	// the shard to send out the following packets - this would result in them
-	// being sent at least after the chunks that are in the current shard have
-	// been sent.
-
-	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name))
-
-	// Send player start position etc.
-	buf := new(bytes.Buffer)
-	proto.ServerWritePlayerPositionLook(
-		buf,
-		&player.position, player.position.Y+StanceNormal,
-		&player.look, false)
-	player.inventory.WriteWindowItems(buf)
-	packet := buf.Bytes()
-
-	// Enqueue on the shard as a hacky way to defer the packet send until after
-	// the initial chunk data has been sent.
-	player.chunkSubs.curShard.Enqueue(func() {
-		player.TransmitPacket(packet)
-	})
 }
