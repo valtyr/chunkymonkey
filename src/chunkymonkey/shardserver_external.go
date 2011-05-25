@@ -40,7 +40,7 @@ type IPlayerConnection interface {
 	// the held item stack and send it in a RequestPlaceItem to the target block.
 	// The player code may *not* honour this request (e.g there might be no
 	// suitable held item).
-	RequestPlaceHeldItem(target BlockXyz)
+	RequestPlaceHeldItem(target BlockXyz, wasHeld slot.Slot)
 
 	// RequestOfferItem requests that the player check if it can take the item.
 	// If it can then it should RequestTakeItem from the chunk.

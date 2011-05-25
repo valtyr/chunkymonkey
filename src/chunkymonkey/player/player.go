@@ -360,7 +360,16 @@ func (player *Player) postLogin() {
 	})
 }
 
-func (player *Player) requestPlaceHeldItem(target *BlockXyz) {
+func (player *Player) requestPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
+	curHeld, _ := player.inventory.HeldItem()
+
+	// Currently held item has changed since chunk saw it.
+	// TODO think about having the slot index passed as well so if that changes,
+	// we can still track the original item and improve placement success rate.
+	if curHeld.ItemType != wasHeld.ItemType || curHeld.Data != wasHeld.Data {
+		return
+	}
+
 	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
 	if ok {
 		var into slot.Slot

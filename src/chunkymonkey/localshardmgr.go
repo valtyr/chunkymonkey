@@ -94,7 +94,7 @@ func (conn *localShardConnection) RequestPlaceItem(target BlockXyz, slot slot.Sl
 	chunkLoc, _ := target.ToChunkLocal()
 
 	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
-		// TODO
+		chunk.(*Chunk).requestPlaceItem(conn.player, &target, &slot)
 	})
 }
 

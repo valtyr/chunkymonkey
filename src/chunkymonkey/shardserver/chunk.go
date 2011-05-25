@@ -210,9 +210,9 @@ func (chunk *Chunk) hitBlock(player shardserver_external.IPlayerConnection, held
 
 func (chunk *Chunk) interactBlock(player shardserver_external.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
 	// TODO use held item to better check of if the player is trying to place a
-	// block vs. perform some other interaction (e.g hoeing dirt).
-	// RequestPlaceItem() will need to check again as the item might have changed
-	// in the meantime, of course.
+	// block vs. perform some other interaction (e.g hoeing dirt). This is
+	// perhaps best solved by sending held item type and the face to
+	// blockType.Aspect.Interact()
 
 	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
 	if !ok {
@@ -228,7 +228,7 @@ func (chunk *Chunk) interactBlock(player shardserver_external.IPlayerConnection,
 		return
 	}
 
-	if blockType.Attachable {
+	if _, isBlockHeld := held.GetItemTypeId().ToBlockId(); isBlockHeld && blockType.Attachable {
 		// The player is interacting with a block that can be attached to.
 
 		// Work out the position to put the block at.
@@ -240,7 +240,7 @@ func (chunk *Chunk) interactBlock(player shardserver_external.IPlayerConnection,
 			target.Z + dz,
 		}
 
-		player.RequestPlaceHeldItem(destLoc)
+		player.RequestPlaceHeldItem(destLoc, held)
 	} else {
 		// Player is otherwise interacting with the block.
 		blockInstance := &block.BlockInstance{
@@ -258,11 +258,21 @@ func (chunk *Chunk) interactBlock(player shardserver_external.IPlayerConnection,
 // placeBlock attempts to place a block. This is called by PlayerBlockInteract
 // in the situation where the player interacts with an attachable block
 // (potentially in a different chunk to the one where the block gets placed).
-func (chunk *Chunk) placeItem(player shardserver_external.IPlayerConnection, target BlockXyz, slot slot.Slot) {
+func (chunk *Chunk) requestPlaceItem(player shardserver_external.IPlayerConnection, target *BlockXyz, slot *slot.Slot) {
 	// TODO defer a check for remaining items in slot, and do something with them
 	// (send to player or drop on the ground).
 
-	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(&target)
+	// TODO more flexible item checking for block placement (e.g placing seed
+	// items on farmland doesn't fit this current simplistic model). The block
+	// type for the block being placed against should probably contain this logic
+	// (i.e farmland block should know about the seed item).
+	heldBlockType, ok := slot.GetItemTypeId().ToBlockId()
+	if !ok || slot.Count < 1 {
+		// Not a placeable item.
+		return
+	}
+
+	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
 	if !ok {
 		return
 	}
@@ -274,17 +284,8 @@ func (chunk *Chunk) placeItem(player shardserver_external.IPlayerConnection, tar
 		return
 	}
 
-	// TODO more flexible item checking for block placement (e.g placing seed
-	// items on farmland doesn't fit this current simplistic model). The block
-	// type for the block being placed against should probably contain this logic
-	// (i.e farmland block should know about the seed item).
-	if slot.Count < 1 || slot.ItemType == nil || slot.ItemType.Id < BlockIdMin || slot.ItemType.Id > BlockIdMax {
-		// Not a placeable item.
-		return
-	}
-
-	// TODO block metadata
-	chunk.setBlock(&target, subLoc, index, BlockId(slot.ItemType.Id), 0)
+	// Safe to replace block.
+	chunk.setBlock(target, subLoc, index, heldBlockType, byte(slot.Data))
 
 	slot.Decrement()
 }

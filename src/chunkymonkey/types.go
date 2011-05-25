@@ -40,6 +40,15 @@ type ItemTypeId int16
 
 const ItemTypeIdNull = ItemTypeId(-1)
 
+// ToBlockId returns the ItemTypeId as a BlockId, or 0, ok=false if it's not a
+// valid BlockId.
+func (id ItemTypeId) ToBlockId() (blockId BlockId, ok bool) {
+	if id >= BlockIdMin && id <= BlockIdMax {
+		return BlockId(id), true
+	}
+	return 0, false
+}
+
 // Item metadata. The meaning of this varies depending upon the item type. In
 // the case of tools/armor it indicates "uses" or "damage".
 type ItemData int16

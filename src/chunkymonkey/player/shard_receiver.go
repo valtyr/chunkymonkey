@@ -31,9 +31,9 @@ func (psr *playerShardReceiver) InventoryUpdate(shardInvId int32, slotIds []Slot
 	// TODO
 }
 
-func (psr *playerShardReceiver) RequestPlaceHeldItem(target BlockXyz) {
+func (psr *playerShardReceiver) RequestPlaceHeldItem(target BlockXyz, wasHeld slot.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
-		psr.player.requestPlaceHeldItem(&target)
+		psr.player.requestPlaceHeldItem(&target, &wasHeld)
 	})
 }
 
