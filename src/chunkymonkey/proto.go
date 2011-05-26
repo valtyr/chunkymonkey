@@ -2241,9 +2241,9 @@ func readExplosion(reader io.Reader, handler IClientPacketHandler) (err os.Error
 
 func WriteUnknown0x3d(writer io.Writer, field1, field2 int32, field3 int8, field4, field5 int32) (err os.Error) {
 	var packet = struct {
-		PacketId byte
+		PacketId       byte
 		Field1, Field2 int32
-		Field3 int8
+		Field3         int8
 		Field4, Field5 int32
 	}{
 		packetIdUnknown0x3d,
@@ -2259,7 +2259,7 @@ func WriteUnknown0x3d(writer io.Writer, field1, field2 int32, field3 int8, field
 func readUnknown0x3d(reader io.Reader, handler IPacketHandler) (err os.Error) {
 	var packet struct {
 		Field1, Field2 int32
-		Field3 int8
+		Field3         int8
 		Field4, Field5 int32
 	}
 
@@ -2766,10 +2766,10 @@ func readSignUpdate(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 func WriteUnknown0x83(writer io.Writer, field1, field2 int16, field3 string) (err os.Error) {
 	var packet = struct {
-		PacketId byte
+		PacketId       byte
 		Field1, Field2 int16
-		Field3Size byte
-		Field3 []byte
+		Field3Size     byte
+		Field3         []byte
 	}{
 		packetIdUnknown0x83,
 		field1, field2,
@@ -2783,7 +2783,7 @@ func WriteUnknown0x83(writer io.Writer, field1, field2 int16, field3 string) (er
 func readUnknown0x83(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
 	var packet struct {
 		Field1, Field2 int16
-		Field3Size byte
+		Field3Size     byte
 	}
 
 	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {

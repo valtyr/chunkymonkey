@@ -23,10 +23,10 @@ type chunkSubscriptions struct {
 	shardConnecter stub.IShardConnecter
 	shardReceiver  stub.IPlayerConnection
 	entityId       EntityId
-	curShardLoc    ShardXz                               // Shard the player is currently in.
-	curChunkLoc    ChunkXz                               // Chunk the player is currently in.
+	curShardLoc    ShardXz               // Shard the player is currently in.
+	curChunkLoc    ChunkXz               // Chunk the player is currently in.
 	curShard       stub.IShardConnection // Shard the player is hosted on.
-	shards         map[uint64]*shardRef                  // Connections to shards.
+	shards         map[uint64]*shardRef  // Connections to shards.
 }
 
 func (sub *chunkSubscriptions) Init(player *Player) {

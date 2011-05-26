@@ -41,9 +41,9 @@ type Chunk struct {
 	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	neighbours   neighboursCache
-	cachedPacket []byte                                              // Cached packet data for this block.
+	cachedPacket []byte                              // Cached packet data for this block.
 	subscribers  map[EntityId]stub.IPlayerConnection // Players getting updates from the chunk.
-	playersData  map[EntityId]*playerData                            // Some player data for player(s) in the chunk.
+	playersData  map[EntityId]*playerData            // Some player data for player(s) in the chunk.
 }
 
 func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {

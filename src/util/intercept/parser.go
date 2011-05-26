@@ -231,7 +231,7 @@ func (p *MessageParser) PacketExplosion(position *AbsXyz, power float32, blockOf
 func (p *MessageParser) PacketUnknown0x3d(field1, field2 int32, field3 int8, field4, field5 int32) {
 	p.printf(
 		"PacketUnknown0x3d(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
-			field1, field2, field3, field4, field5)
+		field1, field2, field3, field4, field5)
 }
 
 func (p *MessageParser) PacketBedInvalid(field1 byte) {
