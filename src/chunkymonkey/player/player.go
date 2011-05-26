@@ -109,7 +109,7 @@ func (player *Player) PacketEntityAction(entityId EntityId, action EntityAction)
 func (player *Player) PacketUseEntity(user EntityId, target EntityId, leftClick bool) {
 }
 
-func (player *Player) PacketRespawn() {
+func (player *Player) PacketRespawn(dimension DimensionId) {
 }
 
 func (player *Player) PacketPlayer(onGround bool) {
@@ -202,6 +202,16 @@ func (player *Player) PacketEntityAnimation(entityId EntityId, animation EntityA
 }
 
 func (player *Player) PacketUnknown0x1b(field1, field2 float32, field3, field4 bool, field5, field6 float32) {
+	log.Printf(
+		"PacketUnknown0x1b(field1=%v, field2=%v, field3=%t, field4=%t, field5=%v, field6=%v)",
+		field1, field2, field3, field4, field5, field6)
+}
+
+func (player *Player) PacketUnknown0x3d(field1, field2 int32, field3 int8, field4, field5 int32) {
+	// TODO Remove this method if it's S->C only.
+	log.Printf(
+		"PacketUnknown0x3d(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
+			field1, field2, field3, field4, field5)
 }
 
 func (player *Player) PacketWindowClose(windowId WindowId) {
@@ -257,6 +267,11 @@ func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, acce
 }
 
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
+}
+
+func (player *Player) PacketUnknown0x83(field1, field2 int16, field3 []byte) {
+	log.Printf("PacketUnknown0x83(field1=%d, field2=%d, field3=%x)",
+		field1, field2, field3)
 }
 
 func (player *Player) PacketDisconnect(reason string) {

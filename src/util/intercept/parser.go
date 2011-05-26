@@ -52,8 +52,8 @@ func (p *MessageParser) PacketChatMessage(message string) {
 	p.printf("PacketChatMessage(%q)", message)
 }
 
-func (p *MessageParser) PacketRespawn() {
-	p.printf("PacketRespawn()")
+func (p *MessageParser) PacketRespawn(dimension DimensionId) {
+	p.printf("PacketRespawn(dimension=%d)")
 }
 
 func (p *MessageParser) PacketPlayer(onGround bool) {
@@ -141,9 +141,9 @@ func (p *MessageParser) PacketItemCollect(collectedItem EntityId, collector Enti
 		collectedItem, collector)
 }
 
-func (p *MessageParser) PacketObjectSpawn(entityId EntityId, objType ObjTypeId, position *AbsIntXyz) {
-	p.printf("PacketObjectSpawn(entityId=%d, objType=%d, position=%v)",
-		entityId, objType, position)
+func (p *MessageParser) PacketObjectSpawn(entityId EntityId, objType ObjTypeId, position *AbsIntXyz, objectData *proto.ObjectData) {
+	p.printf("PacketObjectSpawn(entityId=%d, objType=%d, position=%v, objectData=%#v)",
+		entityId, objType, position, objectData)
 }
 
 func (p *MessageParser) PacketEntitySpawn(entityId EntityId, mobType EntityMobType, position *AbsIntXyz, look *LookBytes, metadata []proto.EntityMetadata) {
@@ -228,6 +228,12 @@ func (p *MessageParser) PacketExplosion(position *AbsXyz, power float32, blockOf
 		position, power, len(blockOffsets), blockOffsets)
 }
 
+func (p *MessageParser) PacketUnknown0x3d(field1, field2 int32, field3 int8, field4, field5 int32) {
+	p.printf(
+		"PacketUnknown0x3d(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
+			field1, field2, field3, field4, field5)
+}
+
 func (p *MessageParser) PacketBedInvalid(field1 byte) {
 	p.printf("PacketBedInvalid(field1=%t)", field1)
 }
@@ -274,6 +280,11 @@ func (p *MessageParser) PacketWindowTransaction(windowId WindowId, txId TxId, ac
 func (p *MessageParser) PacketIncrementStatistic(statisticId StatisticId, delta int8) {
 	p.printf("PacketIncrementStatistic(statisticId=%d, delta=%d)",
 		statisticId, delta)
+}
+
+func (p *MessageParser) PacketUnknown0x83(field1, field2 int16, field3 []byte) {
+	p.printf("PacketUnknown0x83(field1=%d, field2=%d, field3=%x)",
+		field1, field2, field3)
 }
 
 func (p *MessageParser) PacketDisconnect(reason string) {
