@@ -6,7 +6,7 @@ import (
 )
 
 // playerShardReceiver receives events from chunk shards and acts upon them. It
-// implements shardserver_external.IPlayerConnection.
+// implements stub.IPlayerConnection.
 type playerShardReceiver struct {
 	player *Player
 }

@@ -5,7 +5,7 @@ import (
 
 	"chunkymonkey/itemtype"
 	"chunkymonkey/recipe"
-	"chunkymonkey/shardserver_external"
+	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -17,7 +17,7 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 type IChunkBlock interface {
 	GetRand() *rand.Rand
 	GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
-	AddSpawn(s shardserver_external.INonPlayerSpawn)
+	AddSpawn(s stub.INonPlayerSpawn)
 	GetBlockExtra(subLoc *SubChunkXyz) interface{}
 	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
 	GetRecipeSet() *recipe.RecipeSet
@@ -41,6 +41,6 @@ type BlockInstance struct {
 // Defines the behaviour of a block.
 type IBlockAspect interface {
 	Name() string
-	Hit(instance *BlockInstance, player shardserver_external.IPlayerConnection, digStatus DigStatus) (destroyed bool)
-	Interact(instance *BlockInstance, player shardserver_external.IPlayerConnection)
+	Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool)
+	Interact(instance *BlockInstance, player stub.IPlayerConnection)
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"chunkymonkey/chunkstore"
-	"chunkymonkey/shardserver_external"
+	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -81,7 +81,7 @@ func (shard *ChunkShard) String() string {
 
 // Get returns the Chunk at at given coordinates, loading it if it is not
 // already loaded.
-func (shard *ChunkShard) Get(loc *ChunkXz) shardserver_external.IChunk {
+func (shard *ChunkShard) Get(loc *ChunkXz) stub.IChunk {
 	locDelta := ChunkXz{
 		X: loc.X - shard.originChunkLoc.X,
 		Z: loc.Z - shard.originChunkLoc.Z,
@@ -166,16 +166,16 @@ func (shard *ChunkShard) loadChunk(loc *ChunkXz, locDelta *ChunkXz) *Chunk {
 }
 
 // TODO Make all Enqueue* methods private, and take *Chunk instead of
-// shardserver_external.IChunk.
+// stub.IChunk.
 
 // EnqueueAllChunks runs a given function on all loaded chunks in the shard.
-func (shard *ChunkShard) EnqueueAllChunks(fn func(chunk shardserver_external.IChunk)) {
+func (shard *ChunkShard) EnqueueAllChunks(fn func(chunk stub.IChunk)) {
 	shard.requests <- &runOnAllChunks{fn}
 }
 
 // EnqueueOnChunk runs a function on the chunk at the given location. If the
 // chunk does not exist, it does nothing.
-func (shard *ChunkShard) EnqueueOnChunk(loc ChunkXz, fn func(chunk shardserver_external.IChunk)) {
+func (shard *ChunkShard) EnqueueOnChunk(loc ChunkXz, fn func(chunk stub.IChunk)) {
 	shard.requests <- &runOnChunk{loc, fn}
 }
 

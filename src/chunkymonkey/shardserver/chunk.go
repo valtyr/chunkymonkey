@@ -16,7 +16,7 @@ import (
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
-	"chunkymonkey/shardserver_external"
+	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -37,12 +37,12 @@ type Chunk struct {
 	// TODO: (discuss) Maybe split this back into mobs and items?
 	// There are many more users of "spawn" than of only mobs or items. So
 	// I'm inclined to leave it as is.
-	spawn        map[EntityId]shardserver_external.INonPlayerSpawn
+	spawn        map[EntityId]stub.INonPlayerSpawn
 	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	neighbours   neighboursCache
 	cachedPacket []byte                                              // Cached packet data for this block.
-	subscribers  map[EntityId]shardserver_external.IPlayerConnection // Players getting updates from the chunk.
+	subscribers  map[EntityId]stub.IPlayerConnection // Players getting updates from the chunk.
 	playersData  map[EntityId]*playerData                            // Some player data for player(s) in the chunk.
 }
 
@@ -56,10 +56,10 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		skyLight:    reader.SkyLight(),
 		blockLight:  reader.BlockLight(),
 		heightMap:   reader.HeightMap(),
-		spawn:       make(map[EntityId]shardserver_external.INonPlayerSpawn),
+		spawn:       make(map[EntityId]stub.INonPlayerSpawn),
 		blockExtra:  make(map[BlockIndex]interface{}),
 		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers: make(map[EntityId]shardserver_external.IPlayerConnection),
+		subscribers: make(map[EntityId]stub.IPlayerConnection),
 		playersData: make(map[EntityId]*playerData),
 	}
 	chunk.neighbours.init()
@@ -101,13 +101,13 @@ func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemT
 	return
 }
 
-func (chunk *Chunk) TransferSpawn(s shardserver_external.INonPlayerSpawn) {
+func (chunk *Chunk) TransferSpawn(s stub.INonPlayerSpawn) {
 	chunk.spawn[s.GetEntity().EntityId] = s
 }
 
 // AddSpawn creates a mob or item in this chunk and notifies the new spawn to
 // all chunk subscribers.
-func (chunk *Chunk) AddSpawn(s shardserver_external.INonPlayerSpawn) {
+func (chunk *Chunk) AddSpawn(s stub.INonPlayerSpawn) {
 	e := s.GetEntity()
 	chunk.mgr.entityMgr.AddEntity(e)
 
@@ -119,7 +119,7 @@ func (chunk *Chunk) AddSpawn(s shardserver_external.INonPlayerSpawn) {
 	chunk.MulticastPlayers(-1, buf.Bytes())
 }
 
-func (chunk *Chunk) removeSpawn(s shardserver_external.INonPlayerSpawn) {
+func (chunk *Chunk) removeSpawn(s stub.INonPlayerSpawn) {
 	e := s.GetEntity()
 	chunk.mgr.entityMgr.RemoveEntity(e)
 	chunk.spawn[e.EntityId] = nil, false
@@ -179,7 +179,7 @@ func (chunk *Chunk) GetRecipeSet() *recipe.RecipeSet {
 	return chunk.mgr.gameRules.Recipes
 }
 
-func (chunk *Chunk) hitBlock(player shardserver_external.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
+func (chunk *Chunk) hitBlock(player stub.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
 
 	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
 	if !ok {
@@ -208,7 +208,7 @@ func (chunk *Chunk) hitBlock(player shardserver_external.IPlayerConnection, held
 	return
 }
 
-func (chunk *Chunk) interactBlock(player shardserver_external.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
+func (chunk *Chunk) interactBlock(player stub.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
 	// TODO use held item to better check of if the player is trying to place a
 	// block vs. perform some other interaction (e.g hoeing dirt). This is
 	// perhaps best solved by sending held item type and the face to
@@ -258,7 +258,7 @@ func (chunk *Chunk) interactBlock(player shardserver_external.IPlayerConnection,
 // placeBlock attempts to place a block. This is called by PlayerBlockInteract
 // in the situation where the player interacts with an attachable block
 // (potentially in a different chunk to the one where the block gets placed).
-func (chunk *Chunk) requestPlaceItem(player shardserver_external.IPlayerConnection, target *BlockXyz, slot *slot.Slot) {
+func (chunk *Chunk) requestPlaceItem(player stub.IPlayerConnection, target *BlockXyz, slot *slot.Slot) {
 	// TODO defer a check for remaining items in slot, and do something with them
 	// (send to player or drop on the ground).
 
@@ -290,7 +290,7 @@ func (chunk *Chunk) requestPlaceItem(player shardserver_external.IPlayerConnecti
 	slot.Decrement()
 }
 
-func (chunk *Chunk) requestTakeItem(player shardserver_external.IPlayerConnection, entityId EntityId) {
+func (chunk *Chunk) requestTakeItem(player stub.IPlayerConnection, entityId EntityId) {
 	if spawn, ok := chunk.spawn[entityId]; ok {
 		if item, ok := spawn.(*item.Item); ok {
 			player.RequestGiveItem(*item.Position(), *item.GetSlot())
@@ -305,7 +305,7 @@ func (chunk *Chunk) requestTakeItem(player shardserver_external.IPlayerConnectio
 	}
 }
 
-func (chunk *Chunk) requestDropItem(player shardserver_external.IPlayerConnection, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
+func (chunk *Chunk) requestDropItem(player stub.IPlayerConnection, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
 	spawnedItem := item.NewItem(
 		content.ItemType,
 		content.Count,
@@ -373,7 +373,7 @@ func (chunk *Chunk) tick() {
 		}
 		return
 	}
-	outgoingSpawns := []shardserver_external.INonPlayerSpawn{}
+	outgoingSpawns := []stub.INonPlayerSpawn{}
 
 	for _, e := range chunk.spawn {
 		if e.Tick(blockQuery) {
@@ -397,7 +397,7 @@ func (chunk *Chunk) tick() {
 
 			// TODO Batch spawns up into a request per shard if there are efficiency
 			// concerns in sending them individually.
-			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk shardserver_external.IChunk) {
+			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk stub.IChunk) {
 				blockChunk.TransferSpawn(e)
 			})
 		}
@@ -442,7 +442,7 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) addPlayer(entityId EntityId, player shardserver_external.IPlayerConnection) {
+func (chunk *Chunk) addPlayer(entityId EntityId, player stub.IPlayerConnection) {
 	chunk.subscribers[entityId] = player
 
 	buf := new(bytes.Buffer)

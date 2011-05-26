@@ -15,7 +15,7 @@ import (
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
-	"chunkymonkey/shardserver_external"
+	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -34,7 +34,7 @@ func init() {
 type Player struct {
 	entity.Entity
 	shardReceiver  playerShardReceiver
-	shardConnecter shardserver_external.IShardConnecter
+	shardConnecter stub.IShardConnecter
 	conn           net.Conn
 	name           string
 	position       AbsXyz
@@ -53,7 +53,7 @@ type Player struct {
 	onDisconnect chan<- EntityId
 }
 
-func NewPlayer(shardConnecter shardserver_external.IShardConnecter, recipes *recipe.RecipeSet, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
+func NewPlayer(shardConnecter stub.IShardConnecter, recipes *recipe.RecipeSet, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
 	player := &Player{
 		shardConnecter: shardConnecter,
 		conn:           conn,
@@ -374,9 +374,6 @@ func (player *Player) requestPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot)
 	if ok {
 		var into slot.Slot
 		into.Init()
-
-		// TODO Check that the item can be placed? or maybe have the item type
-		// passed from the chunk to check that it's the same.
 
 		player.inventory.TakeOneHeldItem(&into)
 

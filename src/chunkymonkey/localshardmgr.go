@@ -6,7 +6,7 @@ import (
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/entity"
 	"chunkymonkey/gamerules"
-	"chunkymonkey/shardserver_external"
+	"chunkymonkey/stub"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -14,11 +14,11 @@ import (
 // localShardConnection implements IShardConnection for LocalShardManager.
 type localShardConnection struct {
 	entityId EntityId
-	player   shardserver_external.IPlayerConnection
+	player   stub.IPlayerConnection
 	shard    *ChunkShard
 }
 
-func newLocalShardConnection(entityId EntityId, player shardserver_external.IPlayerConnection, shard *ChunkShard) *localShardConnection {
+func newLocalShardConnection(entityId EntityId, player stub.IPlayerConnection, shard *ChunkShard) *localShardConnection {
 	return &localShardConnection{
 		entityId: entityId,
 		player:   player,
@@ -29,7 +29,7 @@ func newLocalShardConnection(entityId EntityId, player shardserver_external.IPla
 func (conn *localShardConnection) Disconnect() {
 	// TODO This inefficiently unsubscribes from all chunks, even if not
 	// subscribed to.
-	conn.shard.EnqueueAllChunks(func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueAllChunks(func(chunk stub.IChunk) {
 		chunk.(*Chunk).removePlayer(conn.entityId, false)
 	})
 }
@@ -39,37 +39,37 @@ func (conn *localShardConnection) Enqueue(fn func()) {
 }
 
 func (conn *localShardConnection) SubscribeChunk(chunkLoc ChunkXz) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).addPlayer(conn.entityId, conn.player)
 	})
 }
 
 func (conn *localShardConnection) UnsubscribeChunk(chunkLoc ChunkXz) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).removePlayer(conn.entityId, true)
 	})
 }
 
 func (conn *localShardConnection) MulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).MulticastPlayers(exclude, packet)
 	})
 }
 
 func (conn *localShardConnection) AddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).addPlayerData(conn.entityId, name, position, look, held)
 	})
 }
 
 func (conn *localShardConnection) RemovePlayerData(chunkLoc ChunkXz, isDisconnect bool) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).removePlayerData(conn.entityId, isDisconnect)
 	})
 }
 
 func (conn *localShardConnection) SetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).setPlayerPositionLook(conn.entityId, position, look, moved)
 	})
 }
@@ -77,7 +77,7 @@ func (conn *localShardConnection) SetPlayerPositionLook(chunkLoc ChunkXz, positi
 func (conn *localShardConnection) RequestHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face) {
 	chunkLoc := target.ToChunkXz()
 
-	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).hitBlock(conn.player, held, digStatus, &target, face)
 	})
 }
@@ -85,7 +85,7 @@ func (conn *localShardConnection) RequestHitBlock(held slot.Slot, target BlockXy
 func (conn *localShardConnection) RequestInteractBlock(held slot.Slot, target BlockXyz, face Face) {
 	chunkLoc := target.ToChunkXz()
 
-	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).interactBlock(conn.player, held, &target, face)
 	})
 }
@@ -93,20 +93,20 @@ func (conn *localShardConnection) RequestInteractBlock(held slot.Slot, target Bl
 func (conn *localShardConnection) RequestPlaceItem(target BlockXyz, slot slot.Slot) {
 	chunkLoc, _ := target.ToChunkLocal()
 
-	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).requestPlaceItem(conn.player, &target, &slot)
 	})
 }
 
 func (conn *localShardConnection) RequestTakeItem(chunkLoc ChunkXz, entityId EntityId) {
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).requestTakeItem(conn.player, entityId)
 	})
 }
 
 func (conn *localShardConnection) RequestDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity) {
 	chunkLoc := position.ToChunkXz()
-	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
 		chunk.(*Chunk).requestDropItem(conn.player, &content, &position, &velocity)
 	})
 }
@@ -146,7 +146,7 @@ func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
 	return shard
 }
 
-func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player shardserver_external.IPlayerConnection, shardLoc ShardXz) shardserver_external.IShardConnection {
+func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player stub.IPlayerConnection, shardLoc ShardXz) stub.IShardConnection {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
@@ -157,7 +157,7 @@ func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player shardserver
 // TODO remove Enqueue* methods
 
 // EnqueueAllChunks runs a given function on all loaded chunks.
-func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk shardserver_external.IChunk)) {
+func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk stub.IChunk)) {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
@@ -168,7 +168,7 @@ func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk shardserver_externa
 
 // EnqueueOnChunk runs a function on the chunk at the given location. If the
 // chunk does not exist, it does nothing.
-func (mgr *LocalShardManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk shardserver_external.IChunk)) {
+func (mgr *LocalShardManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk stub.IChunk)) {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 

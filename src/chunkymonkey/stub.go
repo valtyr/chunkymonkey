@@ -1,4 +1,4 @@
-package shardserver_external
+package stub
 
 import (
 	"io"

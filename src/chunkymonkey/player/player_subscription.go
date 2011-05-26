@@ -3,14 +3,14 @@ package player
 import (
 	"log"
 
-	"chunkymonkey/shardserver_external"
+	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
 // shardRef holds a reference to a shard connection and context for the number
 // of subscribed chunks inside the shard.
 type shardRef struct {
-	shard shardserver_external.IShardConnection
+	shard stub.IShardConnection
 	count int
 }
 
@@ -20,12 +20,12 @@ type shardRef struct {
 // * and moving the player from one shard to another.
 type chunkSubscriptions struct {
 	player         *Player
-	shardConnecter shardserver_external.IShardConnecter
-	shardReceiver  shardserver_external.IPlayerConnection
+	shardConnecter stub.IShardConnecter
+	shardReceiver  stub.IPlayerConnection
 	entityId       EntityId
 	curShardLoc    ShardXz                               // Shard the player is currently in.
 	curChunkLoc    ChunkXz                               // Chunk the player is currently in.
-	curShard       shardserver_external.IShardConnection // Shard the player is hosted on.
+	curShard       stub.IShardConnection // Shard the player is hosted on.
 	shards         map[uint64]*shardRef                  // Connections to shards.
 }
 
@@ -83,7 +83,7 @@ func (sub *chunkSubscriptions) Close() {
 // connection and the ChunkXz within that chunk for a given BlockXyz position.
 // Returns ok = false if there is no open connection for that shard. Note that
 // this doesn't check if the chunk actually exists.
-func (sub *chunkSubscriptions) ShardConnForBlockXyz(blockLoc *BlockXyz) (conn shardserver_external.IShardConnection, chunkLoc *ChunkXz, ok bool) {
+func (sub *chunkSubscriptions) ShardConnForBlockXyz(blockLoc *BlockXyz) (conn stub.IShardConnection, chunkLoc *ChunkXz, ok bool) {
 
 	chunkLoc = blockLoc.ToChunkXz()
 
@@ -103,7 +103,7 @@ func (sub *chunkSubscriptions) ShardConnForBlockXyz(blockLoc *BlockXyz) (conn sh
 // connection for a given ChunkXz position. Returns ok = false if there is no
 // open connection for that shard. Note that this doesn't check if the chunk
 // actually exists.
-func (sub *chunkSubscriptions) ShardConnForChunkXz(chunkLoc *ChunkXz) (conn shardserver_external.IShardConnection, ok bool) {
+func (sub *chunkSubscriptions) ShardConnForChunkXz(chunkLoc *ChunkXz) (conn stub.IShardConnection, ok bool) {
 
 	shardLoc := chunkLoc.ToShardXz()
 	ref, ok := sub.shards[shardLoc.Key()]
