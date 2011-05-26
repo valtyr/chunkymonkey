@@ -14,6 +14,8 @@ use case.
 
 ![Chunkymonkey on Android][1]
 
+- The messy logs were from nictuku trying to understand minecraft physics using printfs ;-).
+
 Prerequisites
 -------------
 *   Android device with USB debugging enabled
