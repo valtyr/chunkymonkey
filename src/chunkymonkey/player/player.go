@@ -269,11 +269,6 @@ func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, acce
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 }
 
-func (player *Player) PacketUnknown0x83(field1, field2 int16, field3 []byte) {
-	log.Printf("PacketUnknown0x83(field1=%d, field2=%d, field3=%x)",
-		field1, field2, field3)
-}
-
 func (player *Player) PacketDisconnect(reason string) {
 	log.Printf("Player %s disconnected reason=%s", player.name, reason)
 

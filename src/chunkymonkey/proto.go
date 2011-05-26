@@ -103,7 +103,6 @@ type IPacketHandler interface {
 	PacketUnknown0x3d(field1, field2 int32, field3 int8, field4, field5 int32)
 	PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool)
 	PacketSignUpdate(position *BlockXyz, lines [4]string)
-	PacketUnknown0x83(field1, field2 int16, field3 []byte)
 	PacketDisconnect(reason string)
 }
 
@@ -156,6 +155,7 @@ type IClientPacketHandler interface {
 	PacketWindowSetSlot(windowId WindowId, slot SlotId, itemTypeId ItemTypeId, amount ItemCount, data ItemData)
 	PacketWindowItems(windowId WindowId, items []WindowSlot)
 	PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue)
+	PacketUnknown0x83(field1, field2 int16, field3 string)
 	PacketIncrementStatistic(statisticId StatisticId, delta int8)
 }
 
@@ -2764,27 +2764,23 @@ func readSignUpdate(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 // packetIdUnknown0x83
 
-func WriteUnknown0x83(writer io.Writer, field1, field2 int16, field3 []byte) (err os.Error) {
+func WriteUnknown0x83(writer io.Writer, field1, field2 int16, field3 string) (err os.Error) {
 	var packet = struct {
 		PacketId byte
 		Field1, Field2 int16
 		Field3Size byte
+		Field3 []byte
 	}{
 		packetIdUnknown0x83,
 		field1, field2,
 		byte(len(field3)),
+		[]byte(field3),
 	}
 
-	if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
-		return
-	}
-
-	_, err = writer.Write(field3)
-
-	return
+	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readUnknown0x83(reader io.Reader, handler IPacketHandler) (err os.Error) {
+func readUnknown0x83(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
 	var packet struct {
 		Field1, Field2 int16
 		Field3Size byte
@@ -2800,7 +2796,7 @@ func readUnknown0x83(reader io.Reader, handler IPacketHandler) (err os.Error) {
 		return
 	}
 
-	handler.PacketUnknown0x83(packet.Field1, packet.Field2, field3)
+	handler.PacketUnknown0x83(packet.Field1, packet.Field2, string(field3))
 
 	return
 }
@@ -2883,7 +2879,6 @@ var commonReadFns = commonPacketReaderMap{
 	packetIdUnknown0x3d:         readUnknown0x3d,
 	packetIdWindowTransaction:   readWindowTransaction,
 	packetIdSignUpdate:          readSignUpdate,
-	packetIdUnknown0x83:         readUnknown0x83,
 	packetIdDisconnect:          readDisconnect,
 }
 
@@ -2932,6 +2927,7 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdWindowSetSlot:        readWindowSetSlot,
 	packetIdWindowItems:          readWindowItems,
 	packetIdWindowProgressBar:    readWindowProgressBar,
+	packetIdUnknown0x83:          readUnknown0x83,
 	packetIdIncrementStatistic:   readIncrementStatistic,
 }
 

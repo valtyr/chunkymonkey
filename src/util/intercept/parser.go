@@ -282,8 +282,8 @@ func (p *MessageParser) PacketIncrementStatistic(statisticId StatisticId, delta 
 		statisticId, delta)
 }
 
-func (p *MessageParser) PacketUnknown0x83(field1, field2 int16, field3 []byte) {
-	p.printf("PacketUnknown0x83(field1=%d, field2=%d, field3=%x)",
+func (p *MessageParser) PacketUnknown0x83(field1, field2 int16, field3 string) {
+	p.printf("PacketUnknown0x83(field1=%d, field2=%d, field3=%q)",
 		field1, field2, field3)
 }
 
