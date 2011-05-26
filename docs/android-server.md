@@ -14,6 +14,8 @@ use case.
 
 ![Chunkymonkey on Android][1]
 
+- The messy logs were from nictuku trying to understand minecraft physics using printfs ;-).
+
 Prerequisites
 -------------
 *   Android device with USB debugging enabled
@@ -51,4 +53,4 @@ Run chunkymonkey:
 
 	adb shell "cd /data/local/bin ; chmod 700 chunkymonkey; ./chunkymonkey /data/local/minecraft-save/"
 
-[1]: ../../raw/master/docs/android.png  "Chunkymonkey on Android"
+[1]: ../../../raw/master/docs/android.png  "Chunkymonkey running in a Nexus One. (ddms screenshot)"
