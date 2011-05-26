@@ -305,6 +305,18 @@ func (chunk *Chunk) requestTakeItem(player shardserver_external.IPlayerConnectio
 	}
 }
 
+func (chunk *Chunk) requestDropItem(player shardserver_external.IPlayerConnection, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
+	spawnedItem := item.NewItem(
+		content.ItemType,
+		content.Count,
+		content.Data,
+		position,
+		velocity,
+	)
+
+	chunk.AddSpawn(spawnedItem)
+}
+
 // Used to read the BlockId of a block that's either in the chunk, or
 // immediately adjoining it in a neighbouring chunk via the side caches.
 func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, isWithinChunk bool, blockUnknownId bool) {

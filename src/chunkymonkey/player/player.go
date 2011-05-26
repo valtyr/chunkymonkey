@@ -399,10 +399,19 @@ func (player *Player) requestOfferItem(fromChunk *ChunkXz, entityId EntityId, it
 }
 
 func (player *Player) requestGiveItem(atPosition *AbsXyz, item *slot.Slot) {
-	player.inventory.PutItem(item)
+	defer func(){
+		// Check if item not fully consumed. If it is not, then throw the remains
+		// back to the chunk.
+		if item.Count > 0 {
+			chunkLoc := atPosition.ToChunkXz()
+			shardConn, ok := player.chunkSubs.ShardConnForChunkXz(&chunkLoc)
+			if ok {
+				shardConn.RequestDropItem(*item, *atPosition, AbsVelocity{})
+			}
+		}
+	}()
 
-	// TODO Check if item not fully consumed. If it is not, then throw the
-	// remains back to the chunk.
+	player.inventory.PutItem(item)
 }
 
 // Enqueue queues a function to run with the player lock within the player's

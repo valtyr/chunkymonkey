@@ -90,6 +90,9 @@ type IShardConnection interface {
 	// given to the player. The chunk doesn't have to respect this (particularly
 	// if the item no longer exists).
 	RequestTakeItem(chunkLoc ChunkXz, entityId EntityId)
+
+	// RequestDropItem requests that an item be created.
+	RequestDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity)
 }
 
 // IShardConnecter is used to look up shards and connect to them.

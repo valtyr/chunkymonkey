@@ -104,6 +104,13 @@ func (conn *localShardConnection) RequestTakeItem(chunkLoc ChunkXz, entityId Ent
 	})
 }
 
+func (conn *localShardConnection) RequestDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity) {
+	chunkLoc := position.ToChunkXz()
+	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk shardserver_external.IChunk) {
+		chunk.(*Chunk).requestDropItem(conn.player, &content, &position, &velocity)
+	})
+}
+
 // LocalShardManager contains all chunk shards and can look them up. It
 // implements IShardConnecter and is for use in hosting all shards in the local
 // process.
