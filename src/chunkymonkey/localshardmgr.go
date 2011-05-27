@@ -30,7 +30,7 @@ func (conn *localShardConnection) Disconnect() {
 	// TODO This inefficiently unsubscribes from all chunks, even if not
 	// subscribed to.
 	conn.shard.EnqueueAllChunks(func(chunk stub.IChunk) {
-		chunk.(*Chunk).removePlayer(conn.entityId, false)
+		chunk.(*Chunk).reqUnsubscribeChunk(conn.entityId, false)
 	})
 }
 
@@ -38,76 +38,76 @@ func (conn *localShardConnection) Enqueue(fn func()) {
 	conn.shard.Enqueue(fn)
 }
 
-func (conn *localShardConnection) SubscribeChunk(chunkLoc ChunkXz) {
+func (conn *localShardConnection) ReqSubscribeChunk(chunkLoc ChunkXz) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).addPlayer(conn.entityId, conn.player)
+		chunk.(*Chunk).reqSubscribeChunk(conn.entityId, conn.player)
 	})
 }
 
-func (conn *localShardConnection) UnsubscribeChunk(chunkLoc ChunkXz) {
+func (conn *localShardConnection) ReqUnsubscribeChunk(chunkLoc ChunkXz) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).removePlayer(conn.entityId, true)
+		chunk.(*Chunk).reqUnsubscribeChunk(conn.entityId, true)
 	})
 }
 
-func (conn *localShardConnection) MulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte) {
+func (conn *localShardConnection) ReqMulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).MulticastPlayers(exclude, packet)
+		chunk.(*Chunk).reqMulticastPlayers(exclude, packet)
 	})
 }
 
-func (conn *localShardConnection) AddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId) {
+func (conn *localShardConnection) ReqAddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).addPlayerData(conn.entityId, name, position, look, held)
+		chunk.(*Chunk).reqAddPlayerData(conn.entityId, name, position, look, held)
 	})
 }
 
-func (conn *localShardConnection) RemovePlayerData(chunkLoc ChunkXz, isDisconnect bool) {
+func (conn *localShardConnection) ReqRemovePlayerData(chunkLoc ChunkXz, isDisconnect bool) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).removePlayerData(conn.entityId, isDisconnect)
+		chunk.(*Chunk).reqRemovePlayerData(conn.entityId, isDisconnect)
 	})
 }
 
-func (conn *localShardConnection) SetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool) {
+func (conn *localShardConnection) ReqSetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).setPlayerPositionLook(conn.entityId, position, look, moved)
+		chunk.(*Chunk).reqSetPlayerPositionLook(conn.entityId, position, look, moved)
 	})
 }
 
-func (conn *localShardConnection) RequestHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face) {
+func (conn *localShardConnection) ReqHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face) {
 	chunkLoc := target.ToChunkXz()
 
 	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).hitBlock(conn.player, held, digStatus, &target, face)
+		chunk.(*Chunk).reqHitBlock(conn.player, held, digStatus, &target, face)
 	})
 }
 
-func (conn *localShardConnection) RequestInteractBlock(held slot.Slot, target BlockXyz, face Face) {
+func (conn *localShardConnection) ReqInteractBlock(held slot.Slot, target BlockXyz, face Face) {
 	chunkLoc := target.ToChunkXz()
 
 	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).interactBlock(conn.player, held, &target, face)
+		chunk.(*Chunk).reqInteractBlock(conn.player, held, &target, face)
 	})
 }
 
-func (conn *localShardConnection) RequestPlaceItem(target BlockXyz, slot slot.Slot) {
+func (conn *localShardConnection) ReqPlaceItem(target BlockXyz, slot slot.Slot) {
 	chunkLoc, _ := target.ToChunkLocal()
 
 	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).requestPlaceItem(conn.player, &target, &slot)
+		chunk.(*Chunk).reqPlaceItem(conn.player, &target, &slot)
 	})
 }
 
-func (conn *localShardConnection) RequestTakeItem(chunkLoc ChunkXz, entityId EntityId) {
+func (conn *localShardConnection) ReqTakeItem(chunkLoc ChunkXz, entityId EntityId) {
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).requestTakeItem(conn.player, entityId)
+		chunk.(*Chunk).reqTakeItem(conn.player, entityId)
 	})
 }
 
-func (conn *localShardConnection) RequestDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity) {
+func (conn *localShardConnection) ReqDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity) {
 	chunkLoc := position.ToChunkXz()
 	conn.shard.EnqueueOnChunk(chunkLoc, func(chunk stub.IChunk) {
-		chunk.(*Chunk).requestDropItem(conn.player, &content, &position, &velocity)
+		chunk.(*Chunk).reqDropItem(conn.player, &content, &position, &velocity)
 	})
 }
 

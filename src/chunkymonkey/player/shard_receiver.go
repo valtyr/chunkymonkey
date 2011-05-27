@@ -31,20 +31,20 @@ func (psr *playerShardReceiver) InventoryUpdate(shardInvId int32, slotIds []Slot
 	// TODO
 }
 
-func (psr *playerShardReceiver) RequestPlaceHeldItem(target BlockXyz, wasHeld slot.Slot) {
+func (psr *playerShardReceiver) ReqPlaceHeldItem(target BlockXyz, wasHeld slot.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
-		psr.player.requestPlaceHeldItem(&target, &wasHeld)
+		psr.player.reqPlaceHeldItem(&target, &wasHeld)
 	})
 }
 
-func (psr *playerShardReceiver) RequestOfferItem(fromChunk ChunkXz, entityId EntityId, item slot.Slot) {
+func (psr *playerShardReceiver) ReqOfferItem(fromChunk ChunkXz, entityId EntityId, item slot.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
-		psr.player.requestOfferItem(&fromChunk, entityId, &item)
+		psr.player.reqOfferItem(&fromChunk, entityId, &item)
 	})
 }
 
-func (psr *playerShardReceiver) RequestGiveItem(atPosition AbsXyz, item slot.Slot) {
+func (psr *playerShardReceiver) ReqGiveItem(atPosition AbsXyz, item slot.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
-		psr.player.requestGiveItem(&atPosition, &item)
+		psr.player.reqGiveItem(&atPosition, &item)
 	})
 }

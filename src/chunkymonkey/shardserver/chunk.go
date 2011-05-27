@@ -84,7 +84,7 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 	// Tell players that the block changed.
 	packet := &bytes.Buffer{}
 	proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
-	chunk.MulticastPlayers(-1, packet.Bytes())
+	chunk.reqMulticastPlayers(-1, packet.Bytes())
 
 	// Update neighbour caches of this change.
 	chunk.neighbours.setBlock(subLoc, blockType)
@@ -117,7 +117,7 @@ func (chunk *Chunk) AddSpawn(s stub.INonPlayerSpawn) {
 	// Spawn new item/mob for players.
 	buf := &bytes.Buffer{}
 	s.SendSpawn(buf)
-	chunk.MulticastPlayers(-1, buf.Bytes())
+	chunk.reqMulticastPlayers(-1, buf.Bytes())
 }
 
 func (chunk *Chunk) removeSpawn(s stub.INonPlayerSpawn) {
@@ -127,7 +127,7 @@ func (chunk *Chunk) removeSpawn(s stub.INonPlayerSpawn) {
 	// Tell all subscribers that the spawn's entity is destroyed.
 	buf := new(bytes.Buffer)
 	proto.WriteEntityDestroy(buf, e.EntityId)
-	chunk.MulticastPlayers(-1, buf.Bytes())
+	chunk.reqMulticastPlayers(-1, buf.Bytes())
 }
 
 func (chunk *Chunk) GetBlockExtra(subLoc *SubChunkXyz) interface{} {
@@ -180,7 +180,7 @@ func (chunk *Chunk) GetRecipeSet() *recipe.RecipeSet {
 	return chunk.mgr.gameRules.Recipes
 }
 
-func (chunk *Chunk) hitBlock(player stub.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
+func (chunk *Chunk) reqHitBlock(player stub.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
 
 	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
 	if !ok {
@@ -209,7 +209,7 @@ func (chunk *Chunk) hitBlock(player stub.IPlayerConnection, held slot.Slot, digS
 	return
 }
 
-func (chunk *Chunk) interactBlock(player stub.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
+func (chunk *Chunk) reqInteractBlock(player stub.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
 	// TODO use held item to better check of if the player is trying to place a
 	// block vs. perform some other interaction (e.g hoeing dirt). This is
 	// perhaps best solved by sending held item type and the face to
@@ -241,7 +241,7 @@ func (chunk *Chunk) interactBlock(player stub.IPlayerConnection, held slot.Slot,
 			target.Z + dz,
 		}
 
-		player.RequestPlaceHeldItem(destLoc, held)
+		player.ReqPlaceHeldItem(destLoc, held)
 	} else {
 		// Player is otherwise interacting with the block.
 		blockInstance := &block.BlockInstance{
@@ -259,7 +259,7 @@ func (chunk *Chunk) interactBlock(player stub.IPlayerConnection, held slot.Slot,
 // placeBlock attempts to place a block. This is called by PlayerBlockInteract
 // in the situation where the player interacts with an attachable block
 // (potentially in a different chunk to the one where the block gets placed).
-func (chunk *Chunk) requestPlaceItem(player stub.IPlayerConnection, target *BlockXyz, slot *slot.Slot) {
+func (chunk *Chunk) reqPlaceItem(player stub.IPlayerConnection, target *BlockXyz, slot *slot.Slot) {
 	// TODO defer a check for remaining items in slot, and do something with them
 	// (send to player or drop on the ground).
 
@@ -291,22 +291,22 @@ func (chunk *Chunk) requestPlaceItem(player stub.IPlayerConnection, target *Bloc
 	slot.Decrement()
 }
 
-func (chunk *Chunk) requestTakeItem(player stub.IPlayerConnection, entityId EntityId) {
+func (chunk *Chunk) reqTakeItem(player stub.IPlayerConnection, entityId EntityId) {
 	if spawn, ok := chunk.spawn[entityId]; ok {
 		if item, ok := spawn.(*item.Item); ok {
-			player.RequestGiveItem(*item.Position(), *item.GetSlot())
+			player.ReqGiveItem(*item.Position(), *item.GetSlot())
 
 			// Tell all subscribers to animate the item flying at the
 			// player.
 			buf := new(bytes.Buffer)
 			proto.WriteItemCollect(buf, entityId, player.GetEntityId())
-			chunk.MulticastPlayers(-1, buf.Bytes())
+			chunk.reqMulticastPlayers(-1, buf.Bytes())
 			chunk.removeSpawn(item)
 		}
 	}
 }
 
-func (chunk *Chunk) requestDropItem(player stub.IPlayerConnection, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
+func (chunk *Chunk) reqDropItem(player stub.IPlayerConnection, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
 	spawnedItem := item.NewItem(
 		content.ItemType,
 		content.Count,
@@ -443,7 +443,7 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) addPlayer(entityId EntityId, player stub.IPlayerConnection) {
+func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IPlayerConnection) {
 	chunk.subscribers[entityId] = player
 
 	buf := new(bytes.Buffer)
@@ -473,7 +473,7 @@ func (chunk *Chunk) addPlayer(entityId EntityId, player stub.IPlayerConnection) 
 	}
 }
 
-func (chunk *Chunk) removePlayer(entityId EntityId, sendPacket bool) {
+func (chunk *Chunk) reqUnsubscribeChunk(entityId EntityId, sendPacket bool) {
 	player, ok := chunk.subscribers[entityId]
 
 	if ok && sendPacket {
@@ -485,7 +485,7 @@ func (chunk *Chunk) removePlayer(entityId EntityId, sendPacket bool) {
 	}
 }
 
-func (chunk *Chunk) MulticastPlayers(exclude EntityId, packet []byte) {
+func (chunk *Chunk) reqMulticastPlayers(exclude EntityId, packet []byte) {
 	for entityId, player := range chunk.subscribers {
 		if entityId != exclude {
 			player.TransmitPacket(packet)
@@ -493,7 +493,7 @@ func (chunk *Chunk) MulticastPlayers(exclude EntityId, packet []byte) {
 	}
 }
 
-func (chunk *Chunk) addPlayerData(entityId EntityId, name string, pos AbsXyz, look LookBytes, held ItemTypeId) {
+func (chunk *Chunk) reqAddPlayerData(entityId EntityId, name string, pos AbsXyz, look LookBytes, held ItemTypeId) {
 	// TODO add other initial data in here.
 	newPlayerData := &playerData{
 		entityId:   entityId,
@@ -507,20 +507,20 @@ func (chunk *Chunk) addPlayerData(entityId EntityId, name string, pos AbsXyz, lo
 	// Spawn new player for existing players.
 	newPlayerPacket := new(bytes.Buffer)
 	newPlayerData.sendSpawn(newPlayerPacket)
-	chunk.MulticastPlayers(entityId, newPlayerPacket.Bytes())
+	chunk.reqMulticastPlayers(entityId, newPlayerPacket.Bytes())
 }
 
-func (chunk *Chunk) removePlayerData(entityId EntityId, isDisconnect bool) {
+func (chunk *Chunk) reqRemovePlayerData(entityId EntityId, isDisconnect bool) {
 	chunk.playersData[entityId] = nil, false
 
 	if isDisconnect {
 		buf := new(bytes.Buffer)
 		proto.WriteEntityDestroy(buf, entityId)
-		chunk.MulticastPlayers(entityId, buf.Bytes())
+		chunk.reqMulticastPlayers(entityId, buf.Bytes())
 	}
 }
 
-func (chunk *Chunk) setPlayerPositionLook(entityId EntityId, pos AbsXyz, look LookBytes, moved bool) {
+func (chunk *Chunk) reqSetPlayerPositionLook(entityId EntityId, pos AbsXyz, look LookBytes, moved bool) {
 	data, ok := chunk.playersData[entityId]
 
 	if !ok {
@@ -537,7 +537,7 @@ func (chunk *Chunk) setPlayerPositionLook(entityId EntityId, pos AbsXyz, look Lo
 	// Update subscribers.
 	buf := new(bytes.Buffer)
 	data.sendPositionLook(buf)
-	chunk.MulticastPlayers(entityId, buf.Bytes())
+	chunk.reqMulticastPlayers(entityId, buf.Bytes())
 
 	if moved {
 		player, ok := chunk.subscribers[entityId]
@@ -548,7 +548,7 @@ func (chunk *Chunk) setPlayerPositionLook(entityId EntityId, pos AbsXyz, look Lo
 				// TODO This check should be performed when items move as well.
 				if data.OverlapsItem(item) {
 					slot := item.GetSlot()
-					player.RequestOfferItem(chunk.loc, item.EntityId, *slot)
+					player.ReqOfferItem(chunk.loc, item.EntityId, *slot)
 				}
 			}
 		}
@@ -570,7 +570,7 @@ func (chunk *Chunk) sendUpdate() {
 	for _, e := range chunk.spawn {
 		e.SendUpdate(buf)
 	}
-	chunk.MulticastPlayers(-1, buf.Bytes())
+	chunk.reqMulticastPlayers(-1, buf.Bytes())
 }
 
 func (chunk *Chunk) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk) {

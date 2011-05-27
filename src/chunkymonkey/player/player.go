@@ -150,7 +150,7 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 
 	// TODO update playerData on current chunk
 
-	player.chunkSubs.curShard.MulticastPlayers(
+	player.chunkSubs.curShard.ReqMulticastPlayers(
 		player.chunkSubs.curChunkLoc,
 		player.EntityId,
 		buf.Bytes(),
@@ -170,7 +170,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 	if ok {
 		heldPtr, _ := player.inventory.HeldItem()
 		held := *heldPtr
-		shardConn.RequestHitBlock(held, *target, status, face)
+		shardConn.ReqHitBlock(held, *target, status, face)
 	}
 }
 
@@ -188,7 +188,7 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, target *Block
 	if ok {
 		heldPtr, _ := player.inventory.HeldItem()
 		held := *heldPtr
-		shardConn.RequestInteractBlock(held, *target, face)
+		shardConn.ReqInteractBlock(held, *target, face)
 	}
 }
 
@@ -370,7 +370,7 @@ func (player *Player) postLogin() {
 	})
 }
 
-func (player *Player) requestPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
+func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
 	curHeld, _ := player.inventory.HeldItem()
 
 	// Currently held item has changed since chunk saw it.
@@ -387,25 +387,25 @@ func (player *Player) requestPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot)
 
 		player.inventory.TakeOneHeldItem(&into)
 
-		shardConn.RequestPlaceItem(*target, into)
+		shardConn.ReqPlaceItem(*target, into)
 	}
 }
 
 // Used to receive items picked up from chunks. It is synchronous so that the
 // passed item can be looked at by the caller afterwards to see if it has been
 // consumed.
-func (player *Player) requestOfferItem(fromChunk *ChunkXz, entityId EntityId, item *slot.Slot) {
+func (player *Player) reqOfferItem(fromChunk *ChunkXz, entityId EntityId, item *slot.Slot) {
 	if player.inventory.CanTakeItem(item) {
 		shardConn, ok := player.chunkSubs.ShardConnForChunkXz(fromChunk)
 		if ok {
-			shardConn.RequestTakeItem(*fromChunk, entityId)
+			shardConn.ReqTakeItem(*fromChunk, entityId)
 		}
 	}
 
 	return
 }
 
-func (player *Player) requestGiveItem(atPosition *AbsXyz, item *slot.Slot) {
+func (player *Player) reqGiveItem(atPosition *AbsXyz, item *slot.Slot) {
 	defer func() {
 		// Check if item not fully consumed. If it is not, then throw the remains
 		// back to the chunk.
@@ -413,7 +413,7 @@ func (player *Player) requestGiveItem(atPosition *AbsXyz, item *slot.Slot) {
 			chunkLoc := atPosition.ToChunkXz()
 			shardConn, ok := player.chunkSubs.ShardConnForChunkXz(&chunkLoc)
 			if ok {
-				shardConn.RequestDropItem(*item, *atPosition, AbsVelocity{})
+				shardConn.ReqDropItem(*item, *atPosition, AbsVelocity{})
 			}
 		}
 	}()
@@ -464,7 +464,7 @@ func (player *Player) sendChatMessage(message string) {
 	buf := new(bytes.Buffer)
 	proto.WriteChatMessage(buf, message)
 
-	player.chunkSubs.curShard.MulticastPlayers(
+	player.chunkSubs.curShard.ReqMulticastPlayers(
 		player.chunkSubs.curChunkLoc,
 		player.EntityId,
 		buf.Bytes(),

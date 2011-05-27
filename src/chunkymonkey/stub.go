@@ -36,17 +36,17 @@ type IPlayerConnection interface {
 
 	InventoryUpdate(shardInvId int32, slotIds []SlotId, slots []slot.Slot)
 
-	// RequestPlaceHeldItem requests that the player frontend take one item from
-	// the held item stack and send it in a RequestPlaceItem to the target block.
-	// The player code may *not* honour this request (e.g there might be no
-	// suitable held item).
-	RequestPlaceHeldItem(target BlockXyz, wasHeld slot.Slot)
+	// ReqPlaceHeldItem requests that the player frontend take one item from the
+	// held item stack and send it in a ReqPlaceItem to the target block.  The
+	// player code may *not* honour this request (e.g there might be no suitable
+	// held item).
+	ReqPlaceHeldItem(target BlockXyz, wasHeld slot.Slot)
 
-	// RequestOfferItem requests that the player check if it can take the item.
-	// If it can then it should RequestTakeItem from the chunk.
-	RequestOfferItem(fromChunk ChunkXz, entityId EntityId, item slot.Slot)
+	// ReqOfferItem requests that the player check if it can take the item.  If
+	// it can then it should ReqTakeItem from the chunk.
+	ReqOfferItem(fromChunk ChunkXz, entityId EntityId, item slot.Slot)
 
-	RequestGiveItem(atPosition AbsXyz, item slot.Slot)
+	ReqGiveItem(atPosition AbsXyz, item slot.Slot)
 }
 
 // IShardConnection is the interface by which shards can be communicated to by
@@ -62,37 +62,37 @@ type IShardConnection interface {
 
 	// The following methods are requests upon chunks.
 
-	SubscribeChunk(chunkLoc ChunkXz)
+	ReqSubscribeChunk(chunkLoc ChunkXz)
 
-	UnsubscribeChunk(chunkLoc ChunkXz)
+	ReqUnsubscribeChunk(chunkLoc ChunkXz)
 
-	MulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte)
+	ReqMulticastPlayers(chunkLoc ChunkXz, exclude EntityId, packet []byte)
 
-	AddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId)
+	ReqAddPlayerData(chunkLoc ChunkXz, name string, position AbsXyz, look LookBytes, held ItemTypeId)
 
-	RemovePlayerData(chunkLoc ChunkXz, isDisconnect bool)
+	ReqRemovePlayerData(chunkLoc ChunkXz, isDisconnect bool)
 
-	SetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool)
+	ReqSetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool)
 
-	// RequestHitBlock requests that the targetted block be hit.
-	RequestHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face)
+	// ReqHitBlock requests that the targetted block be hit.
+	ReqHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face)
 
-	// RequestHitBlock requests that the targetted block be interacted with.
-	RequestInteractBlock(held slot.Slot, target BlockXyz, face Face)
+	// ReqHitBlock requests that the targetted block be interacted with.
+	ReqInteractBlock(held slot.Slot, target BlockXyz, face Face)
 
-	// RequestPlaceItem requests that the item passed be placed at the given
-	// target location. The shard *may* choose not to do this, but if it cannot,
-	// then it *must* account for the item in some way (maybe hand it back to the
-	// player or just drop it on the ground).
-	RequestPlaceItem(target BlockXyz, slot slot.Slot)
+	// ReqPlaceItem requests that the item passed be placed at the given target
+	// location. The shard *may* choose not to do this, but if it cannot, then it
+	// *must* account for the item in some way (maybe hand it back to the player
+	// or just drop it on the ground).
+	ReqPlaceItem(target BlockXyz, slot slot.Slot)
 
-	// RequestTakeItem requests that the item with the specified entityId is
-	// given to the player. The chunk doesn't have to respect this (particularly
-	// if the item no longer exists).
-	RequestTakeItem(chunkLoc ChunkXz, entityId EntityId)
+	// ReqTakeItem requests that the item with the specified entityId is given to
+	// the player. The chunk doesn't have to respect this (particularly if the
+	// item no longer exists).
+	ReqTakeItem(chunkLoc ChunkXz, entityId EntityId)
 
-	// RequestDropItem requests that an item be created.
-	RequestDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity)
+	// ReqDropItem requests that an item be created.
+	ReqDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity)
 }
 
 // IShardConnecter is used to look up shards and connect to them.
@@ -105,5 +105,5 @@ type IShardConnecter interface {
 type IChunk interface {
 	// Everything below must be called from within the containing shard's
 	// goroutine.
-	MulticastPlayers(exclude EntityId, packet []byte)
+	//MulticastPlayers(exclude EntityId, packet []byte)
 }

@@ -42,7 +42,7 @@ func (sub *chunkSubscriptions) Init(player *Player) {
 	sub.subscribeToChunks(initialChunkLocs)
 
 	sub.curShard = sub.shards[sub.curShardLoc.Key()].shard
-	sub.curShard.AddPlayerData(
+	sub.curShard.ReqAddPlayerData(
 		sub.curChunkLoc,
 		player.name,
 		player.position,
@@ -61,7 +61,7 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 			sub.moveToShard(newShardLoc)
 		}
 	} else {
-		sub.curShard.SetPlayerPositionLook(sub.curChunkLoc, *newLoc, *sub.player.look.ToLookBytes(), true)
+		sub.curShard.ReqSetPlayerPositionLook(sub.curChunkLoc, *newLoc, *sub.player.look.ToLookBytes(), true)
 	}
 }
 
@@ -70,7 +70,7 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 func (sub *chunkSubscriptions) Close() {
 	curShardLoc := sub.curChunkLoc.ToShardXz()
 	if ref, ok := sub.shards[curShardLoc.Key()]; ok {
-		ref.shard.RemovePlayerData(sub.curChunkLoc, true)
+		ref.shard.ReqRemovePlayerData(sub.curChunkLoc, true)
 	}
 
 	for key, ref := range sub.shards {
@@ -131,7 +131,7 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
 			}
 			sub.shards[shardKey] = ref
 		}
-		ref.shard.SubscribeChunk(chunkLoc)
+		ref.shard.ReqSubscribeChunk(chunkLoc)
 		ref.count++
 	}
 }
@@ -143,7 +143,7 @@ func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
 		shardLoc := chunkLoc.ToShardXz()
 		shardKey := shardLoc.Key()
 		if ref, ok := sub.shards[shardKey]; ok {
-			ref.shard.UnsubscribeChunk(chunkLoc)
+			ref.shard.ReqUnsubscribeChunk(chunkLoc)
 			ref.count--
 			if ref.count <= 0 {
 				ref.shard.Disconnect()
@@ -165,7 +165,7 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 
 	newShardLoc := newChunkLoc.ToShardXz()
 	if ref, ok := sub.shards[newShardLoc.Key()]; ok {
-		ref.shard.AddPlayerData(
+		ref.shard.ReqAddPlayerData(
 			newChunkLoc,
 			sub.player.name,
 			sub.player.position,
@@ -176,7 +176,7 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 
 	curShardLoc := sub.curChunkLoc.ToShardXz()
 	if ref, ok := sub.shards[curShardLoc.Key()]; ok {
-		ref.shard.RemovePlayerData(sub.curChunkLoc, false)
+		ref.shard.ReqRemovePlayerData(sub.curChunkLoc, false)
 	}
 
 	delChunkLocs := squareDifference(sub.curChunkLoc, newChunkLoc, ChunkRadius)
