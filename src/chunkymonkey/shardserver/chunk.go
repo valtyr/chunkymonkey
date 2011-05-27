@@ -101,7 +101,8 @@ func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemT
 	return
 }
 
-func (chunk *Chunk) TransferSpawn(s stub.INonPlayerSpawn) {
+// Tells the chunk to take posession of the item/mob from another chunk.
+func (chunk *Chunk) transferSpawn(s stub.INonPlayerSpawn) {
 	chunk.spawn[s.GetEntity().EntityId] = s
 }
 
@@ -398,7 +399,7 @@ func (chunk *Chunk) tick() {
 			// TODO Batch spawns up into a request per shard if there are efficiency
 			// concerns in sending them individually.
 			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk stub.IChunk) {
-				blockChunk.TransferSpawn(e)
+				blockChunk.(*Chunk).transferSpawn(e)
 			})
 		}
 	}

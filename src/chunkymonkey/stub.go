@@ -105,9 +105,5 @@ type IShardConnecter interface {
 type IChunk interface {
 	// Everything below must be called from within the containing shard's
 	// goroutine.
-
-	// Tells the chunk to take posession of the item/mob.
-	TransferSpawn(e INonPlayerSpawn)
-
 	MulticastPlayers(exclude EntityId, packet []byte)
 }
