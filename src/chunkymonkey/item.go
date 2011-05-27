@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 
-	"chunkymonkey/entity"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
@@ -13,7 +12,7 @@ import (
 )
 
 type Item struct {
-	entity.Entity
+	EntityId
 	slot.Slot
 	physObj     physics.PointObject
 	orientation OrientationBytes
@@ -29,10 +28,6 @@ func NewItem(itemType *itemtype.ItemType, count ItemCount, data ItemData, positi
 	item.Slot.Data = data
 	item.physObj.Init(position, velocity)
 	return
-}
-
-func (item *Item) GetEntity() *entity.Entity {
-	return &item.Entity
 }
 
 func (item *Item) GetSlot() *slot.Slot {
@@ -73,11 +68,11 @@ func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
 }
 
 func (item *Item) SendUpdate(writer io.Writer) (err os.Error) {
-	if err = proto.WriteEntity(writer, item.Entity.EntityId); err != nil {
+	if err = proto.WriteEntity(writer, item.EntityId); err != nil {
 		return
 	}
 
-	err = item.physObj.SendUpdate(writer, item.Entity.EntityId, &LookBytes{0, 0})
+	err = item.physObj.SendUpdate(writer, item.EntityId, &LookBytes{0, 0})
 
 	return
 }

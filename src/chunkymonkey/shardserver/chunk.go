@@ -102,16 +102,15 @@ func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemT
 }
 
 func (chunk *Chunk) TransferSpawn(s shardserver_external.INonPlayerSpawn) {
-	chunk.spawn[s.GetEntity().EntityId] = s
+	chunk.spawn[s.GetEntityId()] = s
 }
 
 // AddSpawn creates a mob or item in this chunk and notifies the new spawn to
 // all chunk subscribers.
 func (chunk *Chunk) AddSpawn(s shardserver_external.INonPlayerSpawn) {
-	e := s.GetEntity()
-	chunk.mgr.entityMgr.AddEntity(e)
-
-	chunk.spawn[s.GetEntityId()] = s
+	newEntityId := chunk.mgr.entityMgr.NewEntity()
+	s.SetEntityId(newEntityId)
+	chunk.spawn[newEntityId] = s
 
 	// Spawn new item/mob for players.
 	buf := &bytes.Buffer{}
@@ -120,12 +119,12 @@ func (chunk *Chunk) AddSpawn(s shardserver_external.INonPlayerSpawn) {
 }
 
 func (chunk *Chunk) removeSpawn(s shardserver_external.INonPlayerSpawn) {
-	e := s.GetEntity()
-	chunk.mgr.entityMgr.RemoveEntity(e)
-	chunk.spawn[e.EntityId] = nil, false
+	e := s.GetEntityId()
+	chunk.mgr.entityMgr.RemoveEntityById(e)
+	chunk.spawn[e] = nil, false
 	// Tell all subscribers that the spawn's entity is destroyed.
 	buf := new(bytes.Buffer)
-	proto.WriteEntityDestroy(buf, e.EntityId)
+	proto.WriteEntityDestroy(buf, e)
 	chunk.MulticastPlayers(-1, buf.Bytes())
 }
 
@@ -298,7 +297,7 @@ func (chunk *Chunk) requestTakeItem(player shardserver_external.IPlayerConnectio
 			// Tell all subscribers to animate the item flying at the
 			// player.
 			buf := new(bytes.Buffer)
-			proto.WriteItemCollect(buf, entityId, player.GetEntityId())
+			proto.WriteItemCollect(buf, entityId, player.EntityId)
 			chunk.MulticastPlayers(-1, buf.Bytes())
 			chunk.removeSpawn(item)
 		}
@@ -378,7 +377,7 @@ func (chunk *Chunk) tick() {
 		// Transfer spawns to new chunk.
 		for _, e := range outgoingSpawns {
 			// Remove mob/items from this chunk.
-			chunk.spawn[e.GetEntity().EntityId] = nil, false
+			chunk.spawn[e.GetEntityId()] = nil, false
 
 			// Transfer to other chunk.
 			chunkLoc := e.Position().ToChunkXz()

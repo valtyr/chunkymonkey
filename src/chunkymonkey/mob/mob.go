@@ -5,10 +5,9 @@ import (
 	"io"
 	"os"
 
-	"chunkymonkey/entity"
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
-	"chunkymonkey/types"
+	. "chunkymonkey/types"
 )
 
 var (
@@ -19,45 +18,37 @@ func init() {
 	expVarMobSpawnCount = expvar.NewInt("mob-spawn-count")
 }
 
-// When using an object of type Mob or a sub-type, the caller must set the
-// entity ID using, for example, game.AddSpawner(Mob.GetEntity()).
+// When using an object of type Mob or a sub-type, the caller must set an
+// EntityId, most likely obtained from the EntityManager.
 type Mob struct {
-	entity.Entity
-	mobType  types.EntityMobType
-	look     types.LookDegrees
+	EntityId
+	mobType  EntityMobType
+	look     LookDegrees
 	metadata map[byte]byte
 	// TODO: Change to an AABB object when we have that.
 	physObj physics.PointObject
 }
 
-func (mob *Mob) Init(id types.EntityMobType, position *types.AbsXyz, velocity *types.AbsVelocity) {
+func (mob *Mob) Init(id EntityMobType, position *AbsXyz, velocity *AbsVelocity) {
 	mob.physObj.Init(position, velocity)
 	mob.mobType = id
-	mob.look = types.LookDegrees{0, 0}
+	mob.look = LookDegrees{0, 0}
 	mob.metadata = map[byte]byte{
 		0:  byte(0),
 		16: byte(0),
 	}
 }
 
-func (mob *Mob) Position() *types.AbsXyz {
+func (mob *Mob) Position() *AbsXyz {
 	return &mob.physObj.Position
 }
 
-func (mob *Mob) SetPosition(pos types.AbsXyz) {
+func (mob *Mob) SetPosition(pos AbsXyz) {
 	mob.physObj.Position = pos
 }
 
-func (mob *Mob) SetLook(look types.LookDegrees) {
+func (mob *Mob) SetLook(look LookDegrees) {
 	mob.look = look
-}
-
-func (mob *Mob) GetEntityId() types.EntityId {
-	return mob.EntityId
-}
-
-func (mob *Mob) GetEntity() *entity.Entity {
-	return &mob.Entity
 }
 
 func (mob *Mob) SetBurning(burn bool) {
@@ -81,11 +72,11 @@ func (mob *Mob) FormatMetadata() []proto.EntityMetadata {
 }
 
 func (mob *Mob) SendUpdate(writer io.Writer) (err os.Error) {
-	if err = proto.WriteEntity(writer, mob.Entity.EntityId); err != nil {
+	if err = proto.WriteEntity(writer, mob.EntityId); err != nil {
 		return
 	}
 
-	err = mob.physObj.SendUpdate(writer, mob.Entity.EntityId, &types.LookBytes{0, 0})
+	err = mob.physObj.SendUpdate(writer, mob.EntityId, &LookBytes{0, 0})
 
 	return
 }
@@ -94,7 +85,7 @@ func (mob *Mob) SendUpdate(writer io.Writer) (err os.Error) {
 func (mob *Mob) SendSpawn(writer io.Writer) (err os.Error) {
 	err = proto.WriteEntitySpawn(
 		writer,
-		mob.Entity.EntityId,
+		mob.EntityId,
 		mob.mobType,
 		&mob.physObj.LastSentPosition,
 		mob.look.ToLookBytes(),
@@ -104,7 +95,7 @@ func (mob *Mob) SendSpawn(writer io.Writer) (err os.Error) {
 	}
 	err = proto.WriteEntityVelocity(
 		writer,
-		mob.Entity.EntityId,
+		mob.EntityId,
 		&mob.physObj.LastSentVelocity)
 	if err != nil {
 		return
@@ -125,7 +116,7 @@ var (
 	creeperBlueAura = byte(1)
 )
 
-func NewCreeper(position *types.AbsXyz, velocity *types.AbsVelocity) (c *Creeper) {
+func NewCreeper(position *AbsXyz, velocity *AbsVelocity) (c *Creeper) {
 	c = new(Creeper)
 	c.Mob.Init(CreeperType.Id, position, velocity)
 	c.Mob.metadata[17] = creeperNormal
@@ -145,7 +136,7 @@ type Skeleton struct {
 	Mob
 }
 
-func NewSkeleton(position *types.AbsXyz, velocity *types.AbsVelocity) (s *Skeleton) {
+func NewSkeleton(position *AbsXyz, velocity *AbsVelocity) (s *Skeleton) {
 	s = new(Skeleton)
 	s.Mob.Init(SkeletonType.Id, position, velocity)
 	return
@@ -156,7 +147,7 @@ type Spider struct {
 	Mob
 }
 
-func NewSpider(position *types.AbsXyz, velocity *types.AbsVelocity) (s *Spider) {
+func NewSpider(position *AbsXyz, velocity *AbsVelocity) (s *Spider) {
 	s = new(Spider)
 	s.Mob.Init(SpiderType.Id, position, velocity)
 	return
@@ -169,7 +160,7 @@ type Pig struct {
 	Mob
 }
 
-func NewPig(position *types.AbsXyz, velocity *types.AbsVelocity) (p *Pig) {
+func NewPig(position *AbsXyz, velocity *AbsVelocity) (p *Pig) {
 	p = new(Pig)
 	p.Mob.Init(PigType.Id, position, velocity)
 	return
@@ -179,7 +170,7 @@ type Sheep struct {
 	Mob
 }
 
-func NewSheep(position *types.AbsXyz, velocity *types.AbsVelocity) (s *Sheep) {
+func NewSheep(position *AbsXyz, velocity *AbsVelocity) (s *Sheep) {
 	s = new(Sheep)
 	s.Mob.Init(SheepType.Id, position, velocity)
 	return
@@ -189,7 +180,7 @@ type Cow struct {
 	Mob
 }
 
-func NewCow(position *types.AbsXyz, velocity *types.AbsVelocity) (c *Cow) {
+func NewCow(position *AbsXyz, velocity *AbsVelocity) (c *Cow) {
 	c = new(Cow)
 	c.Mob.Init(CowType.Id, position, velocity)
 	return
@@ -199,7 +190,7 @@ type Hen struct {
 	Mob
 }
 
-func NewHen(position *types.AbsXyz, velocity *types.AbsVelocity) (h *Hen) {
+func NewHen(position *AbsXyz, velocity *AbsVelocity) (h *Hen) {
 	h = new(Hen)
 	h.Mob.Init(HenType.Id, position, velocity)
 	return
@@ -209,7 +200,7 @@ type Squid struct {
 	Mob
 }
 
-func NewSquid(position *types.AbsXyz, velocity *types.AbsVelocity) (s *Squid) {
+func NewSquid(position *AbsXyz, velocity *AbsVelocity) (s *Squid) {
 	s = new(Squid)
 	s.Mob.Init(SquidType.Id, position, velocity)
 	return
@@ -219,7 +210,7 @@ type Wolf struct {
 	Mob
 }
 
-func NewWolf(position *types.AbsXyz, velocity *types.AbsVelocity) (w *Wolf) {
+func NewWolf(position *AbsXyz, velocity *AbsVelocity) (w *Wolf) {
 	w = new(Wolf)
 	w.Mob.Init(WolfType.Id, position, velocity)
 	// TODO(nictuku): String with an optional owner's username.
