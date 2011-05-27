@@ -398,8 +398,8 @@ func (chunk *Chunk) tick() {
 
 			// TODO Batch spawns up into a request per shard if there are efficiency
 			// concerns in sending them individually.
-			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk stub.IChunk) {
-				blockChunk.(*Chunk).transferSpawn(e)
+			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk *Chunk) {
+				blockChunk.transferSpawn(e)
 			})
 		}
 	}

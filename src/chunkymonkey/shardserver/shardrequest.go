@@ -1,7 +1,6 @@
 package shardserver
 
 import (
-	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -16,7 +15,7 @@ type iShardRequest interface {
 // runOnChunk runs a function on a specific chunk.
 type runOnChunk struct {
 	loc ChunkXz
-	fn  func(chunk stub.IChunk)
+	fn  func(chunk *Chunk)
 }
 
 func (req *runOnChunk) perform(shard *ChunkShard) {
@@ -28,7 +27,7 @@ func (req *runOnChunk) perform(shard *ChunkShard) {
 
 // runOnChunk runs a function on all loaded chunks in a shard.
 type runOnAllChunks struct {
-	fn func(chunk stub.IChunk)
+	fn func(chunk *Chunk)
 }
 
 func (req *runOnAllChunks) perform(shard *ChunkShard) {

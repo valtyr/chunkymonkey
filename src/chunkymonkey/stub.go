@@ -100,10 +100,3 @@ type IShardConnecter interface {
 	// Must currently be called from with the owning IGame's Enqueue:
 	ShardConnect(entityId EntityId, player IPlayerConnection, shardLoc ShardXz) IShardConnection
 }
-
-// TODO remove this interface when Enqueue* removed from IShardConnection
-type IChunk interface {
-	// Everything below must be called from within the containing shard's
-	// goroutine.
-	//MulticastPlayers(exclude EntityId, packet []byte)
-}
