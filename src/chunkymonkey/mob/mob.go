@@ -4,6 +4,7 @@ import (
 	"expvar"
 	"io"
 	"os"
+	"sort"
 
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
@@ -64,9 +65,20 @@ func (mob *Mob) Tick(blockQuery physics.BlockQueryFn) (leftBlock bool) {
 }
 
 func (mob *Mob) FormatMetadata() []proto.EntityMetadata {
-	x := []proto.EntityMetadata{}
-	for k, v := range mob.metadata {
-		x = append(x, proto.EntityMetadata{0, k, v})
+	ks := make([]byte, len(mob.metadata))
+
+	// Sort by byte index. It's not strictly needed by helps with tests.
+	i := 0
+	for k, _ := range mob.metadata {
+		ks[i] = k
+		i++
+	}
+	sort.Sort(byteArray(ks))
+
+	x := make([]proto.EntityMetadata, len(ks))
+	for i, k := range ks {
+		v := mob.metadata[k]
+		x[i] = proto.EntityMetadata{0, k, v}
 	}
 	return x
 }
@@ -219,3 +231,11 @@ func NewWolf(position *AbsXyz, velocity *AbsVelocity) (w *Wolf) {
 	w.Mob.metadata[18] = 0
 	return w
 }
+
+// byteArray implements the sort.Interface for a slice of bytes.
+// TODO: Move to a more appropriate place.
+type byteArray []byte
+
+func (p byteArray) Len() int           { return len(p) }
+func (p byteArray) Less(i, j int) bool { return p[i] < p[j] }
+func (p byteArray) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
