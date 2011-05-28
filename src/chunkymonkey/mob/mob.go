@@ -23,29 +23,22 @@ func init() {
 // EntityId, most likely obtained from the EntityManager.
 type Mob struct {
 	EntityId
+	physics.PointObject
 	mobType  EntityMobType
 	look     LookDegrees
+	// TODO(nictuku): Move to a more structured form.
 	metadata map[byte]byte
 	// TODO: Change to an AABB object when we have that.
-	physObj physics.PointObject
 }
 
 func (mob *Mob) Init(id EntityMobType, position *AbsXyz, velocity *AbsVelocity) {
-	mob.physObj.Init(position, velocity)
+	mob.PointObject.Init(position, velocity)
 	mob.mobType = id
 	mob.look = LookDegrees{0, 0}
 	mob.metadata = map[byte]byte{
 		0:  byte(0),
 		16: byte(0),
 	}
-}
-
-func (mob *Mob) Position() *AbsXyz {
-	return &mob.physObj.Position
-}
-
-func (mob *Mob) SetPosition(pos AbsXyz) {
-	mob.physObj.Position = pos
 }
 
 func (mob *Mob) SetLook(look LookDegrees) {
@@ -61,7 +54,8 @@ func (mob *Mob) SetBurning(burn bool) {
 }
 
 func (mob *Mob) Tick(blockQuery physics.BlockQueryFn) (leftBlock bool) {
-	return mob.physObj.Tick(blockQuery)
+	// TODO: Spontaneous mob movement.
+	return mob.PointObject.Tick(blockQuery)
 }
 
 func (mob *Mob) FormatMetadata() []proto.EntityMetadata {
@@ -88,7 +82,7 @@ func (mob *Mob) SendUpdate(writer io.Writer) (err os.Error) {
 		return
 	}
 
-	err = mob.physObj.SendUpdate(writer, mob.EntityId, &LookBytes{0, 0})
+	err = mob.PointObject.SendUpdate(writer, mob.EntityId, &LookBytes{0, 0})
 
 	return
 }
@@ -99,7 +93,7 @@ func (mob *Mob) SendSpawn(writer io.Writer) (err os.Error) {
 		writer,
 		mob.EntityId,
 		mob.mobType,
-		&mob.physObj.LastSentPosition,
+		&mob.PointObject.LastSentPosition,
 		mob.look.ToLookBytes(),
 		mob.FormatMetadata())
 	if err != nil {
@@ -108,7 +102,7 @@ func (mob *Mob) SendSpawn(writer io.Writer) (err os.Error) {
 	err = proto.WriteEntityVelocity(
 		writer,
 		mob.EntityId,
-		&mob.physObj.LastSentVelocity)
+		&mob.PointObject.LastSentVelocity)
 	if err != nil {
 		return
 	}
