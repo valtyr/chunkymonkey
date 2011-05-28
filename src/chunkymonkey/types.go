@@ -60,6 +60,14 @@ type ItemCount int8
 
 type EntityId int32
 
+func (e EntityId) GetEntityId() EntityId {
+	return e
+}
+
+func (e EntityId) SetEntityId(entityId EntityId) {
+	e = entityId
+}
+
 // The type of mob
 type EntityMobType byte
 

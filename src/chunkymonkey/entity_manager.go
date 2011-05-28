@@ -6,23 +6,13 @@ import (
 	. "chunkymonkey/types"
 )
 
-// TODO Should EntityManager hold interfaces to Entity-like objects instead?
-
-type Entity struct {
-	EntityId EntityId
-}
-
-func (entity *Entity) GetEntityId() EntityId {
-	return entity.EntityId
-}
-
 // TODO EntityManager should be a service in its own right, able to hand out
 // blocks of IDs and running its own goroutine (potentially shardable by
 // entityId if necessary). Right now taking the easy option of using a simple
 // lock.
 type EntityManager struct {
 	nextEntityId EntityId
-	entities     map[EntityId]*Entity
+	entities     map[EntityId]bool
 	lock         sync.Mutex
 }
 
@@ -31,7 +21,7 @@ func (mgr *EntityManager) Init() {
 	defer mgr.lock.Unlock()
 
 	mgr.nextEntityId = 0
-	mgr.entities = make(map[EntityId]*Entity)
+	mgr.entities = make(map[EntityId]bool)
 }
 
 func (mgr *EntityManager) createEntityId() EntityId {
@@ -54,18 +44,14 @@ func (mgr *EntityManager) createEntityId() EntityId {
 
 // AddEntity adds an entity to the manager, and assigns it a world-unique
 // EntityId.
-func (mgr *EntityManager) AddEntity(entity *Entity) {
+// NewEntity creates a world-unique entityId in the manager and returns it.
+func (mgr *EntityManager) NewEntity() EntityId {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
-	entity.EntityId = mgr.createEntityId()
-	mgr.entities[entity.EntityId] = entity
-}
-
-// RemoveEntity removes an entity from the manager.
-// TODO deprecate
-func (mgr *EntityManager) RemoveEntity(entity *Entity) {
-	mgr.RemoveEntityById(entity.EntityId)
+	entityId := mgr.createEntityId()
+	mgr.entities[entityId] = true
+	return entityId
 }
 
 // RemoveEntity removes an entity from the manager.
@@ -73,5 +59,5 @@ func (mgr *EntityManager) RemoveEntityById(entityId EntityId) {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
-	mgr.entities[entityId] = nil, false
+	mgr.entities[entityId] = false, false
 }

@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 
-	"chunkymonkey/entity"
 	"chunkymonkey/physics"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -21,7 +20,7 @@ type ISpawn interface {
 
 type INonPlayerSpawn interface {
 	ISpawn
-	GetEntity() *entity.Entity
+	SetEntityId(EntityId)
 	Tick(physics.BlockQueryFn) (leftBlock bool)
 }
 

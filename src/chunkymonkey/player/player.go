@@ -10,7 +10,6 @@ import (
 	"os"
 	"sync"
 
-	"chunkymonkey/entity"
 	"chunkymonkey/inventory"
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
@@ -32,7 +31,7 @@ func init() {
 }
 
 type Player struct {
-	entity.Entity
+	EntityId
 	shardReceiver  playerShardReceiver
 	shardConnecter stub.IShardConnecter
 	conn           net.Conn

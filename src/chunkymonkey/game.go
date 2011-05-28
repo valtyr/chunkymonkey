@@ -157,9 +157,9 @@ func (game *Game) Serve(addr string) {
 // addPlayer sends spawn messages to all players in range. It also spawns all
 // existing players so the new player can see them.
 func (game *Game) addPlayer(newPlayer *player.Player) {
-	entity := &newPlayer.Entity
-	game.entityManager.AddEntity(entity)
-	game.players[entity.EntityId] = newPlayer
+	entity := game.entityManager.NewEntity()
+	newPlayer.SetEntityId(entity)
+	game.players[entity] = newPlayer
 }
 
 func (game *Game) removePlayer(entityId EntityId) {
