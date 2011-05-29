@@ -37,8 +37,8 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPl
 				aspect.ejectItems(instance)
 			})
 		}
-		inv := inventory.NewWorkbenchInventory(ejectItems, instance.Chunk.GetRecipeSet())
-		extra = newWorkbenchExtra(&instance.BlockLoc, inv)
+		inv := inventory.NewWorkbenchInventory(instance.Chunk.GetRecipeSet())
+		extra = newWorkbenchExtra(&instance.BlockLoc, inv, ejectItems)
 		instance.Chunk.SetBlockExtra(&instance.SubLoc, extra)
 	}
 
@@ -61,19 +61,21 @@ func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
 // workbenchExtra is the data stored in Chunk.SetBlockExtra. It also implements
 // IInventorySubscriber to relay events to player(s) subscribed.
 type workbenchExtra struct {
-	blockLoc    BlockXyz
-	inv         *inventory.WorkbenchInventory
-	subscribers map[stub.IPlayerConnection]bool
+	blockLoc       BlockXyz
+	inv            *inventory.WorkbenchInventory
+	subscribers    map[stub.IPlayerConnection]bool
+	onUnsubscribed func()
 }
 
-func newWorkbenchExtra(blockLoc *BlockXyz, inv *inventory.WorkbenchInventory) *workbenchExtra {
+func newWorkbenchExtra(blockLoc *BlockXyz, inv *inventory.WorkbenchInventory, onUnsubscribed func()) *workbenchExtra {
 	extra := &workbenchExtra{
-		blockLoc: *blockLoc,
-		inv: inv,
-		subscribers: make(map[stub.IPlayerConnection]bool),
+		blockLoc:       *blockLoc,
+		inv:            inv,
+		subscribers:    make(map[stub.IPlayerConnection]bool),
+		onUnsubscribed: onUnsubscribed,
 	}
 
-	inv.AddSubscriber(extra)
+	inv.SetSubscriber(extra)
 
 	return extra
 }
@@ -89,6 +91,9 @@ func (extra *workbenchExtra) AddSubscriber(player stub.IPlayerConnection) {
 
 func (extra *workbenchExtra) RemoveSubscriber(player stub.IPlayerConnection) {
 	extra.subscribers[player] = false, false
+	if len(extra.subscribers) == 0 && extra.onUnsubscribed != nil {
+		extra.onUnsubscribed()
+	}
 }
 
 func (extra *workbenchExtra) SlotUpdate(slot *slot.Slot, slotId SlotId) {

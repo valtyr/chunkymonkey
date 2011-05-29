@@ -17,46 +17,33 @@ type IInventorySubscriber interface {
 }
 
 type Inventory struct {
-	slots          []slot.Slot
-	subscribers    map[IInventorySubscriber]bool
-	// TODO consider moving the logic around onUnsubscribed and having more than
-	// one subscriber into block.workbenchExtra.
-	onUnsubscribed func()
+	slots      []slot.Slot
+	subscriber IInventorySubscriber
 }
 
 // Init initializes the inventory. onUnsubscribed is called in a new goroutine
 // when the number of subscribers to the inventory reaches zero (but is not
 // called initially).
-func (inv *Inventory) Init(size int, onUnsubscribed func()) {
+func (inv *Inventory) Init(size int) {
 	inv.slots = make([]slot.Slot, size)
 	for i := range inv.slots {
 		inv.slots[i].Init()
 	}
-	inv.subscribers = make(map[IInventorySubscriber]bool)
-	inv.onUnsubscribed = onUnsubscribed
 }
 
 func (inv *Inventory) Destroy() {
-	for sub := range inv.subscribers {
-		sub.Unsubscribed()
-	}
 	// TODO call this method from the appropriate place(s).
-	// TODO decide if inv.onUnsubscribed should be called.
+	if inv.subscriber != nil {
+		inv.subscriber.Unsubscribed()
+	}
 }
 
 func (inv *Inventory) NumSlots() SlotId {
 	return SlotId(len(inv.slots))
 }
 
-func (inv *Inventory) AddSubscriber(subscriber IInventorySubscriber) {
-	inv.subscribers[subscriber] = true
-}
-
-func (inv *Inventory) RemoveSubscriber(subscriber IInventorySubscriber) {
-	inv.subscribers[subscriber] = false, false
-	if len(inv.subscribers) == 0 && inv.onUnsubscribed != nil {
-		inv.onUnsubscribed()
-	}
+func (inv *Inventory) SetSubscriber(subscriber IInventorySubscriber) {
+	inv.subscriber = subscriber
 }
 
 // StandardClick takes the default actions upon a click event from a player.
@@ -175,7 +162,7 @@ func (inv *Inventory) WriteProtoSlots(slots []proto.WindowSlot) {
 
 // Send message about the slot change to the relevant places.
 func (inv *Inventory) slotUpdate(slot *slot.Slot, slotId SlotId) {
-	for subscriber := range inv.subscribers {
-		subscriber.SlotUpdate(slot, slotId)
+	if inv.subscriber != nil {
+		inv.subscriber.SlotUpdate(slot, slotId)
 	}
 }

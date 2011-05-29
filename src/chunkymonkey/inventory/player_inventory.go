@@ -46,10 +46,10 @@ type PlayerInventory struct {
 func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *recipe.RecipeSet) {
 	w.entityId = entityId
 
-	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, nil, recipes)
-	w.armor.Init(playerInvArmorNum, nil)
-	w.main.Init(playerInvMainNum, nil)
-	w.holding.Init(playerInvHoldingNum, nil)
+	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, recipes)
+	w.armor.Init(playerInvArmorNum)
+	w.main.Init(playerInvMainNum)
+	w.holding.Init(playerInvHoldingNum)
 	w.Window.Init(
 		WindowIdInventory,
 		// Note that we have no known value for invTypeId - but it's only used
@@ -63,6 +63,14 @@ func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes 
 		&w.holding,
 	)
 	w.holdingIndex = 0
+}
+
+// Resubscribe should be called when another window has potentially been
+// subscribed to the player's inventory, and subsequently closed.
+func (w *PlayerInventory) Resubscribe() {
+	for i := range w.Window.views {
+		w.Window.views[i].Resubscribe()
+	}
 }
 
 // NewWindow creates a new window for the player that shares its player

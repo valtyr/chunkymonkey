@@ -15,8 +15,7 @@ type IInventory interface {
 	NumSlots() SlotId
 	StandardClick(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool)
 	TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool)
-	AddSubscriber(subscriber IInventorySubscriber)
-	RemoveSubscriber(subscriber IInventorySubscriber)
+	SetSubscriber(subscriber IInventorySubscriber)
 	WriteProtoSlots(slots []proto.WindowSlot)
 }
 
@@ -51,7 +50,11 @@ func (iv *inventoryView) Init(window *Window, inventory IInventory, startSlot Sl
 	iv.inventory = inventory
 	iv.startSlot = startSlot
 	iv.endSlot = endSlot
-	iv.inventory.AddSubscriber(iv)
+	iv.inventory.SetSubscriber(iv)
+}
+
+func (iv *inventoryView) Resubscribe() {
+	iv.inventory.SetSubscriber(iv)
 }
 
 func (iv *inventoryView) Unsubscribed() {
@@ -59,7 +62,7 @@ func (iv *inventoryView) Unsubscribed() {
 }
 
 func (iv *inventoryView) Finalize() {
-	iv.inventory.RemoveSubscriber(iv)
+	iv.inventory.SetSubscriber(nil)
 }
 
 // Implementing IInventorySubscriber - relays inventory changes to the viewer

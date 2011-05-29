@@ -373,30 +373,30 @@ func (player *Player) reqInventorySubscribed(block *BlockXyz, invTypeId InvTypeI
 	log.Printf("reqInventorySubscribed %#v, %d, %v", block, invTypeId, slots)
 
 	/*
-	TODO adapt to work with new remote inventories.
-	player.closeCurrentWindow(true)
-	window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
-	if window == nil {
-		return
-	}
+		TODO adapt to work with new remote inventories.
+		player.closeCurrentWindow(true)
+		window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
+		if window == nil {
+			return
+		}
 
-	buf := &bytes.Buffer{}
-	if err := window.WriteWindowOpen(buf); err != nil {
-		window.Finalize(false)
-		return
-	}
-	if err := window.WriteWindowItems(buf); err != nil {
-		window.Finalize(false)
-		return
-	}
-	player.TransmitPacket(buf.Bytes())
+		buf := &bytes.Buffer{}
+		if err := window.WriteWindowOpen(buf); err != nil {
+			window.Finalize(false)
+			return
+		}
+		if err := window.WriteWindowItems(buf); err != nil {
+			window.Finalize(false)
+			return
+		}
+		player.TransmitPacket(buf.Bytes())
 
-	player.curWindow = window
-	if player.nextWindowId >= WindowIdFreeMax {
-		player.nextWindowId = WindowIdFreeMin
-	} else {
-		player.nextWindowId++
-	}
+		player.curWindow = window
+		if player.nextWindowId >= WindowIdFreeMax {
+			player.nextWindowId = WindowIdFreeMin
+		} else {
+			player.nextWindowId++
+		}
 	*/
 }
 
@@ -478,4 +478,5 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 		player.curWindow.Finalize(sendClosePacket)
 	}
 	player.curWindow = nil
+	player.inventory.Resubscribe()
 }

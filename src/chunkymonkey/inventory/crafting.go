@@ -19,8 +19,8 @@ type CraftingInventory struct {
 	recipes       *recipe.RecipeSet
 }
 
-func (inv *CraftingInventory) Init(width, height int, onUnsubscribed func(), recipes *recipe.RecipeSet) {
-	inv.Inventory.Init(1+width*height, onUnsubscribed)
+func (inv *CraftingInventory) Init(width, height int, recipes *recipe.RecipeSet) {
+	inv.Inventory.Init(1 + width*height)
 	inv.width = width
 	inv.height = height
 	inv.recipes = recipes
@@ -62,12 +62,11 @@ type WorkbenchInventory struct {
 	CraftingInventory
 }
 
-func NewWorkbenchInventory(onUnsubscribed func(), recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
+func NewWorkbenchInventory(recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
 	inv = new(WorkbenchInventory)
 	inv.CraftingInventory.Init(
 		workbenchInvCraftWidth,
 		workbenchInvCraftHeight,
-		onUnsubscribed,
 		recipes,
 	)
 	return
