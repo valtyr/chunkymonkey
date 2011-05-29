@@ -111,6 +111,14 @@ func (conn *localShardConnection) ReqDropItem(content slot.Slot, position AbsXyz
 	})
 }
 
+func (conn *localShardConnection) ReqInventoryClick(block BlockXyz, cursor slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+	// TODO
+}
+
+func (conn *localShardConnection) ReqInventoryUnsubscribed(block BlockXyz) {
+	// TODO
+}
+
 // LocalShardManager contains all chunk shards and can look them up. It
 // implements IShardConnecter and is for use in hosting all shards in the local
 // process.

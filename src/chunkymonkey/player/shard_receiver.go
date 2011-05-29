@@ -23,11 +23,19 @@ func (psr *playerShardReceiver) TransmitPacket(packet []byte) {
 	psr.player.TransmitPacket(packet)
 }
 
-func (psr *playerShardReceiver) InventorySubscribed(shardInvId int32, invTypeId InvTypeId) {
+func (psr *playerShardReceiver) ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []slot.Slot) {
 	// TODO
 }
 
-func (psr *playerShardReceiver) InventoryUpdate(shardInvId int32, slotIds []SlotId, slots []slot.Slot) {
+func (psr *playerShardReceiver) ReqInventorySlotUpdate(block BlockXyz, slotIds []SlotId, slot slot.Slot, slotId SlotId) {
+	// TODO
+}
+
+func (psr *playerShardReceiver) ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot) {
+	// TODO
+}
+
+func (psr *playerShardReceiver) ReqInventoryUnsubscribed(block BlockXyz) {
 	// TODO
 }
 

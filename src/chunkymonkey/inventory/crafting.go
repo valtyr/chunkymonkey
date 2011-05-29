@@ -42,9 +42,6 @@ func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick
 		return
 	}
 
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
-
 	if slotId == 0 {
 		// Player took items from the output slot. Subtract 1 count from each
 		// non-empty input slot.
@@ -79,9 +76,6 @@ func NewWorkbenchInventory(onUnsubscribed func(), recipes *recipe.RecipeSet) (in
 // TakeAllItems empties the inventory, and returns all items that were inside
 // it inside a slice of Slots.
 func (inv *WorkbenchInventory) TakeAllItems() (items []slot.Slot) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
-
 	items = make([]slot.Slot, 0, len(inv.slots)-1)
 
 	// The output slot gets emptied, the only items that are to be ejected are

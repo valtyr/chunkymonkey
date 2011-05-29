@@ -1,8 +1,6 @@
 package inventory
 
 import (
-	"sync"
-
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -13,7 +11,6 @@ type IInventorySubscriber interface {
 }
 
 type Inventory struct {
-	lock           sync.Mutex
 	slots          []slot.Slot
 	subscribers    map[IInventorySubscriber]bool
 	onUnsubscribed func()
@@ -32,14 +29,10 @@ func (inv *Inventory) Init(size int, onUnsubscribed func()) {
 }
 
 func (inv *Inventory) AddSubscriber(subscriber IInventorySubscriber) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
 	inv.subscribers[subscriber] = true
 }
 
 func (inv *Inventory) RemoveSubscriber(subscriber IInventorySubscriber) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
 	inv.subscribers[subscriber] = false, false
 	if len(inv.subscribers) == 0 && inv.onUnsubscribed != nil {
 		go inv.onUnsubscribed()
@@ -48,9 +41,6 @@ func (inv *Inventory) RemoveSubscriber(subscriber IInventorySubscriber) {
 
 // StandardClick takes the default actions upon a click event from a player.
 func (inv *Inventory) StandardClick(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
-
 	if slotId < 0 || int(slotId) > len(inv.slots) {
 		return false
 	}
@@ -86,9 +76,6 @@ func (inv *Inventory) StandardClick(slotId SlotId, cursor *slot.Slot, rightClick
 // TakeOnlyClick only allows items to be taken from the slot, and it only
 // allows the *whole* stack to be taken, otherwise no items are taken at all.
 func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
-
 	if slotId < 0 || int(slotId) > len(inv.slots) {
 		return false
 	}
@@ -107,8 +94,6 @@ func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick
 
 // PutItem attempts to put the given item into the inventory.
 func (inv *Inventory) PutItem(item *slot.Slot) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
 	// TODO optimize this algorithm, maybe by maintaining a map of non-full
 	// slots containing an item of various item type IDs. Additionally, it
 	// should prefer to put stackable items into stacks of the same type,
@@ -127,9 +112,6 @@ func (inv *Inventory) PutItem(item *slot.Slot) {
 // CanTakeItem returns true if it can take at least one item from the passed
 // Slot.
 func (inv *Inventory) CanTakeItem(item *slot.Slot) bool {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
-
 	if item.Count <= 0 {
 		return false
 	}
@@ -151,8 +133,6 @@ func (inv *Inventory) CanTakeItem(item *slot.Slot) bool {
 // item data in the inventory.
 // Precondition: len(slots) == len(inv.slots)
 func (inv *Inventory) writeProtoSlots(slots []proto.WindowSlot) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
 	for i := range inv.slots {
 		src := &inv.slots[i]
 		itemTypeId := ItemTypeIdNull

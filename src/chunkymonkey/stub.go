@@ -31,9 +31,20 @@ type IPlayerConnection interface {
 
 	TransmitPacket(packet []byte)
 
-	InventorySubscribed(shardInvId int32, invTypeId InvTypeId)
+	// ReqInventorySubscribed informs the player that an inventory has been
+	// opened. The block position 
+	ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []slot.Slot)
 
-	InventoryUpdate(shardInvId int32, slotIds []SlotId, slots []slot.Slot)
+	// ReqInventorySlotUpdate informs the player of a change to a slot in the
+	// open inventory.
+	ReqInventorySlotUpdate(block BlockXyz, slotIds []SlotId, slot slot.Slot, slotId SlotId)
+
+	// ReqInventoryCursorUpdate informs the player of their new cursor contents.
+	ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot)
+
+	// ReqInventorySubscribed informs the player that an inventory has been
+	// closed.
+	ReqInventoryUnsubscribed(block BlockXyz)
 
 	// ReqPlaceHeldItem requests that the player frontend take one item from the
 	// held item stack and send it in a ReqPlaceItem to the target block.  The
@@ -45,6 +56,9 @@ type IPlayerConnection interface {
 	// it can then it should ReqTakeItem from the chunk.
 	ReqOfferItem(fromChunk ChunkXz, entityId EntityId, item slot.Slot)
 
+	// ReqGiveItem requests that the player takes the item contents into their
+	// inventory. If they cannot, then the player should drop the item at the
+	// given position.
 	ReqGiveItem(atPosition AbsXyz, item slot.Slot)
 }
 
@@ -92,6 +106,16 @@ type IShardConnection interface {
 
 	// ReqDropItem requests that an item be created.
 	ReqDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity)
+
+	// ReqInventoryClick requests that the given cursor be "clicked" onto the
+	// inventory. The chunk should send a replying ReqInventoryCursorUpdate to
+	// reflect the new state of the cursor afterwards - in addition to any
+	// ReqInventorySlotUpdate to all subscribers to the inventory.
+	ReqInventoryClick(block BlockXyz, cursor slot.Slot, rightClick bool, shiftClick bool, slotId SlotId)
+
+	// ReqInventoryUnsubscribed requests that the inventory for the block be
+	// unsubscribed to.
+	ReqInventoryUnsubscribed(block BlockXyz)
 }
 
 // IShardConnecter is used to look up shards and connect to them.
