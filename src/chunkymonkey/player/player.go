@@ -369,6 +369,37 @@ func (player *Player) postLogin() {
 	})
 }
 
+func (player *Player) reqInventorySubscribed(block *BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot) {
+	log.Printf("reqInventorySubscribed %#v, %d, %v", block, invTypeId, slots)
+
+	/*
+	TODO adapt to work with new remote inventories.
+	player.closeCurrentWindow(true)
+	window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
+	if window == nil {
+		return
+	}
+
+	buf := &bytes.Buffer{}
+	if err := window.WriteWindowOpen(buf); err != nil {
+		window.Finalize(false)
+		return
+	}
+	if err := window.WriteWindowItems(buf); err != nil {
+		window.Finalize(false)
+		return
+	}
+	player.TransmitPacket(buf.Bytes())
+
+	player.curWindow = window
+	if player.nextWindowId >= WindowIdFreeMax {
+		player.nextWindowId = WindowIdFreeMin
+	} else {
+		player.nextWindowId++
+	}
+	*/
+}
+
 func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
 	curHeld, _ := player.inventory.HeldItem()
 
@@ -427,36 +458,6 @@ func (player *Player) Enqueue(f func(*Player)) {
 		return
 	}
 	player.mainQueue <- f
-}
-
-// OpenWindow queues a request that the player opens the given window type.
-// TODO update for altered chunk interaction.
-func (player *Player) OpenWindow(invTypeId InvTypeId, inventory interface{}) {
-	player.Enqueue(func(_ *Player) {
-		player.closeCurrentWindow(true)
-		window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
-		if window == nil {
-			return
-		}
-
-		buf := &bytes.Buffer{}
-		if err := window.WriteWindowOpen(buf); err != nil {
-			window.Finalize(false)
-			return
-		}
-		if err := window.WriteWindowItems(buf); err != nil {
-			window.Finalize(false)
-			return
-		}
-		player.TransmitPacket(buf.Bytes())
-
-		player.curWindow = window
-		if player.nextWindowId >= WindowIdFreeMax {
-			player.nextWindowId = WindowIdFreeMin
-		} else {
-			player.nextWindowId++
-		}
-	})
 }
 
 func (player *Player) sendChatMessage(message string) {

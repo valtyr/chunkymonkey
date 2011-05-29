@@ -25,7 +25,9 @@ func (psr *playerShardReceiver) TransmitPacket(packet []byte) {
 }
 
 func (psr *playerShardReceiver) ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot) {
-	// TODO
+	psr.player.Enqueue(func(_ *Player) {
+		psr.player.reqInventorySubscribed(&block, invTypeId, slots)
+	})
 }
 
 func (psr *playerShardReceiver) ReqInventorySlotUpdate(block BlockXyz, slot slot.Slot, slotId SlotId) {
