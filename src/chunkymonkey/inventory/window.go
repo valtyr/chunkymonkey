@@ -10,6 +10,16 @@ import (
 	. "chunkymonkey/types"
 )
 
+// IInventory is the interface that windows require of inventories.
+type IInventory interface {
+	NumSlots() SlotId
+	StandardClick(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool)
+	TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool)
+	AddSubscriber(subscriber IInventorySubscriber)
+	RemoveSubscriber(subscriber IInventorySubscriber)
+	WriteProtoSlots(slots []proto.WindowSlot)
+}
+
 // IWindow is the interface on to types that represent a view on to multiple
 // inventories.
 type IWindow interface {
@@ -31,12 +41,12 @@ type IWindowViewer interface {
 // inventory at a particular slot range inside the window.
 type inventoryView struct {
 	window    *Window
-	inventory *Inventory
+	inventory IInventory
 	startSlot SlotId
 	endSlot   SlotId
 }
 
-func (iv *inventoryView) Init(window *Window, inventory *Inventory, startSlot SlotId, endSlot SlotId) {
+func (iv *inventoryView) Init(window *Window, inventory IInventory, startSlot SlotId, endSlot SlotId) {
 	iv.window = window
 	iv.inventory = inventory
 	iv.startSlot = startSlot
@@ -68,21 +78,21 @@ type Window struct {
 	viewer    IWindowViewer
 	views     []inventoryView
 	title     string
-	numSlots  int
+	numSlots  SlotId
 }
 
 // Init initializes a window as a view onto the given inventories.
-func (w *Window) Init(windowId WindowId, invTypeId InvTypeId, viewer IWindowViewer, title string, inventories ...*Inventory) {
+func (w *Window) Init(windowId WindowId, invTypeId InvTypeId, viewer IWindowViewer, title string, inventories ...IInventory) {
 	w.windowId = windowId
 	w.invTypeId = invTypeId
 	w.viewer = viewer
 	w.title = title
 
 	w.views = make([]inventoryView, len(inventories))
-	startSlot := 0
+	startSlot := SlotId(0)
 	for index, inv := range inventories {
-		endSlot := startSlot + len(inv.slots)
-		w.views[index].Init(w, inv, SlotId(startSlot), SlotId(endSlot))
+		endSlot := startSlot + inv.NumSlots()
+		w.views[index].Init(w, inv, startSlot, endSlot)
 		startSlot = endSlot
 	}
 	w.numSlots = startSlot

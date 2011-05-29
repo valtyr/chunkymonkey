@@ -44,6 +44,10 @@ func (inv *Inventory) Destroy() {
 	// TODO decide if inv.onUnsubscribed should be called.
 }
 
+func (inv *Inventory) NumSlots() SlotId {
+	return SlotId(len(inv.slots))
+}
+
 func (inv *Inventory) AddSubscriber(subscriber IInventorySubscriber) {
 	inv.subscribers[subscriber] = true
 }
