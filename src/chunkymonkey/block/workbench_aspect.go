@@ -1,6 +1,8 @@
 package block
 
 import (
+	"log"
+
 	"chunkymonkey/inventory"
 	"chunkymonkey/slot"
 	"chunkymonkey/stub"
@@ -43,6 +45,19 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPl
 	}
 
 	extra.AddSubscriber(player)
+}
+
+func (aspect *WorkbenchAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+	extra, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*workbenchExtra)
+	if !ok {
+		// TODO send transaction failure, maybe send the cursor state unchanged
+		// right back?
+		player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
+		return
+	}
+
+	extra.inv.Click(slotId, cursor, rightClick, shiftClick)
+	player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
 }
 
 func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {

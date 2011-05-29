@@ -77,16 +77,11 @@ func (w *PlayerInventory) Resubscribe() {
 // NewWindow creates a new window for the player that shares its player
 // inventory sections with `w`. Returns nil for unrecognized inventory types.
 // TODO implement more inventory types.
-func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId, inv interface{}) IWindow {
+func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId, inv IInventory) IWindow {
 	switch invTypeId {
 	case InvTypeIdWorkbench:
-		if crafting, ok := inv.(*inventory.WorkbenchInventory); ok && crafting != nil {
-			return NewWorkbenchWindow(
-				w.entityId, w.viewer,
-				windowId,
-				crafting, &w.main, &w.holding)
-		}
-	default:
+		return NewWorkbenchWindow(
+			w.entityId, w.viewer, windowId, inv, &w.main, &w.holding)
 	}
 	return nil
 }
@@ -157,11 +152,11 @@ func (w *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick boo
 		// TODO - handle armor
 		return false
 	case slotId < playerInvMainEnd:
-		accepted = w.main.StandardClick(
+		accepted = w.main.Click(
 			slotId-playerInvMainStart,
 			cursor, rightClick, shiftClick)
 	case slotId < playerInvHoldingEnd:
-		accepted = w.holding.StandardClick(
+		accepted = w.holding.Click(
 			slotId-playerInvHoldingStart,
 			cursor, rightClick, shiftClick)
 	}

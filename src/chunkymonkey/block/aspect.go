@@ -5,6 +5,7 @@ import (
 
 	"chunkymonkey/itemtype"
 	"chunkymonkey/recipe"
+	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
@@ -43,4 +44,5 @@ type IBlockAspect interface {
 	Name() string
 	Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool)
 	Interact(instance *BlockInstance, player stub.IPlayerConnection)
+	Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId)
 }

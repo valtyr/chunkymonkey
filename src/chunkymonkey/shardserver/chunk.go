@@ -317,6 +317,32 @@ func (chunk *Chunk) reqDropItem(player stub.IPlayerConnection, content *slot.Slo
 	chunk.AddSpawn(spawnedItem)
 }
 
+func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *BlockXyz, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+	// TODO this code block looks to be rather common to calls to block aspects.
+	{
+		index, subLoc, ok := chunk.getBlockIndexByBlockXyz(blockLoc)
+		if !ok {
+			return
+		}
+
+		blockTypeId := index.GetBlockId(chunk.blocks)
+
+		if blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId); ok && blockType.Destructable {
+			blockData := index.GetBlockData(chunk.blockData)
+
+			blockInstance := &block.BlockInstance{
+				Chunk:    chunk,
+				BlockLoc: *blockLoc,
+				SubLoc:   *subLoc,
+				Data:     blockData,
+			}
+			blockType.Aspect.Click(blockInstance, player, cursor, rightClick, shiftClick, slotId)
+		} else {
+			log.Printf("%v.reqInventoryClick: Attempted to click within unknown block Id %d", chunk, blockTypeId)
+		}
+	}
+}
+
 // Used to read the BlockId of a block that's either in the chunk, or
 // immediately adjoining it in a neighbouring chunk via the side caches.
 func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, isWithinChunk bool, blockUnknownId bool) {

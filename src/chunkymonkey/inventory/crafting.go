@@ -34,7 +34,7 @@ func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick
 			slotId, cursor, rightClick, shiftClick)
 	} else {
 		// Player may interact with the input slots like any other slot.
-		accepted = inv.Inventory.StandardClick(
+		accepted = inv.Inventory.Click(
 			slotId, cursor, rightClick, shiftClick)
 	}
 

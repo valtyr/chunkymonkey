@@ -20,12 +20,12 @@ const (
 
 type WorkbenchWindow struct {
 	Window
-	crafting *inventory.WorkbenchInventory
+	crafting IInventory
 	main     *inventory.Inventory
 	holding  *inventory.Inventory
 }
 
-func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, windowId WindowId, crafting *inventory.WorkbenchInventory, main, holding *inventory.Inventory) (w *WorkbenchWindow) {
+func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, windowId WindowId, crafting IInventory, main, holding *inventory.Inventory) (w *WorkbenchWindow) {
 	w = &WorkbenchWindow{
 		crafting: crafting,
 		main:     main,
@@ -36,7 +36,7 @@ func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, windowId Window
 		InvTypeIdWorkbench,
 		viewer,
 		"Crafting",
-		&w.crafting.Inventory,
+		w.crafting,
 		main,
 		holding)
 
@@ -52,11 +52,11 @@ func (w *WorkbenchWindow) Click(slotId SlotId, cursor *slot.Slot, rightClick boo
 			slotId-workbenchInvCraftStart,
 			cursor, rightClick, shiftClick)
 	case slotId < workbenchInvMainEnd:
-		accepted = w.main.StandardClick(
+		accepted = w.main.Click(
 			slotId-workbenchInvMainStart,
 			cursor, rightClick, shiftClick)
 	case slotId < workbenchInvHoldingEnd:
-		accepted = w.holding.StandardClick(
+		accepted = w.holding.Click(
 			slotId-workbenchInvHoldingStart,
 			cursor, rightClick, shiftClick)
 	}

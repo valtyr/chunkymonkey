@@ -46,8 +46,8 @@ func (inv *Inventory) SetSubscriber(subscriber IInventorySubscriber) {
 	inv.subscriber = subscriber
 }
 
-// StandardClick takes the default actions upon a click event from a player.
-func (inv *Inventory) StandardClick(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
+// Click takes the default actions upon a click event from a player.
+func (inv *Inventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
 	if slotId < 0 || int(slotId) > len(inv.slots) {
 		return false
 	}

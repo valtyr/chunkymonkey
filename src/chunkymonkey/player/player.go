@@ -44,10 +44,14 @@ type Player struct {
 	inventory    window.PlayerInventory
 	curWindow    window.IWindow
 	nextWindowId WindowId
+	remoteInv    *RemoteInventory
 
 	mainQueue chan func(*Player)
 	txQueue   chan []byte
-	lock      sync.Mutex // TODO remove this lock, packet handling shouldn't use it.
+
+	// TODO remove this lock, packet handling shouldn't use a lock, it should use
+	// a channel instead (ideally).
+	lock sync.Mutex
 
 	onDisconnect chan<- EntityId
 }
@@ -216,9 +220,7 @@ func (player *Player) PacketWindowClose(windowId WindowId) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
-	if player.curWindow != nil && player.curWindow.GetWindowId() == windowId {
-		player.curWindow.Finalize(false)
-	}
+	player.closeCurrentWindow(false)
 }
 
 func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, shiftClick bool, itemId ItemTypeId, amount ItemCount, uses ItemData) {
@@ -227,6 +229,8 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 
 	// Note that the parameters itemId, amount and uses are all currently
 	// ignored. The item(s) involved are worked out from the server-side data.
+	// TODO use the itemId, amount and uses values as conditions for the click,
+	// and base the transaction result on that.
 
 	// Determine which inventory window is involved.
 	// TODO support for more windows
@@ -248,6 +252,7 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 	if clickedWindow != nil {
 		accepted = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick)
 
+		// TODO send cursor/transaction update only if this was a *local* click.
 		// We send slot updates in case we have custom max counts that differ
 		// from the client's own model.
 		player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
@@ -262,6 +267,9 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
 	// TODO investigate when this packet is sent from the client and what it
 	// means when it does get sent.
+	log.Printf(
+		"Got PacketWindowTransaction from player %q: windowId=%d txId=%d accepted=%t",
+		player.name, windowId, txId, accepted)
 }
 
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
@@ -369,34 +377,49 @@ func (player *Player) postLogin() {
 }
 
 func (player *Player) reqInventorySubscribed(block *BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot) {
-	log.Printf("reqInventorySubscribed %#v, %d, %v", block, invTypeId, slots)
-
-	/*
-		TODO adapt to work with new remote inventories.
+	if player.remoteInv != nil {
 		player.closeCurrentWindow(true)
-		window := player.inventory.NewWindow(invTypeId, player.nextWindowId, inventory)
-		if window == nil {
-			return
-		}
+	}
 
-		buf := &bytes.Buffer{}
-		if err := window.WriteWindowOpen(buf); err != nil {
-			window.Finalize(false)
-			return
-		}
-		if err := window.WriteWindowItems(buf); err != nil {
-			window.Finalize(false)
-			return
-		}
-		player.TransmitPacket(buf.Bytes())
+	remoteInv := NewRemoteInventory(block, &player.chunkSubs, slots)
 
-		player.curWindow = window
-		if player.nextWindowId >= WindowIdFreeMax {
-			player.nextWindowId = WindowIdFreeMin
-		} else {
-			player.nextWindowId++
-		}
-	*/
+	window := player.inventory.NewWindow(invTypeId, player.nextWindowId, remoteInv)
+	if window == nil {
+		return
+	}
+
+	player.remoteInv = remoteInv
+	player.curWindow = window
+
+	if player.nextWindowId >= WindowIdFreeMax {
+		player.nextWindowId = WindowIdFreeMin
+	} else {
+		player.nextWindowId++
+	}
+
+	buf := new(bytes.Buffer)
+	window.WriteWindowOpen(buf)
+	window.WriteWindowItems(buf)
+	player.TransmitPacket(buf.Bytes())
+}
+
+func (player *Player) reqInventorySlotUpdate(block *BlockXyz, slot *slot.Slot, slotId SlotId) {
+	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) {
+		return
+	}
+
+	player.remoteInv.slotUpdate(slot, slotId)
+}
+
+func (player *Player) reqInventoryCursorUpdate(block *BlockXyz, cursor *slot.Slot) {
+	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) {
+		return
+	}
+
+	player.cursor = *cursor
+	buf := new(bytes.Buffer)
+	player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
+	player.TransmitPacket(buf.Bytes())
 }
 
 func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {

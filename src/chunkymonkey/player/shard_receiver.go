@@ -31,11 +31,15 @@ func (psr *playerShardReceiver) ReqInventorySubscribed(block BlockXyz, invTypeId
 }
 
 func (psr *playerShardReceiver) ReqInventorySlotUpdate(block BlockXyz, slot slot.Slot, slotId SlotId) {
-	// TODO
+	psr.player.Enqueue(func(_ *Player) {
+		psr.player.reqInventorySlotUpdate(&block, &slot, slotId)
+	})
 }
 
 func (psr *playerShardReceiver) ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot) {
-	// TODO
+	psr.player.Enqueue(func(_ *Player) {
+		psr.player.reqInventoryCursorUpdate(&block, &cursor)
+	})
 }
 
 func (psr *playerShardReceiver) ReqInventoryUnsubscribed(block BlockXyz) {

@@ -15,8 +15,7 @@ import (
 // IInventory is the interface that windows require of inventories.
 type IInventory interface {
 	NumSlots() SlotId
-	StandardClick(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool)
-	TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool)
+	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool)
 	SetSubscriber(subscriber inventory.IInventorySubscriber)
 	WriteProtoSlots(slots []proto.WindowSlot)
 }

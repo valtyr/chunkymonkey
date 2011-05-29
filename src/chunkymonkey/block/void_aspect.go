@@ -1,6 +1,7 @@
 package block
 
 import (
+	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
@@ -22,4 +23,7 @@ func (aspect *VoidAspect) Hit(instance *BlockInstance, player stub.IPlayerConnec
 }
 
 func (aspect *VoidAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
+}
+
+func (aspect *VoidAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
 }
