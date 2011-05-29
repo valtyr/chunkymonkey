@@ -1,6 +1,7 @@
 package player
 
 import (
+	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -23,11 +24,11 @@ func (psr *playerShardReceiver) TransmitPacket(packet []byte) {
 	psr.player.TransmitPacket(packet)
 }
 
-func (psr *playerShardReceiver) ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []slot.Slot) {
+func (psr *playerShardReceiver) ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot) {
 	// TODO
 }
 
-func (psr *playerShardReceiver) ReqInventorySlotUpdate(block BlockXyz, slotIds []SlotId, slot slot.Slot, slotId SlotId) {
+func (psr *playerShardReceiver) ReqInventorySlotUpdate(block BlockXyz, slot slot.Slot, slotId SlotId) {
 	// TODO
 }
 

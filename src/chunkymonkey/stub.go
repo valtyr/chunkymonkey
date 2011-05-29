@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"chunkymonkey/physics"
+	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
@@ -33,11 +34,11 @@ type IPlayerConnection interface {
 
 	// ReqInventorySubscribed informs the player that an inventory has been
 	// opened. The block position 
-	ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []slot.Slot)
+	ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot)
 
 	// ReqInventorySlotUpdate informs the player of a change to a slot in the
 	// open inventory.
-	ReqInventorySlotUpdate(block BlockXyz, slotIds []SlotId, slot slot.Slot, slotId SlotId)
+	ReqInventorySlotUpdate(block BlockXyz, slot slot.Slot, slotId SlotId)
 
 	// ReqInventoryCursorUpdate informs the player of their new cursor contents.
 	ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot)

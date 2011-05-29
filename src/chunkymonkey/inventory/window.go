@@ -44,6 +44,10 @@ func (iv *inventoryView) Init(window *Window, inventory *Inventory, startSlot Sl
 	iv.inventory.AddSubscriber(iv)
 }
 
+func (iv *inventoryView) Unsubscribed() {
+	// TODO this should close the window
+}
+
 func (iv *inventoryView) Finalize() {
 	iv.inventory.RemoveSubscriber(iv)
 }
@@ -116,7 +120,7 @@ func (w *Window) WriteWindowItems(writer io.Writer) (err os.Error) {
 
 	for i := range w.views {
 		view := &w.views[i]
-		view.inventory.writeProtoSlots(items[view.startSlot:view.endSlot])
+		view.inventory.WriteProtoSlots(items[view.startSlot:view.endSlot])
 	}
 
 	err = proto.WriteWindowItems(writer, w.windowId, items)

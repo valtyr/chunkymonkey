@@ -2,6 +2,7 @@ package block
 
 import (
 	"chunkymonkey/inventory"
+	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
@@ -29,22 +30,19 @@ func (aspect *WorkbenchAspect) Hit(instance *BlockInstance, player stub.IPlayerC
 }
 
 func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
-	/* TODO get workbenches working with IPlayerConnection
-	workbenchInv, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
+	extra, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*workbenchExtra)
 	if !ok {
-		// TODO have the inventory stop existing when all players unsubscribe from
-		// it. This is merely to reclaim a little memory when no items are in the
-		// workbench.
 		ejectItems := func() {
 			instance.Chunk.EnqueueGeneric(func() {
 				aspect.ejectItems(instance)
 			})
 		}
-		workbenchInv = inventory.NewWorkbenchInventory(ejectItems, instance.Chunk.GetRecipeSet())
-		instance.Chunk.SetBlockExtra(&instance.SubLoc, workbenchInv)
+		inv := inventory.NewWorkbenchInventory(ejectItems, instance.Chunk.GetRecipeSet())
+		extra = newWorkbenchExtra(&instance.BlockLoc, inv)
+		instance.Chunk.SetBlockExtra(&instance.SubLoc, extra)
 	}
-	player.OpenWindow(InvTypeIdWorkbench, workbenchInv)
-	*/
+
+	extra.AddSubscriber(player)
 }
 
 func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
@@ -56,5 +54,51 @@ func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
 	items := workbenchInv.TakeAllItems()
 	for _, slot := range items {
 		spawnItemInBlock(instance, slot.ItemType, slot.Count, slot.Data)
+	}
+}
+
+
+// workbenchExtra is the data stored in Chunk.SetBlockExtra. It also implements
+// IInventorySubscriber to relay events to player(s) subscribed.
+type workbenchExtra struct {
+	blockLoc    BlockXyz
+	inv         *inventory.WorkbenchInventory
+	subscribers map[stub.IPlayerConnection]bool
+}
+
+func newWorkbenchExtra(blockLoc *BlockXyz, inv *inventory.WorkbenchInventory) *workbenchExtra {
+	extra := &workbenchExtra{
+		blockLoc: *blockLoc,
+		inv: inv,
+		subscribers: make(map[stub.IPlayerConnection]bool),
+	}
+
+	inv.AddSubscriber(extra)
+
+	return extra
+}
+
+func (extra *workbenchExtra) AddSubscriber(player stub.IPlayerConnection) {
+	// TODO automatic removal when IPlayerConnection is closed.
+	extra.subscribers[player] = true
+
+	slots := extra.inv.MakeProtoSlots()
+
+	player.ReqInventorySubscribed(extra.blockLoc, InvTypeIdWorkbench, slots)
+}
+
+func (extra *workbenchExtra) RemoveSubscriber(player stub.IPlayerConnection) {
+	extra.subscribers[player] = false, false
+}
+
+func (extra *workbenchExtra) SlotUpdate(slot *slot.Slot, slotId SlotId) {
+	for subscriber := range extra.subscribers {
+		subscriber.ReqInventorySlotUpdate(extra.blockLoc, *slot, slotId)
+	}
+}
+
+func (extra *workbenchExtra) Unsubscribed() {
+	for subscriber := range extra.subscribers {
+		subscriber.ReqInventoryUnsubscribed(extra.blockLoc)
 	}
 }

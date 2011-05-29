@@ -7,12 +7,20 @@ import (
 )
 
 type IInventorySubscriber interface {
+	// SlotUpdate is called when a slot inside the inventory changes its
+	// contents.
 	SlotUpdate(slot *slot.Slot, slotId SlotId)
+
+	// Unsubscribed is called when the inventory is cutting the subscription.
+	// This will typically be when the inventory is destroyed.
+	Unsubscribed()
 }
 
 type Inventory struct {
 	slots          []slot.Slot
 	subscribers    map[IInventorySubscriber]bool
+	// TODO consider moving the logic around onUnsubscribed and having more than
+	// one subscriber into block.workbenchExtra.
 	onUnsubscribed func()
 }
 
@@ -28,6 +36,14 @@ func (inv *Inventory) Init(size int, onUnsubscribed func()) {
 	inv.onUnsubscribed = onUnsubscribed
 }
 
+func (inv *Inventory) Destroy() {
+	for sub := range inv.subscribers {
+		sub.Unsubscribed()
+	}
+	// TODO call this method from the appropriate place(s).
+	// TODO decide if inv.onUnsubscribed should be called.
+}
+
 func (inv *Inventory) AddSubscriber(subscriber IInventorySubscriber) {
 	inv.subscribers[subscriber] = true
 }
@@ -35,7 +51,7 @@ func (inv *Inventory) AddSubscriber(subscriber IInventorySubscriber) {
 func (inv *Inventory) RemoveSubscriber(subscriber IInventorySubscriber) {
 	inv.subscribers[subscriber] = false, false
 	if len(inv.subscribers) == 0 && inv.onUnsubscribed != nil {
-		go inv.onUnsubscribed()
+		inv.onUnsubscribed()
 	}
 }
 
@@ -129,10 +145,16 @@ func (inv *Inventory) CanTakeItem(item *slot.Slot) bool {
 	return false
 }
 
+func (inv *Inventory) MakeProtoSlots() []proto.WindowSlot {
+	slots := make([]proto.WindowSlot, len(inv.slots))
+	inv.WriteProtoSlots(slots)
+	return slots
+}
+
 // WriteProtoSlots stores into the slots parameter the proto version of the
 // item data in the inventory.
 // Precondition: len(slots) == len(inv.slots)
-func (inv *Inventory) writeProtoSlots(slots []proto.WindowSlot) {
+func (inv *Inventory) WriteProtoSlots(slots []proto.WindowSlot) {
 	for i := range inv.slots {
 		src := &inv.slots[i]
 		itemTypeId := ItemTypeIdNull
