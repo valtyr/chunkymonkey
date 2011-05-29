@@ -1,12 +1,13 @@
-package inventory
+package window
 
 import (
+	"chunkymonkey/inventory"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
 const (
-	workbenchInvCraftNum   = 1 + workbenchInvCraftWidth*workbenchInvCraftHeight
+	workbenchInvCraftNum   = 1 + inventory.WorkbenchInvCraftWidth*inventory.WorkbenchInvCraftHeight
 	workbenchInvCraftStart = 0
 	workbenchInvCraftEnd   = workbenchInvCraftStart + workbenchInvCraftNum
 
@@ -19,12 +20,12 @@ const (
 
 type WorkbenchWindow struct {
 	Window
-	crafting *WorkbenchInventory
-	main     *Inventory
-	holding  *Inventory
+	crafting *inventory.WorkbenchInventory
+	main     *inventory.Inventory
+	holding  *inventory.Inventory
 }
 
-func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, windowId WindowId, crafting *WorkbenchInventory, main, holding *Inventory) (w *WorkbenchWindow) {
+func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, windowId WindowId, crafting *inventory.WorkbenchInventory, main, holding *inventory.Inventory) (w *WorkbenchWindow) {
 	w = &WorkbenchWindow{
 		crafting: crafting,
 		main:     main,

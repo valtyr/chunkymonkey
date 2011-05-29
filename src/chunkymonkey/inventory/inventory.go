@@ -99,6 +99,17 @@ func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick
 	return
 }
 
+func (inv *Inventory) Slot(slotId SlotId) slot.Slot {
+	return inv.slots[slotId]
+}
+
+func (inv *Inventory) TakeOneItem(slotId SlotId, into *slot.Slot) {
+	slot := &inv.slots[slotId]
+	if into.AddOne(slot) {
+		inv.slotUpdate(slot, slotId)
+	}
+}
+
 // PutItem attempts to put the given item into the inventory.
 func (inv *Inventory) PutItem(item *slot.Slot) {
 	// TODO optimize this algorithm, maybe by maintaining a map of non-full

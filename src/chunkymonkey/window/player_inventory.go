@@ -1,9 +1,10 @@
-package inventory
+package window
 
 import (
 	"io"
 	"os"
 
+	"chunkymonkey/inventory"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -34,10 +35,10 @@ const (
 type PlayerInventory struct {
 	Window
 	entityId     EntityId
-	crafting     CraftingInventory
-	armor        Inventory
-	main         Inventory
-	holding      Inventory
+	crafting     inventory.CraftingInventory
+	armor        inventory.Inventory
+	main         inventory.Inventory
+	holding      inventory.Inventory
 	holdingIndex SlotId
 }
 
@@ -76,10 +77,10 @@ func (w *PlayerInventory) Resubscribe() {
 // NewWindow creates a new window for the player that shares its player
 // inventory sections with `w`. Returns nil for unrecognized inventory types.
 // TODO implement more inventory types.
-func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId, inventory interface{}) IWindow {
+func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId, inv interface{}) IWindow {
 	switch invTypeId {
 	case InvTypeIdWorkbench:
-		if crafting, ok := inventory.(*WorkbenchInventory); ok && crafting != nil {
+		if crafting, ok := inv.(*inventory.WorkbenchInventory); ok && crafting != nil {
 			return NewWorkbenchWindow(
 				w.entityId, w.viewer,
 				windowId,
@@ -100,20 +101,15 @@ func (w *PlayerInventory) SetHolding(holding SlotId) {
 // HeldItem returns the slot that is the current "held" item.
 // TODO need any changes to the held item slot to create notifications to
 // players.
-func (w *PlayerInventory) HeldItem() (slot *slot.Slot, slotId SlotId) {
-	slotId = w.holdingIndex
-	slot = &w.holding.slots[w.holdingIndex]
-	return
+func (w *PlayerInventory) HeldItem() (slot slot.Slot, slotId SlotId) {
+	return w.holding.Slot(w.holdingIndex), w.holdingIndex
 }
 
 // TakeOneHeldItem takes one item from the stack of items the player is holding
 // and puts it in `into`. It does nothing if the player is holding no items, or
 // if `into` cannot take any items of that type.
 func (w *PlayerInventory) TakeOneHeldItem(into *slot.Slot) {
-	slot := &w.holding.slots[w.holdingIndex]
-	if into.AddOne(slot) {
-		w.holding.slotUpdate(slot, w.holdingIndex)
-	}
+	w.holding.TakeOneItem(w.holdingIndex, into)
 }
 
 // Writes packets for other players to see the equipped items.
@@ -124,8 +120,10 @@ func (w *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer) (err os.Erro
 		return
 	}
 
-	for i := range w.armor.slots {
-		err = w.armor.slots[i].SendEquipmentUpdate(writer, w.entityId, SlotId(i+1))
+	numArmor := w.armor.NumSlots()
+	for i := SlotId(0); i < numArmor; i++ {
+		slot := w.armor.Slot(i)
+		err = slot.SendEquipmentUpdate(writer, w.entityId, SlotId(i+1))
 		if err != nil {
 			return
 		}

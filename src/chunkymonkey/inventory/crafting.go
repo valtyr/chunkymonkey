@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	workbenchInvCraftWidth  = 3
-	workbenchInvCraftHeight = 3
+	WorkbenchInvCraftWidth  = 3
+	WorkbenchInvCraftHeight = 3
 )
 
 // Inventory with extended function to perform crafting. It assumes that slot 0
@@ -65,8 +65,8 @@ type WorkbenchInventory struct {
 func NewWorkbenchInventory(recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
 	inv = new(WorkbenchInventory)
 	inv.CraftingInventory.Init(
-		workbenchInvCraftWidth,
-		workbenchInvCraftHeight,
+		WorkbenchInvCraftWidth,
+		WorkbenchInvCraftHeight,
 		recipes,
 	)
 	return

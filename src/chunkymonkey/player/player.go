@@ -10,12 +10,12 @@ import (
 	"os"
 	"sync"
 
-	"chunkymonkey/inventory"
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
+	"chunkymonkey/window"
 )
 
 var (
@@ -41,8 +41,8 @@ type Player struct {
 	chunkSubs      chunkSubscriptions
 
 	cursor       slot.Slot // Item being moved by mouse cursor.
-	inventory    inventory.PlayerInventory
-	curWindow    inventory.IWindow
+	inventory    window.PlayerInventory
+	curWindow    window.IWindow
 	nextWindowId WindowId
 
 	mainQueue chan func(*Player)
@@ -167,8 +167,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 
 	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
 	if ok {
-		heldPtr, _ := player.inventory.HeldItem()
-		held := *heldPtr
+		held, _ := player.inventory.HeldItem()
 		shardConn.ReqHitBlock(held, *target, status, face)
 	}
 }
@@ -185,8 +184,7 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, target *Block
 
 	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
 	if ok {
-		heldPtr, _ := player.inventory.HeldItem()
-		held := *heldPtr
+		held, _ := player.inventory.HeldItem()
 		shardConn.ReqInteractBlock(held, *target, face)
 	}
 }
@@ -232,7 +230,7 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 	// Determine which inventory window is involved.
 	// TODO support for more windows
 
-	var clickedWindow inventory.IWindow
+	var clickedWindow window.IWindow
 	if windowId == WindowIdInventory {
 		clickedWindow = &player.inventory
 	} else if player.curWindow != nil && player.curWindow.GetWindowId() == windowId {

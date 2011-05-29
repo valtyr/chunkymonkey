@@ -1,10 +1,12 @@
-package inventory
+// The window package handles windows for inventories.
+package window
 
 import (
 	"bytes"
 	"io"
 	"os"
 
+	"chunkymonkey/inventory"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -15,7 +17,7 @@ type IInventory interface {
 	NumSlots() SlotId
 	StandardClick(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool)
 	TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool)
-	SetSubscriber(subscriber IInventorySubscriber)
+	SetSubscriber(subscriber inventory.IInventorySubscriber)
 	WriteProtoSlots(slots []proto.WindowSlot)
 }
 
