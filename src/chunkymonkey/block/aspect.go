@@ -51,6 +51,7 @@ type IBlockAspect interface {
 	Name() string
 	Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool)
 	Interact(instance *BlockInstance, player stub.IPlayerConnection)
-	Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId)
+	InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId)
+	InventoryUnsubscribed(instance *BlockInstance, player stub.IPlayerConnection)
 	Destroy(instance *BlockInstance)
 }

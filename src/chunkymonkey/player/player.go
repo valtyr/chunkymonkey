@@ -498,7 +498,12 @@ func (player *Player) sendChatMessage(message string) {
 func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 	if player.curWindow != nil {
 		player.curWindow.Finalize(sendClosePacket)
+		player.curWindow = nil
 	}
-	player.curWindow = nil
+
+	if player.remoteInv != nil {
+		player.remoteInv.Close()
+	}
+
 	player.inventory.Resubscribe()
 }

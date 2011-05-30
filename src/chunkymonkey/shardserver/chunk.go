@@ -316,7 +316,18 @@ func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *B
 			return
 		}
 
-		blockType.Aspect.Click(blockInstance, player, cursor, rightClick, shiftClick, slotId)
+		blockType.Aspect.InventoryClick(blockInstance, player, cursor, rightClick, shiftClick, slotId)
+	}
+}
+
+func (chunk *Chunk) reqInventoryUnsubscribed(player stub.IPlayerConnection, blockLoc *BlockXyz) {
+	{
+		blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
+		if !ok {
+			return
+		}
+
+		blockType.Aspect.InventoryUnsubscribed(blockInstance, player)
 	}
 }
 

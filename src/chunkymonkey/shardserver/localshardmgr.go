@@ -119,7 +119,10 @@ func (conn *localShardConnection) ReqInventoryClick(block BlockXyz, cursor slot.
 }
 
 func (conn *localShardConnection) ReqInventoryUnsubscribed(block BlockXyz) {
-	// TODO
+	chunkLoc := block.ToChunkXz()
+	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk *Chunk) {
+		chunk.reqInventoryUnsubscribed(conn.player, &block)
+	})
 }
 
 // LocalShardManager contains all chunk shards and can look them up. It

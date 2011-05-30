@@ -33,6 +33,14 @@ func (inv *RemoteInventory) slotUpdate(slot *slot.Slot, slotId SlotId) {
 	}
 }
 
+func (inv *RemoteInventory) Close() {
+	shard, _, ok := inv.chunkSubs.ShardConnForBlockXyz(&inv.blockLoc)
+
+	if ok {
+		shard.ReqInventoryUnsubscribed(inv.blockLoc)
+	}
+}
+
 // The following methods are to implement window.IInventory.
 
 func (inv *RemoteInventory) NumSlots() SlotId {

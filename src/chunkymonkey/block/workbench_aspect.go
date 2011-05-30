@@ -28,7 +28,7 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPl
 	}
 }
 
-func (aspect *WorkbenchAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+func (aspect *WorkbenchAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
 	extra := aspect.invWrapper(instance, false)
 	if extra != nil {
 		extra.inv.Click(slotId, cursor, rightClick, shiftClick)
@@ -38,6 +38,13 @@ func (aspect *WorkbenchAspect) Click(instance *BlockInstance, player stub.IPlaye
 		// right back?
 		player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
 		return
+	}
+}
+
+func (aspect *WorkbenchAspect) InventoryUnsubscribed(instance *BlockInstance, player stub.IPlayerConnection) {
+	extra := aspect.invWrapper(instance, false)
+	if extra != nil {
+		extra.RemoveSubscriber(player.GetEntityId())
 	}
 }
 

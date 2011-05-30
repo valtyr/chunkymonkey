@@ -36,7 +36,10 @@ func (aspect *StandardAspect) Hit(instance *BlockInstance, player stub.IPlayerCo
 func (aspect *StandardAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
 }
 
-func (aspect *StandardAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+func (aspect *StandardAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+}
+
+func (aspect *StandardAspect) InventoryUnsubscribed(instance *BlockInstance, player stub.IPlayerConnection) {
 }
 
 func (aspect *StandardAspect) Destroy(instance *BlockInstance) {
