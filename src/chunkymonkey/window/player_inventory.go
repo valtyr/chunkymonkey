@@ -59,6 +59,7 @@ func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes 
 		viewer,
 		"Inventory",
 		&w.crafting.Inventory,
+		// TODO Create and use special inventory type for armor slots only.
 		&w.armor,
 		&w.main,
 		&w.holding,
@@ -80,8 +81,9 @@ func (w *PlayerInventory) Resubscribe() {
 func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId, inv IInventory) IWindow {
 	switch invTypeId {
 	case InvTypeIdWorkbench:
-		return NewWorkbenchWindow(
-			w.entityId, w.viewer, windowId, inv, &w.main, &w.holding)
+		return NewWindow(
+			windowId, invTypeId, w.viewer, "Crafting",
+			inv, &w.main, &w.holding)
 	}
 	return nil
 }
@@ -138,30 +140,4 @@ func (w *PlayerInventory) PutItem(item *slot.Slot) {
 // Slot.
 func (w *PlayerInventory) CanTakeItem(item *slot.Slot) bool {
 	return w.holding.CanTakeItem(item) || w.main.CanTakeItem(item)
-}
-
-func (w *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) TxState {
-	switch {
-	case slotId < 0:
-		return TxStateRejected
-	case slotId < playerInvCraftEnd:
-		return w.crafting.Click(
-			slotId-playerInvCraftStart,
-			cursor, rightClick, shiftClick,
-			txId, expectedSlot)
-	case slotId < playerInvArmorEnd:
-		// TODO - handle armor
-		return TxStateRejected
-	case slotId < playerInvMainEnd:
-		return w.main.Click(
-			slotId-playerInvMainStart,
-			cursor, rightClick, shiftClick,
-			txId, expectedSlot)
-	case slotId < playerInvHoldingEnd:
-		return w.holding.Click(
-			slotId-playerInvHoldingStart,
-			cursor, rightClick, shiftClick,
-			txId, expectedSlot)
-	}
-	return TxStateRejected
 }

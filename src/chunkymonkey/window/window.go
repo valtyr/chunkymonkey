@@ -81,7 +81,15 @@ type Window struct {
 	numSlots  SlotId
 }
 
-// Init initializes a window as a view onto the given inventories.
+// NewWindow creates a Window as a view onto the given inventories.
+func NewWindow(windowId WindowId, invTypeId InvTypeId, viewer IWindowViewer, title string, inventories ...IInventory) (w *Window) {
+	w = &Window{}
+	w.Init(windowId, invTypeId, viewer, title, inventories...)
+	return
+}
+
+// Init is the same as NewWindow, but allows for direct embedding of the Window
+// type.
 func (w *Window) Init(windowId WindowId, invTypeId InvTypeId, viewer IWindowViewer, title string, inventories ...IInventory) {
 	w.windowId = windowId
 	w.invTypeId = invTypeId
@@ -136,4 +144,19 @@ func (w *Window) WriteWindowItems(writer io.Writer) (err os.Error) {
 
 	err = proto.WriteWindowItems(writer, w.windowId, items)
 	return
+}
+
+func (w *Window) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) TxState {
+	if slotId >= 0 {
+		for _, inventoryView := range w.views {
+
+			if slotId >= inventoryView.startSlot && slotId < inventoryView.endSlot {
+				return inventoryView.inventory.Click(
+					slotId-inventoryView.startSlot, cursor,
+					rightClick, shiftClick, txId, expectedSlot)
+			}
+		}
+	}
+
+	return TxStateRejected
 }

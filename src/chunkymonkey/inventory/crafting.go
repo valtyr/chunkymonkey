@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	WorkbenchInvCraftWidth  = 3
-	WorkbenchInvCraftHeight = 3
+	workbenchInvCraftWidth  = 3
+	workbenchInvCraftHeight = 3
 )
 
 // Inventory with extended function to perform crafting. It assumes that slot 0
@@ -58,6 +58,18 @@ func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick
 	return
 }
 
+// TakeAllItems empties the inventory, and returns all items that were inside
+// it inside a slice of Slots.
+func (inv *CraftingInventory) TakeAllItems() (items []slot.Slot) {
+	// The output slot gets emptied, the only items that are to be taken are
+	// those in the input slots.
+	output := &inv.slots[0]
+	output.Init()
+	inv.slotUpdate(output, 0)
+
+	return inv.Inventory.TakeAllItems()
+}
+
 type WorkbenchInventory struct {
 	CraftingInventory
 }
@@ -65,21 +77,9 @@ type WorkbenchInventory struct {
 func NewWorkbenchInventory(recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
 	inv = new(WorkbenchInventory)
 	inv.CraftingInventory.Init(
-		WorkbenchInvCraftWidth,
-		WorkbenchInvCraftHeight,
+		workbenchInvCraftWidth,
+		workbenchInvCraftHeight,
 		recipes,
 	)
 	return
-}
-
-// TakeAllItems empties the inventory, and returns all items that were inside
-// it inside a slice of Slots.
-func (inv *WorkbenchInventory) TakeAllItems() (items []slot.Slot) {
-	// The output slot gets emptied, the only items that are to be ejected are
-	// those in the input slots.
-	output := &inv.slots[0]
-	output.Init()
-	inv.slotUpdate(output, 0)
-
-	return inv.CraftingInventory.TakeAllItems()
 }
