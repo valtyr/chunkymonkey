@@ -848,8 +848,17 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "Chest",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 54,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
   },
   "55": {
     "BlockAttrs": {

@@ -68,6 +68,10 @@ func (w *PlayerInventory) NewWindow(invTypeId InvTypeId, windowId WindowId, inv 
 		return NewWindow(
 			windowId, invTypeId, w.viewer, "Crafting",
 			inv, &w.main, &w.holding)
+	case InvTypeIdChest:
+		return NewWindow(
+			windowId, invTypeId, w.viewer, "Chest",
+			inv, &w.main, &w.holding)
 	}
 	return nil
 }

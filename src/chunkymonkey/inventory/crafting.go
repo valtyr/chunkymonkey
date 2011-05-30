@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	playerInvCraftWidth  = 2
-	playerInvCraftHeight = 2
+	playerInvCraftWidth     = 2
+	playerInvCraftHeight    = 2
 	workbenchInvCraftWidth  = 3
 	workbenchInvCraftHeight = 3
 )
@@ -37,13 +37,15 @@ func (inv *CraftingInventory) InitPlayerCraftingInventory(recipes *recipe.Recipe
 	)
 }
 
-// InitWorkbenchInventory initializes inv as a 3x3 workbench crafting inventory.
-func (inv *CraftingInventory) InitWorkbenchInventory(recipes *recipe.RecipeSet) {
+// NewWorkbenchInventory creates a 3x3 workbench crafting inventory.
+func NewWorkbenchInventory(recipes *recipe.RecipeSet) *CraftingInventory {
+	inv := new(CraftingInventory)
 	inv.init(
 		workbenchInvCraftWidth,
 		workbenchInvCraftHeight,
 		recipes,
 	)
+	return inv
 }
 
 // Click handles window clicks from a user with special handling for crafting.

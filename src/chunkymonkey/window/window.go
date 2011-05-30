@@ -128,7 +128,12 @@ func (w *Window) Finalize(sendClosePacket bool) {
 
 // WriteWindowOpen writes a packet describing the window to the writer.
 func (w *Window) WriteWindowOpen(writer io.Writer) (err os.Error) {
-	err = proto.WriteWindowOpen(writer, w.windowId, w.invTypeId, w.title, byte(w.numSlots))
+	// Note that the window size is the number of slots in the first inventory,
+	// not including the player inventories.
+	err = proto.WriteWindowOpen(
+		writer, w.windowId, w.invTypeId, w.title,
+		byte(w.views[0].inventory.NumSlots()),
+	)
 	return
 }
 

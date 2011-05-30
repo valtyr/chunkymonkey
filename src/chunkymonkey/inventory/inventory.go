@@ -12,6 +12,16 @@ type IInventorySubscriber interface {
 	SlotUpdate(slot *slot.Slot, slotId SlotId)
 }
 
+// IInventory is the general interface provided by inventory implementations.
+type IInventory interface {
+	NumSlots() SlotId
+	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState)
+	SetSubscriber(subscriber IInventorySubscriber)
+	MakeProtoSlots() []proto.WindowSlot
+	WriteProtoSlots(slots []proto.WindowSlot)
+	TakeAllItems() (items []slot.Slot)
+}
+
 type Inventory struct {
 	slots      []slot.Slot
 	subscriber IInventorySubscriber
