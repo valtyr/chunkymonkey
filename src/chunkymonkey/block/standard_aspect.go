@@ -30,6 +30,16 @@ func (aspect *StandardAspect) Hit(instance *BlockInstance, player stub.IPlayerCo
 
 	destroyed = true
 
+	return
+}
+
+func (aspect *StandardAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
+}
+
+func (aspect *StandardAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+}
+
+func (aspect *StandardAspect) Destroy(instance *BlockInstance) {
 	if len(aspect.DroppedItems) > 0 {
 		rand := instance.Chunk.Rand()
 		// Possibly drop item(s)
@@ -42,12 +52,4 @@ func (aspect *StandardAspect) Hit(instance *BlockInstance, player stub.IPlayerCo
 			r -= dropItem.Probability
 		}
 	}
-
-	return
-}
-
-func (aspect *StandardAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
-}
-
-func (aspect *StandardAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
 }

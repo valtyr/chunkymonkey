@@ -52,6 +52,5 @@ type IBlockAspect interface {
 	Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool)
 	Interact(instance *BlockInstance, player stub.IPlayerConnection)
 	Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId)
-	// TODO Destroy() method for a block to take appropriate actions when it's
-	// destroyed.
+	Destroy(instance *BlockInstance)
 }

@@ -21,71 +21,61 @@ func (aspect *WorkbenchAspect) Name() string {
 	return "Workbench"
 }
 
-func (aspect *WorkbenchAspect) Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool) {
-	destroyed = aspect.StandardAspect.Hit(instance, player, digStatus)
-	if destroyed {
-		aspect.ejectItems(instance)
-	}
-	return
-}
-
 func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
-	extra, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*workbenchExtra)
-	if !ok {
-		ejectItems := func() {
-			aspect.ejectItems(instance)
-		}
-		inv := inventory.NewWorkbenchInventory(instance.Chunk.RecipeSet())
-		extra = newWorkbenchExtra(&instance.BlockLoc, instance.Chunk, inv, ejectItems)
-		instance.Chunk.SetBlockExtra(&instance.SubLoc, extra)
+	extra := aspect.invWrapper(instance, true)
+	if extra != nil {
+		extra.AddSubscriber(player)
 	}
-
-	extra.AddSubscriber(player)
 }
 
 func (aspect *WorkbenchAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
-	extra, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*workbenchExtra)
-	if !ok {
+	extra := aspect.invWrapper(instance, false)
+	if extra != nil {
+		extra.inv.Click(slotId, cursor, rightClick, shiftClick)
+		player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
+	} else {
 		// TODO send transaction failure, maybe send the cursor state unchanged
 		// right back?
 		player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
 		return
 	}
-
-	extra.inv.Click(slotId, cursor, rightClick, shiftClick)
-	player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
 }
 
-func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
-	workbenchInv, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
-	if !ok {
-		return
+func (aspect *WorkbenchAspect) Destroy(instance *BlockInstance) {
+	extra := aspect.invWrapper(instance, false)
+	if extra != nil {
+		extra.EjectItems()
+		extra.Destroyed()
 	}
 
-	items := workbenchInv.TakeAllItems()
-	for _, slot := range items {
-		spawnItemInBlock(instance, slot.ItemType, slot.Count, slot.Data)
+	aspect.StandardAspect.Destroy(instance)
+}
+
+func (aspect *WorkbenchAspect) invWrapper(instance *BlockInstance, create bool) *workbenchExtra {
+	extra, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*workbenchExtra)
+	if !ok && create {
+		inv := inventory.NewWorkbenchInventory(instance.Chunk.RecipeSet())
+		extra = newWorkbenchExtra(instance, inv)
+		instance.Chunk.SetBlockExtra(&instance.SubLoc, extra)
 	}
+
+	return extra
 }
 
 
 // workbenchExtra is the data stored in Chunk.SetBlockExtra. It also implements
 // IInventorySubscriber to relay events to player(s) subscribed.
 type workbenchExtra struct {
-	blockLoc       BlockXyz
-	chunk          IChunkBlock
+	instance       BlockInstance
 	inv            *inventory.WorkbenchInventory
 	subscribers    map[EntityId]stub.IPlayerConnection
-	onUnsubscribed func()
 }
 
-func newWorkbenchExtra(blockLoc *BlockXyz, chunk IChunkBlock, inv *inventory.WorkbenchInventory, onUnsubscribed func()) *workbenchExtra {
+func newWorkbenchExtra(instance *BlockInstance, inv *inventory.WorkbenchInventory) *workbenchExtra {
 	extra := &workbenchExtra{
-		blockLoc:       *blockLoc,
-		chunk:          chunk,
+		instance:       *instance,
 		inv:            inv,
 		subscribers:    make(map[EntityId]stub.IPlayerConnection),
-		onUnsubscribed: onUnsubscribed,
 	}
 
 	inv.SetSubscriber(extra)
@@ -95,7 +85,7 @@ func newWorkbenchExtra(blockLoc *BlockXyz, chunk IChunkBlock, inv *inventory.Wor
 
 func (extra *workbenchExtra) SlotUpdate(slot *slot.Slot, slotId SlotId) {
 	for _, subscriber := range extra.subscribers {
-		subscriber.ReqInventorySlotUpdate(extra.blockLoc, *slot, slotId)
+		subscriber.ReqInventorySlotUpdate(extra.instance.BlockLoc, *slot, slotId)
 	}
 }
 
@@ -105,25 +95,25 @@ func (extra *workbenchExtra) AddSubscriber(player stub.IPlayerConnection) {
 
 	// Register self for automatic removal when IPlayerConnection unsubscribes
 	// from the chunk.
-	extra.chunk.AddOnUnsubscribe(entityId, extra)
+	extra.instance.Chunk.AddOnUnsubscribe(entityId, extra)
 
 	slots := extra.inv.MakeProtoSlots()
 
-	player.ReqInventorySubscribed(extra.blockLoc, InvTypeIdWorkbench, slots)
+	player.ReqInventorySubscribed(extra.instance.BlockLoc, InvTypeIdWorkbench, slots)
 }
 
 func (extra *workbenchExtra) RemoveSubscriber(entityId EntityId) {
 	extra.subscribers[entityId] = nil, false
-	extra.chunk.RemoveOnUnsubscribe(entityId, extra)
-	if len(extra.subscribers) == 0 && extra.onUnsubscribed != nil {
-		extra.onUnsubscribed()
+	extra.instance.Chunk.RemoveOnUnsubscribe(entityId, extra)
+	if len(extra.subscribers) == 0 {
+		extra.EjectItems()
 	}
 }
 
 func (extra *workbenchExtra) Destroyed() {
 	for _, subscriber := range extra.subscribers {
-		subscriber.ReqInventoryUnsubscribed(extra.blockLoc)
-		extra.chunk.RemoveOnUnsubscribe(subscriber.GetEntityId(), extra)
+		subscriber.ReqInventoryUnsubscribed(extra.instance.BlockLoc)
+		extra.instance.Chunk.RemoveOnUnsubscribe(subscriber.GetEntityId(), extra)
 	}
 	extra.subscribers = nil
 }
@@ -132,4 +122,14 @@ func (extra *workbenchExtra) Destroyed() {
 // subscription to the inventory when they unsubscribe from the chunk.
 func (extra *workbenchExtra) Unsubscribed(entityId EntityId) {
 	extra.subscribers[entityId] = nil, false
+}
+
+// EjectItems removes all items from the inventory and drops them at the
+// location of the block.
+func (extra *workbenchExtra) EjectItems() {
+	items := extra.inv.TakeAllItems()
+
+	for _, slot := range items {
+		spawnItemInBlock(&extra.instance, slot.ItemType, slot.Count, slot.Data)
+	}
 }

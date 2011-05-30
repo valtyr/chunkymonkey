@@ -208,6 +208,7 @@ func (chunk *Chunk) reqHitBlock(player stub.IPlayerConnection, held slot.Slot, d
 	}
 
 	if blockType.Destructable && blockType.Aspect.Hit(blockInstance, player, digStatus) {
+		blockType.Aspect.Destroy(blockInstance)
 		chunk.setBlock(target, &blockInstance.SubLoc, blockInstance.Index, BlockIdAir, 0)
 	}
 

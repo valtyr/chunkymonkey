@@ -32,3 +32,6 @@ func (aspect *TodoAspect) Interact(instance *BlockInstance, player stub.IPlayerC
 
 func (aspect *TodoAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
 }
+
+func (aspect *TodoAspect) Destroy(instance *BlockInstance) {
+}
