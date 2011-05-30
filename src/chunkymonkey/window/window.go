@@ -58,7 +58,7 @@ func (iv *inventoryView) Resubscribe() {
 	iv.inventory.SetSubscriber(iv)
 }
 
-func (iv *inventoryView) Unsubscribed() {
+func (iv *inventoryView) Destroyed() {
 	// TODO this should close the window
 }
 

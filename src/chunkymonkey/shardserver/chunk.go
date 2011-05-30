@@ -41,9 +41,10 @@ type Chunk struct {
 	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	neighbours   neighboursCache
-	cachedPacket []byte                              // Cached packet data for this block.
+	cachedPacket []byte                              // Cached packet data for this chunk.
 	subscribers  map[EntityId]stub.IPlayerConnection // Players getting updates from the chunk.
 	playersData  map[EntityId]*playerData            // Some player data for player(s) in the chunk.
+	onUnsub      map[EntityId][]block.IUnsubscribed  // Functions to be called when unsubscribed.
 }
 
 func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {
@@ -61,6 +62,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
 		subscribers: make(map[EntityId]stub.IPlayerConnection),
 		playersData: make(map[EntityId]*playerData),
+		onUnsub:     make(map[EntityId][]block.IUnsubscribed),
 	}
 	chunk.neighbours.init()
 	return
@@ -448,6 +450,11 @@ func (chunk *Chunk) items() (s []*item.Item) {
 }
 
 func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IPlayerConnection) {
+	if _, ok := chunk.subscribers[entityId]; ok {
+		// Already subscribed.
+		return
+	}
+
 	chunk.subscribers[entityId] = player
 
 	buf := new(bytes.Buffer)
@@ -478,14 +485,54 @@ func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IPlayerConn
 }
 
 func (chunk *Chunk) reqUnsubscribeChunk(entityId EntityId, sendPacket bool) {
-	player, ok := chunk.subscribers[entityId]
-
-	if ok && sendPacket {
+	if player, ok := chunk.subscribers[entityId]; ok {
 		chunk.subscribers[entityId] = nil, false
-		buf := &bytes.Buffer{}
-		proto.WritePreChunk(buf, &chunk.loc, ChunkUnload)
-		// TODO send PacketEntityDestroy packets for spawns in this chunk.
-		player.TransmitPacket(buf.Bytes())
+
+		// Call any observers registered with AddOnUnsubscribe.
+		if observers, ok := chunk.onUnsub[entityId]; ok {
+			chunk.onUnsub[entityId] = nil, false
+			for _, observer := range observers {
+				observer.Unsubscribed(entityId)
+			}
+		}
+
+		if sendPacket {
+			buf := new(bytes.Buffer)
+			proto.WritePreChunk(buf, &chunk.loc, ChunkUnload)
+			// TODO send PacketEntityDestroy packets for spawns in this chunk.
+			player.TransmitPacket(buf.Bytes())
+		}
+	}
+}
+
+// AddOnUnsubscribe registers a function to be called when the given subscriber
+// unsubscribes.
+func (chunk *Chunk) AddOnUnsubscribe(entityId EntityId, observer block.IUnsubscribed) {
+	observers := chunk.onUnsub[entityId]
+	observers = append(observers, observer)
+	chunk.onUnsub[entityId] = observers
+}
+
+// RemoveOnUnsubscribe removes a function previously registered
+func (chunk *Chunk) RemoveOnUnsubscribe(entityId EntityId, observer block.IUnsubscribed) {
+	observers, ok := chunk.onUnsub[entityId]
+	if !ok {
+		return
+	}
+
+	for i := range observers {
+		if observers[i] == observer {
+			// Remove!
+			if i < len(observers)-1 {
+				observers[i] = observers[len(observers)-1]
+			}
+			observers = observers[:len(observers)-1]
+
+			// Replace slice in map, or remove if empty.
+			chunk.onUnsub[entityId] = observers, (len(observers) > 0)
+
+			return
+		}
 	}
 }
 

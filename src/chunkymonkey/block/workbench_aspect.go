@@ -33,12 +33,10 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPl
 	extra, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*workbenchExtra)
 	if !ok {
 		ejectItems := func() {
-			instance.Chunk.EnqueueGeneric(func() {
-				aspect.ejectItems(instance)
-			})
+			aspect.ejectItems(instance)
 		}
 		inv := inventory.NewWorkbenchInventory(instance.Chunk.RecipeSet())
-		extra = newWorkbenchExtra(&instance.BlockLoc, inv, ejectItems)
+		extra = newWorkbenchExtra(&instance.BlockLoc, instance.Chunk, inv, ejectItems)
 		instance.Chunk.SetBlockExtra(&instance.SubLoc, extra)
 	}
 
@@ -75,16 +73,18 @@ func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
 // IInventorySubscriber to relay events to player(s) subscribed.
 type workbenchExtra struct {
 	blockLoc       BlockXyz
+	chunk          IChunkBlock
 	inv            *inventory.WorkbenchInventory
-	subscribers    map[stub.IPlayerConnection]bool
+	subscribers    map[EntityId]stub.IPlayerConnection
 	onUnsubscribed func()
 }
 
-func newWorkbenchExtra(blockLoc *BlockXyz, inv *inventory.WorkbenchInventory, onUnsubscribed func()) *workbenchExtra {
+func newWorkbenchExtra(blockLoc *BlockXyz, chunk IChunkBlock, inv *inventory.WorkbenchInventory, onUnsubscribed func()) *workbenchExtra {
 	extra := &workbenchExtra{
 		blockLoc:       *blockLoc,
+		chunk:          chunk,
 		inv:            inv,
-		subscribers:    make(map[stub.IPlayerConnection]bool),
+		subscribers:    make(map[EntityId]stub.IPlayerConnection),
 		onUnsubscribed: onUnsubscribed,
 	}
 
@@ -93,30 +93,43 @@ func newWorkbenchExtra(blockLoc *BlockXyz, inv *inventory.WorkbenchInventory, on
 	return extra
 }
 
+func (extra *workbenchExtra) SlotUpdate(slot *slot.Slot, slotId SlotId) {
+	for _, subscriber := range extra.subscribers {
+		subscriber.ReqInventorySlotUpdate(extra.blockLoc, *slot, slotId)
+	}
+}
+
 func (extra *workbenchExtra) AddSubscriber(player stub.IPlayerConnection) {
-	// TODO automatic removal when IPlayerConnection is closed.
-	extra.subscribers[player] = true
+	entityId := player.GetEntityId()
+	extra.subscribers[entityId] = player
+
+	// Register self for automatic removal when IPlayerConnection unsubscribes
+	// from the chunk.
+	extra.chunk.AddOnUnsubscribe(entityId, extra)
 
 	slots := extra.inv.MakeProtoSlots()
 
 	player.ReqInventorySubscribed(extra.blockLoc, InvTypeIdWorkbench, slots)
 }
 
-func (extra *workbenchExtra) RemoveSubscriber(player stub.IPlayerConnection) {
-	extra.subscribers[player] = false, false
+func (extra *workbenchExtra) RemoveSubscriber(entityId EntityId) {
+	extra.subscribers[entityId] = nil, false
+	extra.chunk.RemoveOnUnsubscribe(entityId, extra)
 	if len(extra.subscribers) == 0 && extra.onUnsubscribed != nil {
 		extra.onUnsubscribed()
 	}
 }
 
-func (extra *workbenchExtra) SlotUpdate(slot *slot.Slot, slotId SlotId) {
-	for subscriber := range extra.subscribers {
-		subscriber.ReqInventorySlotUpdate(extra.blockLoc, *slot, slotId)
+func (extra *workbenchExtra) Destroyed() {
+	for _, subscriber := range extra.subscribers {
+		subscriber.ReqInventoryUnsubscribed(extra.blockLoc)
+		extra.chunk.RemoveOnUnsubscribe(subscriber.GetEntityId(), extra)
 	}
+	extra.subscribers = nil
 }
 
-func (extra *workbenchExtra) Unsubscribed() {
-	for subscriber := range extra.subscribers {
-		subscriber.ReqInventoryUnsubscribed(extra.blockLoc)
-	}
+// Unsubscribed implements block.IUnsubscribed. It removes a player's
+// subscription to the inventory when they unsubscribe from the chunk.
+func (extra *workbenchExtra) Unsubscribed(entityId EntityId) {
+	extra.subscribers[entityId] = nil, false
 }

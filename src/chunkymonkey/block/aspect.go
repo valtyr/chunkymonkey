@@ -22,11 +22,15 @@ type IChunkBlock interface {
 	BlockExtra(subLoc *SubChunkXyz) interface{}
 	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
 	RecipeSet() *recipe.RecipeSet
+	AddOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
+	RemoveOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
+}
 
-	// The above methods are freely callable in the goroutine context of a call
-	// to a IBlockAspect method (as the chunk itself calls that). But from any
-	// other goroutine they must be called via EnqueueGeneric().
-	EnqueueGeneric(f func())
+// IUnsubscribed is the interface by which blocks (and potentially other
+// things) can register themselves to be called when a player unsubscribes from
+// a chunk.
+type IUnsubscribed interface {
+	Unsubscribed(entityId EntityId)
 }
 
 // BlockInstance represents the instance of a block within a chunk. It is used
@@ -48,4 +52,6 @@ type IBlockAspect interface {
 	Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool)
 	Interact(instance *BlockInstance, player stub.IPlayerConnection)
 	Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId)
+	// TODO Destroy() method for a block to take appropriate actions when it's
+	// destroyed.
 }

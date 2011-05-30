@@ -13,7 +13,7 @@ type IInventorySubscriber interface {
 
 	// Unsubscribed is called when the inventory is cutting the subscription.
 	// This will typically be when the inventory is destroyed.
-	Unsubscribed()
+	Destroyed()
 }
 
 type Inventory struct {
@@ -34,7 +34,7 @@ func (inv *Inventory) Init(size int) {
 func (inv *Inventory) Destroy() {
 	// TODO call this method from the appropriate place(s).
 	if inv.subscriber != nil {
-		inv.subscriber.Unsubscribed()
+		inv.subscriber.Destroyed()
 	}
 }
 
