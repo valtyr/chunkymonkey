@@ -223,14 +223,14 @@ func (player *Player) PacketWindowClose(windowId WindowId) {
 	player.closeCurrentWindow(false)
 }
 
-func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, shiftClick bool, itemId ItemTypeId, amount ItemCount, uses ItemData) {
+func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightClick bool, txId TxId, shiftClick bool, expectedSlot *proto.WindowSlot) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
-	// Note that the parameters itemId, amount and uses are all currently
-	// ignored. The item(s) involved are worked out from the server-side data.
-	// TODO use the itemId, amount and uses values as conditions for the click,
-	// and base the transaction result on that.
+	// Note that the expectedSlot parameter is currently ignored. The item(s)
+	// involved are worked out from the server-side data.
+	// TODO use the expectedSlot as a conditions for the click, and base the
+	// transaction result on that.
 
 	// Determine which inventory window is involved.
 	// TODO support for more windows

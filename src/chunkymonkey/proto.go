@@ -112,7 +112,7 @@ type IServerPacketHandler interface {
 	PacketPlayer(onGround bool)
 	PacketHoldingChange(slotId SlotId)
 	PacketWindowClose(windowId WindowId)
-	PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, shiftClick bool, itemTypeId ItemTypeId, amount ItemCount, data ItemData)
+	PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, shiftClick bool, expectedSlot *WindowSlot)
 }
 
 // Clients to the protocol must implement this interface to receive packets
@@ -2419,7 +2419,7 @@ func readWindowClose(reader io.Reader, handler IServerPacketHandler) (err os.Err
 
 // packetIdWindowClick
 
-func WriteWindowClick(writer io.Writer, windowId WindowId, slot SlotId, rightClick bool, txId TxId, shiftClick bool, itemTypeId ItemTypeId, amount ItemCount, data ItemData) (err os.Error) {
+func WriteWindowClick(writer io.Writer, windowId WindowId, slot SlotId, rightClick bool, txId TxId, shiftClick bool, expectedSlot WindowSlot) (err os.Error) {
 	var packet = struct {
 		PacketId   byte
 		WindowId   WindowId
@@ -2435,20 +2435,20 @@ func WriteWindowClick(writer io.Writer, windowId WindowId, slot SlotId, rightCli
 		boolToByte(rightClick),
 		txId,
 		boolToByte(shiftClick),
-		itemTypeId,
+		expectedSlot.ItemTypeId,
 	}
 
 	if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
 		return
 	}
 
-	if itemTypeId != -1 {
+	if expectedSlot.ItemTypeId != -1 {
 		var packetEnd = struct {
 			Amount ItemCount
 			Data   ItemData
 		}{
-			amount,
-			data,
+			expectedSlot.Count,
+			expectedSlot.Data,
 		}
 		err = binary.Write(writer, binary.BigEndian, &packetEnd)
 	}
@@ -2483,15 +2483,19 @@ func readWindowClick(reader io.Reader, handler IServerPacketHandler) (err os.Err
 		}
 	}
 
+	expectedSlot := &WindowSlot{
+		packetStart.ItemTypeId,
+		packetEnd.Amount,
+		packetEnd.Data,
+	}
+
 	handler.PacketWindowClick(
 		packetStart.WindowId,
 		packetStart.Slot,
 		byteToBool(packetStart.RightClick),
 		packetStart.TxId,
 		byteToBool(packetStart.ShiftClick),
-		packetStart.ItemTypeId,
-		packetEnd.Amount,
-		packetEnd.Data)
+		expectedSlot)
 
 	return
 }
