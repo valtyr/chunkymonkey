@@ -2,6 +2,7 @@ package intercept_parse
 
 import (
 	"encoding/hex"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -292,7 +293,7 @@ func (p *MessageParser) PacketDisconnect(reason string) {
 }
 
 // Parses messages from the client
-func (p *MessageParser) CsParse(reader io.Reader) {
+func (p *MessageParser) CsParse(reader io.Reader, connNumber int) {
 	// If we return, we should consume all input to avoid blocking the pipe
 	// we're listening on. TODO Maybe we could just close it?
 	defer p.consumeUnrecognizedInput(reader)
@@ -303,7 +304,7 @@ func (p *MessageParser) CsParse(reader io.Reader) {
 		}
 	}()
 
-	p.logPrefix = "(C->S) "
+	p.logPrefix = fmt.Sprintf("[%d](C->S) ", connNumber)
 
 	username, err := proto.ServerReadHandshake(reader)
 	if err != nil {
@@ -333,7 +334,7 @@ func (p *MessageParser) CsParse(reader io.Reader) {
 }
 
 // Parses messages from the server
-func (p *MessageParser) ScParse(reader io.Reader) {
+func (p *MessageParser) ScParse(reader io.Reader, connNumber int) {
 	// If we return, we should consume all input to avoid blocking the pipe
 	// we're listening on. TODO Maybe we could just close it?
 	defer p.consumeUnrecognizedInput(reader)
@@ -344,7 +345,7 @@ func (p *MessageParser) ScParse(reader io.Reader) {
 		}
 	}()
 
-	p.logPrefix = "(S->C) "
+	p.logPrefix = fmt.Sprintf("[%d](C->S) ", connNumber)
 
 	serverId, err := proto.ClientReadHandshake(reader)
 	if err != nil {

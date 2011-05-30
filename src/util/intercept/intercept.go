@@ -31,46 +31,46 @@ dst io.Writer, src io.Reader) (reportChan chan RelayReport) {
 	return
 }
 
-func serveConn(clientConn net.Conn, remoteaddr string) {
+func serveConn(clientConn net.Conn, remoteaddr string, connNumber int) {
 	defer clientConn.Close()
 
 	clientAddr := clientConn.RemoteAddr().String()
 
-	log.Printf("(%s) Client connected ", clientAddr)
+	log.Printf("[%d](%s) Client connected", connNumber, clientAddr)
 
-	log.Printf("(%s) Creating relay to server %s", clientAddr, remoteaddr)
+	log.Printf("[%d](%s) Creating relay to server %s", connNumber, clientAddr, remoteaddr)
 	serverConn, err := net.Dial("tcp", remoteaddr)
 
 	if err != nil {
-		log.Printf("(%s) Error connecting to %s: %v", clientAddr, remoteaddr, err)
+		log.Printf("[%d](%s) Error connecting to %s: %v", connNumber, clientAddr, remoteaddr, err)
 		return
 	}
 
 	defer serverConn.Close()
 
-	log.Printf("(%s) Connected to server %s", clientAddr, remoteaddr)
+	log.Printf("[%d](%s) Connected to server %s", connNumber, clientAddr, remoteaddr)
 
 	clientParser := new(parser.MessageParser)
 	serverParser := new(parser.MessageParser)
 
 	// Set up for parsing messages from server to client
 	serverToClientReportChan := spliceParser(
-		func(reader io.Reader) { serverParser.ScParse(reader) },
+		func(reader io.Reader) { serverParser.ScParse(reader, connNumber) },
 		clientConn, serverConn)
 
 	// Set up for parsing messages from client to server
 	clientToServerReportChan := spliceParser(
-		func(reader io.Reader) { clientParser.CsParse(reader) },
+		func(reader io.Reader) { clientParser.CsParse(reader, connNumber) },
 		serverConn, clientConn)
 
 	// Wait for the both relay/splices to stop, then we let the connections
 	// close via deferred calls
 	report := <-serverToClientReportChan
-	log.Printf("(%s) Server->client relay after %d bytes with error: %v", clientAddr, report.written, report.err)
+	log.Printf("[%d](%s) Server->client relay after %d bytes with error: %v", connNumber, clientAddr, report.written, report.err)
 	report = <-clientToServerReportChan
-	log.Printf("(%s) Client->server relay after %d bytes with error: %v", clientAddr, report.written, report.err)
+	log.Printf("[%d](%s) Client->server relay after %d bytes with error: %v", connNumber, clientAddr, report.written, report.err)
 
-	log.Printf("(%s) Client disconnected", clientAddr)
+	log.Printf("[%d](%s) Client disconnected", connNumber, clientAddr)
 }
 
 func serve(localaddr, remoteaddr string) (err os.Error) {
@@ -83,12 +83,16 @@ func serve(localaddr, remoteaddr string) (err os.Error) {
 	defer listener.Close()
 	log.Print("Listening on ", localaddr)
 
+	connNumber := 1
+
 	for {
 		clientConn, acceptErr := listener.Accept()
 		if acceptErr != nil {
 			log.Printf("Accept error: %s", acceptErr.String())
+			break
 		} else {
-			go serveConn(clientConn, remoteaddr)
+			go serveConn(clientConn, remoteaddr, connNumber)
+			connNumber++
 		}
 	}
 	return
