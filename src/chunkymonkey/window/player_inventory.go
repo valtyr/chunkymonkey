@@ -11,25 +11,9 @@ import (
 )
 
 const (
-	playerInvCraftWidth  = 2
-	playerInvCraftHeight = 2
-	playerInvCraftNum    = 1 + playerInvCraftWidth + playerInvCraftHeight
-	playerInvCraftStart  = 0
-	playerInvCraftEnd    = playerInvCraftStart + playerInvCraftNum
-
 	playerInvArmorNum   = 4
-	playerInvArmorStart = playerInvCraftEnd
-	playerInvArmorEnd   = playerInvArmorStart + playerInvArmorNum
-
-	playerInvMainNum   = 3 * 9
-	playerInvMainStart = playerInvArmorEnd
-	playerInvMainEnd   = playerInvMainStart + playerInvMainNum
-
-	playerInvHoldingNum   = 9
-	playerInvHoldingStart = playerInvMainEnd
-	playerInvHoldingEnd   = playerInvHoldingStart + playerInvHoldingNum
-
-	playerInvSize = playerInvCraftNum + playerInvArmorNum + playerInvMainNum + playerInvHoldingNum
+	playerInvMainNum    = 3 * 9
+	playerInvHoldingNum = 9
 )
 
 type PlayerInventory struct {
@@ -47,7 +31,7 @@ type PlayerInventory struct {
 func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *recipe.RecipeSet) {
 	w.entityId = entityId
 
-	w.crafting.Init(playerInvCraftWidth, playerInvCraftHeight, recipes)
+	w.crafting.InitPlayerCraftingInventory(recipes)
 	w.armor.Init(playerInvArmorNum)
 	w.main.Init(playerInvMainNum)
 	w.holding.Init(playerInvHoldingNum)

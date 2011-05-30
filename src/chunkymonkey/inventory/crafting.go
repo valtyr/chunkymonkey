@@ -7,6 +7,8 @@ import (
 )
 
 const (
+	playerInvCraftWidth  = 2
+	playerInvCraftHeight = 2
 	workbenchInvCraftWidth  = 3
 	workbenchInvCraftHeight = 3
 )
@@ -19,11 +21,29 @@ type CraftingInventory struct {
 	recipes       *recipe.RecipeSet
 }
 
-func (inv *CraftingInventory) Init(width, height int, recipes *recipe.RecipeSet) {
+func (inv *CraftingInventory) init(width, height int, recipes *recipe.RecipeSet) {
 	inv.Inventory.Init(1 + width*height)
 	inv.width = width
 	inv.height = height
 	inv.recipes = recipes
+}
+
+// InitWorkbenchInventory initializes inv as a 2x2 player crafting inventory.
+func (inv *CraftingInventory) InitPlayerCraftingInventory(recipes *recipe.RecipeSet) {
+	inv.init(
+		playerInvCraftWidth,
+		playerInvCraftHeight,
+		recipes,
+	)
+}
+
+// InitWorkbenchInventory initializes inv as a 3x3 workbench crafting inventory.
+func (inv *CraftingInventory) InitWorkbenchInventory(recipes *recipe.RecipeSet) {
+	inv.init(
+		workbenchInvCraftWidth,
+		workbenchInvCraftHeight,
+		recipes,
+	)
 }
 
 // Click handles window clicks from a user with special handling for crafting.
@@ -68,18 +88,4 @@ func (inv *CraftingInventory) TakeAllItems() (items []slot.Slot) {
 	inv.slotUpdate(output, 0)
 
 	return inv.Inventory.TakeAllItems()
-}
-
-type WorkbenchInventory struct {
-	CraftingInventory
-}
-
-func NewWorkbenchInventory(recipes *recipe.RecipeSet) (inv *WorkbenchInventory) {
-	inv = new(WorkbenchInventory)
-	inv.CraftingInventory.Init(
-		workbenchInvCraftWidth,
-		workbenchInvCraftHeight,
-		recipes,
-	)
-	return
 }

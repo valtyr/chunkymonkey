@@ -60,8 +60,7 @@ func (aspect *WorkbenchAspect) Destroy(instance *BlockInstance) {
 func (aspect *WorkbenchAspect) invWrapper(instance *BlockInstance, create bool) *workbenchExtra {
 	extra, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*workbenchExtra)
 	if !ok && create {
-		inv := inventory.NewWorkbenchInventory(instance.Chunk.RecipeSet())
-		extra = newWorkbenchExtra(instance, inv)
+		extra = newWorkbenchExtra(instance)
 		instance.Chunk.SetBlockExtra(&instance.SubLoc, extra)
 	}
 
@@ -73,18 +72,18 @@ func (aspect *WorkbenchAspect) invWrapper(instance *BlockInstance, create bool) 
 // IInventorySubscriber to relay events to player(s) subscribed.
 type workbenchExtra struct {
 	instance    BlockInstance
-	inv         *inventory.WorkbenchInventory
+	inv         inventory.CraftingInventory
 	subscribers map[EntityId]stub.IPlayerConnection
 }
 
-func newWorkbenchExtra(instance *BlockInstance, inv *inventory.WorkbenchInventory) *workbenchExtra {
+func newWorkbenchExtra(instance *BlockInstance) *workbenchExtra {
 	extra := &workbenchExtra{
 		instance:    *instance,
-		inv:         inv,
 		subscribers: make(map[EntityId]stub.IPlayerConnection),
 	}
 
-	inv.SetSubscriber(extra)
+	extra.inv.InitWorkbenchInventory(instance.Chunk.RecipeSet())
+	extra.inv.SetSubscriber(extra)
 
 	return extra
 }
