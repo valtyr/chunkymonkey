@@ -309,14 +309,17 @@ func (chunk *Chunk) reqDropItem(player stub.IPlayerConnection, content *slot.Slo
 	chunk.AddSpawn(spawnedItem)
 }
 
-func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *BlockXyz, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *BlockXyz, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
 	{
 		blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
 		if !ok {
 			return
 		}
 
-		blockType.Aspect.InventoryClick(blockInstance, player, cursor, rightClick, shiftClick, slotId)
+		blockType.Aspect.InventoryClick(
+			blockInstance, player, slotId, cursor,
+			rightClick, shiftClick,
+			txId, expectedSlot)
 	}
 }
 

@@ -25,7 +25,7 @@ func (aspect *VoidAspect) Hit(instance *BlockInstance, player stub.IPlayerConnec
 func (aspect *VoidAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
 }
 
-func (aspect *VoidAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+func (aspect *VoidAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
 }
 
 func (aspect *VoidAspect) InventoryUnsubscribed(instance *BlockInstance, player stub.IPlayerConnection) {

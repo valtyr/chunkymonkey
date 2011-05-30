@@ -42,6 +42,12 @@ func (psr *playerShardReceiver) ReqInventoryCursorUpdate(block BlockXyz, cursor 
 	})
 }
 
+func (psr *playerShardReceiver) ReqInventoryTxState(block BlockXyz, txId TxId, accepted bool) {
+	psr.player.Enqueue(func(_ *Player) {
+		psr.player.reqInventoryTxState(&block, txId, accepted)
+	})
+}
+
 func (psr *playerShardReceiver) ReqInventoryUnsubscribed(block BlockXyz) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqInventoryUnsubscribed(&block)

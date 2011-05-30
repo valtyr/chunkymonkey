@@ -28,14 +28,13 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPl
 	}
 }
 
-func (aspect *WorkbenchAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+func (aspect *WorkbenchAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
 	extra := aspect.invWrapper(instance, false)
 	if extra != nil {
-		extra.inv.Click(slotId, cursor, rightClick, shiftClick)
-		player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
+		extra.Click(player, slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 	} else {
-		// TODO send transaction failure, maybe send the cursor state unchanged
-		// right back?
+		// No inventory to act on (shouldn't happen, normally).
+		player.ReqInventoryTxState(extra.instance.BlockLoc, txId, false)
 		player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
 		return
 	}
@@ -88,6 +87,15 @@ func newWorkbenchExtra(instance *BlockInstance, inv *inventory.WorkbenchInventor
 	inv.SetSubscriber(extra)
 
 	return extra
+}
+
+func (extra *workbenchExtra) Click(player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
+	txState := extra.inv.Click(slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+
+	player.ReqInventoryCursorUpdate(extra.instance.BlockLoc, *cursor)
+
+	// Inform client of operation status.
+	player.ReqInventoryTxState(extra.instance.BlockLoc, txId, txState == TxStateAccepted)
 }
 
 func (extra *workbenchExtra) SlotUpdate(slot *slot.Slot, slotId SlotId) {

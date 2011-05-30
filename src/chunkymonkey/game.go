@@ -119,7 +119,7 @@ func (game *Game) login(conn net.Conn) {
 
 	// TODO pass player's last position in the world, not necessarily the spawn
 	// position.
-	player := player.NewPlayer(entityId, game.chunkManager, game.gameRules.Recipes, conn, username, startPosition, game.playerDisconnect)
+	player := player.NewPlayer(entityId, game.chunkManager, &game.gameRules, conn, username, startPosition, game.playerDisconnect)
 
 	addedChan := make(chan struct{})
 	game.enqueue(func(_ *Game) {

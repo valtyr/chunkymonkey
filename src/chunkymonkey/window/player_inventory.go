@@ -140,25 +140,28 @@ func (w *PlayerInventory) CanTakeItem(item *slot.Slot) bool {
 	return w.holding.CanTakeItem(item) || w.main.CanTakeItem(item)
 }
 
-func (w *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
+func (w *PlayerInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) TxState {
 	switch {
 	case slotId < 0:
-		return false
+		return TxStateRejected
 	case slotId < playerInvCraftEnd:
-		accepted = w.crafting.Click(
+		return w.crafting.Click(
 			slotId-playerInvCraftStart,
-			cursor, rightClick, shiftClick)
+			cursor, rightClick, shiftClick,
+			txId, expectedSlot)
 	case slotId < playerInvArmorEnd:
 		// TODO - handle armor
-		return false
+		return TxStateRejected
 	case slotId < playerInvMainEnd:
-		accepted = w.main.Click(
+		return w.main.Click(
 			slotId-playerInvMainStart,
-			cursor, rightClick, shiftClick)
+			cursor, rightClick, shiftClick,
+			txId, expectedSlot)
 	case slotId < playerInvHoldingEnd:
-		accepted = w.holding.Click(
+		return w.holding.Click(
 			slotId-playerInvHoldingStart,
-			cursor, rightClick, shiftClick)
+			cursor, rightClick, shiftClick,
+			txId, expectedSlot)
 	}
-	return
+	return TxStateRejected
 }

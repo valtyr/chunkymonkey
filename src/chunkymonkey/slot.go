@@ -26,6 +26,19 @@ func (s *Slot) Init() {
 	s.Data = 0
 }
 
+func (s *Slot) Equals(other *Slot) bool {
+	return (s.ItemType == other.ItemType &&
+		s.Count == other.Count &&
+		s.Data == other.Data)
+}
+
+func (s *Slot) Normalize() {
+	if s.Count == 0 || s.ItemType == nil {
+		s.Count = 0
+		s.ItemType = nil
+	}
+}
+
 func (s *Slot) GetItemTypeId() (itemTypeId ItemTypeId) {
 	if s.ItemType != nil {
 		itemTypeId = s.ItemType.Id

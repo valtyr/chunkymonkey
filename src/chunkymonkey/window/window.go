@@ -15,7 +15,7 @@ import (
 // IInventory is the interface that windows require of inventories.
 type IInventory interface {
 	NumSlots() SlotId
-	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool)
+	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState)
 	SetSubscriber(subscriber inventory.IInventorySubscriber)
 	WriteProtoSlots(slots []proto.WindowSlot)
 }
@@ -24,7 +24,7 @@ type IInventory interface {
 // inventories.
 type IWindow interface {
 	GetWindowId() WindowId
-	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool)
+	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState)
 	WriteWindowOpen(writer io.Writer) (err os.Error)
 	WriteWindowItems(writer io.Writer) (err os.Error)
 	Finalize(sendClosePacket bool)

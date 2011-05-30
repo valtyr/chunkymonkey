@@ -111,10 +111,10 @@ func (conn *localShardConnection) ReqDropItem(content slot.Slot, position AbsXyz
 	})
 }
 
-func (conn *localShardConnection) ReqInventoryClick(block BlockXyz, cursor slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
+func (conn *localShardConnection) ReqInventoryClick(block BlockXyz, slotId SlotId, cursor slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot slot.Slot) {
 	chunkLoc := block.ToChunkXz()
 	conn.shard.EnqueueOnChunk(*chunkLoc, func(chunk *Chunk) {
-		chunk.reqInventoryClick(conn.player, &block, &cursor, rightClick, shiftClick, slotId)
+		chunk.reqInventoryClick(conn.player, &block, slotId, &cursor, rightClick, shiftClick, txId, &expectedSlot)
 	})
 }
 

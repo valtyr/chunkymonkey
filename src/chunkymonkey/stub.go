@@ -43,6 +43,11 @@ type IPlayerConnection interface {
 	// ReqInventoryCursorUpdate informs the player of their new cursor contents.
 	ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot)
 
+	// ReqInventoryTxState requests that the player report the transaction state
+	// as accepted or not. This is used by remote inventories when
+	// TxStateDeferred is returned from Click.
+	ReqInventoryTxState(block BlockXyz, txId TxId, accepted bool)
+
 	// ReqInventorySubscribed informs the player that an inventory has been
 	// closed.
 	ReqInventoryUnsubscribed(block BlockXyz)
@@ -112,7 +117,7 @@ type IShardConnection interface {
 	// inventory. The chunk should send a replying ReqInventoryCursorUpdate to
 	// reflect the new state of the cursor afterwards - in addition to any
 	// ReqInventorySlotUpdate to all subscribers to the inventory.
-	ReqInventoryClick(block BlockXyz, cursor slot.Slot, rightClick bool, shiftClick bool, slotId SlotId)
+	ReqInventoryClick(block BlockXyz, slotId SlotId, cursor slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot slot.Slot)
 
 	// ReqInventoryUnsubscribed requests that the inventory for the block be
 	// unsubscribed to.

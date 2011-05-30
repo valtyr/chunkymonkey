@@ -10,8 +10,8 @@ import (
 	"os"
 	"sync"
 
+	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
-	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
@@ -46,6 +46,8 @@ type Player struct {
 	nextWindowId WindowId
 	remoteInv    *RemoteInventory
 
+	gameRules *gamerules.GameRules
+
 	mainQueue chan func(*Player)
 	txQueue   chan []byte
 
@@ -56,7 +58,7 @@ type Player struct {
 	onDisconnect chan<- EntityId
 }
 
-func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, recipes *recipe.RecipeSet, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
+func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules *gamerules.GameRules, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
 	player := &Player{
 		EntityId:       entityId,
 		shardConnecter: shardConnecter,
@@ -68,6 +70,8 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, recipes *
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
 
+		gameRules: gameRules,
+
 		mainQueue: make(chan func(*Player), 128),
 		txQueue:   make(chan []byte, 128),
 
@@ -76,7 +80,7 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, recipes *
 
 	player.shardReceiver.Init(player)
 	player.cursor.Init()
-	player.inventory.Init(player.EntityId, player, recipes)
+	player.inventory.Init(player.EntityId, player, gameRules.Recipes)
 
 	return player
 }
@@ -246,22 +250,35 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 			windowId)
 	}
 
-	buf := &bytes.Buffer{}
-	accepted := false
-
-	if clickedWindow != nil {
-		accepted = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick)
-
-		// TODO send cursor/transaction update only if this was a *local* click.
-		// We send slot updates in case we have custom max counts that differ
-		// from the client's own model.
-		player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
+	expectedItemType, ok := player.gameRules.ItemTypes[expectedSlot.ItemTypeId]
+	if !ok {
+		return
 	}
 
-	// Inform client of operation status.
-	proto.WriteWindowTransaction(buf, windowId, txId, accepted)
+	expectedSlotContent := &slot.Slot{
+		ItemType: expectedItemType,
+		Count:    expectedSlot.Count,
+		Data:     expectedSlot.Data,
+	}
+	// The client tends to send item IDs even when the count is zero.
+	expectedSlotContent.Normalize()
 
-	player.TransmitPacket(buf.Bytes())
+	txState := TxStateRejected
+
+	if clickedWindow != nil {
+		txState = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick, txId, expectedSlotContent)
+	}
+
+	switch txState {
+	case TxStateAccepted, TxStateRejected:
+		// Inform client of operation status.
+		buf := new(bytes.Buffer)
+		proto.WriteWindowTransaction(buf, windowId, txId, txState == TxStateAccepted)
+		player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
+		player.TransmitPacket(buf.Bytes())
+	case TxStateDeferred:
+		// The remote inventory should send the transaction outcome.
+	}
 }
 
 func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool) {
@@ -419,6 +436,16 @@ func (player *Player) reqInventoryCursorUpdate(block *BlockXyz, cursor *slot.Slo
 	player.cursor = *cursor
 	buf := new(bytes.Buffer)
 	player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
+	player.TransmitPacket(buf.Bytes())
+}
+
+func (player *Player) reqInventoryTxState(block *BlockXyz, txId TxId, accepted bool) {
+	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) || player.curWindow == nil {
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	proto.WriteWindowTransaction(buf, player.curWindow.GetWindowId(), txId, accepted)
 	player.TransmitPacket(buf.Bytes())
 }
 

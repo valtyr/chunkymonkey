@@ -36,29 +36,35 @@ func (inv *Inventory) SetSubscriber(subscriber IInventorySubscriber) {
 }
 
 // Click takes the default actions upon a click event from a player.
-func (inv *Inventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
+func (inv *Inventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) TxState {
 	if slotId < 0 || int(slotId) > len(inv.slots) {
-		return false
+		return TxStateRejected
 	}
 
 	clickedSlot := &inv.slots[slotId]
+
+	if !expectedSlot.Equals(clickedSlot) {
+		return TxStateRejected
+	}
 
 	// Apply the change.
 	if cursor.Count == 0 {
 		if rightClick {
-			accepted = clickedSlot.Split(cursor)
+			clickedSlot.Split(cursor)
 		} else {
-			accepted = clickedSlot.Swap(cursor)
+			clickedSlot.Swap(cursor)
 		}
 	} else {
+		var changed bool
+
 		if rightClick {
-			accepted = clickedSlot.AddOne(cursor)
+			changed = clickedSlot.AddOne(cursor)
 		} else {
-			accepted = clickedSlot.Add(cursor)
+			changed = clickedSlot.Add(cursor)
 		}
 
-		if !accepted {
-			accepted = clickedSlot.Swap(cursor)
+		if !changed {
+			clickedSlot.Swap(cursor)
 		}
 	}
 
@@ -66,26 +72,30 @@ func (inv *Inventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, s
 	// the client's idea.
 	inv.slotUpdate(clickedSlot, slotId)
 
-	return
+	return TxStateAccepted
 }
 
 // TakeOnlyClick only allows items to be taken from the slot, and it only
 // allows the *whole* stack to be taken, otherwise no items are taken at all.
-func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool) (accepted bool) {
+func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *slot.Slot, rightClick, shiftClick bool, txId TxId, expectedSlot *slot.Slot) TxState {
 	if slotId < 0 || int(slotId) > len(inv.slots) {
-		return false
+		return TxStateRejected
 	}
 
 	clickedSlot := &inv.slots[slotId]
 
+	if !expectedSlot.Equals(clickedSlot) {
+		return TxStateRejected
+	}
+
 	// Apply the change.
-	accepted = cursor.AddWhole(clickedSlot)
+	cursor.AddWhole(clickedSlot)
 
 	// We send slot updates in case we have custom max counts that differ from
 	// the client's idea.
 	inv.slotUpdate(clickedSlot, slotId)
 
-	return
+	return TxStateAccepted
 }
 
 func (inv *Inventory) Slot(slotId SlotId) slot.Slot {

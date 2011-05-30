@@ -240,8 +240,17 @@ type PrgBarValue int16
 // ID specifying a player statistic.
 type StatisticId int32
 
-// Transaction ID
+// Transaction ID.
 type TxId int16
+
+// Transaction state.
+type TxState byte
+
+const (
+	TxStateAccepted = TxState(iota)
+	TxStateRejected
+	TxStateDeferred
+)
 
 // Movement-related types and constants
 

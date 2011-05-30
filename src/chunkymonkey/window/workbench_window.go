@@ -43,22 +43,22 @@ func NewWorkbenchWindow(entityId EntityId, viewer IWindowViewer, windowId Window
 	return
 }
 
-func (w *WorkbenchWindow) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
+func (w *WorkbenchWindow) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) TxState {
 	switch {
 	case slotId < 0:
-		return false
+		break
 	case slotId < workbenchInvCraftEnd:
-		accepted = w.crafting.Click(
+		return w.crafting.Click(
 			slotId-workbenchInvCraftStart,
-			cursor, rightClick, shiftClick)
+			cursor, rightClick, shiftClick, txId, expectedSlot)
 	case slotId < workbenchInvMainEnd:
-		accepted = w.main.Click(
+		return w.main.Click(
 			slotId-workbenchInvMainStart,
-			cursor, rightClick, shiftClick)
+			cursor, rightClick, shiftClick, txId, expectedSlot)
 	case slotId < workbenchInvHoldingEnd:
-		accepted = w.holding.Click(
+		return w.holding.Click(
 			slotId-workbenchInvHoldingStart,
-			cursor, rightClick, shiftClick)
+			cursor, rightClick, shiftClick, txId, expectedSlot)
 	}
-	return
+	return TxStateRejected
 }

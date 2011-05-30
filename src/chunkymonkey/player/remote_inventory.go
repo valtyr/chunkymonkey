@@ -47,16 +47,14 @@ func (inv *RemoteInventory) NumSlots() SlotId {
 	return SlotId(len(inv.slots))
 }
 
-func (inv *RemoteInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
+func (inv *RemoteInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState) {
 	shard, _, ok := inv.chunkSubs.ShardConnForBlockXyz(&inv.blockLoc)
 
 	if ok {
-		shard.ReqInventoryClick(inv.blockLoc, *cursor, rightClick, shiftClick, slotId)
+		shard.ReqInventoryClick(inv.blockLoc, slotId, *cursor, rightClick, shiftClick, txId, *expectedSlot)
 	}
 
-	// TODO This isn't strictly true - the transaction may not be accepted. Need
-	// to readdress the transaction mechanism some.
-	return ok
+	return TxStateDeferred
 }
 
 func (inv *RemoteInventory) SetSubscriber(subscriber inventory.IInventorySubscriber) {

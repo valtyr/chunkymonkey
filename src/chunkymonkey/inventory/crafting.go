@@ -27,18 +27,18 @@ func (inv *CraftingInventory) Init(width, height int, recipes *recipe.RecipeSet)
 }
 
 // Click handles window clicks from a user with special handling for crafting.
-func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool) (accepted bool) {
+func (inv *CraftingInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState) {
 	if slotId == 0 {
 		// Player may only *take* the *whole* stack from the output slot.
-		accepted = inv.Inventory.TakeOnlyClick(
-			slotId, cursor, rightClick, shiftClick)
+		txState = inv.Inventory.TakeOnlyClick(
+			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 	} else {
 		// Player may interact with the input slots like any other slot.
-		accepted = inv.Inventory.Click(
-			slotId, cursor, rightClick, shiftClick)
+		txState = inv.Inventory.Click(
+			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 	}
 
-	if !accepted {
+	if txState == TxStateRejected {
 		return
 	}
 
