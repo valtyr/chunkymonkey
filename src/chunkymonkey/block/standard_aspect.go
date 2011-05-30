@@ -31,7 +31,7 @@ func (aspect *StandardAspect) Hit(instance *BlockInstance, player stub.IPlayerCo
 	destroyed = true
 
 	if len(aspect.DroppedItems) > 0 {
-		rand := instance.Chunk.GetRand()
+		rand := instance.Chunk.Rand()
 		// Possibly drop item(s)
 		r := byte(rand.Intn(100))
 		for _, dropItem := range aspect.DroppedItems {

@@ -16,12 +16,12 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 
 // The interface required of a chunk by block behaviour.
 type IChunkBlock interface {
-	GetRand() *rand.Rand
-	GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
+	Rand() *rand.Rand
+	ItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
 	AddSpawn(s stub.INonPlayerSpawn)
-	GetBlockExtra(subLoc *SubChunkXyz) interface{}
+	BlockExtra(subLoc *SubChunkXyz) interface{}
 	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
-	GetRecipeSet() *recipe.RecipeSet
+	RecipeSet() *recipe.RecipeSet
 
 	// The above methods are freely callable in the goroutine context of a call
 	// to a IBlockAspect method (as the chunk itself calls that). But from any

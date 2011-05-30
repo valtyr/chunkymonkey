@@ -92,11 +92,11 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 	return
 }
 
-func (chunk *Chunk) GetRand() *rand.Rand {
+func (chunk *Chunk) Rand() *rand.Rand {
 	return chunk.rand
 }
 
-func (chunk *Chunk) GetItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool) {
+func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool) {
 	itemType, ok = chunk.mgr.gameRules.ItemTypes[itemTypeId]
 	return
 }
@@ -129,7 +129,7 @@ func (chunk *Chunk) removeSpawn(s stub.INonPlayerSpawn) {
 	chunk.reqMulticastPlayers(-1, buf.Bytes())
 }
 
-func (chunk *Chunk) GetBlockExtra(subLoc *SubChunkXyz) interface{} {
+func (chunk *Chunk) BlockExtra(subLoc *SubChunkXyz) interface{} {
 	if index, ok := subLoc.BlockIndex(); ok {
 		if extra, ok := chunk.blockExtra[index]; ok {
 			return extra
@@ -194,18 +194,7 @@ func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *blo
 	return
 }
 
-func (chunk *Chunk) GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
-	index, ok := subLoc.BlockIndex()
-	if !ok {
-		return
-	}
-
-	blockType = index.GetBlockId(chunk.blocks)
-
-	return
-}
-
-func (chunk *Chunk) GetRecipeSet() *recipe.RecipeSet {
+func (chunk *Chunk) RecipeSet() *recipe.RecipeSet {
 	return chunk.mgr.gameRules.Recipes
 }
 
@@ -338,13 +327,18 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 
 	if chunkLoc.X == chunk.loc.X && chunkLoc.Z == chunk.loc.Z {
 		// The item is asking about this chunk.
-		blockTypeId, _ = chunk.GetBlock(subLoc)
+		index, ok := subLoc.BlockIndex()
+		if !ok {
+			return
+		}
+
+		blockTypeId = index.GetBlockId(chunk.blocks)
 		isWithinChunk = true
 	} else {
 		// The item is asking about a separate chunk.
 		isWithinChunk = false
 
-		ok, blockTypeId = chunk.neighbours.GetCachedBlock(
+		ok, blockTypeId = chunk.neighbours.CachedBlock(
 			chunk.loc.X-chunkLoc.X,
 			chunk.loc.Z-chunkLoc.Z,
 			subLoc,

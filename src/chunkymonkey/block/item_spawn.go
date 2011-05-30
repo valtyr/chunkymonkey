@@ -11,7 +11,7 @@ import (
 // spawnItemInBlock creates an item in a block. It must be run within
 // instance.Chunk's goroutine.
 func spawnItemInBlock(instance *BlockInstance, itemType *itemtype.ItemType, count ItemCount, data ItemData) {
-	rand := instance.Chunk.GetRand()
+	rand := instance.Chunk.Rand()
 	position := instance.BlockLoc.ToAbsXyz()
 	position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
 	position.Y += AbsCoord(blockItemSpawnFromEdge)
@@ -33,7 +33,7 @@ type blockDropItem struct {
 }
 
 func (bdi *blockDropItem) drop(instance *BlockInstance) {
-	itemType, ok := instance.Chunk.GetItemType(bdi.DroppedItem)
+	itemType, ok := instance.Chunk.ItemType(bdi.DroppedItem)
 
 	if !ok {
 		log.Printf(

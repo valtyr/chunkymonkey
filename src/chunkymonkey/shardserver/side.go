@@ -86,7 +86,7 @@ func (n *neighboursCache) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Ch
 	})
 }
 
-func (n *neighboursCache) GetCachedBlock(dx, dz ChunkCoord, subLoc *SubChunkXyz) (ok bool, blockTypeId BlockId) {
+func (n *neighboursCache) CachedBlock(dx, dz ChunkCoord, subLoc *SubChunkXyz) (ok bool, blockTypeId BlockId) {
 	dir, isNeighbour := DxzToDir(int32(dx), int32(dz))
 	ok = false
 
@@ -101,7 +101,7 @@ func (n *neighboursCache) GetCachedBlock(dx, dz ChunkCoord, subLoc *SubChunkXyz)
 		return
 	}
 
-	blockTypeId, ok = sideCache.GetCachedBlock(subLoc)
+	blockTypeId, ok = sideCache.CachedBlock(subLoc)
 	if !ok {
 		return
 	}
@@ -124,7 +124,7 @@ func (cache *chunkSideCache) init(side ChunkSideDir) {
 	cache.active = false
 }
 
-func (cache *chunkSideCache) GetCachedBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
+func (cache *chunkSideCache) CachedBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
 	index, ok := getSideBlockIndex(cache.side, subLoc)
 	if !ok {
 		return

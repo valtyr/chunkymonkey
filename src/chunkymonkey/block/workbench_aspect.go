@@ -30,14 +30,14 @@ func (aspect *WorkbenchAspect) Hit(instance *BlockInstance, player stub.IPlayerC
 }
 
 func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
-	extra, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*workbenchExtra)
+	extra, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*workbenchExtra)
 	if !ok {
 		ejectItems := func() {
 			instance.Chunk.EnqueueGeneric(func() {
 				aspect.ejectItems(instance)
 			})
 		}
-		inv := inventory.NewWorkbenchInventory(instance.Chunk.GetRecipeSet())
+		inv := inventory.NewWorkbenchInventory(instance.Chunk.RecipeSet())
 		extra = newWorkbenchExtra(&instance.BlockLoc, inv, ejectItems)
 		instance.Chunk.SetBlockExtra(&instance.SubLoc, extra)
 	}
@@ -46,7 +46,7 @@ func (aspect *WorkbenchAspect) Interact(instance *BlockInstance, player stub.IPl
 }
 
 func (aspect *WorkbenchAspect) Click(instance *BlockInstance, player stub.IPlayerConnection, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
-	extra, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*workbenchExtra)
+	extra, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*workbenchExtra)
 	if !ok {
 		// TODO send transaction failure, maybe send the cursor state unchanged
 		// right back?
@@ -59,7 +59,7 @@ func (aspect *WorkbenchAspect) Click(instance *BlockInstance, player stub.IPlaye
 }
 
 func (aspect *WorkbenchAspect) ejectItems(instance *BlockInstance) {
-	workbenchInv, ok := instance.Chunk.GetBlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
+	workbenchInv, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*inventory.WorkbenchInventory)
 	if !ok {
 		return
 	}
