@@ -75,24 +75,11 @@ func NewWorkbenchInventory(recipes *recipe.RecipeSet) (inv *WorkbenchInventory) 
 // TakeAllItems empties the inventory, and returns all items that were inside
 // it inside a slice of Slots.
 func (inv *WorkbenchInventory) TakeAllItems() (items []slot.Slot) {
-	items = make([]slot.Slot, 0, len(inv.slots)-1)
-
 	// The output slot gets emptied, the only items that are to be ejected are
 	// those in the input slots.
 	output := &inv.slots[0]
 	output.Init()
 	inv.slotUpdate(output, 0)
 
-	for i := 1; i < len(inv.slots); i++ {
-		curSlot := &inv.slots[i]
-		if curSlot.Count > 0 {
-			var taken slot.Slot
-			taken.Init()
-			taken.Swap(curSlot)
-			items = append(items, taken)
-			inv.slotUpdate(curSlot, SlotId(i))
-		}
-	}
-
-	return
+	return inv.CraftingInventory.TakeAllItems()
 }

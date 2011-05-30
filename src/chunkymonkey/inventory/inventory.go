@@ -160,6 +160,25 @@ func (inv *Inventory) WriteProtoSlots(slots []proto.WindowSlot) {
 	}
 }
 
+// TakeAllItems empties the inventory, and returns all items that were inside
+// it inside a slice of Slots.
+func (inv *Inventory) TakeAllItems() (items []slot.Slot) {
+	items = make([]slot.Slot, 0, len(inv.slots)-1)
+
+	for i := range inv.slots {
+		curSlot := &inv.slots[i]
+		if curSlot.Count > 0 {
+			var taken slot.Slot
+			taken.Init()
+			taken.Swap(curSlot)
+			items = append(items, taken)
+			inv.slotUpdate(curSlot, SlotId(i))
+		}
+	}
+
+	return
+}
+
 // Send message about the slot change to the relevant places.
 func (inv *Inventory) slotUpdate(slot *slot.Slot, slotId SlotId) {
 	if inv.subscriber != nil {
