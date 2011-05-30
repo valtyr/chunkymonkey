@@ -73,16 +73,16 @@ func (aspect *WorkbenchAspect) invWrapper(instance *BlockInstance, create bool) 
 // workbenchExtra is the data stored in Chunk.SetBlockExtra. It also implements
 // IInventorySubscriber to relay events to player(s) subscribed.
 type workbenchExtra struct {
-	instance       BlockInstance
-	inv            *inventory.WorkbenchInventory
-	subscribers    map[EntityId]stub.IPlayerConnection
+	instance    BlockInstance
+	inv         *inventory.WorkbenchInventory
+	subscribers map[EntityId]stub.IPlayerConnection
 }
 
 func newWorkbenchExtra(instance *BlockInstance, inv *inventory.WorkbenchInventory) *workbenchExtra {
 	extra := &workbenchExtra{
-		instance:       *instance,
-		inv:            inv,
-		subscribers:    make(map[EntityId]stub.IPlayerConnection),
+		instance:    *instance,
+		inv:         inv,
+		subscribers: make(map[EntityId]stub.IPlayerConnection),
 	}
 
 	inv.SetSubscriber(extra)
