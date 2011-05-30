@@ -58,10 +58,6 @@ func (iv *inventoryView) Resubscribe() {
 	iv.inventory.SetSubscriber(iv)
 }
 
-func (iv *inventoryView) Destroyed() {
-	// TODO this should close the window
-}
-
 func (iv *inventoryView) Finalize() {
 	iv.inventory.SetSubscriber(nil)
 }
@@ -116,8 +112,9 @@ func (w *Window) Finalize(sendClosePacket bool) {
 		w.views[index].Finalize()
 	}
 	if sendClosePacket {
-		buf := &bytes.Buffer{}
+		buf := new(bytes.Buffer)
 		proto.WriteWindowClose(buf, w.windowId)
+		w.viewer.TransmitPacket(buf.Bytes())
 	}
 }
 

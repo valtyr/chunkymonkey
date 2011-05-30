@@ -43,7 +43,9 @@ func (psr *playerShardReceiver) ReqInventoryCursorUpdate(block BlockXyz, cursor 
 }
 
 func (psr *playerShardReceiver) ReqInventoryUnsubscribed(block BlockXyz) {
-	// TODO
+	psr.player.Enqueue(func(_ *Player) {
+		psr.player.reqInventoryUnsubscribed(&block)
+	})
 }
 
 func (psr *playerShardReceiver) ReqPlaceHeldItem(target BlockXyz, wasHeld slot.Slot) {

@@ -422,6 +422,15 @@ func (player *Player) reqInventoryCursorUpdate(block *BlockXyz, cursor *slot.Slo
 	player.TransmitPacket(buf.Bytes())
 }
 
+func (player *Player) reqInventoryUnsubscribed(block *BlockXyz) {
+	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) {
+		return
+	}
+
+	player.closeCurrentWindow(true)
+	player.remoteInv = nil
+}
+
 func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
 	curHeld, _ := player.inventory.HeldItem()
 

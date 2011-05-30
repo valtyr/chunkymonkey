@@ -10,10 +10,6 @@ type IInventorySubscriber interface {
 	// SlotUpdate is called when a slot inside the inventory changes its
 	// contents.
 	SlotUpdate(slot *slot.Slot, slotId SlotId)
-
-	// Unsubscribed is called when the inventory is cutting the subscription.
-	// This will typically be when the inventory is destroyed.
-	Destroyed()
 }
 
 type Inventory struct {
@@ -28,13 +24,6 @@ func (inv *Inventory) Init(size int) {
 	inv.slots = make([]slot.Slot, size)
 	for i := range inv.slots {
 		inv.slots[i].Init()
-	}
-}
-
-func (inv *Inventory) Destroy() {
-	// TODO call this method from the appropriate place(s).
-	if inv.subscriber != nil {
-		inv.subscriber.Destroyed()
 	}
 }
 
