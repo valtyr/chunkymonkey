@@ -29,11 +29,14 @@ type IChunkBlock interface {
 	EnqueueGeneric(f func())
 }
 
-// BlockInstance represents the instance of a block within a chunk.
+// BlockInstance represents the instance of a block within a chunk. It is used
+// to pass context to a IBlockAspect method call. BlockInstances must not be
+// modified after creation.
 type BlockInstance struct {
 	Chunk    IChunkBlock
 	BlockLoc BlockXyz
 	SubLoc   SubChunkXyz
+	Index    BlockIndex
 	// TODO decide if *BlockType belongs in here as well.
 	// Note that only the lower nibble of data is stored.
 	Data byte

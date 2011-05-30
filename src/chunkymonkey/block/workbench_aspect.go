@@ -1,8 +1,6 @@
 package block
 
 import (
-	"log"
-
 	"chunkymonkey/inventory"
 	"chunkymonkey/slot"
 	"chunkymonkey/stub"

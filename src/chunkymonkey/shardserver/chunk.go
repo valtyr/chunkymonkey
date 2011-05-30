@@ -164,6 +164,36 @@ func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockInde
 	return
 }
 
+func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *block.BlockInstance, blockType *block.BlockType, ok bool) {
+	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(blockLoc)
+	if !ok {
+		return
+	}
+
+	blockTypeId := index.GetBlockId(chunk.blocks)
+
+	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
+	if !ok {
+		log.Printf(
+			"%v.blockInstanceAndType: unknown block type %d at %T%#v",
+			chunk, blockTypeId, blockLoc, blockLoc,
+		)
+		return
+	}
+
+	blockData := index.GetBlockData(chunk.blockData)
+
+	blockInstance = &block.BlockInstance{
+		Chunk:    chunk,
+		BlockLoc: *blockLoc,
+		SubLoc:   *subLoc,
+		Index:    index,
+		Data:     blockData,
+	}
+
+	return
+}
+
 func (chunk *Chunk) GetBlock(subLoc *SubChunkXyz) (blockType BlockId, ok bool) {
 	index, ok := subLoc.BlockIndex()
 	if !ok {
@@ -181,28 +211,13 @@ func (chunk *Chunk) GetRecipeSet() *recipe.RecipeSet {
 
 func (chunk *Chunk) reqHitBlock(player stub.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
 
-	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
+	blockInstance, blockType, ok := chunk.blockInstanceAndType(target)
 	if !ok {
 		return
 	}
 
-	blockTypeId := index.GetBlockId(chunk.blocks)
-
-	if blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId); ok && blockType.Destructable {
-		blockData := index.GetBlockData(chunk.blockData)
-		blockLoc := chunk.loc.ToBlockXyz(subLoc)
-
-		blockInstance := &block.BlockInstance{
-			Chunk:    chunk,
-			BlockLoc: *blockLoc,
-			SubLoc:   *subLoc,
-			Data:     blockData,
-		}
-		if blockType.Aspect.Hit(blockInstance, player, digStatus) {
-			chunk.setBlock(blockLoc, subLoc, index, BlockIdAir, 0)
-		}
-	} else {
-		log.Printf("%v.HitBlock: Attempted to destroy unknown block Id %d", chunk, blockTypeId)
+	if blockType.Destructable && blockType.Aspect.Hit(blockInstance, player, digStatus) {
+		chunk.setBlock(target, &blockInstance.SubLoc, blockInstance.Index, BlockIdAir, 0)
 	}
 
 	return
@@ -214,17 +229,8 @@ func (chunk *Chunk) reqInteractBlock(player stub.IPlayerConnection, held slot.Sl
 	// perhaps best solved by sending held item type and the face to
 	// blockType.Aspect.Interact()
 
-	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(target)
+	blockInstance, blockType, ok := chunk.blockInstanceAndType(target)
 	if !ok {
-		return
-	}
-
-	blockTypeId := BlockId(chunk.blocks[index])
-	blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
-	if !ok {
-		log.Printf(
-			"%v.PlayerBlockInteract: unknown target block type %d at target position (%#v)",
-			chunk, blockTypeId, target)
 		return
 	}
 
@@ -243,12 +249,6 @@ func (chunk *Chunk) reqInteractBlock(player stub.IPlayerConnection, held slot.Sl
 		player.ReqPlaceHeldItem(destLoc, held)
 	} else {
 		// Player is otherwise interacting with the block.
-		blockInstance := &block.BlockInstance{
-			Chunk:    chunk,
-			BlockLoc: *target,
-			SubLoc:   *subLoc,
-			Data:     index.GetBlockData(chunk.blockData),
-		}
 		blockType.Aspect.Interact(blockInstance, player)
 	}
 
@@ -318,28 +318,13 @@ func (chunk *Chunk) reqDropItem(player stub.IPlayerConnection, content *slot.Slo
 }
 
 func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *BlockXyz, cursor *slot.Slot, rightClick bool, shiftClick bool, slotId SlotId) {
-	// TODO this code block looks to be rather common to calls to block aspects.
 	{
-		index, subLoc, ok := chunk.getBlockIndexByBlockXyz(blockLoc)
+		blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
 		if !ok {
 			return
 		}
 
-		blockTypeId := index.GetBlockId(chunk.blocks)
-
-		if blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId); ok && blockType.Destructable {
-			blockData := index.GetBlockData(chunk.blockData)
-
-			blockInstance := &block.BlockInstance{
-				Chunk:    chunk,
-				BlockLoc: *blockLoc,
-				SubLoc:   *subLoc,
-				Data:     blockData,
-			}
-			blockType.Aspect.Click(blockInstance, player, cursor, rightClick, shiftClick, slotId)
-		} else {
-			log.Printf("%v.reqInventoryClick: Attempted to click within unknown block Id %d", chunk, blockTypeId)
-		}
+		blockType.Aspect.Click(blockInstance, player, cursor, rightClick, shiftClick, slotId)
 	}
 }
 
