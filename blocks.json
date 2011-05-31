@@ -1410,8 +1410,18 @@
       "DroppedItems": [
         {
           "DroppedItem": 348,
-          "Probability": 100,
-          "Count": 1
+          "Probability": 25,
+          "Count": 2
+        },
+        {
+          "DroppedItem": 348,
+          "Probability": 50,
+          "Count": 3
+        },
+        {
+          "DroppedItem": 348,
+          "Probability": 25,
+          "Count": 4
         }
       ],
       "BreakOn": 2
