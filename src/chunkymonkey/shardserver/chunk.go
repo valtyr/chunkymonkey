@@ -214,6 +214,10 @@ func (chunk *Chunk) RecipeSet() *recipe.RecipeSet {
 	return chunk.mgr.gameRules.Recipes
 }
 
+func (chunk *Chunk) FurnaceData() *recipe.FurnaceData {
+	return &chunk.mgr.gameRules.FurnaceData
+}
+
 func (chunk *Chunk) reqHitBlock(player stub.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
 
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(target)

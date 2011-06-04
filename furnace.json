@@ -57,7 +57,7 @@
       "FuelTicks": 20000
     }
   ],
-  "Recipes": [
+  "Reactions": [
     {
       "Comment": "iron ore -> iron ingot",
       "Input": 15,

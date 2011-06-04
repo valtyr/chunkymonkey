@@ -1,13 +1,19 @@
 package inventory
 
+import (
+	"chunkymonkey/recipe"
+)
+
 type FurnaceInventory struct {
 	Inventory
-	// TODO furnace recipe data
+	furnaceData *recipe.FurnaceData
 }
 
 // NewFurnaceInventory creates a furnace inventory.
-func NewFurnaceInventory() (inv *FurnaceInventory) {
-	inv = &FurnaceInventory{}
+func NewFurnaceInventory(furnaceData *recipe.FurnaceData) (inv *FurnaceInventory) {
+	inv = &FurnaceInventory{
+		furnaceData: furnaceData,
+	}
 	inv.Inventory.Init(3)
 	return
 }

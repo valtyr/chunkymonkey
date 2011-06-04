@@ -32,6 +32,10 @@ var recipeDefs = flag.String(
 	"recipes", "recipes.json",
 	"The JSON file containing recipe definitions.")
 
+var furnaceDefs = flag.String(
+	"furnace", "furnace.json",
+	"The JSON file containing furnace fuel and reaction definitions.")
+
 var underMaintenaceMsg = flag.String(
 	"underMaintenanceMsg", "",
 	"If set, all logins will be denied and this message will be given as reason.")
@@ -62,7 +66,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	gameRules, err := gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs)
+	gameRules, err := gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs, *furnaceDefs)
 	if err != nil {
 		log.Print("Error loading game rules: ", err)
 		os.Exit(1)

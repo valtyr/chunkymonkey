@@ -6,7 +6,10 @@ import (
 
 // Defines the basic types such as ID types, and world units.
 
-type TimeOfDay int64
+type Ticks int64
+
+// TODO consider removing TimeOfDay in favour of using Ticks.
+type TimeOfDay Ticks
 
 const (
 	DayTicksPerDay    = TimeOfDay(24000)

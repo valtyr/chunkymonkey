@@ -24,6 +24,10 @@ var recipeDefs = flag.String(
 	"recipes", "recipes.json",
 	"The JSON file containing recipe definitions.")
 
+var furnaceDefs = flag.String(
+	"furnace", "furnace.json",
+	"The JSON file containing furnace fuel and reaction definitions.")
+
 func main() {
 	var err os.Error
 
@@ -47,5 +51,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("PASS datatests\n")
+	_, err = recipe.LoadFurnaceDataFromFile(*furnaceDefs)
+	if err != nil {
+		fmt.Fprintf(os.Stdout, "Error loading furnace data definitions: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("PASS")
 }
