@@ -26,3 +26,8 @@ func createFurnaceInventory(instance *BlockInstance) *blockInventory {
 		InvTypeIdFurnace,
 	)
 }
+
+func (aspect *FurnaceAspect) Tick(instance *BlockInstance) bool {
+	// TODO
+	return false
+}

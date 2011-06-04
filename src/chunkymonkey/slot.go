@@ -39,6 +39,10 @@ func (s *Slot) Normalize() {
 	}
 }
 
+func (s *Slot) IsEmpty() bool {
+	return s.Count == 0 || s.ItemType == nil
+}
+
 func (s *Slot) GetItemTypeId() (itemTypeId ItemTypeId) {
 	if s.ItemType != nil {
 		itemTypeId = s.ItemType.Id
