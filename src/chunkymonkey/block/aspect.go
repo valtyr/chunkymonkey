@@ -24,6 +24,12 @@ type IChunkBlock interface {
 	RecipeSet() *recipe.RecipeSet
 	AddOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
 	RemoveOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
+
+	// AddActiveBlock flags a block in any chunk as active.
+	AddActiveBlock(blockXyz *BlockXyz)
+
+	// AddActiveBlockIndex flags a block in the chunk itself as active by index.
+	AddActiveBlockIndex(blockIndex BlockIndex)
 }
 
 // IUnsubscribed is the interface by which blocks (and potentially other
@@ -34,8 +40,9 @@ type IUnsubscribed interface {
 }
 
 // BlockInstance represents the instance of a block within a chunk. It is used
-// to pass context to a IBlockAspect method call. BlockInstances must not be
-// modified after creation.
+// to pass context to a IBlockAspect method call. A BlockInstance belongs to
+// the chunk that creates it - a copy must be made if a block aspect needs to
+// persist the value of one.
 type BlockInstance struct {
 	Chunk    IChunkBlock
 	BlockLoc BlockXyz
@@ -48,10 +55,29 @@ type BlockInstance struct {
 
 // Defines the behaviour of a block.
 type IBlockAspect interface {
+	// Name is currently used purely for the serialization of aspect
+	// configuration data.
 	Name() string
+
+	// Hit is called when the player hits a block.
 	Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool)
+
+	// Interact is called when a player right-clicks a block.
 	Interact(instance *BlockInstance, player stub.IPlayerConnection)
+
+	// InventoryClick is called when the player clicked on a slot inside the
+	// inventory for the block (assuming it still has one).
 	InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot)
+
+	// InventoryUnsubscribed is called when the player closes the window for the
+	// inventory for the block (assuming it still has one).
 	InventoryUnsubscribed(instance *BlockInstance, player stub.IPlayerConnection)
+
+	// Destroy is called when the block is destroyed by a player hitting it.
+	// TODO And in other situations, maybe?
 	Destroy(instance *BlockInstance)
+
+	// Tick tells the aspect to run the block for a tick. It should return false
+	// if the block should not tick again.
+	Tick(instance *BlockInstance) bool
 }

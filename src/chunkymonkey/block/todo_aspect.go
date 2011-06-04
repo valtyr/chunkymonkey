@@ -1,7 +1,6 @@
 package block
 
 import (
-	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
@@ -15,6 +14,7 @@ func makeTodoAspect() (aspect IBlockAspect) {
 // whose behaviour is still to be implemented. A comment allows for
 // notes to be made, but provides no functional change.
 type TodoAspect struct {
+	VoidAspect
 	Comment string
 }
 
@@ -25,16 +25,4 @@ func (aspect *TodoAspect) Name() string {
 func (aspect *TodoAspect) Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool) {
 	destroyed = false
 	return
-}
-
-func (aspect *TodoAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
-}
-
-func (aspect *TodoAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
-}
-
-func (aspect *TodoAspect) InventoryUnsubscribed(instance *BlockInstance, player stub.IPlayerConnection) {
-}
-
-func (aspect *TodoAspect) Destroy(instance *BlockInstance) {
 }

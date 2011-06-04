@@ -33,3 +33,7 @@ func (aspect *VoidAspect) InventoryUnsubscribed(instance *BlockInstance, player 
 
 func (aspect *VoidAspect) Destroy(instance *BlockInstance) {
 }
+
+func (aspect *VoidAspect) Tick(instance *BlockInstance) bool {
+	return false
+}

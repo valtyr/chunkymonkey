@@ -4,6 +4,25 @@ import (
 	"testing"
 )
 
+func TestChunkSizeConsts(t *testing.T) {
+	type Test struct {
+		desc     string
+		input    int
+		expected int
+	}
+
+	tests := []Test{
+		{"ChunkSizeH", ChunkSizeH, 16},
+		{"ChunkSizeY", ChunkSizeY, 128},
+	}
+
+	for _, r := range tests {
+		if r.expected != r.input {
+			t.Errorf("Expected %s == %d but it was %d", r.desc, r.expected, r.input)
+		}
+	}
+}
+
 func TestLookDegrees_ToLookBytes(t *testing.T) {
 	type Test struct {
 		input    LookDegrees
@@ -242,6 +261,20 @@ func TestChunkXz_ChunkKey(t *testing.T) {
 	}
 }
 
+func BenchmarkSubChunkXyz_BlockIndex(b *testing.B) {
+	loc := SubChunkXyz{1, 2, 3}
+	for i := 0; i < b.N; i++ {
+		loc.BlockIndex()
+	}
+}
+
+func BenchmarkBlockIndex_ToSubChunkXyz(b *testing.B) {
+	index := BlockIndex(123)
+	for i := 0; i < b.N; i++ {
+		index.ToSubChunkXyz()
+	}
+}
+
 func TestSubChunkXyz_BlockIndex(t *testing.T) {
 	type Test struct {
 		input    SubChunkXyz
@@ -261,6 +294,8 @@ func TestSubChunkXyz_BlockIndex(t *testing.T) {
 		Test{SubChunkXyz{0, 127, 1}, 255, true},
 		Test{SubChunkXyz{0, 0, 2}, 256, true},
 
+		Test{SubChunkXyz{1, 0, 0}, 16 * 128, true},
+
 		// Invalid locations
 		Test{SubChunkXyz{16, 0, 0}, 0, false},
 		Test{SubChunkXyz{0, 128, 0}, 0, false},
@@ -279,6 +314,12 @@ func TestSubChunkXyz_BlockIndex(t *testing.T) {
 		}
 		if r.expIndex != index {
 			t.Errorf("  index=%d", index)
+			continue
+		}
+		// Test reverse conversion.
+		subLoc := index.ToSubChunkXyz()
+		if subLoc.X != r.input.X || subLoc.Y != r.input.Y || subLoc.Z != r.input.Z {
+			t.Errorf("  reverse conversion to SubChunkXyz resulted in %#v", subLoc)
 		}
 	}
 }

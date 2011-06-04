@@ -26,6 +26,8 @@ type ChunkShard struct {
 	chunks           [chunksPerShard]*Chunk
 	requests         chan iShardRequest
 	ticksSinceUpdate int
+
+	newActiveBlocks []BlockXyz
 }
 
 func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
@@ -55,6 +57,7 @@ func (shard *ChunkShard) serve() {
 	}
 }
 
+// tick runs the shard for a single tick.
 func (shard *ChunkShard) tick() {
 	shard.ticksSinceUpdate++
 
@@ -72,27 +75,55 @@ func (shard *ChunkShard) tick() {
 		}
 		shard.ticksSinceUpdate = 0
 	}
+
+	for i := range shard.newActiveBlocks {
+		chunkXz := shard.newActiveBlocks[i].ToChunkXz()
+		chunkIndex, _, _, isThisShard := shard.chunkIndexAndRelLoc(chunkXz)
+		if isThisShard {
+			// Look up chunk - don't load/generate a chunk just for an active block inside it.
+			chunk := shard.chunks[chunkIndex]
+			if chunk == nil {
+				continue
+			}
+			chunk.AddActiveBlock(&shard.newActiveBlocks[i])
+		} else {
+			// TODO handover to other shard
+		}
+	}
+	shard.newActiveBlocks = shard.newActiveBlocks[0:0]
+}
+
+// addActiveBlock sets the given block to be active on the next tick.
+func (shard *ChunkShard) addActiveBlock(blockXyz *BlockXyz) {
+	shard.newActiveBlocks = append(shard.newActiveBlocks, *blockXyz)
 }
 
 func (shard *ChunkShard) String() string {
 	return fmt.Sprintf("ChunkShard[%#v/%#v]", shard.loc, shard.originChunkLoc)
 }
 
+func (shard *ChunkShard) chunkIndexAndRelLoc(loc *ChunkXz) (index int, x, z ChunkCoord, ok bool) {
+	x = loc.X - shard.originChunkLoc.X
+	z = loc.Z - shard.originChunkLoc.Z
+
+	if x < 0 || z < 0 || x >= ShardSize || z >= ShardSize {
+		log.Printf("%v.chunkIndexAndRelLoc(%#v): ChunkXz outside of shard", shard, loc)
+		return 0, 0, 0, false
+	}
+
+	index = int(x*ShardSize + z)
+
+	return
+}
+
 // Get returns the Chunk at at given coordinates, loading it if it is not
 // already loaded.
 // TODO make this method private?
 func (shard *ChunkShard) Get(loc *ChunkXz) *Chunk {
-	locDelta := ChunkXz{
-		X: loc.X - shard.originChunkLoc.X,
-		Z: loc.Z - shard.originChunkLoc.Z,
-	}
-
-	if locDelta.X < 0 || locDelta.Z < 0 || locDelta.X >= ShardSize || locDelta.Z >= ShardSize {
-		log.Printf("%v.Get(%#v): chunk requested from outside of shard", shard, loc)
+	chunkIndex, dx, dz, ok := shard.chunkIndexAndRelLoc(loc)
+	if !ok {
 		return nil
 	}
-
-	chunkIndex := locDelta.X*ShardSize + locDelta.Z
 
 	chunk := shard.chunks[chunkIndex]
 
@@ -101,7 +132,7 @@ func (shard *ChunkShard) Get(loc *ChunkXz) *Chunk {
 		return chunk
 	}
 
-	chunk = shard.loadChunk(loc, &locDelta)
+	chunk = shard.loadChunk(loc, &ChunkXz{dx, dz})
 
 	if chunk == nil {
 		// No chunk available at that location. (Return nil explicitly - interfaces

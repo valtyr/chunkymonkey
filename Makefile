@@ -28,11 +28,18 @@ fmt:
 check: style
 	@./style `find . -name \*.go`
 
-test: cleantmp datatests
+test: cleantmp
 	@-rm -rf test_obj/tmp*
 	@mkdir -p test_obj
 	@gd -q -L test_obj -t src
+
+test_data: datatests
 	@./datatests
+
+bench: cleantmp
+	@-rm -rf test_obj/tmp*
+	@mkdir -p test_obj
+	@gd -q -L test_obj -b Benchmark -t src
 
 # Note that this will also compile code in the src/util directory.
 libs: cleantmp
@@ -58,4 +65,4 @@ docs: $(DIAGRAMS)
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all clean docs extra fmt libs server test
+.PHONY: all bench check clean cleantmp docs extra fmt libs server test test_data

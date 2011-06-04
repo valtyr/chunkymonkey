@@ -406,9 +406,13 @@ func DxzToDir(dx, dz int32) (dir ChunkSideDir, ok bool) {
 // Location-related types and constants
 
 const (
+	ChunkHShift = 4
+	ChunkYShift = 7
 	// Chunk coordinates can be converted to block coordinates
-	ChunkSizeH = 16
-	ChunkSizeY = 128
+	ChunkSizeH = 1 << ChunkHShift
+	ChunkSizeY = 1 << ChunkYShift
+	ChunkHMask = ChunkSizeH - 1
+	ChunkYMask = ChunkSizeY - 1
 
 	// The area within which a client receives updates.
 	ChunkRadius = 10
@@ -602,18 +606,25 @@ type SubChunkXyz struct {
 // BlockIndex returns the relevant index for a block with a given position
 // within a chunk. If subLoc represents an invalid position, then ok=False is
 // returned.
-func (subLoc *SubChunkXyz) BlockIndex() (index BlockIndex, ok bool) {
+func (subLoc *SubChunkXyz) BlockIndex() (BlockIndex, bool) {
 	if subLoc.X < 0 || subLoc.Y < 0 || subLoc.Z < 0 || subLoc.X >= ChunkSizeH || subLoc.Y >= ChunkSizeY || subLoc.Z >= ChunkSizeH {
-		ok = false
-	} else {
-		ok = true
-
-		index = BlockIndex(subLoc.Y) + (BlockIndex(subLoc.Z) * ChunkSizeY) + (BlockIndex(subLoc.X) * ChunkSizeY * ChunkSizeH)
+		return 0, false
 	}
-	return
+
+	return ((BlockIndex(subLoc.X) << (ChunkHShift + ChunkYShift)) |
+		BlockIndex(subLoc.Y) |
+		(BlockIndex(subLoc.Z) << ChunkYShift)),true
 }
 
 type BlockIndex uint32
+
+func (bi BlockIndex) ToSubChunkXyz() SubChunkXyz {
+	return SubChunkXyz{
+		X: ChunkHMask & SubChunkCoord(bi>>(ChunkHShift+ChunkYShift)),
+		Y: ChunkYMask & SubChunkCoord(bi),
+		Z: ChunkHMask & SubChunkCoord(bi>>ChunkYShift),
+	}
+}
 
 func (bi BlockIndex) GetBlockId(blocks []byte) BlockId {
 	return BlockId(blocks[bi])

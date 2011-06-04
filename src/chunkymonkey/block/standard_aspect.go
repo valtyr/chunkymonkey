@@ -56,3 +56,7 @@ func (aspect *StandardAspect) Destroy(instance *BlockInstance) {
 		}
 	}
 }
+
+func (aspect *StandardAspect) Tick(instance *BlockInstance) bool {
+	return false
+}

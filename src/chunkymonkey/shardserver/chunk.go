@@ -45,6 +45,9 @@ type Chunk struct {
 	subscribers  map[EntityId]stub.IPlayerConnection // Players getting updates from the chunk.
 	playersData  map[EntityId]*playerData            // Some player data for player(s) in the chunk.
 	onUnsub      map[EntityId][]block.IUnsubscribed  // Functions to be called when unsubscribed.
+
+	activeBlocks    map[BlockIndex]bool // Blocks that need to "tick".
+	newActiveBlocks map[BlockIndex]bool // Blocks added as active for next "tick".
 }
 
 func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {
@@ -63,6 +66,9 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		subscribers: make(map[EntityId]stub.IPlayerConnection),
 		playersData: make(map[EntityId]*playerData),
 		onUnsub:     make(map[EntityId][]block.IUnsubscribed),
+
+		activeBlocks:    make(map[BlockIndex]bool),
+		newActiveBlocks: make(map[BlockIndex]bool),
 	}
 	chunk.neighbours.init()
 	return
@@ -166,24 +172,32 @@ func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockInde
 	return
 }
 
+func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *block.BlockType, blockData byte, ok bool) {
+	blockTypeId := index.GetBlockId(chunk.blocks)
+
+	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
+	if !ok {
+		log.Printf(
+			"%v.blockTypeAndData: unknown block type %d at index %d",
+			chunk, blockTypeId, index,
+		)
+		return nil, 0, false
+	}
+
+	blockData = index.GetBlockData(chunk.blockData)
+	return
+}
+
 func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *block.BlockInstance, blockType *block.BlockType, ok bool) {
 	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(blockLoc)
 	if !ok {
 		return
 	}
 
-	blockTypeId := index.GetBlockId(chunk.blocks)
-
-	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
+	blockType, blockData, ok := chunk.blockTypeAndData(index)
 	if !ok {
-		log.Printf(
-			"%v.blockInstanceAndType: unknown block type %d at %T%#v",
-			chunk, blockTypeId, blockLoc, blockLoc,
-		)
 		return
 	}
-
-	blockData := index.GetBlockData(chunk.blockData)
 
 	blockInstance = &block.BlockInstance{
 		Chunk:    chunk,
@@ -380,8 +394,20 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 }
 
 func (chunk *Chunk) tick() {
-	// Update neighbouring chunks of block changes in this chunk
+	// Update neighbouring chunks of block changes in this chunk.
 	chunk.neighbours.flush()
+
+	chunk.spawnTick()
+
+	chunk.blockTick()
+}
+
+// spawnTick runs all spawns for a tick.
+func (chunk *Chunk) spawnTick() {
+	if len(chunk.spawn) == 0 {
+		// Nothing to do, bail out early.
+		return
+	}
 
 	blockQuery := func(blockLoc *BlockXyz) (isSolid bool, isWithinChunk bool) {
 		blockType, isWithinChunk, blockUnknownId := chunk.blockQuery(blockLoc)
@@ -440,6 +466,53 @@ func (chunk *Chunk) tick() {
 			}
 		}
 	}
+}
+
+// blockTick runs any blocks that need to do something each tick.
+func (chunk *Chunk) blockTick() {
+	if len(chunk.activeBlocks) == 0 {
+		return
+	}
+
+	var ok bool
+	var blockInstance block.BlockInstance
+	var blockType *block.BlockType
+	blockInstance.Chunk = chunk
+
+	for blockIndex := range chunk.activeBlocks {
+		blockType, blockInstance.Data, ok = chunk.blockTypeAndData(blockIndex)
+		if !ok {
+			// Invalid block.
+			chunk.activeBlocks[blockIndex] = false, false
+		}
+
+		blockInstance.SubLoc = blockIndex.ToSubChunkXyz()
+		blockInstance.Index = blockIndex
+		blockInstance.BlockLoc = *chunk.loc.ToBlockXyz(&blockInstance.SubLoc)
+
+		if !blockType.Aspect.Tick(&blockInstance) {
+			// Block now inactive. Remove this block from the active list.
+			chunk.activeBlocks[blockIndex] = false, false
+		}
+	}
+
+	for blockIndex := range chunk.newActiveBlocks {
+		chunk.activeBlocks[blockIndex] = true
+		chunk.newActiveBlocks[blockIndex] = false, false
+	}
+}
+
+func (chunk *Chunk) AddActiveBlock(blockXyz *BlockXyz) {
+	chunkXz, subLoc := blockXyz.ToChunkLocal()
+	if chunk.isSameChunk(chunkXz) {
+		if index, ok := subLoc.BlockIndex(); ok {
+			chunk.newActiveBlocks[index] = true
+		}
+	}
+}
+
+func (chunk *Chunk) AddActiveBlockIndex(blockIndex BlockIndex) {
+	chunk.newActiveBlocks[blockIndex] = true
 }
 
 func (chunk *Chunk) mobs() (s []*mob.Mob) {
