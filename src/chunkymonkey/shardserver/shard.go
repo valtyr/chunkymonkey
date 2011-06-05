@@ -111,6 +111,8 @@ func (shard *ChunkShard) chunkIndexAndRelLoc(loc *ChunkXz) (index int, x, z Chun
 		return 0, 0, 0, false
 	}
 
+	ok = true
+
 	index = int(x*ShardSize + z)
 
 	return
