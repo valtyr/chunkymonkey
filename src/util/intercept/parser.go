@@ -345,7 +345,7 @@ func (p *MessageParser) ScParse(reader io.Reader, connNumber int) {
 		}
 	}()
 
-	p.logPrefix = fmt.Sprintf("[%d](C->S) ", connNumber)
+	p.logPrefix = fmt.Sprintf("[%d](S->C) ", connNumber)
 
 	serverId, err := proto.ClientReadHandshake(reader)
 	if err != nil {
