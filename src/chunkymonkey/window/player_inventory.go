@@ -42,7 +42,7 @@ func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes 
 		-1,
 		viewer,
 		"Inventory",
-		&w.crafting.Inventory,
+		&w.crafting,
 		// TODO Create and use special inventory type for armor slots only.
 		&w.armor,
 		&w.main,
