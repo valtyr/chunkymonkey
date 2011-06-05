@@ -108,7 +108,11 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-	player.sendChatMessage(message)
+	if message[0] == '/' {
+		runCommand(player, message[1:])
+	} else {
+		player.sendChatMessage(message)
+	}
 }
 
 func (player *Player) PacketEntityAction(entityId EntityId, action EntityAction) {
