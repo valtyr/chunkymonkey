@@ -10,6 +10,7 @@ const (
 	furnaceSlotReagent = SlotId(0)
 	furnaceSlotFuel    = SlotId(1)
 	furnaceSlotOutput  = SlotId(2)
+	furnaceNumSlots    = 3
 )
 
 type FurnaceInventory struct {
@@ -22,7 +23,7 @@ func NewFurnaceInventory(furnaceData *recipe.FurnaceData) (inv *FurnaceInventory
 	inv = &FurnaceInventory{
 		furnaceData: furnaceData,
 	}
-	inv.Inventory.Init(3)
+	inv.Inventory.Init(furnaceNumSlots)
 	return
 }
 
