@@ -79,25 +79,37 @@ func (chunk *Chunk) String() string {
 }
 
 // Sets a block and its data. Returns true if the block was not changed.
-func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index BlockIndex, blockType BlockId, blockMetadata byte) {
+func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index BlockIndex, blockType BlockId, blockData byte) {
 
 	// Invalidate cached packet.
 	chunk.cachedPacket = nil
 
 	index.SetBlockId(chunk.blocks, blockType)
-	index.SetBlockData(chunk.blockData, blockMetadata)
+	index.SetBlockData(chunk.blockData, blockData)
 
 	chunk.blockExtra[index] = nil, false
 
 	// Tell players that the block changed.
-	packet := &bytes.Buffer{}
-	proto.WriteBlockChange(packet, blockLoc, blockType, blockMetadata)
+	packet := new(bytes.Buffer)
+	proto.WriteBlockChange(packet, blockLoc, blockType, blockData)
 	chunk.reqMulticastPlayers(-1, packet.Bytes())
 
 	// Update neighbour caches of this change.
 	chunk.neighbours.setBlock(subLoc, blockType)
 
 	return
+}
+
+func (chunk *Chunk) SetBlockByIndex(blockIndex BlockIndex, blockId BlockId, blockData byte) {
+	subLoc := blockIndex.ToSubChunkXyz()
+	blockLoc := chunk.loc.ToBlockXyz(&subLoc)
+
+	chunk.setBlock(
+		blockLoc,
+		&subLoc,
+		blockIndex,
+		blockId,
+		blockData)
 }
 
 func (chunk *Chunk) Rand() *rand.Rand {
@@ -137,19 +149,15 @@ func (chunk *Chunk) removeSpawn(s stub.INonPlayerSpawn) {
 	chunk.reqMulticastPlayers(-1, buf.Bytes())
 }
 
-func (chunk *Chunk) BlockExtra(subLoc *SubChunkXyz) interface{} {
-	if index, ok := subLoc.BlockIndex(); ok {
-		if extra, ok := chunk.blockExtra[index]; ok {
-			return extra
-		}
+func (chunk *Chunk) BlockExtra(index BlockIndex) interface{} {
+	if extra, ok := chunk.blockExtra[index]; ok {
+		return extra
 	}
 	return nil
 }
 
-func (chunk *Chunk) SetBlockExtra(subLoc *SubChunkXyz, extra interface{}) {
-	if index, ok := subLoc.BlockIndex(); ok {
-		chunk.blockExtra[index] = extra, extra != nil
-	}
+func (chunk *Chunk) SetBlockExtra(index BlockIndex, extra interface{}) {
+	chunk.blockExtra[index] = extra, extra != nil
 }
 
 func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockIndex, subLoc *SubChunkXyz, ok bool) {
@@ -200,11 +208,12 @@ func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *blo
 	}
 
 	blockInstance = &block.BlockInstance{
-		Chunk:    chunk,
-		BlockLoc: *blockLoc,
-		SubLoc:   *subLoc,
-		Index:    index,
-		Data:     blockData,
+		Chunk:     chunk,
+		BlockLoc:  *blockLoc,
+		SubLoc:    *subLoc,
+		Index:     index,
+		BlockType: blockType,
+		Data:      blockData,
 	}
 
 	return
@@ -480,11 +489,10 @@ func (chunk *Chunk) blockTick() {
 
 	var ok bool
 	var blockInstance block.BlockInstance
-	var blockType *block.BlockType
 	blockInstance.Chunk = chunk
 
 	for blockIndex := range chunk.activeBlocks {
-		blockType, blockInstance.Data, ok = chunk.blockTypeAndData(blockIndex)
+		blockInstance.BlockType, blockInstance.Data, ok = chunk.blockTypeAndData(blockIndex)
 		if !ok {
 			// Invalid block.
 			chunk.activeBlocks[blockIndex] = false, false
@@ -494,7 +502,7 @@ func (chunk *Chunk) blockTick() {
 		blockInstance.Index = blockIndex
 		blockInstance.BlockLoc = *chunk.loc.ToBlockXyz(&blockInstance.SubLoc)
 
-		if !blockType.Aspect.Tick(&blockInstance) {
+		if !blockInstance.BlockType.Aspect.Tick(&blockInstance) {
 			// Block now inactive. Remove this block from the active list.
 			chunk.activeBlocks[blockIndex] = false, false
 		}

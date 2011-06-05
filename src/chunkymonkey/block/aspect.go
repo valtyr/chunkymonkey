@@ -19,8 +19,9 @@ type IChunkBlock interface {
 	Rand() *rand.Rand
 	ItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
 	AddSpawn(s stub.INonPlayerSpawn)
-	BlockExtra(subLoc *SubChunkXyz) interface{}
-	SetBlockExtra(subLoc *SubChunkXyz, extra interface{})
+	SetBlockByIndex(blockIndex BlockIndex, blockId BlockId, blockData byte)
+	BlockExtra(blockIndex BlockIndex) interface{}
+	SetBlockExtra(blockIndex BlockIndex, extra interface{})
 	RecipeSet() *recipe.RecipeSet
 	FurnaceData() *recipe.FurnaceData
 	AddOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
@@ -45,17 +46,19 @@ type IUnsubscribed interface {
 // the chunk that creates it - a copy must be made if a block aspect needs to
 // persist the value of one.
 type BlockInstance struct {
-	Chunk    IChunkBlock
-	BlockLoc BlockXyz
-	SubLoc   SubChunkXyz
-	Index    BlockIndex
-	// TODO decide if *BlockType belongs in here as well.
+	Chunk     IChunkBlock
+	BlockLoc  BlockXyz
+	SubLoc    SubChunkXyz
+	Index     BlockIndex
+	BlockType *BlockType
 	// Note that only the lower nibble of data is stored.
 	Data byte
 }
 
 // Defines the behaviour of a block.
 type IBlockAspect interface {
+	setType(blockType *BlockType)
+
 	// Name is currently used purely for the serialization of aspect
 	// configuration data.
 	Name() string

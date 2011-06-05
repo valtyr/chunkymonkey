@@ -54,10 +54,10 @@ func (aspect *InventoryAspect) Destroy(instance *BlockInstance) {
 }
 
 func (aspect *InventoryAspect) blockInv(instance *BlockInstance, create bool) *blockInventory {
-	blkInv, ok := instance.Chunk.BlockExtra(&instance.SubLoc).(*blockInventory)
+	blkInv, ok := instance.Chunk.BlockExtra(instance.Index).(*blockInventory)
 	if !ok && create {
 		blkInv = aspect.createBlockInventory(instance)
-		instance.Chunk.SetBlockExtra(&instance.SubLoc, blkInv)
+		instance.Chunk.SetBlockExtra(instance.Index, blkInv)
 	}
 
 	return blkInv

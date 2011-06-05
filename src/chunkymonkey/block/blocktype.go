@@ -6,6 +6,7 @@ import (
 )
 
 type BlockAttrs struct {
+	id           BlockId
 	Name         string
 	Opacity      int8
 	defined      bool

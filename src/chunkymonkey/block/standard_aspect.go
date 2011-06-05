@@ -14,9 +14,14 @@ func makeStandardAspect() (aspect IBlockAspect) {
 // diggable, and drops items in a simple manner. StandardAspect blocks do not
 // use block metadata.
 type StandardAspect struct {
+	blockType *BlockType
 	// Items, up to one of which will potentially spawn when block destroyed.
 	DroppedItems []blockDropItem
 	BreakOn      DigStatus
+}
+
+func (aspect *StandardAspect) setType(blockType *BlockType) {
+	aspect.blockType = blockType
 }
 
 func (aspect *StandardAspect) Name() string {

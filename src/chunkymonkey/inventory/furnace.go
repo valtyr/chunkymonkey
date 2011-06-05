@@ -16,6 +16,7 @@ const (
 type FurnaceInventory struct {
 	Inventory
 	furnaceData *recipe.FurnaceData
+	active      bool
 }
 
 // NewFurnaceInventory creates a furnace inventory.
@@ -29,7 +30,7 @@ func NewFurnaceInventory(furnaceData *recipe.FurnaceData) (inv *FurnaceInventory
 
 func (inv *FurnaceInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState) {
 
-	switch (slotId) {
+	switch slotId {
 	case furnaceSlotReagent:
 		txState = inv.Inventory.Click(
 			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
@@ -41,12 +42,25 @@ func (inv *FurnaceInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick 
 			txState = inv.Inventory.Click(
 				slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 		}
-		// TODO If fuel has been added to an empty slot, set the furnace burning.
 	case furnaceSlotOutput:
 		// Player may only *take* the *whole* stack from the output slot.
 		txState = inv.Inventory.TakeOnlyClick(
 			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 	}
 
+	// If the fuel and reagent slots are non-empty, make the furnace active.
+	if !inv.slots[furnaceSlotFuel].IsEmpty() && !inv.slots[furnaceSlotReagent].IsEmpty() {
+		inv.active = true
+	}
+
+	return
+}
+
+func (inv *FurnaceInventory) IsActive() bool {
+	return inv.active
+}
+
+// Tick runs the furnace for a single tick.
+func (inv *FurnaceInventory) Tick() {
 	return
 }

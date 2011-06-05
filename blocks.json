@@ -971,7 +971,10 @@
       "Attachable": false
     },
     "Aspect": "Furnace",
-    "AspectArgs": {}
+    "AspectArgs": {
+      "Inactive": 61,
+      "Active": 62
+    }
   },
   "62": {
     "BlockAttrs": {
@@ -982,8 +985,11 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "Furnace",
+    "AspectArgs": {
+      "Inactive": 61,
+      "Active": 62
+    }
   },
   "63": {
     "BlockAttrs": {

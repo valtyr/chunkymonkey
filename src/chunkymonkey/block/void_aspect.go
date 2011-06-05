@@ -11,7 +11,13 @@ func makeVoidAspect() (aspect IBlockAspect) {
 }
 
 // Behaviour of a "void" block which has no behaviour.
-type VoidAspect struct{}
+type VoidAspect struct {
+	blockType *BlockType
+}
+
+func (aspect *VoidAspect) setType(blockType *BlockType) {
+	aspect.blockType = blockType
+}
 
 func (aspect *VoidAspect) Name() string {
 	return "Void"

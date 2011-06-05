@@ -45,6 +45,7 @@ func (bd *blockDef) LoadBlockType() (block *BlockType, err os.Error) {
 		BlockAttrs: bd.BlockAttrs,
 		Aspect:     aspect,
 	}
+	aspect.setType(block)
 	return
 }
 
@@ -134,12 +135,15 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
 		blocks[id] = *block
 	}
 
-	// Put VoidAspect in any undefined blocks rather than leave it nil.
-	void := makeVoidAspect()
+	// Put VoidAspect in any undefined blocks rather than leave it nil, and also
+	// set id on each block type.
 	for id := range blocks {
 		block := &blocks[id]
+		block.id = BlockId(id)
 		if !block.defined {
+			void := makeVoidAspect()
 			block.Aspect = void
+			void.setType(block)
 		}
 	}
 
