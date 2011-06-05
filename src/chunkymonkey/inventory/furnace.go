@@ -29,19 +29,13 @@ func NewFurnaceInventory(furnaceData *recipe.FurnaceData) (inv *FurnaceInventory
 
 func (inv *FurnaceInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState) {
 
-	cursorItemId := cursor.GetItemTypeId()
-
 	switch (slotId) {
 	case furnaceSlotReagent:
-		_, cursorIsReagent := inv.furnaceData.Reactions[cursorItemId]
-		if cursorIsReagent || cursor.IsEmpty() {
-			txState = inv.Inventory.Click(
-				slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
-			// TODO If the reagent changes, the reaction should restart.
-		} else {
-			return TxStateRejected
-		}
+		txState = inv.Inventory.Click(
+			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+		// TODO If the reagent type changes, the reaction should restart.
 	case furnaceSlotFuel:
+		cursorItemId := cursor.GetItemTypeId()
 		_, cursorIsFuel := inv.furnaceData.Fuels[cursorItemId]
 		if cursorIsFuel || cursor.IsEmpty() {
 			txState = inv.Inventory.Click(
