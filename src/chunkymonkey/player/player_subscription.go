@@ -188,6 +188,7 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 func (sub *chunkSubscriptions) moveToShard(newShardLoc ShardXz) {
 	// The new current shard is assumed to be present in sub.shards already.
 	sub.curShard = sub.shards[newShardLoc.Key()].shard
+	sub.curShardLoc = newShardLoc
 }
 
 // squareDifference computes the ChunkXz values that are in "square radius" of
