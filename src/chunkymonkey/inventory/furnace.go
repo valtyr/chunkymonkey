@@ -1,6 +1,9 @@
 package inventory
 
 import (
+	"log"
+
+	"chunkymonkey/itemtype"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -11,18 +14,27 @@ const (
 	furnaceSlotFuel    = SlotId(1)
 	furnaceSlotOutput  = SlotId(2)
 	furnaceNumSlots    = 3
+
+	reactionDuration = Ticks(185)
 )
 
 type FurnaceInventory struct {
 	Inventory
-	furnaceData *recipe.FurnaceData
-	active      bool
+	furnaceData       *recipe.FurnaceData
+	itemTypes         itemtype.ItemTypeMap
+	maxFuel           Ticks
+	curFuel           Ticks
+	reactionRemaining Ticks
 }
 
 // NewFurnaceInventory creates a furnace inventory.
-func NewFurnaceInventory(furnaceData *recipe.FurnaceData) (inv *FurnaceInventory) {
+func NewFurnaceInventory(furnaceData *recipe.FurnaceData, itemTypes itemtype.ItemTypeMap) (inv *FurnaceInventory) {
 	inv = &FurnaceInventory{
-		furnaceData: furnaceData,
+		furnaceData:       furnaceData,
+		itemTypes:         itemTypes,
+		maxFuel:           0,
+		curFuel:           0,
+		reactionRemaining: reactionDuration,
 	}
 	inv.Inventory.Init(furnaceNumSlots)
 	return
@@ -32,9 +44,17 @@ func (inv *FurnaceInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick 
 
 	switch slotId {
 	case furnaceSlotReagent:
+		slotBefore := inv.slots[furnaceSlotReagent]
+
 		txState = inv.Inventory.Click(
 			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
-		// TODO If the reagent type changes, the reaction should restart.
+
+		slotAfter := &inv.slots[furnaceSlotReagent]
+
+		// If the reagent type changes, the reaction restarts.
+		if slotBefore.ItemType != slotAfter.ItemType || slotBefore.Data != slotAfter.Data {
+			inv.reactionRemaining = reactionDuration
+		}
 	case furnaceSlotFuel:
 		cursorItemId := cursor.GetItemTypeId()
 		_, cursorIsFuel := inv.furnaceData.Fuels[cursorItemId]
@@ -48,19 +68,102 @@ func (inv *FurnaceInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick 
 			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 	}
 
-	// If the fuel and reagent slots are non-empty, make the furnace active.
-	if !inv.slots[furnaceSlotFuel].IsEmpty() && !inv.slots[furnaceSlotReagent].IsEmpty() {
-		inv.active = true
-	}
+	inv.stateCheck()
+
+	inv.sendProgressUpdates()
 
 	return
 }
 
-func (inv *FurnaceInventory) IsActive() bool {
-	return inv.active
+func (inv *FurnaceInventory) stateCheck() {
+	reagentSlot := &inv.slots[furnaceSlotReagent]
+	fuelSlot := &inv.slots[furnaceSlotFuel]
+	outputSlot := &inv.slots[furnaceSlotOutput]
+
+	reaction, haveReagent := inv.furnaceData.Reactions[reagentSlot.GetItemTypeId()]
+	fuelTicks, haveFuel := inv.furnaceData.Fuels[fuelSlot.GetItemTypeId()]
+
+	// Work out if the output slot is ready for items to be produced from the
+	// reaction.
+	var outputReady bool
+	if outputSlot.ItemType != nil {
+		// Output has items in.
+		if !haveReagent {
+			outputReady = false
+		} else if outputSlot.Count >= outputSlot.ItemType.MaxStack {
+			// Output is full.
+			outputReady = false
+		} else if outputSlot.GetItemTypeId() != reaction.Output || outputSlot.Data != reaction.OutputData {
+			// Output has a different type from the reaction.
+			outputReady = false
+		} else {
+			// Output contains compatible items and is not full.
+			outputReady = true
+		}
+	} else {
+		// Output is empty.
+		outputReady = true
+	}
+
+	if inv.curFuel > 0 {
+		// Furnace is lit.
+		if !outputReady {
+			inv.reactionRemaining = reactionDuration
+		} else if haveReagent && inv.reactionRemaining == 0 {
+			// One reaction complete.
+			itemType, ok := inv.itemTypes[reaction.Output]
+			if ok {
+				itemCreated := slot.Slot{
+					ItemType: itemType,
+					Count: 1,
+					Data: reaction.OutputData,
+				}
+				inv.reactionRemaining = reactionDuration
+
+				outputSlot.AddOne(&itemCreated)
+				inv.slotUpdate(outputSlot, furnaceSlotReagent)
+				reagentSlot.Decrement()
+				inv.slotUpdate(reagentSlot, furnaceSlotReagent)
+			} else {
+				log.Printf("Furnace encountered unknown output type in reaction %#v", reaction)
+			}
+		}
+	} else {
+		inv.reactionRemaining = reactionDuration
+
+		// Furnace is unlit.
+		if haveReagent && haveFuel && outputReady {
+			// Everything is in place, light the furnace by consuming one unit of
+			// fuel.
+			fuelSlot.Decrement()
+			inv.curFuel = fuelTicks
+			inv.slotUpdate(fuelSlot, furnaceSlotFuel)
+		} else {
+			inv.reactionRemaining = reactionDuration
+		}
+	}
+}
+
+func (inv *FurnaceInventory) sendProgressUpdates() {
+	// TODO
+	log.Printf("Furnace progress: reaction=%d/%d fuel=%d/%d", inv.reactionRemaining, reactionDuration, inv.curFuel, inv.maxFuel)
+}
+
+func (inv *FurnaceInventory) IsLit() bool {
+	return inv.curFuel > 0
 }
 
 // Tick runs the furnace for a single tick.
 func (inv *FurnaceInventory) Tick() {
-	return
+	if inv.curFuel > 0 {
+		inv.curFuel--
+
+		if inv.reactionRemaining > 0 {
+			inv.reactionRemaining--
+		}
+
+		inv.stateCheck()
+
+		inv.sendProgressUpdates()
+	}
 }

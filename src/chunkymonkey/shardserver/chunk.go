@@ -227,6 +227,10 @@ func (chunk *Chunk) FurnaceData() *recipe.FurnaceData {
 	return &chunk.mgr.gameRules.FurnaceData
 }
 
+func (chunk *Chunk) ItemTypes() itemtype.ItemTypeMap {
+	return chunk.mgr.gameRules.ItemTypes
+}
+
 func (chunk *Chunk) reqHitBlock(player stub.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
 
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(target)
@@ -483,8 +487,13 @@ func (chunk *Chunk) spawnTick() {
 
 // blockTick runs any blocks that need to do something each tick.
 func (chunk *Chunk) blockTick() {
-	if len(chunk.activeBlocks) == 0 {
+	if len(chunk.activeBlocks) == 0 && len(chunk.newActiveBlocks) == 0 {
 		return
+	}
+
+	for blockIndex := range chunk.newActiveBlocks {
+		chunk.activeBlocks[blockIndex] = true
+		chunk.newActiveBlocks[blockIndex] = false, false
 	}
 
 	var ok bool
@@ -506,11 +515,6 @@ func (chunk *Chunk) blockTick() {
 			// Block now inactive. Remove this block from the active list.
 			chunk.activeBlocks[blockIndex] = false, false
 		}
-	}
-
-	for blockIndex := range chunk.newActiveBlocks {
-		chunk.activeBlocks[blockIndex] = true
-		chunk.newActiveBlocks[blockIndex] = false, false
 	}
 }
 

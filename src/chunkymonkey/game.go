@@ -209,8 +209,8 @@ func (game *Game) sendTimeUpdate() {
 }
 
 func (game *Game) tick() {
-	game.time = (game.time + DayTicksPerTick) % DayTicksPerDay
-	if game.time%DayTicksPerSecond == 0 {
+	game.time++
+	if game.time%TicksPerSecond == 0 {
 		game.sendTimeUpdate()
 	}
 }

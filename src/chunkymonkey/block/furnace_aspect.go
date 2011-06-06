@@ -25,7 +25,7 @@ type FurnaceAspect struct {
 func createFurnaceInventory(instance *BlockInstance) *blockInventory {
 	return newBlockInventory(
 		instance,
-		inventory.NewFurnaceInventory(instance.Chunk.FurnaceData()),
+		inventory.NewFurnaceInventory(instance.Chunk.FurnaceData(), instance.Chunk.ItemTypes()),
 		false,
 		InvTypeIdFurnace,
 	)
@@ -41,7 +41,7 @@ func (aspect *FurnaceAspect) InventoryClick(instance *BlockInstance, player stub
 		return
 	}
 
-	aspect.updateBlock(instance, blockInv, furnaceInv.IsActive())
+	aspect.updateBlock(instance, blockInv, furnaceInv.IsLit())
 }
 
 func (aspect *FurnaceAspect) Tick(instance *BlockInstance) bool {
@@ -53,11 +53,11 @@ func (aspect *FurnaceAspect) Tick(instance *BlockInstance) bool {
 
 	furnaceInv.Tick()
 
-	currentState := furnaceInv.IsActive()
+	currentState := furnaceInv.IsLit()
 
 	aspect.updateBlock(instance, blockInv, currentState)
 
-	return furnaceInv.IsActive()
+	return furnaceInv.IsLit()
 }
 
 func (aspect *FurnaceAspect) furnaceInventory(instance *BlockInstance) (blockInv *blockInventory, furnaceInv *inventory.FurnaceInventory) {
@@ -84,6 +84,7 @@ func (aspect *FurnaceAspect) updateBlock(instance *BlockInstance, blockInv *bloc
 		var newBlockId BlockId
 		if currentState {
 			newBlockId = aspect.Active
+			instance.Chunk.AddActiveBlockIndex(instance.Index)
 		} else {
 			newBlockId = aspect.Inactive
 		}

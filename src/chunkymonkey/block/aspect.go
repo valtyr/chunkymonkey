@@ -24,6 +24,7 @@ type IChunkBlock interface {
 	SetBlockExtra(blockIndex BlockIndex, extra interface{})
 	RecipeSet() *recipe.RecipeSet
 	FurnaceData() *recipe.FurnaceData
+	ItemTypes() itemtype.ItemTypeMap
 	AddOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
 	RemoveOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
 

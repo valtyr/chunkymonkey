@@ -21,7 +21,7 @@ const (
 type TickTime float64
 
 const (
-	TicksPerSecond      = 5
+	TicksPerSecond      = 20
 	DayTicksPerTick     = DayTicksPerSecond / TicksPerSecond
 	NanosecondsInSecond = 1e9
 )
