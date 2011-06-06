@@ -111,8 +111,9 @@ func (inv *FurnaceInventory) stateCheck() {
 			inv.reactionRemaining = reactionDuration
 		} else if haveReagent && inv.reactionRemaining == 0 {
 			// One reaction complete.
-			itemType, ok := inv.itemTypes[reaction.Output]
-			if ok {
+			if itemType, ok := inv.itemTypes[reaction.Output]; !ok {
+				log.Printf("Furnace encountered unknown output type in reaction %#v", reaction)
+			} else {
 				itemCreated := slot.Slot{
 					ItemType: itemType,
 					Count: 1,
@@ -121,11 +122,9 @@ func (inv *FurnaceInventory) stateCheck() {
 				inv.reactionRemaining = reactionDuration
 
 				outputSlot.AddOne(&itemCreated)
-				inv.slotUpdate(outputSlot, furnaceSlotReagent)
+				inv.slotUpdate(outputSlot, furnaceSlotOutput)
 				reagentSlot.Decrement()
 				inv.slotUpdate(reagentSlot, furnaceSlotReagent)
-			} else {
-				log.Printf("Furnace encountered unknown output type in reaction %#v", reaction)
 			}
 		}
 	} else {
