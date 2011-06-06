@@ -36,6 +36,12 @@ func (psr *playerShardReceiver) ReqInventorySlotUpdate(block BlockXyz, slot slot
 	})
 }
 
+func (psr *playerShardReceiver) ReqInventoryProgressUpdate(block BlockXyz, prgBarId PrgBarId, value PrgBarValue) {
+	psr.player.Enqueue(func(_ *Player) {
+		psr.player.reqInventoryProgressUpdate(&block, prgBarId, value)
+	})
+}
+
 func (psr *playerShardReceiver) ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqInventoryCursorUpdate(&block, &cursor)

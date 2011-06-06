@@ -33,6 +33,12 @@ func (inv *RemoteInventory) slotUpdate(slot *slot.Slot, slotId SlotId) {
 	}
 }
 
+func (inv *RemoteInventory) progressUpdate(prgBarId PrgBarId, value PrgBarValue) {
+	if inv.subscriber != nil {
+		inv.subscriber.ProgressUpdate(prgBarId, value)
+	}
+}
+
 func (inv *RemoteInventory) Close() {
 	shard, _, ok := inv.chunkSubs.ShardConnForBlockXyz(&inv.blockLoc)
 

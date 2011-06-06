@@ -49,6 +49,12 @@ func (blkInv *blockInventory) SlotUpdate(slot *slot.Slot, slotId SlotId) {
 	}
 }
 
+func (blkInv *blockInventory) ProgressUpdate(prgBarId PrgBarId, value PrgBarValue) {
+	for _, subscriber := range blkInv.subscribers {
+		subscriber.ReqInventoryProgressUpdate(blkInv.instance.BlockLoc, prgBarId, value)
+	}
+}
+
 func (blkInv *blockInventory) AddSubscriber(player stub.IPlayerConnection) {
 	entityId := player.GetEntityId()
 	blkInv.subscribers[entityId] = player

@@ -432,6 +432,14 @@ func (player *Player) reqInventorySlotUpdate(block *BlockXyz, slot *slot.Slot, s
 	player.remoteInv.slotUpdate(slot, slotId)
 }
 
+func (player *Player) reqInventoryProgressUpdate(block *BlockXyz, prgBarId PrgBarId, value PrgBarValue) {
+	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) {
+		return
+	}
+
+	player.remoteInv.progressUpdate(prgBarId, value)
+}
+
 func (player *Player) reqInventoryCursorUpdate(block *BlockXyz, cursor *slot.Slot) {
 	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) {
 		return

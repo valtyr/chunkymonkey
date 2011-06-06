@@ -10,6 +10,9 @@ type IInventorySubscriber interface {
 	// SlotUpdate is called when a slot inside the inventory changes its
 	// contents.
 	SlotUpdate(slot *slot.Slot, slotId SlotId)
+
+	// ProgressUpdate is called when a progress bar inside the inventory changes.
+	ProgressUpdate(prgBarId PrgBarId, value PrgBarValue)
 }
 
 // IInventory is the general interface provided by inventory implementations.

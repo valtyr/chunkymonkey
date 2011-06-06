@@ -65,8 +65,14 @@ func (iv *inventoryView) Finalize() {
 // Implementing IInventorySubscriber - relays inventory changes to the viewer
 // of the window.
 func (iv *inventoryView) SlotUpdate(slot *slot.Slot, slotId SlotId) {
-	buf := &bytes.Buffer{}
+	buf := new(bytes.Buffer)
 	slot.SendUpdate(buf, iv.window.windowId, iv.startSlot+slotId)
+	iv.window.viewer.TransmitPacket(buf.Bytes())
+}
+
+func (iv *inventoryView) ProgressUpdate(prgBarId PrgBarId, value PrgBarValue) {
+	buf := new(bytes.Buffer)
+	proto.WriteWindowProgressBar(buf, iv.window.windowId, prgBarId, value)
 	iv.window.viewer.TransmitPacket(buf.Bytes())
 }
 

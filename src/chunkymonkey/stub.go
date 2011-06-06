@@ -40,6 +40,10 @@ type IPlayerConnection interface {
 	// open inventory.
 	ReqInventorySlotUpdate(block BlockXyz, slot slot.Slot, slotId SlotId)
 
+	// ReqInventoryProgressUpdate informs the player of a change of a progress
+	// bar in a window.
+	ReqInventoryProgressUpdate(block BlockXyz, prgBarId PrgBarId, value PrgBarValue)
+
 	// ReqInventoryCursorUpdate informs the player of their new cursor contents.
 	ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot)
 
