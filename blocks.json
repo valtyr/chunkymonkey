@@ -974,6 +974,14 @@
     "AspectArgs": {
       "Inactive": 61,
       "Active": 62
+      "DroppedItems": [
+        {
+          "DroppedItem": 61,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
     }
   },
   "62": {
@@ -989,6 +997,14 @@
     "AspectArgs": {
       "Inactive": 61,
       "Active": 62
+      "DroppedItems": [
+        {
+          "DroppedItem": 61,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
     }
   },
   "63": {
