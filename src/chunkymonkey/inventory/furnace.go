@@ -135,6 +135,7 @@ func (inv *FurnaceInventory) stateCheck() {
 			// Everything is in place, light the furnace by consuming one unit of
 			// fuel.
 			fuelSlot.Decrement()
+			inv.maxFuel = fuelTicks
 			inv.curFuel = fuelTicks
 			inv.slotUpdate(fuelSlot, furnaceSlotFuel)
 		} else {
