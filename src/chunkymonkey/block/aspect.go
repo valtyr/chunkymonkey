@@ -58,7 +58,7 @@ type BlockInstance struct {
 
 // Defines the behaviour of a block.
 type IBlockAspect interface {
-	setType(blockType *BlockType)
+	setAttrs(blockAttrs *BlockAttrs)
 
 	// Name is currently used purely for the serialization of aspect
 	// configuration data.

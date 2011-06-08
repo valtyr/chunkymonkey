@@ -467,7 +467,6 @@ func (player *Player) reqInventoryUnsubscribed(block *BlockXyz) {
 	}
 
 	player.closeCurrentWindow(true)
-	player.remoteInv = nil
 }
 
 func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
@@ -551,6 +550,7 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 
 	if player.remoteInv != nil {
 		player.remoteInv.Close()
+		player.remoteInv = nil
 	}
 
 	player.inventory.Resubscribe()

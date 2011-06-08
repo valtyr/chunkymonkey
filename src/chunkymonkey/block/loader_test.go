@@ -76,6 +76,15 @@ func displayBlocks(t *testing.T, blocks BlockTypeList) {
 	}
 }
 
+func makeBlockType(attrs BlockAttrs, aspect IBlockAspect) *BlockType {
+	blockType := &BlockType{
+		BlockAttrs: attrs,
+		Aspect:     aspect,
+	}
+	aspect.setAttrs(&blockType.BlockAttrs)
+	return blockType
+}
+
 func TestLoadBlockDefs(t *testing.T) {
 	reader := strings.NewReader(twoBlocks)
 	t.Log(twoBlocks)
@@ -90,8 +99,9 @@ func TestLoadBlockDefs(t *testing.T) {
 
 	assertBlockTypeEq(
 		t,
-		&BlockType{
-			BlockAttrs: BlockAttrs{
+		makeBlockType(
+			BlockAttrs{
+				id:           0,
 				Name:         "air",
 				Opacity:      0,
 				defined:      true,
@@ -100,15 +110,16 @@ func TestLoadBlockDefs(t *testing.T) {
 				Replaceable:  true,
 				Attachable:   false,
 			},
-			Aspect: &VoidAspect{},
-		},
+			&VoidAspect{},
+		),
 		&blocks[0],
 	)
 
 	assertBlockTypeEq(
 		t,
-		&BlockType{
-			BlockAttrs: BlockAttrs{
+		makeBlockType(
+			BlockAttrs{
+				id:           1,
 				Name:         "stone",
 				Opacity:      15,
 				defined:      true,
@@ -117,7 +128,7 @@ func TestLoadBlockDefs(t *testing.T) {
 				Replaceable:  false,
 				Attachable:   true,
 			},
-			Aspect: &StandardAspect{
+			&StandardAspect{
 				DroppedItems: []blockDropItem{
 					blockDropItem{
 						DroppedItem: 4,
@@ -127,7 +138,7 @@ func TestLoadBlockDefs(t *testing.T) {
 				},
 				BreakOn: DigBlockBroke,
 			},
-		},
+		),
 		&blocks[1],
 	)
 }

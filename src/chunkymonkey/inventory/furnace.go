@@ -16,6 +16,7 @@ const (
 	furnaceNumSlots    = 3
 
 	reactionDuration = Ticks(185)
+	maxFuelPrg       = 255
 )
 
 type FurnaceInventory struct {
@@ -25,6 +26,10 @@ type FurnaceInventory struct {
 	maxFuel           Ticks
 	curFuel           Ticks
 	reactionRemaining Ticks
+
+	lastCurFuel           PrgBarValue
+	lastReactionRemaining PrgBarValue
+	ticksSinceUpdate      int
 }
 
 // NewFurnaceInventory creates a furnace inventory.
@@ -116,8 +121,8 @@ func (inv *FurnaceInventory) stateCheck() {
 			} else {
 				itemCreated := slot.Slot{
 					ItemType: itemType,
-					Count: 1,
-					Data: reaction.OutputData,
+					Count:    1,
+					Data:     reaction.OutputData,
 				}
 				inv.reactionRemaining = reactionDuration
 
@@ -144,9 +149,28 @@ func (inv *FurnaceInventory) stateCheck() {
 	}
 }
 
+// sendProgressUpdates sends an update to the subscriber. Not every time,
+// however - to cut down on unnecessary communication.
 func (inv *FurnaceInventory) sendProgressUpdates() {
-	// TODO
-	log.Printf("Furnace progress: reaction=%d/%d fuel=%d/%d", inv.reactionRemaining, reactionDuration, inv.curFuel, inv.maxFuel)
+	inv.ticksSinceUpdate++
+	if inv.ticksSinceUpdate > 5 || !inv.IsLit() {
+		inv.ticksSinceUpdate = 0
+
+		curFuelPrg := PrgBarValue(0)
+		if inv.maxFuel != 0 {
+			curFuelPrg = PrgBarValue((maxFuelPrg * inv.curFuel) / inv.maxFuel)
+		}
+		if inv.lastCurFuel != curFuelPrg {
+			inv.lastCurFuel = curFuelPrg
+			inv.subscriber.ProgressUpdate(PrgBarIdFurnaceFire, curFuelPrg)
+		}
+
+		curReactionRemaining := PrgBarValue(reactionDuration - inv.reactionRemaining)
+		if inv.lastReactionRemaining != curReactionRemaining {
+			inv.lastReactionRemaining = curReactionRemaining
+			inv.subscriber.ProgressUpdate(PrgBarIdFurnaceProgress, curReactionRemaining)
+		}
+	}
 }
 
 func (inv *FurnaceInventory) IsLit() bool {

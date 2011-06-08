@@ -45,7 +45,7 @@ func (bd *blockDef) LoadBlockType() (block *BlockType, err os.Error) {
 		BlockAttrs: bd.BlockAttrs,
 		Aspect:     aspect,
 	}
-	aspect.setType(block)
+	aspect.setAttrs(&block.BlockAttrs)
 	return
 }
 
@@ -131,6 +131,7 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
 		if err != nil {
 			return
 		}
+		block.id = BlockId(id)
 		block.defined = true
 		blocks[id] = *block
 	}
@@ -143,7 +144,7 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
 		if !block.defined {
 			void := makeVoidAspect()
 			block.Aspect = void
-			void.setType(block)
+			void.setAttrs(&block.BlockAttrs)
 		}
 	}
 

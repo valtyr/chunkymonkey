@@ -341,28 +341,24 @@ func (chunk *Chunk) reqDropItem(player stub.IPlayerConnection, content *slot.Slo
 }
 
 func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *BlockXyz, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
-	{
-		blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
-		if !ok {
-			return
-		}
-
-		blockType.Aspect.InventoryClick(
-			blockInstance, player, slotId, cursor,
-			rightClick, shiftClick,
-			txId, expectedSlot)
+	blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
+	if !ok {
+		return
 	}
+
+	blockType.Aspect.InventoryClick(
+		blockInstance, player, slotId, cursor,
+		rightClick, shiftClick,
+		txId, expectedSlot)
 }
 
 func (chunk *Chunk) reqInventoryUnsubscribed(player stub.IPlayerConnection, blockLoc *BlockXyz) {
-	{
-		blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
-		if !ok {
-			return
-		}
-
-		blockType.Aspect.InventoryUnsubscribed(blockInstance, player)
+	blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
+	if !ok {
+		return
 	}
+
+	blockType.Aspect.InventoryUnsubscribed(blockInstance, player)
 }
 
 // Used to read the BlockId of a block that's either in the chunk, or

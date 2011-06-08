@@ -78,7 +78,7 @@ func (aspect *FurnaceAspect) furnaceInventory(instance *BlockInstance) (blockInv
 func (aspect *FurnaceAspect) updateBlock(instance *BlockInstance, blockInv *blockInventory, currentState bool) {
 	// The prior state is determined by the ID of the aspect called to handle the
 	// current state.
-	priorState := aspect.blockType.id == aspect.Active
+	priorState := aspect.blockAttrs.id == aspect.Active
 
 	if priorState != currentState {
 		var newBlockId BlockId
