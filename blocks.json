@@ -973,7 +973,7 @@
     "Aspect": "Furnace",
     "AspectArgs": {
       "Inactive": 61,
-      "Active": 62
+      "Active": 62,
       "DroppedItems": [
         {
           "DroppedItem": 61,
@@ -996,7 +996,7 @@
     "Aspect": "Furnace",
     "AspectArgs": {
       "Inactive": 61,
-      "Active": 62
+      "Active": 62,
       "DroppedItems": [
         {
           "DroppedItem": 61,
