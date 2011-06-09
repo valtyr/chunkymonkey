@@ -72,9 +72,9 @@ type IPlayerConnection interface {
 	ReqGiveItem(atPosition AbsXyz, item slot.Slot)
 }
 
-// IShardConnection is the interface by which shards can be communicated to by
+// IPlayerShardClient is the interface by which shards can be communicated to by
 // player frontend code.
-type IShardConnection interface {
+type IPlayerShardClient interface {
 	// Removes connection to shard, and removes all subscriptions to chunks in
 	// the shard. Note that this does *not* send packets to tell the client to
 	// unload the subscribed chunks.
@@ -130,7 +130,7 @@ type IShardConnection interface {
 
 // IShardConnecter is used to look up shards and connect to them.
 type IShardConnecter interface {
-	ShardConnect(entityId EntityId, player IPlayerConnection, shardLoc ShardXz) IShardConnection
+	ShardConnect(entityId EntityId, player IPlayerConnection, shardLoc ShardXz) IPlayerShardClient
 
 	// ShardToShardConnect makes a connection from one shard to another.
 	ShardToShardConnect(shardLoc ShardXz) IShardShardClient

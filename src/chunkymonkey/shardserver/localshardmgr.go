@@ -11,7 +11,7 @@ import (
 	. "chunkymonkey/types"
 )
 
-// localShardConnection implements IShardConnection for LocalShardManager.
+// localShardConnection implements IPlayerShardClient for LocalShardManager.
 type localShardConnection struct {
 	entityId EntityId
 	player   stub.IPlayerConnection
@@ -160,7 +160,7 @@ func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
 	return shard
 }
 
-func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player stub.IPlayerConnection, shardLoc ShardXz) stub.IShardConnection {
+func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player stub.IPlayerConnection, shardLoc ShardXz) stub.IPlayerShardClient {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
