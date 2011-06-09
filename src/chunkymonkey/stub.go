@@ -130,6 +130,12 @@ type IShardConnection interface {
 
 // IShardConnecter is used to look up shards and connect to them.
 type IShardConnecter interface {
-	// Must currently be called from with the owning IGame's Enqueue:
 	ShardConnect(entityId EntityId, player IPlayerConnection, shardLoc ShardXz) IShardConnection
+
+	// ShardToShardConnect makes a connection from one shard to another.
+	ShardToShardConnect(shardLoc ShardXz) IShardShardClient
+}
+
+type IShardShardClient interface {
+	ReqSetActiveBlocks(blocks []BlockXyz)
 }

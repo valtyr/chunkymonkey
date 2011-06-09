@@ -168,6 +168,15 @@ func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player stub.IPlaye
 	return newLocalShardConnection(entityId, player, shard)
 }
 
+func (mgr *LocalShardManager) ShardToShardConnect(shardLoc ShardXz) stub.IShardShardClient {
+	mgr.lock.Lock()
+	defer mgr.lock.Unlock()
+
+	// TODO
+
+	return nil
+}
+
 // TODO remove Enqueue* methods
 
 // EnqueueAllChunks runs a given function on all loaded chunks.

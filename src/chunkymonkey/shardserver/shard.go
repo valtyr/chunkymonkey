@@ -28,6 +28,7 @@ type ChunkShard struct {
 	ticksSinceUpdate int
 
 	newActiveBlocks []BlockXyz
+	newActiveShards map[uint64]*destActiveShard
 }
 
 func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
@@ -37,6 +38,8 @@ func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
 		originChunkLoc:   loc.ToChunkXz(),
 		requests:         make(chan iShardRequest, 256),
 		ticksSinceUpdate: 0,
+
+		newActiveShards: make(map[uint64]*destActiveShard),
 	}
 
 	return
@@ -76,26 +79,59 @@ func (shard *ChunkShard) tick() {
 		shard.ticksSinceUpdate = 0
 	}
 
-	for i := range shard.newActiveBlocks {
-		chunkXz := shard.newActiveBlocks[i].ToChunkXz()
+	shard.transferActiveBlocks()
+}
+
+// transferActiveBlocks takes blocks marked as newly active by addActiveBlock,
+// and informs the chunk in the destination shards.
+func (shard *ChunkShard) transferActiveBlocks() {
+	if len(shard.newActiveBlocks) == 0 {
+		return
+	}
+
+	thisShardKey := shard.loc.Key()
+	for shardKey, activeShard := range shard.newActiveShards {
+		if shardKey == thisShardKey {
+			shard.setBlocksActive(activeShard.blocks)
+		} else {
+			// TODO Send a ReqSetActiveBlocks to the destination shard.
+		}
+	}
+}
+
+// setBlocksActive sets each block in the given slice to be active within the
+// chunk. Note: if a block is within a different shard, it is discarded.
+func (shard *ChunkShard) setBlocksActive(blocks []BlockXyz) {
+	for _, block := range blocks {
+		chunkXz := block.ToChunkXz()
 		chunkIndex, _, _, isThisShard := shard.chunkIndexAndRelLoc(chunkXz)
 		if isThisShard {
-			// Look up chunk - don't load/generate a chunk just for an active block inside it.
 			chunk := shard.chunks[chunkIndex]
 			if chunk == nil {
 				continue
 			}
-			chunk.AddActiveBlock(&shard.newActiveBlocks[i])
-		} else {
-			// TODO handover to other shard
+			chunk.AddActiveBlock(&block)
 		}
 	}
-	shard.newActiveBlocks = shard.newActiveBlocks[0:0]
 }
 
-// addActiveBlock sets the given block to be active on the next tick.
-func (shard *ChunkShard) addActiveBlock(blockXyz *BlockXyz) {
-	shard.newActiveBlocks = append(shard.newActiveBlocks, *blockXyz)
+// addActiveBlock sets the given block to be active on the next tick. This
+// works even if the block is not within the shard - it will be made active
+// provided that the chunk that the block is within is loaded.
+func (shard *ChunkShard) addActiveBlock(block *BlockXyz) {
+	chunkXz := block.ToChunkXz()
+	shardXz := chunkXz.ToShardXz()
+	shardKey := shardXz.Key()
+	activeShard, ok := shard.newActiveShards[shardKey]
+	if ok {
+		activeShard = &destActiveShard{
+			loc:    shardXz,
+			blocks: []BlockXyz{*block},
+		}
+		shard.newActiveShards[shardKey] = activeShard
+	} else {
+		activeShard.blocks = append(activeShard.blocks, *block)
+	}
 }
 
 func (shard *ChunkShard) String() string {
@@ -217,4 +253,9 @@ func (shard *ChunkShard) Enqueue(fn func()) {
 
 func (shard *ChunkShard) enqueueRequest(req iShardRequest) {
 	shard.requests <- req
+}
+
+type destActiveShard struct {
+	loc    ShardXz
+	blocks []BlockXyz
 }

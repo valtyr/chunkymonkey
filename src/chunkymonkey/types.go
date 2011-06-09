@@ -537,6 +537,10 @@ func (loc *ShardXz) Key() uint64 {
 	return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
 }
 
+func (loc *ShardXz) Equals(other *ShardXz) bool {
+	return loc.X == other.X && loc.Z == other.Z
+}
+
 // Coordinate of a chunk in the world (block / 16).
 type ChunkCoord int32
 
