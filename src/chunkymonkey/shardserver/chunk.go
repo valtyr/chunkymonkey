@@ -13,6 +13,7 @@ import (
 	"chunkymonkey/item"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/mob"
+	"chunkymonkey/object"
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
@@ -37,7 +38,7 @@ type Chunk struct {
 	// TODO: (discuss) Maybe split this back into mobs and items?
 	// There are many more users of "spawn" than of only mobs or items. So
 	// I'm inclined to leave it as is.
-	spawn        map[EntityId]stub.INonPlayerSpawn
+	spawn        map[EntityId]object.INonPlayerSpawn
 	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	neighbours   neighboursCache
@@ -60,7 +61,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		skyLight:    reader.SkyLight(),
 		blockLight:  reader.BlockLight(),
 		heightMap:   reader.HeightMap(),
-		spawn:       make(map[EntityId]stub.INonPlayerSpawn),
+		spawn:       make(map[EntityId]object.INonPlayerSpawn),
 		blockExtra:  make(map[BlockIndex]interface{}),
 		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
 		subscribers: make(map[EntityId]stub.IShardPlayerClient),
@@ -122,13 +123,13 @@ func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType
 }
 
 // Tells the chunk to take posession of the item/mob from another chunk.
-func (chunk *Chunk) transferSpawn(s stub.INonPlayerSpawn) {
+func (chunk *Chunk) transferSpawn(s object.INonPlayerSpawn) {
 	chunk.spawn[s.GetEntityId()] = s
 }
 
 // AddSpawn creates a mob or item in this chunk and notifies the new spawn to
 // all chunk subscribers.
-func (chunk *Chunk) AddSpawn(s stub.INonPlayerSpawn) {
+func (chunk *Chunk) AddSpawn(s object.INonPlayerSpawn) {
 	newEntityId := chunk.mgr.entityMgr.NewEntity()
 	s.SetEntityId(newEntityId)
 	chunk.spawn[newEntityId] = s
@@ -139,7 +140,7 @@ func (chunk *Chunk) AddSpawn(s stub.INonPlayerSpawn) {
 	chunk.reqMulticastPlayers(-1, buf.Bytes())
 }
 
-func (chunk *Chunk) removeSpawn(s stub.INonPlayerSpawn) {
+func (chunk *Chunk) removeSpawn(s object.INonPlayerSpawn) {
 	e := s.GetEntityId()
 	chunk.mgr.entityMgr.RemoveEntityById(e)
 	chunk.spawn[e] = nil, false
@@ -434,7 +435,7 @@ func (chunk *Chunk) spawnTick() {
 		}
 		return
 	}
-	outgoingSpawns := []stub.INonPlayerSpawn{}
+	outgoingSpawns := []object.INonPlayerSpawn{}
 
 	for _, e := range chunk.spawn {
 		if e.Tick(blockQuery) {

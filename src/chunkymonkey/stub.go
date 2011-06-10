@@ -1,10 +1,6 @@
 package stub
 
 import (
-	"io"
-	"os"
-
-	"chunkymonkey/physics"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -18,21 +14,6 @@ type IShardConnecter interface {
 	// ShardShardConnect makes a connection from one shard to another.
 	// TODO Consider making this package-private to shardserver.
 	ShardShardConnect(shardLoc ShardXz) IShardShardClient
-}
-
-// ISpawn represents common elements to all types of entities that can be
-// present in a chunk.
-type ISpawn interface {
-	GetEntityId() EntityId
-	SendSpawn(io.Writer) os.Error
-	SendUpdate(io.Writer) os.Error
-	Position() *AbsXyz
-}
-
-type INonPlayerSpawn interface {
-	ISpawn
-	SetEntityId(EntityId)
-	Tick(physics.BlockQueryFn) (leftBlock bool)
 }
 
 // IShardPlayerClient is the interface by which shards communicate to players on

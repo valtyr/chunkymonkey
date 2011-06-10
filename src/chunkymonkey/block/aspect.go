@@ -4,6 +4,7 @@ import (
 	"rand"
 
 	"chunkymonkey/itemtype"
+	"chunkymonkey/object"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	"chunkymonkey/stub"
@@ -18,7 +19,7 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 type IChunkBlock interface {
 	Rand() *rand.Rand
 	ItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool)
-	AddSpawn(s stub.INonPlayerSpawn)
+	AddSpawn(s object.INonPlayerSpawn)
 	SetBlockByIndex(blockIndex BlockIndex, blockId BlockId, blockData byte)
 	BlockExtra(blockIndex BlockIndex) interface{}
 	SetBlockExtra(blockIndex BlockIndex, extra interface{})
