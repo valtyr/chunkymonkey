@@ -126,7 +126,7 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
 		ref, ok := sub.shards[shardKey]
 		if !ok {
 			ref = &shardRef{
-				shard: sub.shardConnecter.ShardConnect(sub.entityId, sub.shardReceiver, shardLoc),
+				shard: sub.shardConnecter.PlayerShardConnect(sub.entityId, sub.shardReceiver, shardLoc),
 				count: 0,
 			}
 			sub.shards[shardKey] = ref

@@ -45,7 +45,7 @@ func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
 	return shard
 }
 
-func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player stub.IShardPlayerClient, shardLoc ShardXz) stub.IPlayerShardClient {
+func (mgr *LocalShardManager) PlayerShardConnect(entityId EntityId, player stub.IShardPlayerClient, shardLoc ShardXz) stub.IPlayerShardClient {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
@@ -53,7 +53,7 @@ func (mgr *LocalShardManager) ShardConnect(entityId EntityId, player stub.IShard
 	return newLocalPlayerShardClient(entityId, player, shard)
 }
 
-func (mgr *LocalShardManager) ShardToShardConnect(shardLoc ShardXz) stub.IShardShardClient {
+func (mgr *LocalShardManager) ShardShardConnect(shardLoc ShardXz) stub.IShardShardClient {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
