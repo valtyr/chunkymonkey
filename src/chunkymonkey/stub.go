@@ -10,6 +10,16 @@ import (
 	. "chunkymonkey/types"
 )
 
+// IShardConnecter is used to look up shards and connect to them.
+type IShardConnecter interface {
+	// PlayerShardConnect makes a connection from a player to a shard.
+	PlayerShardConnect(entityId EntityId, player IShardPlayerClient, shardLoc ShardXz) IPlayerShardClient
+
+	// ShardShardConnect makes a connection from one shard to another.
+	// TODO Consider making this package-private to shardserver.
+	ShardShardConnect(shardLoc ShardXz) IShardShardClient
+}
+
 // ISpawn represents common elements to all types of entities that can be
 // present in a chunk.
 type ISpawn interface {
@@ -126,16 +136,6 @@ type IPlayerShardClient interface {
 	// ReqInventoryUnsubscribed requests that the inventory for the block be
 	// unsubscribed to.
 	ReqInventoryUnsubscribed(block BlockXyz)
-}
-
-// IShardConnecter is used to look up shards and connect to them.
-type IShardConnecter interface {
-	// PlayerShardConnect makes a connection from a player to a shard.
-	PlayerShardConnect(entityId EntityId, player IShardPlayerClient, shardLoc ShardXz) IPlayerShardClient
-
-	// ShardShardConnect makes a connection from one shard to another.
-	// TODO Consider making this package-private to shardserver.
-	ShardShardConnect(shardLoc ShardXz) IShardShardClient
 }
 
 // IShardShardClient provides an interface for shards to make requests against
