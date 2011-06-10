@@ -1,10 +1,5 @@
 package block
 
-import (
-	"chunkymonkey/stub"
-	. "chunkymonkey/types"
-)
-
 func makeTodoAspect() (aspect IBlockAspect) {
 	return &TodoAspect{}
 }
@@ -20,9 +15,4 @@ type TodoAspect struct {
 
 func (aspect *TodoAspect) Name() string {
 	return "Todo"
-}
-
-func (aspect *TodoAspect) Hit(instance *BlockInstance, player stub.IPlayerConnection, digStatus DigStatus) (destroyed bool) {
-	destroyed = false
-	return
 }

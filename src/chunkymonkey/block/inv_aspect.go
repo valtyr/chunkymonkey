@@ -17,14 +17,14 @@ func (aspect *InventoryAspect) Name() string {
 	return aspect.name
 }
 
-func (aspect *InventoryAspect) Interact(instance *BlockInstance, player stub.IPlayerConnection) {
+func (aspect *InventoryAspect) Interact(instance *BlockInstance, player stub.IShardPlayerClient) {
 	blkInv := aspect.blockInv(instance, true)
 	if blkInv != nil {
 		blkInv.AddSubscriber(player)
 	}
 }
 
-func (aspect *InventoryAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
+func (aspect *InventoryAspect) InventoryClick(instance *BlockInstance, player stub.IShardPlayerClient, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
 	blkInv := aspect.blockInv(instance, false)
 	if blkInv != nil {
 		blkInv.Click(player, slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
@@ -36,7 +36,7 @@ func (aspect *InventoryAspect) InventoryClick(instance *BlockInstance, player st
 	}
 }
 
-func (aspect *InventoryAspect) InventoryUnsubscribed(instance *BlockInstance, player stub.IPlayerConnection) {
+func (aspect *InventoryAspect) InventoryUnsubscribed(instance *BlockInstance, player stub.IShardPlayerClient) {
 	blkInv := aspect.blockInv(instance, false)
 	if blkInv != nil {
 		blkInv.RemoveSubscriber(player.GetEntityId())

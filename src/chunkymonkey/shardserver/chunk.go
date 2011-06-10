@@ -42,7 +42,7 @@ type Chunk struct {
 	rand         *rand.Rand
 	neighbours   neighboursCache
 	cachedPacket []byte                              // Cached packet data for this chunk.
-	subscribers  map[EntityId]stub.IPlayerConnection // Players getting updates from the chunk.
+	subscribers  map[EntityId]stub.IShardPlayerClient // Players getting updates from the chunk.
 	playersData  map[EntityId]*playerData            // Some player data for player(s) in the chunk.
 	onUnsub      map[EntityId][]block.IUnsubscribed  // Functions to be called when unsubscribed.
 
@@ -63,7 +63,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		spawn:       make(map[EntityId]stub.INonPlayerSpawn),
 		blockExtra:  make(map[BlockIndex]interface{}),
 		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers: make(map[EntityId]stub.IPlayerConnection),
+		subscribers: make(map[EntityId]stub.IShardPlayerClient),
 		playersData: make(map[EntityId]*playerData),
 		onUnsub:     make(map[EntityId][]block.IUnsubscribed),
 
@@ -231,7 +231,7 @@ func (chunk *Chunk) ItemTypes() itemtype.ItemTypeMap {
 	return chunk.mgr.gameRules.ItemTypes
 }
 
-func (chunk *Chunk) reqHitBlock(player stub.IPlayerConnection, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
+func (chunk *Chunk) reqHitBlock(player stub.IShardPlayerClient, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
 
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(target)
 	if !ok {
@@ -246,7 +246,7 @@ func (chunk *Chunk) reqHitBlock(player stub.IPlayerConnection, held slot.Slot, d
 	return
 }
 
-func (chunk *Chunk) reqInteractBlock(player stub.IPlayerConnection, held slot.Slot, target *BlockXyz, againstFace Face) {
+func (chunk *Chunk) reqInteractBlock(player stub.IShardPlayerClient, held slot.Slot, target *BlockXyz, againstFace Face) {
 	// TODO use held item to better check of if the player is trying to place a
 	// block vs. perform some other interaction (e.g hoeing dirt). This is
 	// perhaps best solved by sending held item type and the face to
@@ -281,7 +281,7 @@ func (chunk *Chunk) reqInteractBlock(player stub.IPlayerConnection, held slot.Sl
 // placeBlock attempts to place a block. This is called by PlayerBlockInteract
 // in the situation where the player interacts with an attachable block
 // (potentially in a different chunk to the one where the block gets placed).
-func (chunk *Chunk) reqPlaceItem(player stub.IPlayerConnection, target *BlockXyz, slot *slot.Slot) {
+func (chunk *Chunk) reqPlaceItem(player stub.IShardPlayerClient, target *BlockXyz, slot *slot.Slot) {
 	// TODO defer a check for remaining items in slot, and do something with them
 	// (send to player or drop on the ground).
 
@@ -313,7 +313,7 @@ func (chunk *Chunk) reqPlaceItem(player stub.IPlayerConnection, target *BlockXyz
 	slot.Decrement()
 }
 
-func (chunk *Chunk) reqTakeItem(player stub.IPlayerConnection, entityId EntityId) {
+func (chunk *Chunk) reqTakeItem(player stub.IShardPlayerClient, entityId EntityId) {
 	if spawn, ok := chunk.spawn[entityId]; ok {
 		if item, ok := spawn.(*item.Item); ok {
 			player.ReqGiveItem(*item.Position(), *item.GetSlot())
@@ -328,7 +328,7 @@ func (chunk *Chunk) reqTakeItem(player stub.IPlayerConnection, entityId EntityId
 	}
 }
 
-func (chunk *Chunk) reqDropItem(player stub.IPlayerConnection, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
+func (chunk *Chunk) reqDropItem(player stub.IShardPlayerClient, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
 	spawnedItem := item.NewItem(
 		content.ItemType,
 		content.Count,
@@ -340,7 +340,7 @@ func (chunk *Chunk) reqDropItem(player stub.IPlayerConnection, content *slot.Slo
 	chunk.AddSpawn(spawnedItem)
 }
 
-func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *BlockXyz, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
+func (chunk *Chunk) reqInventoryClick(player stub.IShardPlayerClient, blockLoc *BlockXyz, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
 	if !ok {
 		return
@@ -352,7 +352,7 @@ func (chunk *Chunk) reqInventoryClick(player stub.IPlayerConnection, blockLoc *B
 		txId, expectedSlot)
 }
 
-func (chunk *Chunk) reqInventoryUnsubscribed(player stub.IPlayerConnection, blockLoc *BlockXyz) {
+func (chunk *Chunk) reqInventoryUnsubscribed(player stub.IShardPlayerClient, blockLoc *BlockXyz) {
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
 	if !ok {
 		return
@@ -549,7 +549,7 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IPlayerConnection) {
+func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IShardPlayerClient) {
 	if _, ok := chunk.subscribers[entityId]; ok {
 		// Already subscribed.
 		return

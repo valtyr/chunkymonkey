@@ -32,7 +32,7 @@ func init() {
 
 type Player struct {
 	EntityId
-	shardReceiver  playerShardReceiver
+	shardReceiver  shardPlayerClient
 	shardConnecter stub.IShardConnecter
 	conn           net.Conn
 	name           string

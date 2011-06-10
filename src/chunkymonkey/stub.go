@@ -25,9 +25,9 @@ type INonPlayerSpawn interface {
 	Tick(physics.BlockQueryFn) (leftBlock bool)
 }
 
-// IPlayerConnection is the interface by which shards communicate to players on
+// IShardPlayerClient is the interface by which shards communicate to players on
 // the frontend.
-type IPlayerConnection interface {
+type IShardPlayerClient interface {
 	GetEntityId() EntityId
 
 	TransmitPacket(packet []byte)
@@ -130,12 +130,16 @@ type IPlayerShardClient interface {
 
 // IShardConnecter is used to look up shards and connect to them.
 type IShardConnecter interface {
-	ShardConnect(entityId EntityId, player IPlayerConnection, shardLoc ShardXz) IPlayerShardClient
+	ShardConnect(entityId EntityId, player IShardPlayerClient, shardLoc ShardXz) IPlayerShardClient
 
 	// ShardToShardConnect makes a connection from one shard to another.
+	// TODO Consider making this package-private to shardserver.
 	ShardToShardConnect(shardLoc ShardXz) IShardShardClient
 }
 
+// IShardShardClient provides an interface for shards to make requests against
+// another shard.
+// TODO Consider making this package-private to shardserver.
 type IShardShardClient interface {
 	ReqSetActiveBlocks(blocks []BlockXyz)
 }

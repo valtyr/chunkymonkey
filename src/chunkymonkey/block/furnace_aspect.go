@@ -31,7 +31,7 @@ func createFurnaceInventory(instance *BlockInstance) *blockInventory {
 	)
 }
 
-func (aspect *FurnaceAspect) InventoryClick(instance *BlockInstance, player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
+func (aspect *FurnaceAspect) InventoryClick(instance *BlockInstance, player stub.IShardPlayerClient, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
 
 	aspect.InventoryAspect.InventoryClick(instance, player, slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 

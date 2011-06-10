@@ -14,7 +14,7 @@ import (
 type blockInventory struct {
 	instance           BlockInstance
 	inv                inventory.IInventory
-	subscribers        map[EntityId]stub.IPlayerConnection
+	subscribers        map[EntityId]stub.IShardPlayerClient
 	ejectOnUnsubscribe bool
 	invTypeId          InvTypeId
 }
@@ -24,7 +24,7 @@ func newBlockInventory(instance *BlockInstance, inv inventory.IInventory, ejectO
 	blkInv := &blockInventory{
 		instance:           *instance,
 		inv:                inv,
-		subscribers:        make(map[EntityId]stub.IPlayerConnection),
+		subscribers:        make(map[EntityId]stub.IShardPlayerClient),
 		ejectOnUnsubscribe: ejectOnUnsubscribe,
 		invTypeId:          invTypeId,
 	}
@@ -34,7 +34,7 @@ func newBlockInventory(instance *BlockInstance, inv inventory.IInventory, ejectO
 	return blkInv
 }
 
-func (blkInv *blockInventory) Click(player stub.IPlayerConnection, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
+func (blkInv *blockInventory) Click(player stub.IShardPlayerClient, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
 	txState := blkInv.inv.Click(slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
 
 	player.ReqInventoryCursorUpdate(blkInv.instance.BlockLoc, *cursor)
@@ -55,11 +55,11 @@ func (blkInv *blockInventory) ProgressUpdate(prgBarId PrgBarId, value PrgBarValu
 	}
 }
 
-func (blkInv *blockInventory) AddSubscriber(player stub.IPlayerConnection) {
+func (blkInv *blockInventory) AddSubscriber(player stub.IShardPlayerClient) {
 	entityId := player.GetEntityId()
 	blkInv.subscribers[entityId] = player
 
-	// Register self for automatic removal when IPlayerConnection unsubscribes
+	// Register self for automatic removal when IShardPlayerClient unsubscribes
 	// from the chunk.
 	blkInv.instance.Chunk.AddOnUnsubscribe(entityId, blkInv)
 
