@@ -30,11 +30,15 @@ func NewLocalShardManager(chunkStore chunkstore.IChunkStore, entityMgr *entity.E
 	}
 }
 
-func (mgr *LocalShardManager) getShard(loc ShardXz) *ChunkShard {
+func (mgr *LocalShardManager) getShard(loc ShardXz, create bool) *ChunkShard {
 	shardKey := loc.Key()
 	if shard, ok := mgr.shards[shardKey]; ok {
 		// Shard already exists.
 		return shard
+	}
+
+	if !create {
+		return nil
 	}
 
 	// Create shard.
@@ -49,7 +53,7 @@ func (mgr *LocalShardManager) PlayerShardConnect(entityId EntityId, player stub.
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
-	shard := mgr.getShard(shardLoc)
+	shard := mgr.getShard(shardLoc, true)
 	return newLocalPlayerShardClient(entityId, player, shard)
 }
 
@@ -57,9 +61,13 @@ func (mgr *LocalShardManager) ShardShardConnect(shardLoc ShardXz) stub.IShardSha
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
-	// TODO
+	shard := mgr.getShard(shardLoc, false)
 
-	return nil
+	if shard == nil {
+		return nil
+	}
+
+	return newLocalShardShardClient(shard)
 }
 
 // TODO remove Enqueue* methods
@@ -80,6 +88,6 @@ func (mgr *LocalShardManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk *Chunk))
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
-	shard := mgr.getShard(loc.ToShardXz())
+	shard := mgr.getShard(loc.ToShardXz(), true)
 	shard.EnqueueOnChunk(loc, fn)
 }

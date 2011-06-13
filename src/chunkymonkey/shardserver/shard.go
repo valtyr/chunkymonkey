@@ -92,16 +92,21 @@ func (shard *ChunkShard) transferActiveBlocks() {
 	thisShardKey := shard.loc.Key()
 	for shardKey, activeShard := range shard.newActiveShards {
 		if shardKey == thisShardKey {
-			shard.setBlocksActive(activeShard.blocks)
+			shard.reqSetBlocksActive(activeShard.blocks)
 		} else {
-			// TODO Send a ReqSetActiveBlocks to the destination shard.
+			// TODO For now we only open a connection per request and then discard
+			// it. It will likely be worth holding open connections at least to
+			// neighbouring shards at some point.
+			destShardClient := shard.mgr.ShardShardConnect(activeShard.loc)
+			defer destShardClient.Disconnect()
+			destShardClient.ReqSetActiveBlocks(activeShard.blocks)
 		}
 	}
 }
 
-// setBlocksActive sets each block in the given slice to be active within the
-// chunk. Note: if a block is within a different shard, it is discarded.
-func (shard *ChunkShard) setBlocksActive(blocks []BlockXyz) {
+// reqSetBlocksActive sets each block in the given slice to be active within
+// the chunk. Note: if a block is within a different shard, it is discarded.
+func (shard *ChunkShard) reqSetBlocksActive(blocks []BlockXyz) {
 	for _, block := range blocks {
 		chunkXz := block.ToChunkXz()
 		chunkIndex, _, _, isThisShard := shard.chunkIndexAndRelLoc(chunkXz)

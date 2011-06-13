@@ -40,7 +40,7 @@ func (inv *RemoteInventory) progressUpdate(prgBarId PrgBarId, value PrgBarValue)
 }
 
 func (inv *RemoteInventory) Close() {
-	shard, _, ok := inv.chunkSubs.ShardConnForBlockXyz(&inv.blockLoc)
+	shard, _, ok := inv.chunkSubs.ShardClientForBlockXyz(&inv.blockLoc)
 
 	if ok {
 		shard.ReqInventoryUnsubscribed(inv.blockLoc)
@@ -54,7 +54,7 @@ func (inv *RemoteInventory) NumSlots() SlotId {
 }
 
 func (inv *RemoteInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState) {
-	shard, _, ok := inv.chunkSubs.ShardConnForBlockXyz(&inv.blockLoc)
+	shard, _, ok := inv.chunkSubs.ShardClientForBlockXyz(&inv.blockLoc)
 
 	if ok {
 		shard.ReqInventoryClick(inv.blockLoc, slotId, *cursor, rightClick, shiftClick, txId, *expectedSlot)

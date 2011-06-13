@@ -178,10 +178,10 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 	// TODO measure the dig time on the target block and relay to the shard to
 	// stop speed hacking (based on block type and tool used - non-trivial).
 
-	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(target)
 	if ok {
 		held, _ := player.inventory.HeldItem()
-		shardConn.ReqHitBlock(held, *target, status, face)
+		shardClient.ReqHitBlock(held, *target, status, face)
 	}
 }
 
@@ -195,10 +195,10 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, target *Block
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
-	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(target)
 	if ok {
 		held, _ := player.inventory.HeldItem()
-		shardConn.ReqInteractBlock(held, *target, face)
+		shardClient.ReqInteractBlock(held, *target, face)
 	}
 }
 
@@ -479,14 +479,14 @@ func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
 		return
 	}
 
-	shardConn, _, ok := player.chunkSubs.ShardConnForBlockXyz(target)
+	shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(target)
 	if ok {
 		var into slot.Slot
 		into.Init()
 
 		player.inventory.TakeOneHeldItem(&into)
 
-		shardConn.ReqPlaceItem(*target, into)
+		shardClient.ReqPlaceItem(*target, into)
 	}
 }
 
@@ -495,9 +495,9 @@ func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
 // consumed.
 func (player *Player) reqOfferItem(fromChunk *ChunkXz, entityId EntityId, item *slot.Slot) {
 	if player.inventory.CanTakeItem(item) {
-		shardConn, ok := player.chunkSubs.ShardConnForChunkXz(fromChunk)
+		shardClient, ok := player.chunkSubs.ShardClientForChunkXz(fromChunk)
 		if ok {
-			shardConn.ReqTakeItem(*fromChunk, entityId)
+			shardClient.ReqTakeItem(*fromChunk, entityId)
 		}
 	}
 
@@ -510,9 +510,9 @@ func (player *Player) reqGiveItem(atPosition *AbsXyz, item *slot.Slot) {
 		// back to the chunk.
 		if item.Count > 0 {
 			chunkLoc := atPosition.ToChunkXz()
-			shardConn, ok := player.chunkSubs.ShardConnForChunkXz(&chunkLoc)
+			shardClient, ok := player.chunkSubs.ShardClientForChunkXz(&chunkLoc)
 			if ok {
-				shardConn.ReqDropItem(*item, *atPosition, AbsVelocity{})
+				shardClient.ReqDropItem(*item, *atPosition, AbsVelocity{})
 			}
 		}
 	}()

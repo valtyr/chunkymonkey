@@ -42,10 +42,10 @@ type Chunk struct {
 	blockExtra   map[BlockIndex]interface{} // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	neighbours   neighboursCache
-	cachedPacket []byte                              // Cached packet data for this chunk.
+	cachedPacket []byte                               // Cached packet data for this chunk.
 	subscribers  map[EntityId]stub.IShardPlayerClient // Players getting updates from the chunk.
-	playersData  map[EntityId]*playerData            // Some player data for player(s) in the chunk.
-	onUnsub      map[EntityId][]block.IUnsubscribed  // Functions to be called when unsubscribed.
+	playersData  map[EntityId]*playerData             // Some player data for player(s) in the chunk.
+	onUnsub      map[EntityId][]block.IUnsubscribed   // Functions to be called when unsubscribed.
 
 	activeBlocks    map[BlockIndex]bool // Blocks that need to "tick".
 	newActiveBlocks map[BlockIndex]bool // Blocks added as active for next "tick".

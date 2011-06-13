@@ -123,5 +123,7 @@ type IPlayerShardClient interface {
 // another shard.
 // TODO Consider making this package-private to shardserver.
 type IShardShardClient interface {
+	Disconnect()
+
 	ReqSetActiveBlocks(blocks []BlockXyz)
 }

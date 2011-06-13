@@ -119,4 +119,3 @@ func (conn *localPlayerShardClient) ReqInventoryUnsubscribed(block BlockXyz) {
 		chunk.reqInventoryUnsubscribed(conn.player, &block)
 	})
 }
-

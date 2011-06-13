@@ -16,17 +16,17 @@ type shardRef struct {
 
 // chunkSubscriptions is part of the player frontend code, and maintains:
 // * the shards to be connected to,
-// * the chunks that to be subscribed to (via their shards),
+// * the chunks that to be subscribed to (via their shardClients),
 // * and moving the player from one shard to another.
 type chunkSubscriptions struct {
 	player         *Player
 	shardConnecter stub.IShardConnecter
 	shardReceiver  stub.IShardPlayerClient
 	entityId       EntityId
-	curShardLoc    ShardXz               // Shard the player is currently in.
-	curChunkLoc    ChunkXz               // Chunk the player is currently in.
+	curShardLoc    ShardXz                 // Shard the player is currently in.
+	curChunkLoc    ChunkXz                 // Chunk the player is currently in.
 	curShard       stub.IPlayerShardClient // Shard the player is hosted on.
-	shards         map[uint64]*shardRef  // Connections to shards.
+	shardClients   map[uint64]*shardRef    // Connections to shards.
 }
 
 func (sub *chunkSubscriptions) Init(player *Player) {
@@ -36,12 +36,12 @@ func (sub *chunkSubscriptions) Init(player *Player) {
 	sub.entityId = player.EntityId
 	sub.curShardLoc = player.position.ToShardXz()
 	sub.curChunkLoc = player.position.ToChunkXz()
-	sub.shards = make(map[uint64]*shardRef)
+	sub.shardClients = make(map[uint64]*shardRef)
 
 	initialChunkLocs := orderedChunkSquare(sub.curChunkLoc, ChunkRadius)
 	sub.subscribeToChunks(initialChunkLocs)
 
-	sub.curShard = sub.shards[sub.curShardLoc.Key()].shard
+	sub.curShard = sub.shardClients[sub.curShardLoc.Key()].shard
 	sub.curShard.ReqAddPlayerData(
 		sub.curChunkLoc,
 		player.name,
@@ -69,26 +69,26 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 // disconnected.
 func (sub *chunkSubscriptions) Close() {
 	curShardLoc := sub.curChunkLoc.ToShardXz()
-	if ref, ok := sub.shards[curShardLoc.Key()]; ok {
+	if ref, ok := sub.shardClients[curShardLoc.Key()]; ok {
 		ref.shard.ReqRemovePlayerData(sub.curChunkLoc, true)
 	}
 
-	for key, ref := range sub.shards {
+	for key, ref := range sub.shardClients {
 		ref.shard.Disconnect()
-		sub.shards[key] = nil, false
+		sub.shardClients[key] = nil, false
 	}
 }
 
-// ShardConnForBlockXyz is a convenience function to get the correct shard
+// ShardClientForBlockXyz is a convenience function to get the correct shard
 // connection and the ChunkXz within that chunk for a given BlockXyz position.
 // Returns ok = false if there is no open connection for that shard. Note that
 // this doesn't check if the chunk actually exists.
-func (sub *chunkSubscriptions) ShardConnForBlockXyz(blockLoc *BlockXyz) (conn stub.IPlayerShardClient, chunkLoc *ChunkXz, ok bool) {
+func (sub *chunkSubscriptions) ShardClientForBlockXyz(blockLoc *BlockXyz) (conn stub.IPlayerShardClient, chunkLoc *ChunkXz, ok bool) {
 
 	chunkLoc = blockLoc.ToChunkXz()
 
 	shardLoc := chunkLoc.ToShardXz()
-	ref, ok := sub.shards[shardLoc.Key()]
+	ref, ok := sub.shardClients[shardLoc.Key()]
 	if !ok {
 		return
 	}
@@ -99,14 +99,14 @@ func (sub *chunkSubscriptions) ShardConnForBlockXyz(blockLoc *BlockXyz) (conn st
 	return
 }
 
-// ShardConnForChunkXz is a convenience function to get the correct shard
+// ShardClientForChunkXz is a convenience function to get the correct shard
 // connection for a given ChunkXz position. Returns ok = false if there is no
 // open connection for that shard. Note that this doesn't check if the chunk
 // actually exists.
-func (sub *chunkSubscriptions) ShardConnForChunkXz(chunkLoc *ChunkXz) (conn stub.IPlayerShardClient, ok bool) {
+func (sub *chunkSubscriptions) ShardClientForChunkXz(chunkLoc *ChunkXz) (conn stub.IPlayerShardClient, ok bool) {
 
 	shardLoc := chunkLoc.ToShardXz()
-	ref, ok := sub.shards[shardLoc.Key()]
+	ref, ok := sub.shardClients[shardLoc.Key()]
 	if !ok {
 		return
 	}
@@ -123,13 +123,13 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
 	for _, chunkLoc := range chunkLocs {
 		shardLoc := chunkLoc.ToShardXz()
 		shardKey := shardLoc.Key()
-		ref, ok := sub.shards[shardKey]
+		ref, ok := sub.shardClients[shardKey]
 		if !ok {
 			ref = &shardRef{
 				shard: sub.shardConnecter.PlayerShardConnect(sub.entityId, sub.shardReceiver, shardLoc),
 				count: 0,
 			}
-			sub.shards[shardKey] = ref
+			sub.shardClients[shardKey] = ref
 		}
 		ref.shard.ReqSubscribeChunk(chunkLoc)
 		ref.count++
@@ -142,12 +142,12 @@ func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
 	for _, chunkLoc := range chunkLocs {
 		shardLoc := chunkLoc.ToShardXz()
 		shardKey := shardLoc.Key()
-		if ref, ok := sub.shards[shardKey]; ok {
+		if ref, ok := sub.shardClients[shardKey]; ok {
 			ref.shard.ReqUnsubscribeChunk(chunkLoc)
 			ref.count--
 			if ref.count <= 0 {
 				ref.shard.Disconnect()
-				sub.shards[shardKey] = nil, false
+				sub.shardClients[shardKey] = nil, false
 			}
 		} else {
 			// Odd - we don't have a shard connection for that chunk.
@@ -164,7 +164,7 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 	sub.subscribeToChunks(addChunkLocs)
 
 	newShardLoc := newChunkLoc.ToShardXz()
-	if ref, ok := sub.shards[newShardLoc.Key()]; ok {
+	if ref, ok := sub.shardClients[newShardLoc.Key()]; ok {
 		ref.shard.ReqAddPlayerData(
 			newChunkLoc,
 			sub.player.name,
@@ -175,7 +175,7 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 	}
 
 	curShardLoc := sub.curChunkLoc.ToShardXz()
-	if ref, ok := sub.shards[curShardLoc.Key()]; ok {
+	if ref, ok := sub.shardClients[curShardLoc.Key()]; ok {
 		ref.shard.ReqRemovePlayerData(sub.curChunkLoc, false)
 	}
 
@@ -186,8 +186,8 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 }
 
 func (sub *chunkSubscriptions) moveToShard(newShardLoc ShardXz) {
-	// The new current shard is assumed to be present in sub.shards already.
-	sub.curShard = sub.shards[newShardLoc.Key()].shard
+	// The new current shard is assumed to be present in sub.shardClients already.
+	sub.curShard = sub.shardClients[newShardLoc.Key()].shard
 	sub.curShardLoc = newShardLoc
 }
 
