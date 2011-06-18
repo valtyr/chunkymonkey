@@ -23,14 +23,14 @@ Minecraft Beta clients may:
 
 *   Connect and walk around the existing generated parts of a world.
 *   Blocks may be dug, items picked up, and blocks placed.
-*   Craft using the 2x2 or 3x3 crafting grids.
+*   Craft using the 2x2 or 3x3 crafting grids and the furnace.
 
 Currently missing features include:
 
 *   Block physics.
 *   Complete item physics (there is a minimal implementation in place).
 *   Mobs.
-*   Most block interactions.
+*   Many block interactions.
 *   World persistency.
 *   World generation.
 
