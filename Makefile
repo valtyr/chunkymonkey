@@ -3,6 +3,7 @@ EXTRA_BINARIES=\
 	datatests \
 	inspectlevel \
 	intercept \
+	replay \
 	style
 
 DIAGRAMS=diagrams/top-level-architecture.png
@@ -48,13 +49,16 @@ libs: cleantmp
 chunkymonkey: libs
 	@gd -q -I src -o $@ src/main
 
+datatests: libs
+	@gd -q -I src -o $@ src/util/$@
+
 intercept: libs
 	@gd -q -I src -o $@ src/util/$@
 
 inspectlevel: libs
 	@gd -q -I src -o $@ src/util/$@
 
-datatests: libs
+replay: libs
 	@gd -q -I src -o $@ src/util/$@
 
 style: src/util/style/style.go

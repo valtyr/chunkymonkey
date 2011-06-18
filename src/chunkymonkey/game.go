@@ -14,7 +14,6 @@ import (
 	"chunkymonkey/itemtype"
 	"chunkymonkey/player"
 	"chunkymonkey/proto"
-	"chunkymonkey/record"
 	"chunkymonkey/server_auth"
 	"chunkymonkey/shardserver"
 	. "chunkymonkey/types"
@@ -152,7 +151,7 @@ func (game *Game) Serve(addr string) {
 			continue
 		}
 
-		go game.login(record.WrapConn(conn))
+		go game.login(conn)
 	}
 }
 
