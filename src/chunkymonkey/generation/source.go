@@ -1,9 +1,38 @@
 package generation
 
+import (
+	"math"
+)
+
 
 type Source interface {
 	At2d(x, y float64) float64
 	MeanMagnitude() float64
+}
+
+
+type Const float64
+
+func (gen Const) At2d(x, y float64) float64 {
+	return float64(gen)
+}
+
+func (gen Const) MeanMagnitude() float64 {
+	return float64(gen)
+}
+
+
+type Offset struct {
+	Dx, Dy float64
+	Source Source
+}
+
+func (gen *Offset) At2d(x, y float64) float64 {
+	return gen.Source.At2d(x+gen.Dx, y+gen.Dy)
+}
+
+func (gen *Offset) MeanMagnitude() float64 {
+	return gen.Source.MeanMagnitude()
 }
 
 
@@ -39,6 +68,28 @@ func (gen *Scale) MeanMagnitude() float64 {
 }
 
 
+type Pow struct {
+	Source Source
+	Power  Source
+}
+
+func (gen *Pow) At2d(x, y float64) float64 {
+	v := gen.Source.At2d(x, y)
+	power := gen.Power.At2d(x, y)
+	if v < 0 {
+		// Retain sign, and don't break on negatives raised to fractional powers.
+		// Not strictly a power function, but serves the purpose.
+		return -math.Pow(-v, power)
+	}
+	return math.Pow(v, power)
+}
+
+func (gen *Pow) MeanMagnitude() float64 {
+	// TODO Remove all MeanMagnitude.
+	return 0.5
+}
+
+
 type Mult struct {
 	A, B Source
 }
@@ -49,6 +100,20 @@ func (gen *Mult) At2d(x, y float64) float64 {
 
 func (gen *Mult) MeanMagnitude() float64 {
 	return gen.A.MeanMagnitude() * gen.B.MeanMagnitude()
+}
+
+
+type Add struct {
+	Source Source
+	Value  float64
+}
+
+func (gen *Add) At2d(x, y float64) float64 {
+	return gen.Source.At2d(x, y) + gen.Value
+}
+
+func (gen *Add) MeanMagnitude() float64 {
+	return gen.Source.MeanMagnitude() + gen.Value
 }
 
 

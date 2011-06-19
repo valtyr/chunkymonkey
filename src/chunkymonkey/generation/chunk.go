@@ -69,27 +69,25 @@ func NewTestGenerator(seed int64) *TestGenerator {
 
 	inputs := []Source{
 		&Scale{
-			Wavelength: 300,
+			Wavelength: 200,
 			Amplitude:  30,
 			Source:     perlin,
 		},
 		&Turbulence{
-			// TODO Consider that we should offset dx from dy to get better results.
-			// They should not be equal.
 			Dx:     perlin,
-			Dy:     perlin,
+			Dy:     &Offset{10, 0, perlin},
 			Factor: 0.25,
 			Source: &Mult{
 				A: &Scale{
-					Wavelength: 20,
-					Amplitude:  40,
+					Wavelength: 30,
+					Amplitude:  20,
 					Source:     perlin,
 				},
 				// Local steepness.
 				B: &Scale{
-					Wavelength: 100,
-					Amplitude:  2,
-					Source:     perlin,
+					Wavelength: 200,
+					Amplitude:  1,
+					Source:     &Add{perlin, 0.6},
 				},
 			},
 		},
@@ -124,7 +122,13 @@ func (gen *TestGenerator) generate(loc ChunkXz, result chan<- chunkstore.ChunkRe
 	for x := 0; x < ChunkSizeH; x++ {
 		for z := 0; z < ChunkSizeH; z++ {
 			xf, zf := float64(x)+float64(baseX), float64(z)+float64(baseZ)
-			height := int(1 + SeaLevel + gen.heightSource.At2d(xf, zf))
+			height := int(SeaLevel + gen.heightSource.At2d(xf, zf))
+
+			if height < 0 {
+				height = 0
+			} else if height >= ChunkSizeY {
+				height = ChunkSizeY - 1
+			}
 
 			skyLightHeight := gen.setBlockStack(
 				height,
@@ -151,24 +155,16 @@ func (gen *TestGenerator) generate(loc ChunkXz, result chan<- chunkstore.ChunkRe
 }
 
 func (gen *TestGenerator) setBlockStack(height int, blocks []byte) (skyLightHeight int) {
-	if height < 0 {
-		height = 0
-	} else if height >= ChunkSizeY {
-		height = ChunkSizeY - 1
-	}
-
 	var topBlockType byte
-	if height < SeaLevel {
+	if height < SeaLevel+1 {
 		skyLightHeight = SeaLevel + 1
 
 		for y := SeaLevel; y > height; y-- {
 			blocks[y] = 9 // stationary water
 		}
-
 		blocks[height] = 12 // sand
 		topBlockType = 12
 	} else {
-		skyLightHeight = height + 1
 
 		if height <= SeaLevel+1 {
 			blocks[height] = 12 // sand
@@ -179,11 +175,15 @@ func (gen *TestGenerator) setBlockStack(height int, blocks []byte) (skyLightHeig
 		}
 	}
 
-	for y := height - 1; y > height-3; y-- {
+	for y := height - 1; y > height-3 && y > 0; y-- {
 		blocks[y] = topBlockType // dirt
 	}
 	for y := height - 3; y > 0; y-- {
 		blocks[y] = 1 // stone
+	}
+
+	if skyLightHeight < 0 {
+		skyLightHeight = 0
 	}
 
 	return
