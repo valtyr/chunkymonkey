@@ -61,15 +61,15 @@ func (data *ChunkData) GetRootTag() *nbt.NamedTag {
 
 // TestGenerator implements chunkstore.IChunkStore.
 type TestGenerator struct {
-	heightSource Source
+	heightSource ISource
 }
 
 func NewTestGenerator(seed int64) *TestGenerator {
 	perlin := perlin.NewPerlinNoise(seed)
 
 	return &TestGenerator{
-		heightSource: &SumStack{
-			Inputs: []Source{
+		heightSource: &Sum{
+			Inputs: []ISource{
 				&Turbulence{
 					Dx:     &Scale{50, 1, &Offset{20.1, 0, perlin}},
 					Dy:     &Scale{50, 1, &Offset{10.1, 0, perlin}},
