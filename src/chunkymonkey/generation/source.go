@@ -5,7 +5,7 @@ import (
 )
 
 
-type Source interface {
+type ISource interface {
 	At2d(x, y float64) float64
 	MeanMagnitude() float64
 }
