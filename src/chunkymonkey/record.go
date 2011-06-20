@@ -58,8 +58,8 @@ type ReaderReplayer struct {
 
 func NewReaderReplayer(log io.Reader, writer io.Writer) *ReaderReplayer {
 	return &ReaderReplayer{
-		writer: writer,
-		log:    log,
+		writer:        writer,
+		log:           log,
 		lastTimestamp: time.Nanoseconds(),
 	}
 }
