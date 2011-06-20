@@ -67,39 +67,44 @@ type TestGenerator struct {
 func NewTestGenerator(seed int64) *TestGenerator {
 	perlin := perlin.NewPerlinNoise(seed)
 
-	inputs := []Source{
-		&Scale{
-			Wavelength: 200,
-			Amplitude:  30,
-			Source:     perlin,
-		},
-		&Turbulence{
-			Dx:     perlin,
-			Dy:     &Offset{10, 0, perlin},
-			Factor: 0.25,
-			Source: &Mult{
-				A: &Scale{
-					Wavelength: 30,
-					Amplitude:  20,
-					Source:     perlin,
+	return &TestGenerator{
+		heightSource: &SumStack{
+			Inputs: []Source{
+				&Turbulence{
+					Dx:     &Scale{50, 1, &Offset{20.1, 0, perlin}},
+					Dy:     &Scale{50, 1, &Offset{10.1, 0, perlin}},
+					Factor: 50,
+					Source: &Scale{
+						Wavelength: 200,
+						Amplitude:  50,
+						Source:     perlin,
+					},
 				},
-				// Local steepness.
-				B: &Scale{
-					Wavelength: 200,
-					Amplitude:  1,
-					Source:     &Add{perlin, 0.6},
+				&Turbulence{
+					Dx:     &Scale{40, 1, &Offset{20.1, 0, perlin}},
+					Dy:     &Scale{40, 1, &Offset{10.1, 0, perlin}},
+					Factor: 10,
+					Source: &Mult{
+						A: &Scale{
+							Wavelength: 40,
+							Amplitude:  20,
+							Source:     perlin,
+						},
+						// Local steepness.
+						B: &Scale{
+							Wavelength: 200,
+							Amplitude:  1,
+							Source:     &Add{perlin, 0.6},
+						},
+					},
+				},
+				&Scale{
+					Wavelength: 5,
+					Amplitude:  2,
+					Source:     perlin,
 				},
 			},
 		},
-		&Scale{
-			Wavelength: 5,
-			Amplitude:  2,
-			Source:     perlin,
-		},
-	}
-
-	return &TestGenerator{
-		heightSource: NewSumStack(inputs),
 	}
 }
 
