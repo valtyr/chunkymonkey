@@ -3,6 +3,7 @@ EXTRA_BINARIES=\
 	datatests \
 	inspectlevel \
 	intercept \
+	noise \
 	replay \
 	style
 
@@ -56,6 +57,9 @@ intercept: libs
 	@gd -q -I src -o $@ src/util/$@
 
 inspectlevel: libs
+	@gd -q -I src -o $@ src/util/$@
+
+noise: libs
 	@gd -q -I src -o $@ src/util/$@
 
 replay: libs
