@@ -166,8 +166,8 @@ const (
 	FaceMinValid = 0
 	FaceBottom   = 0
 	FaceTop      = 1
-	FaceWest     = 2
-	FaceEast     = 3
+	FaceEast     = 2
+	FaceWest     = 3
 	FaceNorth    = 4
 	FaceSouth    = 5
 	FaceMaxValid = 5
