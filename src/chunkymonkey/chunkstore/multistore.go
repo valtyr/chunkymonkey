@@ -21,6 +21,8 @@ func NewMultiStore(stores []IChunkStore) *MultiStore {
 func (s *MultiStore) LoadChunk(chunkLoc *ChunkXz) (result <-chan ChunkResult) {
 	resultChan := make(chan ChunkResult)
 
+	// TODO This very rapidly creates large numbers of goroutines when generating
+	// chunks and exhausts memory. Should generate from a pool instead.
 	go s.loadChunk(chunkLoc, resultChan)
 
 	return resultChan
