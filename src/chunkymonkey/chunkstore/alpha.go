@@ -7,6 +7,7 @@ import (
 	"path"
 
 	. "chunkymonkey/types"
+	"chunkymonkey/util"
 )
 
 type chunkStoreAlpha struct {
@@ -32,7 +33,7 @@ func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXz) string {
 func (s *chunkStoreAlpha) loadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error) {
 	file, err := os.Open(s.chunkPath(chunkLoc))
 	if err != nil {
-		if sysErr, ok := err.(*os.SyscallError); ok && sysErr.Errno == os.ENOENT {
+		if errno, ok := util.Errno(err); ok && errno == os.ENOENT {
 			err = NoSuchChunkError(false)
 		}
 		return

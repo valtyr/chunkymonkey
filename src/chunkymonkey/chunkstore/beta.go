@@ -10,6 +10,7 @@ import (
 	"path"
 
 	. "chunkymonkey/types"
+	"chunkymonkey/util"
 )
 
 const (
@@ -43,6 +44,9 @@ func (s *chunkStoreBeta) loadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err 
 		filePath := regionLoc.regionFilePath(s.worldPath)
 		cfr, err = newRegionFileReader(filePath)
 		if err != nil {
+			if errno, ok := util.Errno(err); ok && errno == os.ENOENT {
+				err = NoSuchChunkError(false)
+			}
 			return
 		}
 		s.regionFiles[regionLoc.regionKey()] = cfr

@@ -11,7 +11,6 @@ import (
 
 	. "chunkymonkey/entity"
 	"chunkymonkey/gamerules"
-	"chunkymonkey/generation"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/player"
 	"chunkymonkey/proto"
@@ -39,10 +38,6 @@ type Game struct {
 
 func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err os.Error) {
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
-
-	// HACK Testing chunk generation.
-	worldStore.ChunkStore = generation.NewTestGenerator(0)
-	worldStore.StartPosition = AbsXyz{0, ChunkSizeY, 0}
 
 	game = &Game{
 		mainQueue:        make(chan func(*Game), 256),

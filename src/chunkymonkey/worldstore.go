@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"chunkymonkey/chunkstore"
+	"chunkymonkey/generation"
 	. "chunkymonkey/types"
 	"chunkymonkey/nbt"
 )
@@ -27,19 +28,27 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 		return
 	}
 
-	chunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, levelData)
-	if err != nil {
-		return
-	}
 	startPosition, err := absXyzFromNbt(levelData, "/Data/Player/Pos")
 	if err != nil {
 		return
 	}
 
+	var chunkStores []chunkstore.IChunkStore
+	persistantChunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, levelData)
+	if err != nil {
+		return
+	}
+	chunkStores = append(chunkStores, persistantChunkStore)
+
+	seed, ok := levelData.Lookup("/Data/RandomSeed").(*nbt.Long)
+	if ok {
+		chunkStores = append(chunkStores, generation.NewTestGenerator(seed.Value))
+	}
+
 	world = &WorldStore{
 		WorldPath:     worldPath,
 		LevelData:     levelData,
-		ChunkStore:    chunkStore,
+		ChunkStore:    chunkstore.NewMultiStore(chunkStores),
 		StartPosition: startPosition,
 	}
 
