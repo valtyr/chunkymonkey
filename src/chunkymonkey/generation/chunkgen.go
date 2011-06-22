@@ -9,7 +9,7 @@ import (
 	. "chunkymonkey/types"
 )
 
-const SeaLevel = 64
+const SeaLevel = 63
 
 // ChunkData implements chunkstore.IChunkReader.
 type ChunkData struct {
