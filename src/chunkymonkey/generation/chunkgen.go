@@ -173,7 +173,7 @@ func (gen *TestGenerator) setBlockStack(height int, blocks []byte) (skyLightHeig
 	}
 
 	for y := height - 1; y > height-3 && y > 0; y-- {
-		blocks[y] = topBlockType // dirt
+		blocks[y] = topBlockType
 	}
 	for y := height - 3; y > 0; y-- {
 		blocks[y] = 1 // stone
