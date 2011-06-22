@@ -12,7 +12,7 @@ import (
 )
 
 func usage() {
-	os.Stderr.WriteString("usage: " + os.Args[0] + " <world path>\n")
+	os.Stderr.WriteString("usage: " + os.Args[0] + " [options] <world path>\n")
 	flag.PrintDefaults()
 }
 
@@ -26,7 +26,7 @@ func displayNbt(indentCount int, tag nbt.ITag) {
 			displayNbt(indentCount+1, subTag)
 		}
 	case *nbt.List:
-		fmt.Print("List:\n")
+		fmt.Printf("List[%d]:\n", len(t.Value))
 		for index, subTag := range t.Value {
 			fmt.Printf("%s[%d]: ", indent, index)
 			displayNbt(indentCount+1, subTag)
@@ -55,6 +55,9 @@ func displayNbt(indentCount int, tag nbt.ITag) {
 }
 
 func main() {
+	showWorld := flag.Bool("world", false, "Display world information")
+	x := flag.Int64("x", 0, "X chunk coordinate of chunk to display")
+	z := flag.Int64("z", 0, "Z chunk coordinate of chunk to display")
 	flag.Usage = usage
 	flag.Parse()
 
@@ -71,15 +74,19 @@ func main() {
 		return
 	}
 
-	fmt.Print("Level data:\n")
-	displayNbt(1, worldStore.LevelData)
+	if *showWorld {
+		fmt.Print("Level data:\n")
+		displayNbt(1, worldStore.LevelData)
+	}
 
-	chunkResult := <-worldStore.ChunkStore.LoadChunk(ChunkXz{0, 0})
+	chunkLoc := ChunkXz{ChunkCoord(*x), ChunkCoord(*z)}
+
+	chunkResult := <-worldStore.ChunkStore.LoadChunk(chunkLoc)
 	if chunkResult.Err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading chunk: %s\n", chunkResult.Err)
 		return
 	}
 
-	fmt.Print("Chunk {0, 0} data:\n")
+	fmt.Printf("Chunk %#v data:\n", chunkLoc)
 	displayNbt(1, chunkResult.Reader.GetRootTag())
 }
