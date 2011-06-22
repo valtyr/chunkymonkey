@@ -192,7 +192,7 @@ func (shard *ChunkShard) Get(loc *ChunkXz) *Chunk {
 // loc - The absolute world position of the chunk.
 // locDelta - The relative position of the chunk within the shard.
 func (shard *ChunkShard) loadChunk(loc *ChunkXz, locDelta *ChunkXz) *Chunk {
-	chunkResult := <-shard.mgr.chunkStore.LoadChunk(loc)
+	chunkResult := <-shard.mgr.chunkStore.LoadChunk(*loc)
 	chunkReader, err := chunkResult.Reader, chunkResult.Err
 	if err != nil {
 		if _, ok := err.(chunkstore.NoSuchChunkError); !ok {

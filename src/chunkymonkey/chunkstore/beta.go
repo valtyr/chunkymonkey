@@ -24,15 +24,17 @@ type chunkStoreBeta struct {
 	regionFiles map[uint64]*regionFileReader
 }
 
-// Creates a ChunkStore that reads the Minecraft Beta world format.
+// Creates a chunkStoreBeta that reads the Minecraft Beta world format.
 func newChunkStoreBeta(worldPath string) *chunkStoreBeta {
-	return &chunkStoreBeta{
+	s := &chunkStoreBeta{
 		worldPath:   worldPath,
 		regionFiles: make(map[uint64]*regionFileReader),
 	}
+
+	return s
 }
 
-func (s *chunkStoreBeta) loadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error) {
+func (s *chunkStoreBeta) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
 	regionLoc := regionLocForChunkXz(chunkLoc)
 
 	var cfr *regionFileReader
@@ -80,7 +82,7 @@ type regionFileHeader [regionFileEdge * regionFileEdge]chunkOffset
 
 // Returns the chunk offset data for the given chunk. It assumes that chunkLoc
 // is within the chunk file - discarding upper bits of the X and Z coords.
-func (h regionFileHeader) GetOffset(chunkLoc *ChunkXz) chunkOffset {
+func (h regionFileHeader) GetOffset(chunkLoc ChunkXz) chunkOffset {
 	x := chunkLoc.X & (regionFileEdge - 1)
 	z := chunkLoc.Z & (regionFileEdge - 1)
 	return h[x+(z<<regionFileEdgeShift)]
@@ -140,7 +142,7 @@ func (cfr *regionFileReader) Close() {
 	cfr.file.Close()
 }
 
-func (cfr *regionFileReader) ReadChunkData(chunkLoc *ChunkXz) (r *chunkReader, err os.Error) {
+func (cfr *regionFileReader) ReadChunkData(chunkLoc ChunkXz) (r *chunkReader, err os.Error) {
 	offset := cfr.offsets.GetOffset(chunkLoc)
 
 	if !offset.IsPresent() {
@@ -185,7 +187,7 @@ type regionLoc struct {
 	X, Z regionCoord
 }
 
-func regionLocForChunkXz(chunkLoc *ChunkXz) regionLoc {
+func regionLocForChunkXz(chunkLoc ChunkXz) regionLoc {
 	return regionLoc{
 		regionCoord(chunkLoc.X >> regionFileEdgeShift),
 		regionCoord(chunkLoc.Z >> regionFileEdgeShift),

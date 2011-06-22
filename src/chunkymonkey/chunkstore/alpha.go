@@ -12,17 +12,17 @@ import (
 
 type chunkStoreAlpha struct {
 	worldPath string
-	requests  chan *ChunkXz
 }
 
-// Creates a IChunkStore that reads the Minecraft Alpha world format.
+// Creates an IChunkStore that reads the Minecraft Alpha world format.
 func newChunkStoreAlpha(worldPath string) *chunkStoreAlpha {
-	return &chunkStoreAlpha{
+	s := &chunkStoreAlpha{
 		worldPath: worldPath,
 	}
+	return s
 }
 
-func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXz) string {
+func (s *chunkStoreAlpha) chunkPath(chunkLoc ChunkXz) string {
 	return path.Join(
 		s.worldPath,
 		base36Encode(int32(chunkLoc.X&63)),
@@ -30,7 +30,7 @@ func (s *chunkStoreAlpha) chunkPath(chunkLoc *ChunkXz) string {
 		"c."+base36Encode(int32(chunkLoc.X))+"."+base36Encode(int32(chunkLoc.Z))+".dat")
 }
 
-func (s *chunkStoreAlpha) loadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error) {
+func (s *chunkStoreAlpha) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
 	file, err := os.Open(s.chunkPath(chunkLoc))
 	if err != nil {
 		if errno, ok := util.Errno(err); ok && errno == os.ENOENT {

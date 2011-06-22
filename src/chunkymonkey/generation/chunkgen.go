@@ -1,6 +1,8 @@
 package generation
 
 import (
+	"os"
+
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/generation/perlin"
 	"chunkymonkey/nbt"
@@ -30,8 +32,8 @@ func newChunkData(loc ChunkXz) *ChunkData {
 	}
 }
 
-func (data *ChunkData) ChunkLoc() *ChunkXz {
-	return &data.loc
+func (data *ChunkData) ChunkLoc() ChunkXz {
+	return data.loc
 }
 
 func (data *ChunkData) Blocks() []byte {
@@ -108,19 +110,12 @@ func NewTestGenerator(seed int64) *TestGenerator {
 	}
 }
 
-func (gen *TestGenerator) LoadChunk(chunkLoc *ChunkXz) (result <-chan chunkstore.ChunkResult) {
-	resultChan := make(chan chunkstore.ChunkResult)
-	result = resultChan
-	go gen.generate(*chunkLoc, resultChan)
-	return
-}
-
-func (gen *TestGenerator) generate(loc ChunkXz, result chan<- chunkstore.ChunkResult) {
-	baseBlockXyz := loc.GetChunkCornerBlockXY()
+func (gen *TestGenerator) LoadChunk(chunkLoc ChunkXz) (reader chunkstore.IChunkReader, err os.Error) {
+	baseBlockXyz := chunkLoc.GetChunkCornerBlockXY()
 
 	baseX, baseZ := baseBlockXyz.X, baseBlockXyz.Z
 
-	data := newChunkData(loc)
+	data := newChunkData(chunkLoc)
 
 	baseIndex := BlockIndex(0)
 	heightMapIndex := 0
@@ -153,10 +148,7 @@ func (gen *TestGenerator) generate(loc ChunkXz, result chan<- chunkstore.ChunkRe
 		}
 	}
 
-	result <- chunkstore.ChunkResult{
-		Reader: data,
-		Err:    nil,
-	}
+	return data, nil
 }
 
 func (gen *TestGenerator) setBlockStack(height int, blocks []byte) (skyLightHeight int) {

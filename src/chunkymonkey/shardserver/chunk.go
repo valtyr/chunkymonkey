@@ -55,7 +55,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 	chunk = &Chunk{
 		mgr:         mgr,
 		shard:       shard,
-		loc:         *reader.ChunkLoc(),
+		loc:         reader.ChunkLoc(),
 		blocks:      reader.Blocks(),
 		blockData:   reader.BlockData(),
 		skyLight:    reader.SkyLight(),

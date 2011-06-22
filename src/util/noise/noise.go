@@ -82,18 +82,18 @@ func main() {
 		for col := 0; col < w; col++ {
 			value := gen.At2d(float64(col), float64(row))
 			valueStat.Add(value)
-			values[row*w + col] = value
+			values[row*w+col] = value
 		}
 	}
 
 	img := image.NewGray(w, h)
 
 	base := valueStat.min
-	scale := 255/(valueStat.max-valueStat.min)
+	scale := 255 / (valueStat.max - valueStat.min)
 
 	for row := 0; row < h; row++ {
 		for col := 0; col < w; col++ {
-			scaled := scale*(values[row*w + col]-base)
+			scaled := scale * (values[row*w+col] - base)
 			img.Set(col, row, image.GrayColor{uint8(scaled)})
 		}
 	}

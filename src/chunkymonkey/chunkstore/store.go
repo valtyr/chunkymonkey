@@ -14,12 +14,15 @@ type ChunkResult struct {
 }
 
 type IChunkStore interface {
-	LoadChunk(chunkLoc *ChunkXz) (result <-chan ChunkResult)
+	// Serve() serves LoadChunk() requests in the foreground.
+	Serve()
+
+	LoadChunk(chunkLoc ChunkXz) (result <-chan ChunkResult)
 }
 
 type IChunkReader interface {
 	// Returns the chunk location.
-	ChunkLoc() *ChunkXz
+	ChunkLoc() ChunkXz
 
 	// Returns the block IDs in the chunk.
 	Blocks() []byte
@@ -41,26 +44,20 @@ type IChunkReader interface {
 	GetRootTag() *nbt.NamedTag
 }
 
-// Given the NamedTag for a level.dat, returns an appropriate ChunkStore.
-func ChunkStoreForLevel(worldPath string, levelData *nbt.NamedTag) (store IChunkStore, err os.Error) {
-	var serialStore iSerialChunkStore
+// Given the NamedTag for a level.dat, returns an appropriate
+// IChunkStoreForeground.
+func ChunkStoreForLevel(worldPath string, levelData *nbt.NamedTag) (store IChunkStoreForeground, err os.Error) {
 	versionTag, ok := levelData.Lookup("/Data/version").(*nbt.Int)
 
 	if !ok {
-		serialStore = newChunkStoreAlpha(worldPath)
+		store = newChunkStoreAlpha(worldPath)
 	} else {
 		switch version := versionTag.Value; version {
 		case 19132:
-			serialStore = newChunkStoreBeta(worldPath)
+			store = newChunkStoreBeta(worldPath)
 		default:
 			err = UnknownLevelVersion(version)
 		}
-	}
-
-	if serialStore != nil {
-		service := newChunkService(serialStore)
-		store = service
-		go service.serve()
 	}
 
 	return

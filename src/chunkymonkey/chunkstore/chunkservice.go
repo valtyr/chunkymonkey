@@ -7,38 +7,38 @@ import (
 )
 
 type request struct {
-	chunkLoc     *ChunkXz
+	chunkLoc     ChunkXz
 	responseChan chan<- ChunkResult
 }
 
-type iSerialChunkStore interface {
-	loadChunk(chunkLoc *ChunkXz) (reader IChunkReader, err os.Error)
+type IChunkStoreForeground interface {
+	LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error)
 }
 
-// chunkService adapts an iSerialStore (which can only be accessed from one
-// goroutine) to an IChunkStore.
-type chunkService struct {
-	store    iSerialChunkStore
+
+// ChunkService adapts an IChunkStoreForeground (which can only be accessed
+// from one goroutine) to an IChunkStore.
+type ChunkService struct {
+	store    IChunkStoreForeground
 	requests chan request
 }
 
-func newChunkService(store iSerialChunkStore) *chunkService {
-	return &chunkService{
+func NewChunkService(store IChunkStoreForeground) (s *ChunkService) {
+	return &ChunkService{
 		store:    store,
 		requests: make(chan request),
 	}
 }
 
-// serve() serves LoadChunk() requests in the foreground.
-func (s *chunkService) serve() {
+func (s *ChunkService) Serve() {
 	for {
 		request := <-s.requests
-		reader, err := s.store.loadChunk(request.chunkLoc)
+		reader, err := s.store.LoadChunk(request.chunkLoc)
 		request.responseChan <- ChunkResult{reader, err}
 	}
 }
 
-func (s *chunkService) LoadChunk(chunkLoc *ChunkXz) <-chan ChunkResult {
+func (s *ChunkService) LoadChunk(chunkLoc ChunkXz) <-chan ChunkResult {
 	responseChan := make(chan ChunkResult)
 
 	s.requests <- request{

@@ -38,19 +38,25 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	if err != nil {
 		return
 	}
-	chunkStores = append(chunkStores, persistantChunkStore)
+	chunkStores = append(chunkStores, chunkstore.NewChunkService(persistantChunkStore))
 
 	seed, ok := levelData.Lookup("/Data/RandomSeed").(*nbt.Long)
 	if ok {
-		chunkStores = append(chunkStores, generation.NewTestGenerator(seed.Value))
+		chunkStores = append(chunkStores, chunkstore.NewChunkService(generation.NewTestGenerator(seed.Value)))
+	}
+
+	for _, store := range chunkStores {
+		go store.Serve()
 	}
 
 	world = &WorldStore{
 		WorldPath:     worldPath,
 		LevelData:     levelData,
-		ChunkStore:    chunkstore.NewMultiStore(chunkStores),
+		ChunkStore:    chunkstore.NewChunkService(chunkstore.NewMultiStore(chunkStores)),
 		StartPosition: startPosition,
 	}
+
+	go world.ChunkStore.Serve()
 
 	return
 }

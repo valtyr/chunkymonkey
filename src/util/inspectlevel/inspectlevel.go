@@ -74,7 +74,7 @@ func main() {
 	fmt.Print("Level data:\n")
 	displayNbt(1, worldStore.LevelData)
 
-	chunkResult := <-worldStore.ChunkStore.LoadChunk(&ChunkXz{0, 0})
+	chunkResult := <-worldStore.ChunkStore.LoadChunk(ChunkXz{0, 0})
 	if chunkResult.Err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading chunk: %s\n", chunkResult.Err)
 		return
