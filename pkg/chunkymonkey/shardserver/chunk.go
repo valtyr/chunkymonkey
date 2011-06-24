@@ -737,19 +737,7 @@ func (chunk *Chunk) EnqueueGeneric(fn func()) {
 
 func (chunk *Chunk) AddEntities(entities []*nbt.Compound, mgr *LocalShardManager) {
 	for _, entity := range entities {
-		// TODO(jnw): Handle non-item entities
-		if entity.Lookup("Item") == nil {
-			continue
-		}
-
-		itemInfo := entity.Lookup("Item").(*nbt.Compound)
-
-		// Grab the basic item data
-		id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
-		count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
-		data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-
-		// Fetch the position data
+		// Position within the chunk
 		posList := entity.Lookup("Pos").(*nbt.List).Value
 		pos := &AbsXyz{
 			AbsCoord(posList[0].(*nbt.Double).Value),
@@ -757,13 +745,60 @@ func (chunk *Chunk) AddEntities(entities []*nbt.Compound, mgr *LocalShardManager
 			AbsCoord(posList[2].(*nbt.Double).Value),
 		}
 
-		// TODO(jnw): Handle Motion/Velocity
-		velocity := &AbsVelocity{0, 0, 0}
-		entityId := mgr.entityMgr.NewEntity()
+		// Motion
+		motionList := entity.Lookup("Motion").(*nbt.List).Value
+		velocity := &AbsVelocity{
+			AbsVelocityCoord(motionList[0].(*nbt.Double).Value),
+			AbsVelocityCoord(motionList[1].(*nbt.Double).Value),
+			AbsVelocityCoord(motionList[2].(*nbt.Double).Value),
+		}
 
-		item := item.NewItem(mgr.gameRules.ItemTypes[id], count, data, pos, velocity)
-		item.EntityId = entityId
-		chunk.entities[entityId] = item
+		_ = entity.Lookup("OnGround").(*nbt.Byte).Value
+		_ = entity.Lookup("FallDistance").(*nbt.Float).Value
+		_ = entity.Lookup("Air").(*nbt.Short).Value
+		_ = entity.Lookup("Rotation").(*nbt.List).Value // two elements, floats
+		_ = entity.Lookup("Fire").(*nbt.Short).Value
+
+		var newEntity object.INonPlayerEntity
+		entityObjectId := entity.Lookup("id").(*nbt.String).Value
+
+		switch entityObjectId {
+		case "Item":
+			itemInfo := entity.Lookup("Item").(*nbt.Compound)
+
+			// Grab the basic item data
+			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
+			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
+			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
+			newEntity = item.NewItem(mgr.gameRules.ItemTypes[id], count, data, pos, velocity)
+		case "Chicken":
+			newEntity = mob.NewHen(pos, velocity)
+		case "Cow":
+			newEntity = mob.NewCow(pos, velocity)
+		case "Pig":
+			newEntity = mob.NewPig(pos, velocity)
+		case "Sheep":
+			newEntity = mob.NewSheep(pos, velocity)
+		case "Squid":
+			newEntity = mob.NewSquid(pos, velocity)
+		case "Wolf":
+			newEntity = mob.NewWolf(pos, velocity)
+		default:
+			// Handle all other objects
+			objType, ok := ObjTypeMap[entityObjectId]
+			if ok {
+				newEntity = object.NewObject(objType, pos, velocity)
+			} else {
+				log.Printf("Found unhandled entity type: %s", entityObjectId)
+			}
+		}
+
+		if newEntity != nil {
+			entityId := mgr.entityMgr.NewEntity()
+			newEntity.SetEntityId(entityId)
+			chunk.entities[entityId] = newEntity
+		}
+
 	}
 	return
 

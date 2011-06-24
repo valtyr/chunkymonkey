@@ -127,6 +127,20 @@ const (
 	ObjTypeIdFishingFloat   = ObjTypeId(90)
 )
 
+var ObjTypeMap = map[string]ObjTypeId{
+	"Boat":           ObjTypeIdBoat,
+	"Minecart":       ObjTypeIdMinecart,
+	"StorageCart":    ObjTypeIdStorageCart,
+	"PoweredCart":    ObjTypeIdPoweredCart,
+	"ActivatedTnt":   ObjTypeIdActivatedTnt,
+	"Arrow":          ObjTypeIdArrow,
+	"ThrownSnowball": ObjTypeIdThrownSnowball,
+	"ThrownEgg":      ObjTypeIdThrownEgg,
+	"FallingSand":    ObjTypeIdFallingSand,
+	"FallingGravel":  ObjTypeIdFallingGravel,
+	"FishingFloat":   ObjTypeIdFishingFloat,
+}
+
 type PaintingTypeId int32
 
 type InstrumentId byte
