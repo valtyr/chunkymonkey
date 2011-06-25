@@ -50,7 +50,6 @@ Key skills:
 
 Highly desireable skills:
 
-*   Cellular automata for the purposes of world block physics.
 *   Embedding a scripting environment (perhaps Lua?) into Go.
 *   Low-latency reliable network communication.
 *   Server scalabilty and reliability architecture.
