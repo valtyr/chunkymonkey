@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"chunkymonkey/record"
-	parser "util/intercept/intercept_parse"
 )
 
 var recordBase = flag.String(
@@ -67,8 +66,8 @@ func serveConn(clientConn net.Conn, remoteaddr string, connNumber int) {
 		}
 	}
 
-	clientParser := new(parser.MessageParser)
-	serverParser := new(parser.MessageParser)
+	clientParser := new(MessageParser)
+	serverParser := new(MessageParser)
 
 	// Set up for parsing messages from server to client
 	serverToClientReportChan := spliceParser(
