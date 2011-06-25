@@ -7,6 +7,8 @@ EXTRA_BINARIES=\
 	replay \
 	style
 
+GD_OPTS=-quiet -lib _obj src
+
 DIAGRAMS=diagrams/top-level-architecture.png
 
 server: $(SERVER_BINARY)
@@ -15,62 +17,56 @@ all: server extra
 
 extra: $(EXTRA_BINARIES)
 
-# godag leaves garbage behind.
-cleantmp:
-	@-rm -rf src/tmp*
+cleanobj:
+	@gd $(GD_OPTS) -clean
 
-clean:
+clean: cleanobj
 	@-rm -f $(SERVER_BINARY) $(EXTRA_BINARIES)
-	@-rm -rf test_obj
-	@gd -q -c
 
 fmt:
-	@gd -q -fmt --tab src
+	@gd $(GD_OPTS) -fmt --tab
 
 check: style
 	@./style `find . -name \*.go`
 
-test: cleantmp
-	@-rm -rf test_obj/tmp*
-	@mkdir -p test_obj
-	@gd -q -L test_obj -t src
+# requires clean-up due to bug in godag
+test: cleanobj
+	@gd $(GD_OPTS) -test
+
+# Note that this will also compile code in the src/util directory.
+libs:
+	@gd $(GD_OPTS)
 
 test_data: datatests
 	@./datatests
 
-bench: cleantmp
-	@-rm -rf test_obj/tmp*
-	@mkdir -p test_obj
-	@gd -q -L test_obj -b Benchmark -t src
-
-# Note that this will also compile code in the src/util directory.
-libs: cleantmp
-	@gd -q src
+bench:
+	@gd $(GD_OPTS) -bench . -match "Regex That Matches 0 Tests" -test
 
 chunkymonkey: libs
-	@gd -q -I src -o $@ src/main
+	@gd $(GD_OPTS) -output $@ -main ^main$$
 
 datatests: libs
-	@gd -q -I src -o $@ src/util/$@
+	@gd $(GD_OPTS) -output $@ -main $@
 
 intercept: libs
-	@gd -q -I src -o $@ src/util/$@
+	@gd $(GD_OPTS) -output $@ -main $@
 
 inspectlevel: libs
-	@gd -q -I src -o $@ src/util/$@
+	@gd $(GD_OPTS) -output $@ -main $@
 
 noise: libs
-	@gd -q -I src -o $@ src/util/$@
+	@gd $(GD_OPTS) -output $@ -main $@
 
 replay: libs
-	@gd -q -I src -o $@ src/util/$@
+	@gd $(GD_OPTS) -output $@ -main $@
 
 style: src/util/style/style.go
-	@gd -q -I src -o $@ src/util/$@
+	@gd $(GD_OPTS) -output $@ -main $@
 
 docs: $(DIAGRAMS)
 
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all bench check clean cleantmp docs extra fmt libs server test test_data
+.PHONY: all bench check clean cleanobj docs extra fmt server test test_data
