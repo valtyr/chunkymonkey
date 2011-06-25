@@ -27,7 +27,7 @@ func TestRegionLoc_regionFilePath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		regionLoc := regionLocForChunkXz(&test.loc)
+		regionLoc := regionLocForChunkXz(test.loc)
 		result := regionLoc.regionFilePath("/foo")
 		if test.expected != result {
 			t.Errorf(
