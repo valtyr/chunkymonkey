@@ -1,72 +1,51 @@
-SERVER_BINARY=chunkymonkey
-EXTRA_BINARIES=\
-	datatests \
-	inspectlevel \
-	intercept \
-	noise \
-	replay \
-	style
+BINARIES=\
+	bin/chunkymonkey \
+	bin/datatests \
+	bin/inspectlevel \
+	bin/intercept \
+	bin/noise \
+	bin/replay \
+	bin/style
 
-GD_OPTS=-quiet -lib _obj src
+GD_OPTS=-quiet
 
 DIAGRAMS=diagrams/top-level-architecture.png
 
-server: $(SERVER_BINARY)
-
-all: server extra
-
-extra: $(EXTRA_BINARIES)
+all: $(BINARIES)
 
 cleanobj:
-	@gd $(GD_OPTS) -clean
+	@gd $(GD_OPTS) -clean _obj
 
 clean: cleanobj
 	@-rm -f $(SERVER_BINARY) $(EXTRA_BINARIES)
 
 fmt:
-	@gd $(GD_OPTS) -fmt --tab
+	@gd $(GD_OPTS) -fmt -tab pkg
+	@gd $(GD_OPTS) -fmt -tab cmd
 
-check: style
-	@./style `find . -name \*.go`
+check: bin/style
+	@bin/style `find . -name \*.go`
 
 # requires clean-up due to bug in godag
 test: cleanobj
-	@gd $(GD_OPTS) -test
+	gd $(GD_OPTS) -lib _test/pkg -test pkg
+
+bench: cleanobj
+	@gd $(GD_OPTS) -lib _test/pkg -bench 'Bench' -match 'Regex That Matches 0 Tests' -test pkg
 
 # Note that this will also compile code in the src/util directory.
 libs:
-	@gd $(GD_OPTS)
+	@gd $(GD_OPTS) -lib _obj/pkg pkg
 
-test_data: datatests
-	@./datatests
+test_data: bin/datatests
+	@bin/datatests
 
-bench:
-	@gd $(GD_OPTS) -bench . -match "Regex That Matches 0 Tests" -test
-
-chunkymonkey: libs
-	@gd $(GD_OPTS) -output $@ -main ^main$$
-
-datatests: libs
-	@gd $(GD_OPTS) -output $@ -main $@
-
-intercept: libs
-	@gd $(GD_OPTS) -output $@ -main $@
-
-inspectlevel: libs
-	@gd $(GD_OPTS) -output $@ -main $@
-
-noise: libs
-	@gd $(GD_OPTS) -output $@ -main $@
-
-replay: libs
-	@gd $(GD_OPTS) -output $@ -main $@
-
-style: src/util/style/style.go
-	@gd $(GD_OPTS) -output $@ -main $@
+bin/%: libs
+	@gd $(GD_OPTS) -I _obj/pkg -output $@ cmd/$*
 
 docs: $(DIAGRAMS)
 
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all bench check clean cleanobj docs extra fmt server test test_data
+.PHONY: all bench check clean cleanobj docs fmt test test_data
