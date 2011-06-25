@@ -39,16 +39,20 @@ func serveConn(clientConn net.Conn, remoteaddr string, connNumber int) {
 	defer clientConn.Close()
 
 	clientAddr := clientConn.RemoteAddr().String()
-	log.Printf("[%d](%s) Client connected", connNumber, clientAddr)
 
-	log.Printf("[%d](%s) Creating relay to server %s", connNumber, clientAddr, remoteaddr)
+	logPrefix := fmt.Sprintf("[%d]", connNumber)
+	logger := log.New(os.Stderr, logPrefix+" ", log.Ldate|log.Ltime|log.Lmicroseconds)
+
+	logger.Printf("Client connected from %v", clientAddr)
+
+	logger.Printf("Creating relay to server %v", remoteaddr)
 	serverConn, err := net.Dial("tcp", remoteaddr)
 	if err != nil {
-		log.Printf("[%d](%s) Error connecting to %s: %v", connNumber, clientAddr, remoteaddr, err)
+		logger.Printf("Error connecting to server: %v", err)
 		return
 	}
 	defer serverConn.Close()
-	log.Printf("[%d](%s) Connected to server %s", connNumber, clientAddr, remoteaddr)
+	logger.Print("Connected to server")
 
 	// clientReader reads data sent from the client.
 	clientReader := io.Reader(clientConn)
@@ -56,9 +60,9 @@ func serveConn(clientConn net.Conn, remoteaddr string, connNumber int) {
 		recordFilename := fmt.Sprintf("%s-%d.record", *recordBase, connNumber)
 		recordOutput, err := os.Create(recordFilename)
 		if err != nil {
-			log.Printf(
-				"[%d](%s) Failed to open file %q to record connection: %v",
-				connNumber, clientAddr, recordFilename, err)
+			logger.Printf(
+				"Failed to open file %q to record connection: %v",
+				recordFilename, err)
 		} else {
 			recorder := record.NewReaderRecorder(recordOutput, clientConn)
 			defer recorder.Close()
@@ -70,23 +74,25 @@ func serveConn(clientConn net.Conn, remoteaddr string, connNumber int) {
 	serverParser := new(MessageParser)
 
 	// Set up for parsing messages from server to client
+	scLogger := log.New(os.Stderr, logPrefix+"(S->C) ", log.Ldate|log.Ltime|log.Lmicroseconds)
 	serverToClientReportChan := spliceParser(
-		func(reader io.Reader) { serverParser.ScParse(reader, connNumber) },
+		func(reader io.Reader) { serverParser.ScParse(reader, scLogger) },
 		clientConn, serverConn)
 
 	// Set up for parsing messages from client to server
+	csLogger := log.New(os.Stderr, logPrefix+"(C->S) ", log.Ldate|log.Ltime|log.Lmicroseconds)
 	clientToServerReportChan := spliceParser(
-		func(reader io.Reader) { clientParser.CsParse(reader, connNumber) },
+		func(reader io.Reader) { clientParser.CsParse(reader, csLogger) },
 		serverConn, clientReader)
 
 	// Wait for the both relay/splices to stop, then we let the connections
 	// close via deferred calls
 	report := <-serverToClientReportChan
-	log.Printf("[%d](%s) Server->client relay after %d bytes with error: %v", connNumber, clientAddr, report.written, report.err)
+	logger.Printf("Server->client relay after %d bytes with error: %v", report.written, report.err)
 	report = <-clientToServerReportChan
-	log.Printf("[%d](%s) Client->server relay after %d bytes with error: %v", connNumber, clientAddr, report.written, report.err)
+	logger.Printf("Client->server relay after %d bytes with error: %v", report.written, report.err)
 
-	log.Printf("[%d](%s) Client disconnected", connNumber, clientAddr)
+	logger.Print("Client disconnected")
 }
 
 func serve(localaddr, remoteaddr string) (err os.Error) {

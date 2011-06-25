@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -38,11 +37,11 @@ func (p *MessageParser) consumeUnrecognizedInput(reader io.Reader) {
 }
 
 type MessageParser struct {
-	logPrefix string
+	logger *log.Logger
 }
 
 func (p *MessageParser) printf(format string, v ...interface{}) {
-	log.Printf(p.logPrefix+format, v...)
+	p.logger.Printf(format, v...)
 }
 
 func (p *MessageParser) PacketKeepAlive() {
@@ -293,7 +292,9 @@ func (p *MessageParser) PacketDisconnect(reason string) {
 }
 
 // Parses messages from the client
-func (p *MessageParser) CsParse(reader io.Reader, connNumber int) {
+func (p *MessageParser) CsParse(reader io.Reader, logger *log.Logger) {
+	p.logger = logger
+
 	// If we return, we should consume all input to avoid blocking the pipe
 	// we're listening on. TODO Maybe we could just close it?
 	defer p.consumeUnrecognizedInput(reader)
@@ -303,8 +304,6 @@ func (p *MessageParser) CsParse(reader io.Reader, connNumber int) {
 			p.printf("Parsing failed: %v", err)
 		}
 	}()
-
-	p.logPrefix = fmt.Sprintf("[%d](C->S) ", connNumber)
 
 	username, err := proto.ServerReadHandshake(reader)
 	if err != nil {
@@ -334,7 +333,9 @@ func (p *MessageParser) CsParse(reader io.Reader, connNumber int) {
 }
 
 // Parses messages from the server
-func (p *MessageParser) ScParse(reader io.Reader, connNumber int) {
+func (p *MessageParser) ScParse(reader io.Reader, logger *log.Logger) {
+	p.logger = logger
+
 	// If we return, we should consume all input to avoid blocking the pipe
 	// we're listening on. TODO Maybe we could just close it?
 	defer p.consumeUnrecognizedInput(reader)
@@ -344,8 +345,6 @@ func (p *MessageParser) ScParse(reader io.Reader, connNumber int) {
 			p.printf("Parsing failed: %v", err)
 		}
 	}()
-
-	p.logPrefix = fmt.Sprintf("[%d](S->C) ", connNumber)
 
 	serverId, err := proto.ClientReadHandshake(reader)
 	if err != nil {
