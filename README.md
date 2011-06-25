@@ -90,19 +90,21 @@ For debugging it is often useful to record a player's actions and replay them
 one or more times later.  This makes it possible to simulate multiplayer games
 without having real people logging in.
 
-To record a session:
+To record a session, run the intercept proxy:
 
-    $ bin/chunkymonkey --record player.log ~/.minecraft/saves/World1
+    $ bin/intercept -record player.log localhost:25567 localhost:25565
+
+Which will accept client connections on localhost port 25567 and relay the
+connection to the server at localhost port 25565. This has the side effect of
+display packets that pass through to stderr.
+
+Connect your Minecraft client to localhost:25567, and a record of the clients
+actions will be stored to player.log-1, player.log-2 etc. (one file per client
+connection).
 
 To replay a session:
 
-    $ bin/chunkymonkey --replay player.log ~/.minecraft/saves/World1 &
-    $ java -jar Minecraft.jar  # start the first player (real human)
-    $ nc localhost 25565       # start the second player (replay from log file)
-
-The recorded player will start when the second client connects to the server.
-Use netcat or a similar tool to start an otherwise idle TCP connection to the
-server.
+    $ bin/replay localhost:25565 player.log-1
 
 
 [1]: http://golang.org/doc/install.html          "Go toolchain installation"
