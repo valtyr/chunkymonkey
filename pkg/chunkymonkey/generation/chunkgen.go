@@ -56,6 +56,10 @@ func (data *ChunkData) HeightMap() []byte {
 	return data.heightMap
 }
 
+func (data *ChunkData) Entities() []*nbt.Compound {
+	return nil
+}
+
 func (data *ChunkData) GetRootTag() *nbt.NamedTag {
 	return nil
 }

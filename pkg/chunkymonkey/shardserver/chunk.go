@@ -69,7 +69,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 		newActiveBlocks: make(map[BlockIndex]bool),
 	}
 
-	chunk.AddEntities(reader.Entities(), mgr)
+	chunk.addEntities(reader.Entities())
 	chunk.neighbours.init()
 	return
 }
@@ -433,7 +433,7 @@ func (chunk *Chunk) spawnTick() {
 		}
 		return
 	}
-	outgoingSpawns := []object.INonPlayerEntity{}
+	outgoingEntities := []object.INonPlayerEntity{}
 
 	for _, e := range chunk.entities {
 		if e.Tick(blockQuery) {
@@ -441,14 +441,14 @@ func (chunk *Chunk) spawnTick() {
 				// Item or mob fell out of the world.
 				chunk.removeEntity(e)
 			} else {
-				outgoingSpawns = append(outgoingSpawns, e)
+				outgoingEntities = append(outgoingEntities, e)
 			}
 		}
 	}
 
-	if len(outgoingSpawns) > 0 {
+	if len(outgoingEntities) > 0 {
 		// Transfer spawns to new chunk.
-		for _, e := range outgoingSpawns {
+		for _, e := range outgoingEntities {
 			// Remove mob/items from this chunk.
 			chunk.entities[e.GetEntityId()] = nil, false
 
@@ -735,7 +735,7 @@ func (chunk *Chunk) EnqueueGeneric(fn func()) {
 	chunk.shard.enqueueRequest(&runGeneric{fn})
 }
 
-func (chunk *Chunk) AddEntities(entities []*nbt.Compound, mgr *LocalShardManager) {
+func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 	for _, entity := range entities {
 		// Position within the chunk
 		posList := entity.Lookup("Pos").(*nbt.List).Value
@@ -770,7 +770,7 @@ func (chunk *Chunk) AddEntities(entities []*nbt.Compound, mgr *LocalShardManager
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = item.NewItem(mgr.gameRules.ItemTypes[id], count, data, pos, velocity)
+			newEntity = item.NewItem(chunk.mgr.gameRules.ItemTypes[id], count, data, pos, velocity)
 		case "Chicken":
 			newEntity = mob.NewHen(pos, velocity)
 		case "Cow":
@@ -794,12 +794,11 @@ func (chunk *Chunk) AddEntities(entities []*nbt.Compound, mgr *LocalShardManager
 		}
 
 		if newEntity != nil {
-			entityId := mgr.entityMgr.NewEntity()
+			entityId := chunk.mgr.entityMgr.NewEntity()
 			newEntity.SetEntityId(entityId)
 			chunk.entities[entityId] = newEntity
 		}
 
 	}
 	return
-
 }

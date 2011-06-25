@@ -1,6 +1,7 @@
 package chunkstore
 
 import (
+	"log"
 	"io"
 	"os"
 
@@ -59,7 +60,12 @@ func (r *chunkReader) Entities() []*nbt.Compound {
 	entities := make([]*nbt.Compound, len(list))
 
 	for idx, data := range list {
-		entities[idx] = data.(*nbt.Compound)
+		entity, ok := data.(*nbt.Compound)
+		if ok {
+			entities[idx] = entity
+		} else {
+			log.Printf("Non-Compound entity in /Level/Entities/%d", idx)
+		}
 	}
 	return entities
 }
