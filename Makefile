@@ -14,10 +14,10 @@ DIAGRAMS=diagrams/top-level-architecture.png
 all: $(BINARIES)
 
 cleanobj:
-	@gd $(GD_OPTS) -clean _obj
+	@gd $(GD_OPTS) -clean .
 
 clean: cleanobj
-	@-rm -f $(SERVER_BINARY) $(EXTRA_BINARIES)
+	@-rm -f $(BINARIES)
 
 fmt:
 	@gd $(GD_OPTS) -fmt -tab pkg
@@ -28,7 +28,7 @@ check: bin/style
 
 # requires clean-up due to bug in godag
 test: cleanobj
-	gd $(GD_OPTS) -lib _test/pkg -test pkg
+	@gd $(GD_OPTS) -lib _test/pkg -test pkg
 
 bench: cleanobj
 	@gd $(GD_OPTS) -lib _test/pkg -bench 'Bench' -match 'Regex That Matches 0 Tests' -test pkg
