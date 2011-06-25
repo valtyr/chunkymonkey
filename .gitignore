@@ -4,12 +4,5 @@
 *~
 .*.swp
 _obj
-/chunkymonkey
-/datatests
-/intercept
-/inspectlevel
-/noise
-/replay
-/style
-/test_obj
+/bin
 *.log
