@@ -64,7 +64,9 @@ via Github, or on the Freenode IRC network in the #mcdevs channel.
 Requirements
 ------------
 
-The [Go toolchain][1] must be installed.
+The [Go toolchain][1] must be installed. Note that chunkymonkey is developed
+against the current stable release of the Go toolchain, so might not compile
+against the weekly releases (gofix might be able to fix such cases).
 
 
 Building
