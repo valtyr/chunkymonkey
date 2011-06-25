@@ -1,6 +1,7 @@
 package chunkstore
 
 import (
+	"log"
 	"io"
 	"os"
 
@@ -52,6 +53,21 @@ func (r *chunkReader) SkyLight() []byte {
 
 func (r *chunkReader) HeightMap() []byte {
 	return r.chunkTag.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value
+}
+
+func (r *chunkReader) Entities() []*nbt.Compound {
+	list := r.chunkTag.Lookup("/Level/Entities").(*nbt.List).Value
+	entities := make([]*nbt.Compound, len(list))
+
+	for idx, data := range list {
+		entity, ok := data.(*nbt.Compound)
+		if ok {
+			entities[idx] = entity
+		} else {
+			log.Printf("Non-Compound entity in /Level/Entities/%d", idx)
+		}
+	}
+	return entities
 }
 
 func (r *chunkReader) GetRootTag() *nbt.NamedTag {
