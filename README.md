@@ -80,7 +80,7 @@ Running
 
 Serve up a single player world:
 
-    $ ./chunkymonkey ~/.minecraft/saves/World1
+    $ bin/chunkymonkey ~/.minecraft/saves/World1
     2010/10/03 16:32:13 Listening on  :25565
 
 Record/replay
@@ -92,11 +92,11 @@ without having real people logging in.
 
 To record a session:
 
-    $ ./chunkymonkey --record player.log ~/.minecraft/saves/World1
+    $ bin/chunkymonkey --record player.log ~/.minecraft/saves/World1
 
 To replay a session:
 
-    $ ./chunkymonkey --replay player.log ~/.minecraft/saves/World1 &
+    $ bin/chunkymonkey --replay player.log ~/.minecraft/saves/World1 &
     $ java -jar Minecraft.jar  # start the first player (real human)
     $ nc localhost 25565       # start the second player (replay from log file)
 
