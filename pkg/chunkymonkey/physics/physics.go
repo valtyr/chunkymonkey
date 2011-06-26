@@ -39,6 +39,9 @@ type PointObject struct {
 	LastSentPosition AbsIntXyz
 	LastSentVelocity Velocity
 
+	// TODO Add a counter so that a full teleport is sent every so often so that
+	// positions don't drift out of sync.
+
 	// Used in physical modelling
 	position  AbsXyz
 	velocity  AbsVelocity
