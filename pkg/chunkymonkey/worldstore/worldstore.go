@@ -30,7 +30,8 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 
 	startPosition, err := absXyzFromNbt(levelData, "/Data/Player/Pos")
 	if err != nil {
-		return
+		// TODO Hack - remove this when SMP loading is supported properly.
+		startPosition = AbsXyz{0, ChunkSizeY, 0}
 	}
 
 	var chunkStores []chunkstore.IChunkStore
