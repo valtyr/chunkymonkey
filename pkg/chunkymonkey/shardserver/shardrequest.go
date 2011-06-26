@@ -19,7 +19,7 @@ type runOnChunk struct {
 }
 
 func (req *runOnChunk) perform(shard *ChunkShard) {
-	chunk := shard.Get(&req.loc)
+	chunk := shard.chunkAt(req.loc)
 	if chunk != nil {
 		req.fn(chunk)
 	}

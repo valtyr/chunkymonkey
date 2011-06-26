@@ -380,7 +380,7 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 		// The item is asking about a separate chunk.
 		isWithinChunk = false
 
-		blockTypeId, ok = chunk.shard.blockQuery(chunkLoc, subLoc)
+		blockTypeId, ok = chunk.shard.blockQuery(*chunkLoc, subLoc)
 
 		if !ok {
 			// The chunk side isn't known.

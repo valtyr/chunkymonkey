@@ -27,7 +27,7 @@ func (client *localShardShardClient) ReqSetActiveBlocks(blocks []BlockXyz) {
 
 func (client *localShardShardClient) ReqTransferEntity(loc ChunkXz, entity object.INonPlayerEntity) {
 	client.serverShard.Enqueue(func() {
-		chunk := client.serverShard.Get(&loc)
+		chunk := client.serverShard.chunkAt(loc)
 		if chunk != nil {
 			chunk.transferEntity(entity)
 		}

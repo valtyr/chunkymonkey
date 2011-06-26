@@ -115,7 +115,7 @@ func (shard *ChunkShard) clientForShard(shardLoc ShardXz) (client stub.IShardSha
 
 // blockQuery performs a relatively fast query of the BlockId at the given
 // location. known=true if the returned blockTypeId is valid.
-func (shard *ChunkShard) blockQuery(chunkLoc *ChunkXz, subLoc *SubChunkXyz) (blockTypeId BlockId, known bool) {
+func (shard *ChunkShard) blockQuery(chunkLoc ChunkXz, subLoc *SubChunkXyz) (blockTypeId BlockId, known bool) {
 
 	chunkIndex, _, _, ok := shard.chunkIndexAndRelLoc(chunkLoc)
 
@@ -163,7 +163,7 @@ func (shard *ChunkShard) transferActiveBlocks() {
 func (shard *ChunkShard) reqSetBlocksActive(blocks []BlockXyz) {
 	for _, block := range blocks {
 		chunkXz := block.ToChunkXz()
-		chunkIndex, _, _, isThisShard := shard.chunkIndexAndRelLoc(chunkXz)
+		chunkIndex, _, _, isThisShard := shard.chunkIndexAndRelLoc(*chunkXz)
 		if isThisShard {
 			chunk := shard.chunks[chunkIndex]
 			if chunk == nil {
@@ -197,7 +197,7 @@ func (shard *ChunkShard) String() string {
 	return fmt.Sprintf("ChunkShard[%#v/%#v]", shard.loc, shard.originChunkLoc)
 }
 
-func (shard *ChunkShard) chunkIndexAndRelLoc(loc *ChunkXz) (index int, x, z ChunkCoord, ok bool) {
+func (shard *ChunkShard) chunkIndexAndRelLoc(loc ChunkXz) (index int, x, z ChunkCoord, ok bool) {
 	x = loc.X - shard.originChunkLoc.X
 	z = loc.Z - shard.originChunkLoc.Z
 
@@ -214,8 +214,7 @@ func (shard *ChunkShard) chunkIndexAndRelLoc(loc *ChunkXz) (index int, x, z Chun
 
 // Get returns the Chunk at at given coordinates, loading it if it is not
 // already loaded.
-// TODO make this method private?
-func (shard *ChunkShard) Get(loc *ChunkXz) *Chunk {
+func (shard *ChunkShard) chunkAt(loc ChunkXz) *Chunk {
 	chunkIndex, dx, dz, ok := shard.chunkIndexAndRelLoc(loc)
 	if !ok {
 		log.Printf("%v.Get(%#v): ChunkXz outside of shard", shard, loc)
@@ -229,7 +228,7 @@ func (shard *ChunkShard) Get(loc *ChunkXz) *Chunk {
 		return chunk
 	}
 
-	chunk = shard.loadChunk(loc, &ChunkXz{dx, dz})
+	chunk = shard.loadChunk(loc, ChunkXz{dx, dz})
 
 	if chunk == nil {
 		// No chunk available at that location. (Return nil explicitly - interfaces
@@ -245,8 +244,8 @@ func (shard *ChunkShard) Get(loc *ChunkXz) *Chunk {
 // loadChunk loads the specified chunk from store, and returns it.
 // loc - The absolute world position of the chunk.
 // locDelta - The relative position of the chunk within the shard.
-func (shard *ChunkShard) loadChunk(loc *ChunkXz, locDelta *ChunkXz) *Chunk {
-	chunkResult := <-shard.mgr.chunkStore.LoadChunk(*loc)
+func (shard *ChunkShard) loadChunk(loc ChunkXz, locDelta ChunkXz) *Chunk {
+	chunkResult := <-shard.mgr.chunkStore.LoadChunk(loc)
 	chunkReader, err := chunkResult.Reader, chunkResult.Err
 	if err != nil {
 		if _, ok := err.(chunkstore.NoSuchChunkError); !ok {
@@ -254,7 +253,6 @@ func (shard *ChunkShard) loadChunk(loc *ChunkXz, locDelta *ChunkXz) *Chunk {
 			return nil
 		} else {
 			// Chunk doesn't exist in store.
-			// TODO Generate new chunks.
 			return nil
 		}
 	}
@@ -305,7 +303,7 @@ func (client *shardSelfClient) ReqSetActiveBlocks(blocks []BlockXyz) {
 }
 
 func (client *shardSelfClient) ReqTransferEntity(loc ChunkXz, entity object.INonPlayerEntity) {
-	chunk := client.shard.Get(&loc)
+	chunk := client.shard.chunkAt(loc)
 	if chunk != nil {
 		chunk.transferEntity(entity)
 	}
