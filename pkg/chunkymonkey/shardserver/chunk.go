@@ -13,13 +13,13 @@ import (
 	"chunkymonkey/item"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/mob"
-	"chunkymonkey/nbt"
 	"chunkymonkey/object"
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
 	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
 var enableMobs = flag.Bool(

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	. "chunkymonkey/types"
-	"chunkymonkey/nbt"
+	"nbt"
 )
 
 type ChunkResult struct {

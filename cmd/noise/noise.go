@@ -7,7 +7,7 @@ import (
 	"os"
 
 	. "chunkymonkey/generation"
-	"chunkymonkey/generation/perlin"
+	"perlin"
 )
 
 type Stat struct {

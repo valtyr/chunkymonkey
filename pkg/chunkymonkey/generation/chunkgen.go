@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"chunkymonkey/chunkstore"
-	"chunkymonkey/generation/perlin"
-	"chunkymonkey/nbt"
 	. "chunkymonkey/types"
+	"nbt"
+	"perlin"
 )
 
 const SeaLevel = 63

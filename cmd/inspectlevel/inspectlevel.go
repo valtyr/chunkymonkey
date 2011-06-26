@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"chunkymonkey/nbt"
 	. "chunkymonkey/types"
 	"chunkymonkey/worldstore"
+	"nbt"
 )
 
 func usage() {

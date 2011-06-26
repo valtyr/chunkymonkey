@@ -6,7 +6,7 @@ import (
 	"os"
 
 	. "chunkymonkey/types"
-	"chunkymonkey/nbt"
+	"nbt"
 )
 
 // Returned to chunks to pull their data from.
