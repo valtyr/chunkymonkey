@@ -1,6 +1,7 @@
 package stub
 
 import (
+	"chunkymonkey/object"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
@@ -126,4 +127,6 @@ type IShardShardClient interface {
 	Disconnect()
 
 	ReqSetActiveBlocks(blocks []BlockXyz)
+
+	ReqTransferEntity(loc ChunkXz, entity object.INonPlayerEntity)
 }

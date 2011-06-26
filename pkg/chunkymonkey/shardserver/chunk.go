@@ -454,12 +454,14 @@ func (chunk *Chunk) spawnTick() {
 
 			// Transfer to other chunk.
 			chunkLoc := e.Position().ToChunkXz()
+			shardLoc := chunkLoc.ToShardXz()
 
 			// TODO Batch spawns up into a request per shard if there are efficiency
 			// concerns in sending them individually.
-			chunk.mgr.EnqueueOnChunk(chunkLoc, func(blockChunk *Chunk) {
-				blockChunk.transferEntity(e)
-			})
+			shardClient := chunk.mgr.ShardShardConnect(shardLoc)
+			if shardClient != nil {
+				shardClient.ReqTransferEntity(chunkLoc, e)
+			}
 		}
 	}
 
