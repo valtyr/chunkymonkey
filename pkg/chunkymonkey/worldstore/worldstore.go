@@ -104,5 +104,5 @@ func absXyzFromNbt(tag nbt.ITag, path string) (pos AbsXyz, err os.Error) {
 type BadType string
 
 func (err BadType) String() string {
-	return fmt.Sprintf("Bad type in level.dat for %s", err)
+	return fmt.Sprintf("Bad type in level.dat for %s", string(err))
 }
