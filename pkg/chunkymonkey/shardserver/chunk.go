@@ -13,6 +13,7 @@ import (
 	"chunkymonkey/item"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/mob"
+	"chunkymonkey/nbtutil"
 	"chunkymonkey/object"
 	"chunkymonkey/proto"
 	"chunkymonkey/recipe"
@@ -465,7 +466,7 @@ func (chunk *Chunk) spawnTick() {
 				ms := chunk.mobs()
 				if len(ms) == 0 {
 					log.Printf("%v.Tick: spawning a mob at %v", chunk, playerData.position)
-					m := mob.NewPig(&playerData.position, &AbsVelocity{5, 5, 5})
+					m := mob.NewPig(&playerData.position, &AbsVelocity{5, 5, 5}, &LookDegrees{0, 0})
 					chunk.AddEntity(&m.Mob)
 				}
 				break
@@ -727,25 +728,20 @@ func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
 func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 	for _, entity := range entities {
 		// Position within the chunk
-		posList := entity.Lookup("Pos").(*nbt.List).Value
-		pos := &AbsXyz{
-			AbsCoord(posList[0].(*nbt.Double).Value),
-			AbsCoord(posList[1].(*nbt.Double).Value),
-			AbsCoord(posList[2].(*nbt.Double).Value),
-		}
+		pos, ok := nbtutil.ReadAbsXyz(entity, "Pos")
+		if !ok { continue }
 
 		// Motion
-		motionList := entity.Lookup("Motion").(*nbt.List).Value
-		velocity := &AbsVelocity{
-			AbsVelocityCoord(motionList[0].(*nbt.Double).Value),
-			AbsVelocityCoord(motionList[1].(*nbt.Double).Value),
-			AbsVelocityCoord(motionList[2].(*nbt.Double).Value),
-		}
+		velocity, ok := nbtutil.ReadAbsVelocity(entity, "Motion")
+		if !ok { continue }
+
+		// Look
+		look, ok := nbtutil.ReadLookDegrees(entity, "Rotation")
+		if !ok { continue }
 
 		_ = entity.Lookup("OnGround").(*nbt.Byte).Value
 		_ = entity.Lookup("FallDistance").(*nbt.Float).Value
 		_ = entity.Lookup("Air").(*nbt.Short).Value
-		_ = entity.Lookup("Rotation").(*nbt.List).Value // two elements, floats
 		_ = entity.Lookup("Fire").(*nbt.Short).Value
 
 		var newEntity object.INonPlayerEntity
@@ -761,25 +757,25 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
 			newEntity = item.NewItem(chunk.mgr.gameRules.ItemTypes[id], count, data, pos, velocity)
 		case "Chicken":
-			newEntity = mob.NewHen(pos, velocity)
+			newEntity = mob.NewHen(pos, velocity, look)
 		case "Cow":
-			newEntity = mob.NewCow(pos, velocity)
+			newEntity = mob.NewCow(pos, velocity, look)
 		case "Creeper":
-			newEntity = mob.NewCreeper(pos, velocity)
+			newEntity = mob.NewCreeper(pos, velocity, look)
 		case "Pig":
-			newEntity = mob.NewPig(pos, velocity)
+			newEntity = mob.NewPig(pos, velocity, look)
 		case "Sheep":
-			newEntity = mob.NewSheep(pos, velocity)
+			newEntity = mob.NewSheep(pos, velocity, look)
 		case "Skeleton":
-			newEntity = mob.NewSkeleton(pos, velocity)
+			newEntity = mob.NewSkeleton(pos, velocity, look)
 		case "Squid":
-			newEntity = mob.NewSquid(pos, velocity)
+			newEntity = mob.NewSquid(pos, velocity, look)
 		case "Spider":
-			newEntity = mob.NewSpider(pos, velocity)
+			newEntity = mob.NewSpider(pos, velocity, look)
 		case "Wolf":
-			newEntity = mob.NewWolf(pos, velocity)
+			newEntity = mob.NewWolf(pos, velocity, look)
 		case "Zombie":
-			newEntity = mob.NewZombie(pos, velocity)
+			newEntity = mob.NewZombie(pos, velocity, look)
 		default:
 			// Handle all other objects
 			objType, ok := ObjTypeMap[entityObjectId]

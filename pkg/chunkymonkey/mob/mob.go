@@ -31,10 +31,10 @@ type Mob struct {
 	// TODO: Change to an AABB object when we have that.
 }
 
-func (mob *Mob) Init(id EntityMobType, position *AbsXyz, velocity *AbsVelocity) {
+func (mob *Mob) Init(id EntityMobType, position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) {
 	mob.PointObject.Init(position, velocity)
 	mob.mobType = id
-	mob.look = LookDegrees{0, 0}
+	mob.look = *look
 	mob.metadata = map[byte]byte{
 		0:  byte(0),
 		16: byte(0),
@@ -82,7 +82,7 @@ func (mob *Mob) SendUpdate(writer io.Writer) (err os.Error) {
 		return
 	}
 
-	err = mob.PointObject.SendUpdate(writer, mob.EntityId, &LookBytes{0, 0})
+	err = mob.PointObject.SendUpdate(writer, mob.EntityId, mob.look.ToLookBytes())
 
 	return
 }
@@ -122,9 +122,9 @@ var (
 	creeperBlueAura = byte(1)
 )
 
-func NewCreeper(position *AbsXyz, velocity *AbsVelocity) (c *Creeper) {
+func NewCreeper(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (c *Creeper) {
 	c = new(Creeper)
-	c.Mob.Init(CreeperType.Id, position, velocity)
+	c.Mob.Init(CreeperType.Id, position, velocity, look)
 	c.Mob.metadata[17] = creeperNormal
 	c.Mob.metadata[16] = byte(255)
 	return c
@@ -142,9 +142,9 @@ type Skeleton struct {
 	Mob
 }
 
-func NewSkeleton(position *AbsXyz, velocity *AbsVelocity) (s *Skeleton) {
+func NewSkeleton(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (s *Skeleton) {
 	s = new(Skeleton)
-	s.Mob.Init(SkeletonType.Id, position, velocity)
+	s.Mob.Init(SkeletonType.Id, position, velocity, look)
 	return
 }
 
@@ -153,9 +153,9 @@ type Spider struct {
 	Mob
 }
 
-func NewSpider(position *AbsXyz, velocity *AbsVelocity) (s *Spider) {
+func NewSpider(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (s *Spider) {
 	s = new(Spider)
-	s.Mob.Init(SpiderType.Id, position, velocity)
+	s.Mob.Init(SpiderType.Id, position, velocity, look)
 	return
 }
 
@@ -163,9 +163,9 @@ type Zombie struct {
 	Mob
 }
 
-func NewZombie(position *AbsXyz, velocity *AbsVelocity) (s *Zombie) {
+func NewZombie(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (s *Zombie) {
 	s = new(Zombie)
-	s.Mob.Init(ZombieType.Id, position, velocity)
+	s.Mob.Init(ZombieType.Id, position, velocity, look)
 	return
 }
 
@@ -175,9 +175,9 @@ type Pig struct {
 	Mob
 }
 
-func NewPig(position *AbsXyz, velocity *AbsVelocity) (p *Pig) {
+func NewPig(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (p *Pig) {
 	p = new(Pig)
-	p.Mob.Init(PigType.Id, position, velocity)
+	p.Mob.Init(PigType.Id, position, velocity, look)
 	return
 }
 
@@ -185,9 +185,9 @@ type Sheep struct {
 	Mob
 }
 
-func NewSheep(position *AbsXyz, velocity *AbsVelocity) (s *Sheep) {
+func NewSheep(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (s *Sheep) {
 	s = new(Sheep)
-	s.Mob.Init(SheepType.Id, position, velocity)
+	s.Mob.Init(SheepType.Id, position, velocity, look)
 	return
 }
 
@@ -195,9 +195,9 @@ type Cow struct {
 	Mob
 }
 
-func NewCow(position *AbsXyz, velocity *AbsVelocity) (c *Cow) {
+func NewCow(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (c *Cow) {
 	c = new(Cow)
-	c.Mob.Init(CowType.Id, position, velocity)
+	c.Mob.Init(CowType.Id, position, velocity, look)
 	return
 }
 
@@ -205,9 +205,9 @@ type Hen struct {
 	Mob
 }
 
-func NewHen(position *AbsXyz, velocity *AbsVelocity) (h *Hen) {
+func NewHen(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (h *Hen) {
 	h = new(Hen)
-	h.Mob.Init(HenType.Id, position, velocity)
+	h.Mob.Init(HenType.Id, position, velocity, look)
 	return
 }
 
@@ -215,9 +215,9 @@ type Squid struct {
 	Mob
 }
 
-func NewSquid(position *AbsXyz, velocity *AbsVelocity) (s *Squid) {
+func NewSquid(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (s *Squid) {
 	s = new(Squid)
-	s.Mob.Init(SquidType.Id, position, velocity)
+	s.Mob.Init(SquidType.Id, position, velocity, look)
 	return
 }
 
@@ -225,9 +225,9 @@ type Wolf struct {
 	Mob
 }
 
-func NewWolf(position *AbsXyz, velocity *AbsVelocity) (w *Wolf) {
+func NewWolf(position *AbsXyz, velocity *AbsVelocity, look *LookDegrees) (w *Wolf) {
 	w = new(Wolf)
-	w.Mob.Init(WolfType.Id, position, velocity)
+	w.Mob.Init(WolfType.Id, position, velocity, look)
 	// TODO(nictuku): String with an optional owner's username.
 	w.Mob.metadata[17] = 0
 	w.Mob.metadata[16] = 0
