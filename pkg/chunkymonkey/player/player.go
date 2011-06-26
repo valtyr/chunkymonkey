@@ -372,6 +372,8 @@ func (player *Player) mainLoop() {
 
 func (player *Player) reqNotifyChunkLoad() {
 	if !player.loginComplete {
+		player.loginComplete = true
+
 		// Send player start position etc.
 		buf := new(bytes.Buffer)
 		proto.ServerWritePlayerPositionLook(
