@@ -724,10 +724,6 @@ func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
 	return otherChunkLoc.X == chunk.loc.X && otherChunkLoc.Z == chunk.loc.Z
 }
 
-func (chunk *Chunk) EnqueueGeneric(fn func()) {
-	chunk.shard.enqueueRequest(&runGeneric{fn})
-}
-
 func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 	for _, entity := range entities {
 		// Position within the chunk
