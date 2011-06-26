@@ -8,23 +8,15 @@ import (
 
 type Ticks int64
 
-// TODO consider removing TimeOfDay in favour of using Ticks.
-type TimeOfDay Ticks
-
 const (
-	DayTicksPerDay    = TimeOfDay(24000)
-	DayTicksPerSecond = TimeOfDay(20)
+	TicksPerDay         = 24000
+	TicksPerSecond      = 20
+	NanosecondsInSecond = 1e9
 )
 
 // 1 "TickTime" is the duration of a server "tick". This value is intended for
 // use in sub-tick physics calculations.
 type TickTime float64
-
-const (
-	TicksPerSecond      = 20
-	DayTicksPerTick     = DayTicksPerSecond / TicksPerSecond
-	NanosecondsInSecond = 1e9
-)
 
 type RandomSeed int64
 

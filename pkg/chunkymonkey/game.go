@@ -33,7 +33,7 @@ type Game struct {
 	playerDisconnect chan EntityId
 	entityManager    EntityManager
 	players          map[EntityId]*player.Player
-	time             TimeOfDay
+	time             Ticks
 	gameRules        gamerules.GameRules
 	itemTypes        itemtype.ItemTypeMap
 	serverId         string
@@ -52,6 +52,7 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 		mainQueue:        make(chan func(*Game), 256),
 		playerDisconnect: make(chan EntityId),
 		players:          make(map[EntityId]*player.Player),
+		time:             worldStore.Time,
 		gameRules:        *gameRules,
 		worldStore:       worldStore,
 	}

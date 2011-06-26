@@ -20,6 +20,7 @@ type WorldStore struct {
 	WorldPath string
 
 	Seed int64
+	Time Ticks
 
 	LevelData     *nbt.NamedTag
 	ChunkStore    chunkstore.IChunkStore
@@ -51,6 +52,11 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 		return
 	}
 
+	var timeTicks Ticks
+	if timeTag, ok := levelData.Lookup("/Data/Time").(*nbt.Long); ok {
+		timeTicks = Ticks(timeTag.Value)
+	}
+
 	var chunkStores []chunkstore.IChunkStore
 	persistantChunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, levelData)
 	if err != nil {
@@ -74,6 +80,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	world = &WorldStore{
 		WorldPath:     worldPath,
 		Seed:          seed,
+		Time:          timeTicks,
 		LevelData:     levelData,
 		ChunkStore:    chunkstore.NewChunkService(chunkstore.NewMultiStore(chunkStores)),
 		SpawnPosition: spawnPosition,

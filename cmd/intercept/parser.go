@@ -105,7 +105,7 @@ func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed,
 		entityId, mapSeed, dimension)
 }
 
-func (p *MessageParser) PacketTimeUpdate(time TimeOfDay) {
+func (p *MessageParser) PacketTimeUpdate(time Ticks) {
 	p.printf("PacketTime(time=%d)", time)
 }
 

@@ -729,15 +729,21 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 	for _, entity := range entities {
 		// Position within the chunk
 		pos, ok := nbtutil.ReadAbsXyz(entity, "Pos")
-		if !ok { continue }
+		if !ok {
+			continue
+		}
 
 		// Motion
 		velocity, ok := nbtutil.ReadAbsVelocity(entity, "Motion")
-		if !ok { continue }
+		if !ok {
+			continue
+		}
 
 		// Look
 		look, ok := nbtutil.ReadLookDegrees(entity, "Rotation")
-		if !ok { continue }
+		if !ok {
+			continue
+		}
 
 		_ = entity.Lookup("OnGround").(*nbt.Byte).Value
 		_ = entity.Lookup("FallDistance").(*nbt.Float).Value

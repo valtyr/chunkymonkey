@@ -119,7 +119,7 @@ type IServerPacketHandler interface {
 type IClientPacketHandler interface {
 	IPacketHandler
 	ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, dimension DimensionId)
-	PacketTimeUpdate(time TimeOfDay)
+	PacketTimeUpdate(time Ticks)
 	PacketBedUse(flag bool, bedLoc *BlockXyz)
 	PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemTypeId)
 	PacketEntityEquipment(entityId EntityId, slot SlotId, itemTypeId ItemTypeId, data ItemData)
@@ -574,10 +574,10 @@ func readChatMessage(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 // packetIdTimeUpdate
 
-func ServerWriteTimeUpdate(writer io.Writer, time TimeOfDay) os.Error {
+func ServerWriteTimeUpdate(writer io.Writer, time Ticks) os.Error {
 	var packet = struct {
 		PacketId byte
-		Time     TimeOfDay
+		Time     Ticks
 	}{
 		packetIdTimeUpdate,
 		time,
@@ -586,7 +586,7 @@ func ServerWriteTimeUpdate(writer io.Writer, time TimeOfDay) os.Error {
 }
 
 func readTimeUpdate(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
-	var time TimeOfDay
+	var time Ticks
 
 	err = binary.Read(reader, binary.BigEndian, &time)
 	if err != nil {
