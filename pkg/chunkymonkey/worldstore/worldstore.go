@@ -94,6 +94,7 @@ func loadLevelData(worldPath string) (levelData *nbt.NamedTag, err os.Error) {
 }
 
 func (world *WorldStore) PlayerData(user string) (playerData *nbt.NamedTag, err os.Error) {
+	// TODO: This code opens a file, so needs to handle 'bad' usernames
 	file, err := os.Open(path.Join(world.WorldPath, "players", user+".dat"))
 	if err != nil {
 		return
