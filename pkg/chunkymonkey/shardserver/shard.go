@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"chunkymonkey/chunkstore"
+	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -29,6 +30,8 @@ type ChunkShard struct {
 
 	newActiveBlocks []BlockXyz
 	newActiveShards map[uint64]*destActiveShard
+
+	shardClients map[uint64]stub.IShardShardClient
 }
 
 func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
@@ -40,6 +43,8 @@ func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
 		ticksSinceUpdate: 0,
 
 		newActiveShards: make(map[uint64]*destActiveShard),
+
+		shardClients: make(map[uint64]stub.IShardShardClient),
 	}
 
 	return
@@ -82,6 +87,23 @@ func (shard *ChunkShard) tick() {
 	shard.transferActiveBlocks()
 }
 
+// clientForShard is used to get a IShardShardClient for a given shard, reusing
+// IShardShardClient connections for use within the shard. Returns nil if the
+// shard does not exist.
+func (shard *ChunkShard) clientForShard(shardLoc ShardXz) (client stub.IShardShardClient) {
+	var ok bool
+	shardKey := shardLoc.Key()
+
+	if client, ok = shard.shardClients[shardKey]; !ok {
+		client = shard.mgr.ShardShardConnect(shardLoc)
+		if client != nil {
+			shard.shardClients[shardKey] = client
+		}
+	}
+
+	return
+}
+
 // transferActiveBlocks takes blocks marked as newly active by addActiveBlock,
 // and informs the chunk in the destination shards.
 func (shard *ChunkShard) transferActiveBlocks() {
@@ -94,12 +116,9 @@ func (shard *ChunkShard) transferActiveBlocks() {
 		if shardKey == thisShardKey {
 			shard.reqSetBlocksActive(activeShard.blocks)
 		} else {
-			// TODO For now we only open a connection per request and then discard
-			// it. It will likely be worth holding open connections at least to
-			// neighbouring shards at some point.
-			destShardClient := shard.mgr.ShardShardConnect(activeShard.loc)
-			defer destShardClient.Disconnect()
-			destShardClient.ReqSetActiveBlocks(activeShard.blocks)
+			if client := shard.clientForShard(activeShard.loc); client != nil {
+				client.ReqSetActiveBlocks(activeShard.blocks)
+			}
 		}
 	}
 }

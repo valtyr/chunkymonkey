@@ -458,7 +458,7 @@ func (chunk *Chunk) spawnTick() {
 
 			// TODO Batch spawns up into a request per shard if there are efficiency
 			// concerns in sending them individually.
-			shardClient := chunk.mgr.ShardShardConnect(shardLoc)
+			shardClient := chunk.shard.clientForShard(shardLoc)
 			if shardClient != nil {
 				shardClient.ReqTransferEntity(chunkLoc, e)
 			}
