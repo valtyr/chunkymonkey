@@ -113,6 +113,32 @@ func (shard *ChunkShard) clientForShard(shardLoc ShardXz) (client stub.IShardSha
 	return
 }
 
+// blockQuery performs a relatively fast query of the BlockId at the given
+// location. known=true if the returned blockTypeId is valid.
+func (shard *ChunkShard) blockQuery(chunkLoc *ChunkXz, subLoc *SubChunkXyz) (blockTypeId BlockId, known bool) {
+
+	chunkIndex, _, _, ok := shard.chunkIndexAndRelLoc(chunkLoc)
+
+	if !ok {
+		// blockLoc is in another shard.
+		// TODO Have a good fast case to deal with this.
+		return
+	}
+
+	chunk := shard.chunks[chunkIndex]
+
+	if chunk == nil {
+		// Chunk not loaded. Don't bother to load it just for a block query.
+		return
+	}
+
+	blockIndex, _ := subLoc.BlockIndex()
+	blockTypeId = chunk.blockId(blockIndex)
+	known = true
+
+	return
+}
+
 // transferActiveBlocks takes blocks marked as newly active by addActiveBlock,
 // and informs the chunk in the destination shards.
 func (shard *ChunkShard) transferActiveBlocks() {
@@ -176,7 +202,6 @@ func (shard *ChunkShard) chunkIndexAndRelLoc(loc *ChunkXz) (index int, x, z Chun
 	z = loc.Z - shard.originChunkLoc.Z
 
 	if x < 0 || z < 0 || x >= ShardSize || z >= ShardSize {
-		log.Printf("%v.chunkIndexAndRelLoc(%#v): ChunkXz outside of shard", shard, loc)
 		return 0, 0, 0, false
 	}
 
@@ -193,6 +218,7 @@ func (shard *ChunkShard) chunkIndexAndRelLoc(loc *ChunkXz) (index int, x, z Chun
 func (shard *ChunkShard) Get(loc *ChunkXz) *Chunk {
 	chunkIndex, dx, dz, ok := shard.chunkIndexAndRelLoc(loc)
 	if !ok {
+		log.Printf("%v.Get(%#v): ChunkXz outside of shard", shard, loc)
 		return nil
 	}
 
@@ -234,35 +260,6 @@ func (shard *ChunkShard) loadChunk(loc *ChunkXz, locDelta *ChunkXz) *Chunk {
 	}
 
 	chunk := newChunkFromReader(chunkReader, shard.mgr, shard)
-
-	// Notify neighbouring chunk(s) (if any) that this chunk is now active, and
-	// notify this chunk of its active neighbours
-	linkNeighbours := func(from ChunkSideDir) {
-		dx, dz := from.GetDxz()
-		nLoc := ChunkXz{
-			X: locDelta.X + dx,
-			Z: locDelta.Z + dz,
-		}
-		if nLoc.X < 0 || nLoc.Z < 0 || nLoc.X > ShardSize || nLoc.Z > ShardSize {
-			// Link to neighbouring chunk outside the shard.
-			// TODO This should also link to chunks outside the shard. Although the
-			// architecure of this is likely to change radically or go away.
-		} else {
-			// Link to neighbouring chunk within the shard.
-			chunkIndex := chunkXzToChunkIndex(locDelta)
-			neighbour := shard.chunks[chunkIndex]
-			if neighbour != nil {
-				to := from.GetOpposite()
-				chunk.sideCacheSetNeighbour(from, neighbour)
-				neighbour.sideCacheSetNeighbour(to, chunk)
-			}
-		}
-	}
-	// TODO Corresponding unlinking when a chunk is unloaded.
-	linkNeighbours(ChunkSideEast)
-	linkNeighbours(ChunkSideSouth)
-	linkNeighbours(ChunkSideWest)
-	linkNeighbours(ChunkSideNorth)
 
 	return chunk
 }

@@ -364,62 +364,6 @@ type OrientationBytes struct {
 	Yaw, Pitch, Roll AngleBytes
 }
 
-// Cardinal directions
-type ChunkSideDir int
-
-// Note that these constants are different to those for Face. These index
-// directly into arrays of fixed length.
-const (
-	ChunkSideEast  = 0
-	ChunkSideSouth = 1
-	ChunkSideWest  = 2
-	ChunkSideNorth = 3
-)
-
-func (d ChunkSideDir) GetDxz() (dx, dz ChunkCoord) {
-	switch d {
-	case ChunkSideEast:
-		dz = 1
-	case ChunkSideSouth:
-		dx = 1
-	case ChunkSideWest:
-		dz = -1
-	case ChunkSideNorth:
-		dx = -1
-	}
-	return
-}
-
-func (d ChunkSideDir) GetOpposite() ChunkSideDir {
-	return (d + 2) & 3
-}
-
-// Returns the direction that (dx,dz) is in. Exactly one of dx and dz must be
-// -1 or 1, and the other must be 0, otherwide ok will return as false.
-func DxzToDir(dx, dz int32) (dir ChunkSideDir, ok bool) {
-	ok = true
-	if dz == 0 {
-		if dx == -1 {
-			dir = ChunkSideNorth
-		} else if dx == 1 {
-			dir = ChunkSideSouth
-		} else {
-			ok = false
-		}
-	} else if dx == 0 {
-		if dz == -1 {
-			dir = ChunkSideWest
-		} else if dz == 1 {
-			dir = ChunkSideEast
-		} else {
-			ok = false
-		}
-	} else {
-		ok = false
-	}
-	return
-}
-
 // Location-related types and constants
 
 const (

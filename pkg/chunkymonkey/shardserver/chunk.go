@@ -38,7 +38,6 @@ type Chunk struct {
 	entities     map[EntityId]object.INonPlayerEntity // Entities (mobs, items, etc)
 	blockExtra   map[BlockIndex]interface{}           // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
-	neighbours   neighboursCache
 	cachedPacket []byte                               // Cached packet data for this chunk.
 	subscribers  map[EntityId]stub.IShardPlayerClient // Players getting updates from the chunk.
 	playersData  map[EntityId]*playerData             // Some player data for player(s) in the chunk.
@@ -70,7 +69,6 @@ func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, 
 	}
 
 	chunk.addEntities(reader.Entities())
-	chunk.neighbours.init()
 	return
 }
 
@@ -94,10 +92,11 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 	proto.WriteBlockChange(packet, blockLoc, blockType, blockData)
 	chunk.reqMulticastPlayers(-1, packet.Bytes())
 
-	// Update neighbour caches of this change.
-	chunk.neighbours.setBlock(subLoc, blockType)
-
 	return
+}
+
+func (chunk *Chunk) blockId(index BlockIndex) BlockId {
+	return BlockId(index.GetBlockData(chunk.blocks))
 }
 
 func (chunk *Chunk) SetBlockByIndex(blockIndex BlockIndex, blockId BlockId, blockData byte) {
@@ -381,14 +380,10 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 		// The item is asking about a separate chunk.
 		isWithinChunk = false
 
-		ok, blockTypeId = chunk.neighbours.CachedBlock(
-			chunk.loc.X-chunkLoc.X,
-			chunk.loc.Z-chunkLoc.Z,
-			subLoc,
-		)
+		blockTypeId, ok = chunk.shard.blockQuery(chunkLoc, subLoc)
 
 		if !ok {
-			// The chunk side isn't cached or isn't a neighbouring block.
+			// The chunk side isn't known.
 			blockUnknownId = true
 			return
 		}
@@ -406,9 +401,6 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 }
 
 func (chunk *Chunk) tick() {
-	// Update neighbouring chunks of block changes in this chunk.
-	chunk.neighbours.flush()
-
 	chunk.spawnTick()
 
 	chunk.blockTick()
@@ -723,10 +715,6 @@ func (chunk *Chunk) sendUpdate() {
 		e.SendUpdate(buf)
 	}
 	chunk.reqMulticastPlayers(-1, buf.Bytes())
-}
-
-func (chunk *Chunk) sideCacheSetNeighbour(side ChunkSideDir, neighbour *Chunk) {
-	chunk.neighbours.sideCacheSetNeighbour(side, neighbour, chunk.blocks)
 }
 
 func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
