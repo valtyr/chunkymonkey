@@ -33,8 +33,8 @@ func (n *neighboursCache) setBlock(subLoc *SubChunkXyz, blockType BlockId) {
 }
 
 func (n *neighboursCache) flush() {
-	for _, updater := range n.sideUpdater {
-		updater.flush()
+	for i := range n.sideUpdater {
+		n.sideUpdater[i].flush()
 	}
 }
 
