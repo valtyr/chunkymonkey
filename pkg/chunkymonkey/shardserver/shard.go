@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"chunkymonkey/chunkstore"
+	"chunkymonkey/object"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
@@ -32,6 +33,7 @@ type ChunkShard struct {
 	newActiveShards map[uint64]*destActiveShard
 
 	shardClients map[uint64]stub.IShardShardClient
+	selfClient   shardSelfClient
 }
 
 func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
@@ -46,6 +48,8 @@ func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
 
 		shardClients: make(map[uint64]stub.IShardShardClient),
 	}
+
+	shard.selfClient.shard = shard
 
 	return
 }
@@ -92,6 +96,11 @@ func (shard *ChunkShard) tick() {
 // shard does not exist.
 func (shard *ChunkShard) clientForShard(shardLoc ShardXz) (client stub.IShardShardClient) {
 	var ok bool
+
+	if shard.loc.Equals(&shardLoc) {
+		return &shard.selfClient
+	}
+
 	shardKey := shardLoc.Key()
 
 	if client, ok = shard.shardClients[shardKey]; !ok {
@@ -282,4 +291,25 @@ func (shard *ChunkShard) enqueueRequest(req iShardRequest) {
 type destActiveShard struct {
 	loc    ShardXz
 	blocks []BlockXyz
+}
+
+
+// shardSelfClient implements IShardShardClient for a shard to efficiently talk
+// to itself.
+type shardSelfClient struct {
+	shard *ChunkShard
+}
+
+func (client *shardSelfClient) Disconnect() {
+}
+
+func (client *shardSelfClient) ReqSetActiveBlocks(blocks []BlockXyz) {
+	client.shard.reqSetBlocksActive(blocks)
+}
+
+func (client *shardSelfClient) ReqTransferEntity(loc ChunkXz, entity object.INonPlayerEntity) {
+	chunk := client.shard.Get(&loc)
+	if chunk != nil {
+		chunk.transferEntity(entity)
+	}
 }
