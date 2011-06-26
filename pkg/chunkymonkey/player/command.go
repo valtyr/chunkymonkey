@@ -2,15 +2,24 @@ package player
 
 import (
 	"bytes"
+	"flag"
+	"os"
+	"runtime/pprof"
 	"regexp"
 	"strconv"
+	"sync"
 
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
+var profileCmdsEnabled = flag.Bool("profile_cmds", false, "Enable profiling commands")
+
 var cmdPartRegexp = regexp.MustCompile("[^ ]+")
+
+var profiling bool
+var profilingMutex sync.Mutex
 
 func runCommand(player *Player, command string) {
 	cmdParts := cmdPartRegexp.FindAllString(command, -1)
@@ -19,6 +28,10 @@ func runCommand(player *Player, command string) {
 	switch cmdParts[0] {
 	case "give":
 		msg = cmdGive(player, cmdParts[1:])
+	case "cpuprofile":
+		msg = cmdCpuProfile(player, cmdParts[1:])
+	case "memprofile":
+		msg = cmdMemProfile(player, cmdParts[1:])
 	}
 
 	if msg != "" {
@@ -26,6 +39,51 @@ func runCommand(player *Player, command string) {
 		proto.WriteChatMessage(buf, msg)
 		player.TransmitPacket(buf.Bytes())
 	}
+}
+
+func cmdCpuProfile(player *Player, cmdParts []string) string {
+	if !*profileCmdsEnabled {
+		return ""
+	}
+
+	profilingMutex.Lock()
+	defer profilingMutex.Unlock()
+
+	filename := "/tmp/chunkymonkey.cpu.pprof"
+
+	if !profiling {
+		w, err := os.Create(filename)
+		if err != nil {
+			return err.String()
+		}
+		pprof.StartCPUProfile(w)
+		profiling = true
+		return "CPU profiling started and writing to " + filename
+	} else {
+		pprof.StopCPUProfile()
+		profiling = false
+		return "CPU profiling stopped"
+	}
+
+	return ""
+}
+
+func cmdMemProfile(player *Player, cmdParts []string) string {
+	if !*profileCmdsEnabled {
+		return ""
+	}
+
+	filename := "/tmp/chunkymonkey.heap.pprof"
+
+	w, err := os.Create(filename)
+	if err != nil {
+		return err.String()
+	}
+	defer w.Close()
+
+	pprof.WriteHeapProfile(w)
+
+	return "Heap profile written to " + filename
 }
 
 const giveUsage = "/give <item ID> [<quantity> [<data>]]"
