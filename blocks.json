@@ -507,6 +507,26 @@
     "Aspect": "Todo",
     "AspectArgs": {}
   },
+  "31": {
+    "BlockAttrs": {
+      "Name": "tall grass",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 295,
+          "Probability": 20,
+          "Count": 1
+        }
+      ]
+    }
+  },
   "35": {
     "BlockAttrs": {
       "Name": "wool",
