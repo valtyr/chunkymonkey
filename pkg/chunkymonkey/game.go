@@ -36,7 +36,6 @@ type Game struct {
 	time             TimeOfDay
 	gameRules        gamerules.GameRules
 	itemTypes        itemtype.ItemTypeMap
-	rand             *rand.Rand
 	serverId         string
 	worldStore       *worldstore.WorldStore
 	// If set, logins are not allowed.
@@ -54,13 +53,12 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 		playerDisconnect: make(chan EntityId),
 		players:          make(map[EntityId]*player.Player),
 		gameRules:        *gameRules,
-		rand:             rand.New(rand.NewSource(time.UTC().Seconds())),
 		worldStore:       worldStore,
 	}
 
 	game.entityManager.Init()
 
-	game.serverId = fmt.Sprintf("%x", game.rand.Int63())
+	game.serverId = fmt.Sprintf("%016x", rand.NewSource(worldStore.Seed).Int63())
 	//game.serverId = "-"
 
 	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, &game.entityManager, &game.gameRules)

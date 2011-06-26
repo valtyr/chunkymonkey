@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"rand"
+	"time"
 
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/generation"
@@ -16,6 +18,8 @@ import (
 
 type WorldStore struct {
 	WorldPath string
+
+	Seed int64
 
 	LevelData     *nbt.NamedTag
 	ChunkStore    chunkstore.IChunkStore
@@ -54,10 +58,14 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	}
 	chunkStores = append(chunkStores, chunkstore.NewChunkService(persistantChunkStore))
 
-	seed, ok := levelData.Lookup("/Data/RandomSeed").(*nbt.Long)
-	if ok {
-		chunkStores = append(chunkStores, chunkstore.NewChunkService(generation.NewTestGenerator(seed.Value)))
+	var seed int64
+	if seedNbt, ok := levelData.Lookup("/Data/RandomSeed").(*nbt.Long); ok {
+		seed = seedNbt.Value
+	} else {
+		seed = rand.NewSource(time.Seconds()).Int63()
 	}
+
+	chunkStores = append(chunkStores, chunkstore.NewChunkService(generation.NewTestGenerator(seed)))
 
 	for _, store := range chunkStores {
 		go store.Serve()
@@ -65,6 +73,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 
 	world = &WorldStore{
 		WorldPath:     worldPath,
+		Seed:          seed,
 		LevelData:     levelData,
 		ChunkStore:    chunkstore.NewChunkService(chunkstore.NewMultiStore(chunkStores)),
 		SpawnPosition: spawnPosition,
