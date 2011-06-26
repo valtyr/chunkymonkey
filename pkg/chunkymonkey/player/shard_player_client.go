@@ -24,6 +24,12 @@ func (psr *shardPlayerClient) TransmitPacket(packet []byte) {
 	psr.player.TransmitPacket(packet)
 }
 
+func (psr *shardPlayerClient) ReqNotifyChunkLoad() {
+	psr.player.Enqueue(func(_ *Player) {
+		psr.player.reqNotifyChunkLoad()
+	})
+}
+
 func (psr *shardPlayerClient) ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqInventorySubscribed(&block, invTypeId, slots)

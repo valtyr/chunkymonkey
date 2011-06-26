@@ -542,7 +542,7 @@ func (chunk *Chunk) items() (s []*item.Item) {
 	return
 }
 
-func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IShardPlayerClient) {
+func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IShardPlayerClient, notify bool) {
 	if _, ok := chunk.subscribers[entityId]; ok {
 		// Already subscribed.
 		return
@@ -555,6 +555,9 @@ func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IShardPlaye
 	player.TransmitPacket(buf.Bytes())
 
 	player.TransmitPacket(chunk.chunkPacket())
+	if notify {
+		player.ReqNotifyChunkLoad()
+	}
 
 	// Send spawns packets for all entities in the chunk.
 	if len(chunk.entities) > 0 {

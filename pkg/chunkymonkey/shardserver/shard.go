@@ -262,20 +262,18 @@ func (shard *ChunkShard) loadChunk(loc ChunkXz, locDelta ChunkXz) *Chunk {
 	return chunk
 }
 
-// TODO Make all Enqueue* methods private.
-
-// EnqueueAllChunks runs a given function on all loaded chunks in the shard.
-func (shard *ChunkShard) EnqueueAllChunks(fn func(chunk *Chunk)) {
+// enqueueAllChunks runs a given function on all loaded chunks in the shard.
+func (shard *ChunkShard) enqueueAllChunks(fn func(chunk *Chunk)) {
 	shard.requests <- &runOnAllChunks{fn}
 }
 
-// EnqueueOnChunk runs a function on the chunk at the given location. If the
+// enqueueOnChunk runs a function on the chunk at the given location. If the
 // chunk does not exist, it does nothing.
-func (shard *ChunkShard) EnqueueOnChunk(loc ChunkXz, fn func(chunk *Chunk)) {
+func (shard *ChunkShard) enqueueOnChunk(loc ChunkXz, fn func(chunk *Chunk)) {
 	shard.requests <- &runOnChunk{loc, fn}
 }
 
-func (shard *ChunkShard) Enqueue(fn func()) {
+func (shard *ChunkShard) enqueue(fn func()) {
 	shard.requests <- &runGeneric{fn}
 }
 

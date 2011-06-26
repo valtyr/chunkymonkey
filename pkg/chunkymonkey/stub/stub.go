@@ -24,6 +24,10 @@ type IShardPlayerClient interface {
 
 	TransmitPacket(packet []byte)
 
+	// ReqNotifyChunkLoad informs Player that a chunk subscription request with
+	// notify=true has completed.
+	ReqNotifyChunkLoad()
+
 	// ReqInventorySubscribed informs the player that an inventory has been
 	// opened. The block position 
 	ReqInventorySubscribed(block BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot)
@@ -72,12 +76,9 @@ type IPlayerShardClient interface {
 	// unload the subscribed chunks.
 	Disconnect()
 
-	// TODO better method to send events to chunks from player frontend.
-	Enqueue(fn func())
-
 	// The following methods are requests upon chunks.
 
-	ReqSubscribeChunk(chunkLoc ChunkXz)
+	ReqSubscribeChunk(chunkLoc ChunkXz, notify bool)
 
 	ReqUnsubscribeChunk(chunkLoc ChunkXz)
 

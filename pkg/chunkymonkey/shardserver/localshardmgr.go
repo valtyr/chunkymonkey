@@ -78,7 +78,7 @@ func (mgr *LocalShardManager) EnqueueAllChunks(fn func(chunk *Chunk)) {
 	defer mgr.lock.Unlock()
 
 	for _, shard := range mgr.shards {
-		shard.EnqueueAllChunks(fn)
+		shard.enqueueAllChunks(fn)
 	}
 }
 
@@ -89,5 +89,5 @@ func (mgr *LocalShardManager) EnqueueOnChunk(loc ChunkXz, fn func(chunk *Chunk))
 	defer mgr.lock.Unlock()
 
 	shard := mgr.getShard(loc.ToShardXz(), true)
-	shard.EnqueueOnChunk(loc, fn)
+	shard.enqueueOnChunk(loc, fn)
 }

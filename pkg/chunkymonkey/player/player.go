@@ -39,6 +39,7 @@ type Player struct {
 	position       AbsXyz
 	look           LookDegrees
 	chunkSubs      chunkSubscriptions
+	loginComplete  bool
 
 	cursor       slot.Slot // Item being moved by mouse cursor.
 	inventory    window.PlayerInventory
@@ -358,7 +359,7 @@ func (player *Player) mainLoop() {
 	player.chunkSubs.Init(player)
 	defer player.chunkSubs.Close()
 
-	player.postLogin()
+	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name))
 
 	for {
 		f, ok := <-player.mainQueue
@@ -369,32 +370,18 @@ func (player *Player) mainLoop() {
 	}
 }
 
-func (player *Player) postLogin() {
-	// TODO Old version of chunkSubscriptions.Move() that was called here had
-	// stuff for a callback when the nearest chunks had been sent so that player
-	// position would only be sent when nearby chunks were out. Some replacement
-	// for this will be needed. Possibly a message could be queued to the current
-	// shard following on from chunkSubscriptions's initialization that would ask
-	// the shard to send out the following packets - this would result in them
-	// being sent at least after the chunks that are in the current shard have
-	// been sent.
+func (player *Player) reqNotifyChunkLoad() {
+	if !player.loginComplete {
+		// Send player start position etc.
+		buf := new(bytes.Buffer)
+		proto.ServerWritePlayerPositionLook(
+			buf,
+			&player.position, player.position.Y+StanceNormal,
+			&player.look, false)
+		player.inventory.WriteWindowItems(buf)
 
-	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name))
-
-	// Send player start position etc.
-	buf := new(bytes.Buffer)
-	proto.ServerWritePlayerPositionLook(
-		buf,
-		&player.position, player.position.Y+StanceNormal,
-		&player.look, false)
-	player.inventory.WriteWindowItems(buf)
-	packet := buf.Bytes()
-
-	// Enqueue on the shard as a hacky way to defer the packet send until after
-	// the initial chunk data has been sent.
-	player.chunkSubs.curShard.Enqueue(func() {
-		player.TransmitPacket(packet)
-	})
+		player.TransmitPacket(buf.Bytes())
+	}
 }
 
 func (player *Player) reqInventorySubscribed(block *BlockXyz, invTypeId InvTypeId, slots []proto.WindowSlot) {

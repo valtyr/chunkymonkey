@@ -39,7 +39,7 @@ func (sub *chunkSubscriptions) Init(player *Player) {
 	sub.shardClients = make(map[uint64]*shardRef)
 
 	initialChunkLocs := orderedChunkSquare(sub.curChunkLoc, ChunkRadius)
-	sub.subscribeToChunks(initialChunkLocs)
+	sub.subscribeToChunks(initialChunkLocs, true)
 
 	sub.curShard = sub.shardClients[sub.curShardLoc.Key()].shard
 	sub.curShard.ReqAddPlayerData(
@@ -119,8 +119,8 @@ func (sub *chunkSubscriptions) ShardClientForChunkXz(chunkLoc *ChunkXz) (conn st
 
 // subscribeToChunks connects to shards and subscribes to chunks for the chunk
 // locations given.
-func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
-	for _, chunkLoc := range chunkLocs {
+func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz, notify bool) {
+	for i, chunkLoc := range chunkLocs {
 		shardLoc := chunkLoc.ToShardXz()
 		shardKey := shardLoc.Key()
 		ref, ok := sub.shardClients[shardKey]
@@ -131,7 +131,7 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz) {
 			}
 			sub.shardClients[shardKey] = ref
 		}
-		ref.shard.ReqSubscribeChunk(chunkLoc)
+		ref.shard.ReqSubscribeChunk(chunkLoc, notify && i == 0)
 		ref.count++
 	}
 }
@@ -161,7 +161,7 @@ func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
 // to those that have just left.
 func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) {
 	addChunkLocs := squareDifference(newChunkLoc, sub.curChunkLoc, ChunkRadius)
-	sub.subscribeToChunks(addChunkLocs)
+	sub.subscribeToChunks(addChunkLocs, false)
 
 	newShardLoc := newChunkLoc.ToShardXz()
 	if ref, ok := sub.shardClients[newShardLoc.Key()]; ok {
