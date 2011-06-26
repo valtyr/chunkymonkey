@@ -38,6 +38,9 @@ type Game struct {
 
 func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err os.Error) {
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
+	if worldStore == nil {
+		log.Fatalf("Error loading world store for '%s': %s", worldPath, err)
+	}
 
 	game = &Game{
 		mainQueue:        make(chan func(*Game), 256),
