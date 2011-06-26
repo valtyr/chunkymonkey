@@ -15,7 +15,10 @@ type chunkStoreAlpha struct {
 }
 
 // Creates an IChunkStore that reads the Minecraft Alpha world format.
-func newChunkStoreAlpha(worldPath string) *chunkStoreAlpha {
+func newChunkStoreAlpha(worldPath string, dimension DimensionId) *chunkStoreAlpha {
+	// Don't know the dimension directory structure for alpha, but it's likely
+	// not worth writing support for.
+
 	s := &chunkStoreAlpha{
 		worldPath: worldPath,
 	}

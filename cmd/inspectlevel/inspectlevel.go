@@ -13,6 +13,10 @@ import (
 )
 
 func displayNbt(indentCount int, tag nbt.ITag) {
+	if tag == nil {
+		fmt.Print("<nil>\n")
+		return
+	}
 	indent := strings.Repeat("  ", indentCount)
 	switch t := tag.(type) {
 	case *nbt.Compound:
@@ -69,8 +73,8 @@ func cmdLevel(args []string) (err os.Error) {
 }
 
 func cmdChunk(args []string) (err os.Error) {
-	if len(args) != 3 {
-		os.Stderr.WriteString("usage: " + os.Args[0] + " chunk <world path> <chunk x> <chunk z>\n")
+	if len(args) < 3 || len(args) > 4 {
+		os.Stderr.WriteString("usage: " + os.Args[0] + " chunk <world path> <chunk x> <chunk z> [dimension]\n")
 		return
 	}
 
@@ -84,6 +88,16 @@ func cmdChunk(args []string) (err os.Error) {
 		return
 	}
 
+	dimension := DimensionNormal
+	if len(args) >= 4 {
+		var dimInt int
+		dimInt, err = strconv.Atoi(args[3])
+		if err != nil {
+			return
+		}
+		dimension = DimensionId(dimInt)
+	}
+
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
 	if err != nil {
 		return
@@ -91,7 +105,12 @@ func cmdChunk(args []string) (err os.Error) {
 
 	chunkLoc := ChunkXz{ChunkCoord(x), ChunkCoord(z)}
 
-	chunkResult := <-worldStore.ChunkStore.LoadChunk(chunkLoc)
+	store, err := worldStore.ChunkStoreForDimension(dimension)
+	if err != nil {
+		return
+	}
+
+	chunkResult := <-store.LoadChunk(chunkLoc)
 	if chunkResult.Err != nil {
 		return chunkResult.Err
 	}

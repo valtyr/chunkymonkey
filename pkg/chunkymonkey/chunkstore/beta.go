@@ -20,15 +20,20 @@ const (
 )
 
 type chunkStoreBeta struct {
-	worldPath   string
+	regionPath  string
 	regionFiles map[uint64]*regionFileReader
 }
 
 // Creates a chunkStoreBeta that reads the Minecraft Beta world format.
-func newChunkStoreBeta(worldPath string) *chunkStoreBeta {
+func newChunkStoreBeta(worldPath string, dimension DimensionId) *chunkStoreBeta {
 	s := &chunkStoreBeta{
-		worldPath:   worldPath,
 		regionFiles: make(map[uint64]*regionFileReader),
+	}
+
+	if dimension == DimensionNormal {
+		s.regionPath = path.Join(worldPath, "region")
+	} else {
+		s.regionPath = path.Join(worldPath, fmt.Sprintf("DIM%d", dimension), "region")
 	}
 
 	return s
@@ -43,7 +48,7 @@ func (s *chunkStoreBeta) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err o
 		// TODO limit number of regionFileReader objs to a maximum number of
 		// most-frequently-used regions. Close regionFileReader objects when no
 		// longer needed.
-		filePath := regionLoc.regionFilePath(s.worldPath)
+		filePath := regionLoc.regionFilePath(s.regionPath)
 		cfr, err = newRegionFileReader(filePath)
 		if err != nil {
 			if errno, ok := util.Errno(err); ok && errno == os.ENOENT {
@@ -198,10 +203,9 @@ func (loc *regionLoc) regionKey() uint64 {
 	return uint64(loc.X)<<32 | uint64(uint32(loc.Z))
 }
 
-func (loc *regionLoc) regionFilePath(worldPath string) string {
+func (loc *regionLoc) regionFilePath(regionPath string) string {
 	return path.Join(
-		worldPath,
-		"region",
+		regionPath,
 		fmt.Sprintf("r.%d.%d.mcr", loc.X, loc.Z),
 	)
 }

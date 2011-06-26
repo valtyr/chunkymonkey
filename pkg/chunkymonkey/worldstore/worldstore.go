@@ -58,7 +58,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	}
 
 	var chunkStores []chunkstore.IChunkStore
-	persistantChunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, levelData)
+	persistantChunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, levelData, DimensionNormal)
 	if err != nil {
 		return
 	}
@@ -106,6 +106,18 @@ func loadLevelData(worldPath string) (levelData *nbt.NamedTag, err os.Error) {
 
 	levelData, err = nbt.Read(gzipReader)
 
+	return
+}
+
+// NOTE: ChunkStoreForDimension shouldn't really be used in the server just
+// yet.
+func (world *WorldStore) ChunkStoreForDimension(dimension DimensionId) (store chunkstore.IChunkStore, err os.Error) {
+	fgStore, err := chunkstore.ChunkStoreForLevel(world.WorldPath, world.LevelData, dimension)
+	if err != nil {
+		return
+	}
+	store = chunkstore.NewChunkService(fgStore)
+	go store.Serve()
 	return
 }
 
