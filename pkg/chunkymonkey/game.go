@@ -12,13 +12,13 @@ import (
 	. "chunkymonkey/entity"
 	"chunkymonkey/gamerules"
 	"chunkymonkey/itemtype"
-	"chunkymonkey/nbt"
 	"chunkymonkey/player"
 	"chunkymonkey/proto"
 	"chunkymonkey/server_auth"
 	"chunkymonkey/shardserver"
 	. "chunkymonkey/types"
 	"chunkymonkey/worldstore"
+	"nbt"
 )
 
 type Game struct {
