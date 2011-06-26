@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"rand"
+	"regexp"
 	"time"
 
 	. "chunkymonkey/entity"
@@ -20,6 +21,11 @@ import (
 	"chunkymonkey/worldstore"
 	"nbt"
 )
+
+// We regard usernames as valid if they don't contain "dangerous" characters.
+// That is: characters that might be abused in filename components, etc.
+var validPlayerUsername = regexp.MustCompile(`^[\-a-zA-Z0-9_]+$`)
+
 
 type Game struct {
 	chunkManager     *shardserver.LocalShardManager
@@ -67,6 +73,13 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 // Note that it does not run in the game's goroutine.
 func (game *Game) login(conn net.Conn) {
 	username, err := proto.ServerReadHandshake(conn)
+
+	if !validPlayerUsername.MatchString(username) {
+		proto.WriteDisconnect(conn, "Bad username")
+		conn.Close()
+		return
+	}
+
 	if err != nil {
 		log.Print("ServerReadHandshake: ", err.String())
 		proto.WriteDisconnect(conn, err.String())
