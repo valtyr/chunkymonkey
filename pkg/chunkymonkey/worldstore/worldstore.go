@@ -19,7 +19,7 @@ type WorldStore struct {
 
 	LevelData     *nbt.NamedTag
 	ChunkStore    chunkstore.IChunkStore
-	StartPosition AbsXyz
+	SpawnPosition AbsXyz
 }
 
 func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
@@ -28,10 +28,23 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 		return
 	}
 
-	startPosition, err := absXyzFromNbt(levelData, "/Data/Player/Pos")
-	if err != nil {
-		// TODO Hack - remove this when SMP loading is supported properly.
-		startPosition = AbsXyz{ChunkSizeH / 2, ChunkSizeY, ChunkSizeH / 2}
+	// In both single-player and SMP maps, the 'spawn position' is stored in
+	// the level data.
+	var spawnPosition AbsXyz
+
+	x, xok := levelData.Lookup("/Data/SpawnX").(*nbt.Int)
+	y, yok := levelData.Lookup("/Data/SpawnY").(*nbt.Int)
+	z, zok := levelData.Lookup("/Data/SpawnZ").(*nbt.Int)
+
+	if xok && yok && zok {
+		spawnPosition = AbsXyz{
+			AbsCoord(x.Value),
+			AbsCoord(y.Value),
+			AbsCoord(z.Value),
+		}
+	} else {
+		err = os.NewError("Invalid map level data: does not contain Spawn{X,Y,Z}")
+		return
 	}
 
 	var chunkStores []chunkstore.IChunkStore
@@ -54,7 +67,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 		WorldPath:     worldPath,
 		LevelData:     levelData,
 		ChunkStore:    chunkstore.NewChunkService(chunkstore.NewMultiStore(chunkStores)),
-		StartPosition: startPosition,
+		SpawnPosition: spawnPosition,
 	}
 
 	go world.ChunkStore.Serve()
@@ -76,6 +89,24 @@ func loadLevelData(worldPath string) (levelData *nbt.NamedTag, err os.Error) {
 	defer gzipReader.Close()
 
 	levelData, err = nbt.Read(gzipReader)
+
+	return
+}
+
+func (world *WorldStore) PlayerData(user string) (playerData *nbt.NamedTag, err os.Error) {
+	file, err := os.Open(path.Join(world.WorldPath, "players", user+".dat"))
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		return
+	}
+	defer gzipReader.Close()
+
+	playerData, err = nbt.Read(gzipReader)
 
 	return
 }
