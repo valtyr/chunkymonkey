@@ -13,17 +13,17 @@ func TestRegionLoc_regionFilePath(t *testing.T) {
 	}
 
 	tests := []Test{
-		{ChunkXz{0, 0}, "/foo/region/r.0.0.mcr"},
-		{ChunkXz{31, 0}, "/foo/region/r.0.0.mcr"},
-		{ChunkXz{0, 31}, "/foo/region/r.0.0.mcr"},
-		{ChunkXz{32, 0}, "/foo/region/r.1.0.mcr"},
-		{ChunkXz{0, 32}, "/foo/region/r.0.1.mcr"},
-		{ChunkXz{-1, 0}, "/foo/region/r.-1.0.mcr"},
-		{ChunkXz{0, -1}, "/foo/region/r.0.-1.mcr"},
-		{ChunkXz{-32, 0}, "/foo/region/r.-1.0.mcr"},
-		{ChunkXz{0, -32}, "/foo/region/r.0.-1.mcr"},
-		{ChunkXz{-33, 0}, "/foo/region/r.-2.0.mcr"},
-		{ChunkXz{0, -33}, "/foo/region/r.0.-2.mcr"},
+		{ChunkXz{0, 0}, "/foo/r.0.0.mcr"},
+		{ChunkXz{31, 0}, "/foo/r.0.0.mcr"},
+		{ChunkXz{0, 31}, "/foo/r.0.0.mcr"},
+		{ChunkXz{32, 0}, "/foo/r.1.0.mcr"},
+		{ChunkXz{0, 32}, "/foo/r.0.1.mcr"},
+		{ChunkXz{-1, 0}, "/foo/r.-1.0.mcr"},
+		{ChunkXz{0, -1}, "/foo/r.0.-1.mcr"},
+		{ChunkXz{-32, 0}, "/foo/r.-1.0.mcr"},
+		{ChunkXz{0, -32}, "/foo/r.0.-1.mcr"},
+		{ChunkXz{-33, 0}, "/foo/r.-2.0.mcr"},
+		{ChunkXz{0, -33}, "/foo/r.0.-2.mcr"},
 	}
 
 	for _, test := range tests {
