@@ -4,6 +4,7 @@ import (
 	_ "expvar"
 	"flag"
 	"http"
+	_ "http/pprof"
 	"log"
 	"net"
 	"os"
