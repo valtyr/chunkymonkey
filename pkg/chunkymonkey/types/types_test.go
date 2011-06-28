@@ -129,33 +129,41 @@ func TestAbsIntXyz_ToChunkXz(t *testing.T) {
 	}
 }
 
-func TestCoordDivMod(t *testing.T) {
-	type CoordDivModTest struct {
-		expected_div, expected_mod int32
-		num, denom                 int32
+func Test_BlockCoord_ToChunkLocalCoord(t *testing.T) {
+	type Test struct {
+		expected_chunk  ChunkCoord
+		expected_subloc SubChunkCoord
+		block           BlockCoord
 	}
 
-	var CoordDivModTests = []CoordDivModTest{
+	var tests = []Test{
 		// Simple +ve numerator cases
-		CoordDivModTest{0, 0, 0, 16},
-		CoordDivModTest{0, 1, 1, 16},
-		CoordDivModTest{0, 15, 15, 16},
-		CoordDivModTest{1, 0, 16, 16},
-		CoordDivModTest{1, 15, 31, 16},
+		Test{0, 0, 0},
+		Test{0, 1, 1},
+		Test{0, 15, 15},
+		Test{1, 0, 16},
+		Test{1, 15, 31},
 
 		// -ve numerator cases
-		CoordDivModTest{-1, 15, -1, 16},
-		CoordDivModTest{-1, 0, -16, 16},
-		CoordDivModTest{-2, 15, -17, 16},
-		CoordDivModTest{-2, 0, -32, 16},
+		Test{-1, 15, -1},
+		Test{-1, 0, -16},
+		Test{-2, 15, -17},
+		Test{-2, 0, -32},
 	}
 
-	for _, r := range CoordDivModTests {
-		div, mod := coordDivMod(r.num, r.denom)
-		if r.expected_div != div || r.expected_mod != mod {
-			t.Errorf("coordDivMod(%d, %d) expected (%d, %d) got (%d, %d)",
-				r.num, r.denom, r.expected_div, r.expected_mod, div, mod)
+	for _, r := range tests {
+		chunk, subLoc := r.block.ToChunkLocalCoord()
+		if r.expected_chunk != chunk || r.expected_subloc != subLoc {
+			t.Errorf(
+				"BlockCoord(%d).ToChunkLocalCoord() expected (%d, %d) got (%d, %d)",
+				r.block, r.expected_chunk, r.expected_subloc, chunk, subLoc)
 		}
+	}
+}
+
+func Benchmark_BlockCoord_ToChunkLocalCoord(b *testing.B) {
+	for i := BlockCoord(0); i < BlockCoord(b.N); i++ {
+		i.ToChunkLocalCoord()
 	}
 }
 

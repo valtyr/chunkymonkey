@@ -374,7 +374,11 @@ const (
 	MinChunkRadius = 2
 
 	// Sometimes it is useful to convert block coordinates to pixels
-	PixelsPerBlock = 32
+	PixelShift = 5
+	PixelsPerBlock = 1<<PixelShift
+
+	PixelsPerChunkShift = (ChunkHShift + PixelShift)
+	PixelsPerChunk = 1<<PixelsPerChunkShift
 
 	// Millipixels are used in velocity values
 	MilliPixelsPerPixel = 1000
@@ -447,12 +451,9 @@ func (p *AbsIntXyz) ToBlockXyz() *BlockXyz {
 
 // Convert (x, z) absolute integer coordinates to chunk coordinates
 func (abs *AbsIntXyz) ToChunkXz() *ChunkXz {
-	chunkX, _ := coordDivMod(int32(abs.X), ChunkSizeH*PixelsPerBlock)
-	chunkZ, _ := coordDivMod(int32(abs.Z), ChunkSizeH*PixelsPerBlock)
-
 	return &ChunkXz{
-		ChunkCoord(chunkX),
-		ChunkCoord(chunkZ),
+		ChunkCoord(abs.X >> PixelsPerChunkShift),
+		ChunkCoord(abs.Z >> PixelsPerChunkShift),
 	}
 }
 
@@ -615,6 +616,10 @@ func (bi BlockIndex) SetBlockData(blockData []byte, data byte) {
 type BlockCoord int32
 type BlockYCoord int8
 
+func (b BlockCoord) ToChunkLocalCoord() (c ChunkCoord, s SubChunkCoord) {
+	return ChunkCoord(b>>ChunkHShift), SubChunkCoord(b&ChunkHMask)
+}
+
 // BlockXyz represents the position of a block within the world.
 type BlockXyz struct {
 	X BlockCoord
@@ -668,20 +673,10 @@ func (b *BlockXyz) AddXyz(dx BlockCoord, dy BlockYCoord, dz BlockCoord) (newb *B
 	}
 }
 
-func coordDivMod(num, denom int32) (div, mod int32) {
-	div = num / denom
-	mod = num % denom
-	if mod < 0 {
-		mod += denom
-		div -= 1
-	}
-	return
-}
-
 // Convert an (x, y, z) block coordinate to chunk coordinates.
 func (blockLoc *BlockXyz) ToChunkXz() (chunkLoc *ChunkXz) {
-	chunkX, _ := coordDivMod(int32(blockLoc.X), ChunkSizeH)
-	chunkZ, _ := coordDivMod(int32(blockLoc.Z), ChunkSizeH)
+	chunkX, _ := blockLoc.X.ToChunkLocalCoord()
+	chunkZ, _ := blockLoc.Z.ToChunkLocalCoord()
 
 	chunkLoc = &ChunkXz{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
 	return
@@ -690,8 +685,8 @@ func (blockLoc *BlockXyz) ToChunkXz() (chunkLoc *ChunkXz) {
 // Convert an (x, y, z) block coordinate to chunk coordinates and the
 // coordinates of the block within the chunk
 func (blockLoc *BlockXyz) ToChunkLocal() (chunkLoc *ChunkXz, subLoc *SubChunkXyz) {
-	chunkX, subX := coordDivMod(int32(blockLoc.X), ChunkSizeH)
-	chunkZ, subZ := coordDivMod(int32(blockLoc.Z), ChunkSizeH)
+	chunkX, subX := blockLoc.X.ToChunkLocalCoord()
+	chunkZ, subZ := blockLoc.Z.ToChunkLocalCoord()
 
 	chunkLoc = &ChunkXz{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
 	subLoc = &SubChunkXyz{SubChunkCoord(subX), SubChunkCoord(blockLoc.Y), SubChunkCoord(subZ)}
