@@ -46,14 +46,10 @@ func (d *DummyAuth) Authenticate(serverId, user string) (authenticated bool, err
 // Build a URL+query string based on a given server URL, serverId and user
 // input
 func (s *ServerAuth) BuildQuery(serverId, user string) (query string) {
-	query = s.Url + "?" + http.EncodeQuery(
-		map[string][]string{
-			"serverId": {serverId},
-			"user":     {user},
-		},
-	)
-
-	return
+	return s.Url + "?" + http.Values{
+		"serverId": {serverId},
+		"user":     {user},
+	}.Encode()
 }
 
 // Authenticate implements the Authenticator.Authenticate method
@@ -73,7 +69,7 @@ func (s *ServerAuth) Authenticate(serverId, user string) (authenticated bool, er
 
 	url := s.BuildQuery(serverId, user)
 
-	response, _, err := http.Get(url)
+	response, err := http.Get(url)
 	if err != nil {
 		return
 	}
