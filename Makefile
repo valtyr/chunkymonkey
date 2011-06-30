@@ -14,7 +14,8 @@ DIAGRAMS=diagrams/top-level-architecture.png
 all: $(BINARIES)
 
 cleanobj:
-	@gd $(GD_OPTS) -clean .
+	@gd $(GD_OPTS) -lib _obj -clean .
+	@gd $(GD_OPTS) -lib _test -clean .
 
 clean: cleanobj
 	@-rm -f $(BINARIES)
