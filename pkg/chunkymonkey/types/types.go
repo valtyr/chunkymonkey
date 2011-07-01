@@ -179,7 +179,7 @@ const (
 	FaceMaxValid = 5
 )
 
-func (f Face) GetDxyz() (dx BlockCoord, dy BlockYCoord, dz BlockCoord) {
+func (f Face) Dxyz() (dx BlockCoord, dy BlockYCoord, dz BlockCoord) {
 	switch f {
 	case FaceBottom:
 		dy = -1
@@ -516,7 +516,7 @@ type ChunkXz struct {
 }
 
 // Returns the world BlockXyz position of the (0, 0, 0) block in the chunk
-func (chunkLoc *ChunkXz) GetChunkCornerBlockXY() *BlockXyz {
+func (chunkLoc *ChunkXz) ChunkCornerBlockXY() *BlockXyz {
 	return &BlockXyz{
 		BlockCoord(chunkLoc.X) * ChunkSizeH,
 		0,
@@ -584,11 +584,11 @@ func (bi BlockIndex) ToSubChunkXyz() SubChunkXyz {
 	}
 }
 
-func (bi BlockIndex) GetBlockId(blocks []byte) BlockId {
+func (bi BlockIndex) BlockId(blocks []byte) BlockId {
 	return BlockId(blocks[bi])
 }
 
-func (bi BlockIndex) GetBlockData(blockData []byte) byte {
+func (bi BlockIndex) BlockData(blockData []byte) byte {
 	shift := (bi & 1) << 2
 	index := bi >> 1
 	return (blockData[index] >> shift) & 0xf

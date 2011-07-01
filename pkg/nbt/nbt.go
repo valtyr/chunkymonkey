@@ -25,7 +25,7 @@ const (
 )
 
 type ITag interface {
-	GetType() byte
+	Type() byte
 	Read(io.Reader) os.Error
 	Write(io.Writer) os.Error
 	Lookup(path string) ITag
@@ -64,7 +64,7 @@ func NewTagByType(tagType byte) (tag ITag) {
 
 type End struct{}
 
-func (end *End) GetType() byte {
+func (end *End) Type() byte {
 	return TagEnd
 }
 
@@ -85,8 +85,8 @@ type NamedTag struct {
 	Tag  ITag
 }
 
-func (n *NamedTag) GetType() byte {
-	return TagNamed | n.Tag.GetType()
+func (n *NamedTag) Type() byte {
+	return TagNamed | n.Tag.Type()
 }
 
 func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
@@ -116,7 +116,7 @@ func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
 }
 
 func (n *NamedTag) Write(writer io.Writer) (err os.Error) {
-	if err = binary.Write(writer, binary.BigEndian, n.Tag.GetType()); err != nil {
+	if err = binary.Write(writer, binary.BigEndian, n.Tag.Type()); err != nil {
 		return
 	}
 
@@ -145,7 +145,7 @@ type Byte struct {
 	Value int8
 }
 
-func (*Byte) GetType() byte {
+func (*Byte) Type() byte {
 	return TagByte
 }
 
@@ -165,7 +165,7 @@ type Short struct {
 	Value int16
 }
 
-func (*Short) GetType() byte {
+func (*Short) Type() byte {
 	return TagShort
 }
 
@@ -185,7 +185,7 @@ type Int struct {
 	Value int32
 }
 
-func (*Int) GetType() byte {
+func (*Int) Type() byte {
 	return TagInt
 }
 
@@ -205,7 +205,7 @@ type Long struct {
 	Value int64
 }
 
-func (*Long) GetType() byte {
+func (*Long) Type() byte {
 	return TagLong
 }
 
@@ -225,7 +225,7 @@ type Float struct {
 	Value float32
 }
 
-func (*Float) GetType() byte {
+func (*Float) Type() byte {
 	return TagFloat
 }
 
@@ -245,7 +245,7 @@ type Double struct {
 	Value float64
 }
 
-func (*Double) GetType() byte {
+func (*Double) Type() byte {
 	return TagDouble
 }
 
@@ -265,7 +265,7 @@ type ByteArray struct {
 	Value []byte
 }
 
-func (*ByteArray) GetType() byte {
+func (*ByteArray) Type() byte {
 	return TagByteArray
 }
 
@@ -306,7 +306,7 @@ type String struct {
 	Value string
 }
 
-func (*String) GetType() byte {
+func (*String) Type() byte {
 	return TagString
 }
 
@@ -348,7 +348,7 @@ type List struct {
 	Value   []ITag
 }
 
-func (*List) GetType() byte {
+func (*List) Type() byte {
 	return TagList
 }
 
@@ -410,7 +410,7 @@ type Compound struct {
 	Tags map[string]*NamedTag
 }
 
-func (*Compound) GetType() byte {
+func (*Compound) Type() byte {
 	return TagCompound
 }
 
@@ -423,7 +423,7 @@ func (c *Compound) Read(reader io.Reader) (err os.Error) {
 			return
 		}
 
-		if tag.GetType() == TagNamed|TagEnd {
+		if tag.Type() == TagNamed|TagEnd {
 			break
 		}
 
@@ -461,7 +461,7 @@ func Read(reader io.Reader) (compound *NamedTag, err os.Error) {
 		return
 	}
 
-	if compound.GetType() != TagNamed|TagCompound {
+	if compound.Type() != TagNamed|TagCompound {
 		return nil, os.NewError("Expected named compound tag")
 	}
 	return

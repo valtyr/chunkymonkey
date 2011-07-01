@@ -19,10 +19,10 @@ func init() {
 	expVarServerAuthTimeNs = expvar.NewInt("server-auth-time-ns")
 }
 
-// An Authenticator takes a serverId and a user string and attempts to
+// An IAuthenticator takes a serverId and a user string and attempts to
 // authenticate against a server. This interface allows for the use of a dummy
 // authentication server for testing purposes.
-type Authenticator interface {
+type IAuthenticator interface {
 	Authenticate(string, string) (bool, os.Error)
 }
 
@@ -38,7 +38,7 @@ type ServerAuth struct {
 	Url string
 }
 
-// Authenticate implements the Authenticator.Authenticate method
+// Authenticate implements the IAuthenticator.Authenticate method
 func (d *DummyAuth) Authenticate(serverId, user string) (authenticated bool, err os.Error) {
 	return d.Result, nil
 }
@@ -52,7 +52,7 @@ func (s *ServerAuth) BuildQuery(serverId, user string) (query string) {
 	}.Encode()
 }
 
-// Authenticate implements the Authenticator.Authenticate method
+// Authenticate implements the IAuthenticator.Authenticate method
 func (s *ServerAuth) Authenticate(serverId, user string) (authenticated bool, err os.Error) {
 	before := time.Nanoseconds()
 	defer func() {

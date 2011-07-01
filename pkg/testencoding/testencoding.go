@@ -9,9 +9,9 @@ import (
 )
 
 
-// BytesMatcher is the interface that tests if a sequence of bytes matches
+// IBytesMatcher is the interface that tests if a sequence of bytes matches
 // expectations.
-type BytesMatcher interface {
+type IBytesMatcher interface {
 	// Match tests if the given sequence of bytes matches. It returns
 	// matches=true if it matches correctly, and returns the number of bytes
 	// matched as n.
@@ -54,10 +54,10 @@ func (bm *BytesLiteral) Write(writer *bytes.Buffer) {
 // BytesMatcherInOrder matches a sequence of BytesMatchers that must match in
 // the order given.
 type BytesMatcherInOrder struct {
-	Matchers []BytesMatcher
+	Matchers []IBytesMatcher
 }
 
-func InOrder(matchers ...BytesMatcher) *BytesMatcherInOrder {
+func InOrder(matchers ...IBytesMatcher) *BytesMatcherInOrder {
 	return &BytesMatcherInOrder{matchers}
 }
 
@@ -87,15 +87,15 @@ func (bm *BytesMatcherInOrder) Write(writer *bytes.Buffer) {
 // BytesMatcherAnyOrder matches a set of BytesMatchers, but they do not have to
 // match in any particular order.
 type BytesMatcherAnyOrder struct {
-	Matchers []BytesMatcher
+	Matchers []IBytesMatcher
 }
 
-func AnyOrder(matchers ...BytesMatcher) *BytesMatcherAnyOrder {
+func AnyOrder(matchers ...IBytesMatcher) *BytesMatcherAnyOrder {
 	return &BytesMatcherAnyOrder{matchers}
 }
 
 func (bm *BytesMatcherAnyOrder) Match(b []byte) (n int, matches bool) {
-	toMatch := make([]BytesMatcher, len(bm.Matchers))
+	toMatch := make([]IBytesMatcher, len(bm.Matchers))
 	copy(toMatch, bm.Matchers)
 	var consumed int
 

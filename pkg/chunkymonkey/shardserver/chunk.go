@@ -97,7 +97,7 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 }
 
 func (chunk *Chunk) blockId(index BlockIndex) BlockId {
-	return BlockId(index.GetBlockData(chunk.blocks))
+	return BlockId(index.BlockData(chunk.blocks))
 }
 
 func (chunk *Chunk) SetBlockByIndex(blockIndex BlockIndex, blockId BlockId, blockData byte) {
@@ -181,7 +181,7 @@ func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockInde
 }
 
 func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *block.BlockType, blockData byte, ok bool) {
-	blockTypeId := index.GetBlockId(chunk.blocks)
+	blockTypeId := index.BlockId(chunk.blocks)
 
 	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok {
@@ -192,7 +192,7 @@ func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *block.BlockTy
 		return nil, 0, false
 	}
 
-	blockData = index.GetBlockData(chunk.blockData)
+	blockData = index.BlockData(chunk.blockData)
 	return
 }
 
@@ -257,11 +257,11 @@ func (chunk *Chunk) reqInteractBlock(player stub.IShardPlayerClient, held slot.S
 		return
 	}
 
-	if _, isBlockHeld := held.GetItemTypeId().ToBlockId(); isBlockHeld && blockType.Attachable {
+	if _, isBlockHeld := held.ItemTypeId().ToBlockId(); isBlockHeld && blockType.Attachable {
 		// The player is interacting with a block that can be attached to.
 
 		// Work out the position to put the block at.
-		dx, dy, dz := againstFace.GetDxyz()
+		dx, dy, dz := againstFace.Dxyz()
 		destLoc := target.AddXyz(dx, dy, dz)
 		if destLoc == nil {
 			// there is overflow with the translation, so do nothing
@@ -288,7 +288,7 @@ func (chunk *Chunk) reqPlaceItem(player stub.IShardPlayerClient, target *BlockXy
 	// items on farmland doesn't fit this current simplistic model). The block
 	// type for the block being placed against should probably contain this logic
 	// (i.e farmland block should know about the seed item).
-	heldBlockType, ok := slot.GetItemTypeId().ToBlockId()
+	heldBlockType, ok := slot.ItemTypeId().ToBlockId()
 	if !ok || slot.Count < 1 {
 		// Not a placeable item.
 		return
@@ -300,7 +300,7 @@ func (chunk *Chunk) reqPlaceItem(player stub.IShardPlayerClient, target *BlockXy
 	}
 
 	// Blocks can only replace certain blocks.
-	blockTypeId := index.GetBlockId(chunk.blocks)
+	blockTypeId := index.BlockId(chunk.blocks)
 	blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok || !blockType.Replaceable {
 		return
@@ -375,7 +375,7 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 			return
 		}
 
-		blockTypeId = index.GetBlockId(chunk.blocks)
+		blockTypeId = index.BlockId(chunk.blocks)
 		isWithinChunk = true
 	} else {
 		// The item is asking about a separate chunk.

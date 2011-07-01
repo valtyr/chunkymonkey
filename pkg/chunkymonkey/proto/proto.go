@@ -1958,7 +1958,7 @@ func WriteMapChunk(writer io.Writer, chunkLoc *ChunkXz, blocks, blockData, block
 	compressed.Close()
 	bs := buf.Bytes()
 
-	chunkCornerLoc := chunkLoc.GetChunkCornerBlockXY()
+	chunkCornerLoc := chunkLoc.ChunkCornerBlockXY()
 
 	var packet = struct {
 		PacketId         byte

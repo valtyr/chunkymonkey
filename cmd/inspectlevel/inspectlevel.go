@@ -116,7 +116,7 @@ func cmdChunk(args []string) (err os.Error) {
 	}
 
 	fmt.Printf("Chunk %#v data:\n", chunkLoc)
-	displayNbt(1, chunkResult.Reader.GetRootTag())
+	displayNbt(1, chunkResult.Reader.RootTag())
 
 	return
 }

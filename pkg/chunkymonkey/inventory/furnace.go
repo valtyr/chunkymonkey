@@ -61,7 +61,7 @@ func (inv *FurnaceInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick 
 			inv.reactionRemaining = reactionDuration
 		}
 	case furnaceSlotFuel:
-		cursorItemId := cursor.GetItemTypeId()
+		cursorItemId := cursor.ItemTypeId()
 		_, cursorIsFuel := inv.furnaceData.Fuels[cursorItemId]
 		if cursorIsFuel || cursor.IsEmpty() {
 			txState = inv.Inventory.Click(
@@ -85,8 +85,8 @@ func (inv *FurnaceInventory) stateCheck() {
 	fuelSlot := &inv.slots[furnaceSlotFuel]
 	outputSlot := &inv.slots[furnaceSlotOutput]
 
-	reaction, haveReagent := inv.furnaceData.Reactions[reagentSlot.GetItemTypeId()]
-	fuelTicks, haveFuel := inv.furnaceData.Fuels[fuelSlot.GetItemTypeId()]
+	reaction, haveReagent := inv.furnaceData.Reactions[reagentSlot.ItemTypeId()]
+	fuelTicks, haveFuel := inv.furnaceData.Fuels[fuelSlot.ItemTypeId()]
 
 	// Work out if the output slot is ready for items to be produced from the
 	// reaction.
@@ -98,7 +98,7 @@ func (inv *FurnaceInventory) stateCheck() {
 		} else if outputSlot.Count >= outputSlot.ItemType.MaxStack {
 			// Output is full.
 			outputReady = false
-		} else if outputSlot.GetItemTypeId() != reaction.Output || outputSlot.Data != reaction.OutputData {
+		} else if outputSlot.ItemTypeId() != reaction.Output || outputSlot.Data != reaction.OutputData {
 			// Output has a different type from the reaction.
 			outputReady = false
 		} else {

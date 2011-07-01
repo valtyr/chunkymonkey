@@ -88,7 +88,7 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 
 func (player *Player) getHeldItemTypeId() ItemTypeId {
 	heldSlot, _ := player.inventory.HeldItem()
-	heldItemId := heldSlot.GetItemTypeId()
+	heldItemId := heldSlot.ItemTypeId()
 	if heldItemId < 0 {
 		return 0
 	}
@@ -247,7 +247,7 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 	var clickedWindow window.IWindow
 	if windowId == WindowIdInventory {
 		clickedWindow = &player.inventory
-	} else if player.curWindow != nil && player.curWindow.GetWindowId() == windowId {
+	} else if player.curWindow != nil && player.curWindow.WindowId() == windowId {
 		clickedWindow = player.curWindow
 	} else {
 		log.Printf(
@@ -446,7 +446,7 @@ func (player *Player) reqInventoryTxState(block *BlockXyz, txId TxId, accepted b
 	}
 
 	buf := new(bytes.Buffer)
-	proto.WriteWindowTransaction(buf, player.curWindow.GetWindowId(), txId, accepted)
+	proto.WriteWindowTransaction(buf, player.curWindow.WindowId(), txId, accepted)
 	player.TransmitPacket(buf.Bytes())
 }
 

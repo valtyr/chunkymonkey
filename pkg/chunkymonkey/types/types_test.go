@@ -197,7 +197,7 @@ func TestChunkCoord_ToShardCoord(t *testing.T) {
 	}
 }
 
-func TestChunkXz_GetChunkCornerBlockXY(t *testing.T) {
+func TestChunkXz_ChunkCornerBlockXY(t *testing.T) {
 	type Test struct {
 		input    ChunkXz
 		expected BlockXyz
@@ -212,7 +212,7 @@ func TestChunkXz_GetChunkCornerBlockXY(t *testing.T) {
 	}
 
 	for _, r := range tests {
-		result := r.input.GetChunkCornerBlockXY()
+		result := r.input.ChunkCornerBlockXY()
 		if r.expected.X != result.X || r.expected.Y != result.Y || r.expected.Z != result.Z {
 			t.Errorf("ChunkXz%v expected BlockXyz%v got BlockXyz%v",
 				r.input, r.expected, result)

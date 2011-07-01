@@ -23,7 +23,7 @@ type IInventory interface {
 // IWindow is the interface on to types that represent a view on to multiple
 // inventories.
 type IWindow interface {
-	GetWindowId() WindowId
+	WindowId() WindowId
 	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState)
 	WriteWindowOpen(writer io.Writer) (err os.Error)
 	WriteWindowItems(writer io.Writer) (err os.Error)
@@ -114,7 +114,7 @@ func (w *Window) Init(windowId WindowId, invTypeId InvTypeId, viewer IWindowView
 	return
 }
 
-func (w *Window) GetWindowId() WindowId {
+func (w *Window) WindowId() WindowId {
 	return w.windowId
 }
 

@@ -34,10 +34,6 @@ func (item *Item) GetSlot() *slot.Slot {
 	return &item.Slot
 }
 
-func (item *Item) GetItemTypeId() ItemTypeId {
-	return item.ItemType.Id
-}
-
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
 	// TODO pass uses value instead of 0
 	err = proto.WriteItemSpawn(

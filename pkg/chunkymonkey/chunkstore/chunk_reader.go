@@ -70,6 +70,6 @@ func (r *chunkReader) Entities() []*nbt.Compound {
 	return entities
 }
 
-func (r *chunkReader) GetRootTag() *nbt.NamedTag {
+func (r *chunkReader) RootTag() *nbt.NamedTag {
 	return r.chunkTag
 }

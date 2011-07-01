@@ -11,7 +11,7 @@ import (
 
 
 type Test struct {
-	Serialized te.BytesMatcher
+	Serialized te.IBytesMatcher
 	Value      ITag
 }
 
@@ -23,7 +23,7 @@ func (test *Test) testRead(t *testing.T, ) {
 	bytesBuf := new(bytes.Buffer)
 	test.Serialized.Write(bytesBuf)
 
-	result := NewTagByType(test.Value.GetType())
+	result := NewTagByType(test.Value.Type())
 	err := result.Read(bytesBuf)
 
 	t.Logf("Test read %v", test)

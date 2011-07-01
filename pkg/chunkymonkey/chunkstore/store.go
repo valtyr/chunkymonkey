@@ -44,7 +44,7 @@ type IChunkReader interface {
 
 	// For low-level NBT access. Not for regular use. It's possible that this
 	// might return nil if the underlying system doesn't use NBT.
-	GetRootTag() *nbt.NamedTag
+	RootTag() *nbt.NamedTag
 }
 
 // Given the NamedTag for a level.dat, returns an appropriate

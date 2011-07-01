@@ -60,7 +60,7 @@ func (data *ChunkData) Entities() []*nbt.Compound {
 	return nil
 }
 
-func (data *ChunkData) GetRootTag() *nbt.NamedTag {
+func (data *ChunkData) RootTag() *nbt.NamedTag {
 	return nil
 }
 
@@ -115,7 +115,7 @@ func NewTestGenerator(seed int64) *TestGenerator {
 }
 
 func (gen *TestGenerator) LoadChunk(chunkLoc ChunkXz) (reader chunkstore.IChunkReader, err os.Error) {
-	baseBlockXyz := chunkLoc.GetChunkCornerBlockXY()
+	baseBlockXyz := chunkLoc.ChunkCornerBlockXY()
 
 	baseX, baseZ := baseBlockXyz.X, baseBlockXyz.Z
 

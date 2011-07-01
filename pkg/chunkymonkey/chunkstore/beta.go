@@ -87,7 +87,7 @@ type regionFileHeader [regionFileEdge * regionFileEdge]chunkOffset
 
 // Returns the chunk offset data for the given chunk. It assumes that chunkLoc
 // is within the chunk file - discarding upper bits of the X and Z coords.
-func (h regionFileHeader) GetOffset(chunkLoc ChunkXz) chunkOffset {
+func (h regionFileHeader) Offset(chunkLoc ChunkXz) chunkOffset {
 	x := chunkLoc.X & (regionFileEdge - 1)
 	z := chunkLoc.Z & (regionFileEdge - 1)
 	return h[x+(z<<regionFileEdgeShift)]
@@ -102,7 +102,7 @@ type chunkDataHeader struct {
 // Returns an io.Reader to correctly decompress data from the chunk data.
 // The reader passed in must be just after the chunkDataHeader in the source
 // data stream. The caller is responsible for closing the returned ReadCloser.
-func (cdh *chunkDataHeader) GetDataReader(raw io.Reader) (output io.ReadCloser, err os.Error) {
+func (cdh *chunkDataHeader) DataReader(raw io.Reader) (output io.ReadCloser, err os.Error) {
 	limitReader := io.LimitReader(raw, int64(cdh.DataSize))
 	switch cdh.Version {
 	case 1:
@@ -148,7 +148,7 @@ func (cfr *regionFileReader) Close() {
 }
 
 func (cfr *regionFileReader) ReadChunkData(chunkLoc ChunkXz) (r *chunkReader, err os.Error) {
-	offset := cfr.offsets.GetOffset(chunkLoc)
+	offset := cfr.offsets.Offset(chunkLoc)
 
 	if !offset.IsPresent() {
 		// Chunk doesn't exist in file
@@ -175,7 +175,7 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc ChunkXz) (r *chunkReader, er
 		return
 	}
 
-	dataReader, err := header.GetDataReader(cfr.file)
+	dataReader, err := header.DataReader(cfr.file)
 	if err != nil {
 		return
 	}

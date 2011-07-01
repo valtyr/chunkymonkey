@@ -43,7 +43,7 @@ func (s *Slot) IsEmpty() bool {
 	return s.Count == 0 || s.ItemType == nil
 }
 
-func (s *Slot) GetItemTypeId() (itemTypeId ItemTypeId) {
+func (s *Slot) ItemTypeId() (itemTypeId ItemTypeId) {
 	if s.ItemType != nil {
 		itemTypeId = s.ItemType.Id
 	} else {
@@ -52,16 +52,16 @@ func (s *Slot) GetItemTypeId() (itemTypeId ItemTypeId) {
 	return
 }
 
-func (s *Slot) GetAttr() (ItemTypeId, ItemCount, ItemData) {
-	return s.GetItemTypeId(), s.Count, s.Data
+func (s *Slot) Attr() (ItemTypeId, ItemCount, ItemData) {
+	return s.ItemTypeId(), s.Count, s.Data
 }
 
 func (s *Slot) SendUpdate(writer io.Writer, windowId WindowId, slotId SlotId) os.Error {
-	return proto.WriteWindowSetSlot(writer, windowId, slotId, s.GetItemTypeId(), s.Count, s.Data)
+	return proto.WriteWindowSetSlot(writer, windowId, slotId, s.ItemTypeId(), s.Count, s.Data)
 }
 
 func (s *Slot) SendEquipmentUpdate(writer io.Writer, entityId EntityId, slotId SlotId) os.Error {
-	return proto.WriteEntityEquipment(writer, entityId, slotId, s.GetItemTypeId(), s.Data)
+	return proto.WriteEntityEquipment(writer, entityId, slotId, s.ItemTypeId(), s.Data)
 }
 
 func (s *Slot) setCount(count ItemCount) {
