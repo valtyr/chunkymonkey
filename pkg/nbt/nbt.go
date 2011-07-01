@@ -56,6 +56,7 @@ func NewTagByType(tagType byte) (tag ITag) {
 	case TagCompound:
 		tag = new(Compound)
 	default:
+		// TODO Don't panic, produce an error.
 		panic(fmt.Sprintf("Invalid NBT tag type %#x", tagType))
 	}
 	return
@@ -335,7 +336,8 @@ func (*String) Lookup(path string) ITag {
 }
 
 type List struct {
-	Value []ITag
+	TagType byte
+	Value   []ITag
 }
 
 func (*List) GetType() byte {
@@ -348,6 +350,8 @@ func (l *List) Read(reader io.Reader) (err os.Error) {
 	if err != nil {
 		return
 	}
+
+	l.TagType = byte(tagType.Value)
 
 	var length Int
 	err = length.Read(reader)
@@ -371,7 +375,22 @@ func (l *List) Read(reader io.Reader) (err os.Error) {
 }
 
 func (l *List) Write(writer io.Writer) (err os.Error) {
-	// TODO
+	tagType := Byte{int8(l.TagType)}
+	if err = tagType.Write(writer); err != nil {
+		return
+	}
+
+	length := Int{int32(len(l.Value))}
+	if err = length.Write(writer); err != nil {
+		return
+	}
+
+	for _, tag := range l.Value {
+		if err = tag.Write(writer); err != nil {
+			return
+		}
+	}
+
 	return
 }
 
