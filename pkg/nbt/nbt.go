@@ -27,6 +27,7 @@ const (
 type ITag interface {
 	GetType() byte
 	Read(io.Reader) os.Error
+	Write(io.Writer) os.Error
 	Lookup(path string) ITag
 }
 
@@ -55,6 +56,7 @@ func NewTagByType(tagType byte) (tag ITag) {
 	case TagCompound:
 		tag = new(Compound)
 	default:
+		// TODO Don't panic, produce an error.
 		panic(fmt.Sprintf("Invalid NBT tag type %#x", tagType))
 	}
 	return
@@ -67,6 +69,10 @@ func (end *End) GetType() byte {
 }
 
 func (end *End) Read(io.Reader) os.Error {
+	return nil
+}
+
+func (end *End) Write(io.Writer) os.Error {
 	return nil
 }
 
@@ -109,6 +115,19 @@ func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
 	return
 }
 
+func (n *NamedTag) Write(writer io.Writer) (err os.Error) {
+	if err = binary.Write(writer, binary.BigEndian, n.Tag.GetType()); err != nil {
+		return
+	}
+
+	name := String{n.Name}
+	if err = name.Write(writer); err != nil {
+		return
+	}
+
+	return n.Tag.Write(writer)
+}
+
 func (n *NamedTag) Lookup(path string) ITag {
 	components := strings.Split(path, "/", 2)
 	if components[0] != n.Name {
@@ -138,6 +157,10 @@ func (b *Byte) Read(reader io.Reader) (err os.Error) {
 	return binary.Read(reader, binary.BigEndian, &b.Value)
 }
 
+func (b *Byte) Write(writer io.Writer) (err os.Error) {
+	return binary.Write(writer, binary.BigEndian, &b.Value)
+}
+
 type Short struct {
 	Value int16
 }
@@ -148,6 +171,10 @@ func (*Short) GetType() byte {
 
 func (s *Short) Read(reader io.Reader) (err os.Error) {
 	return binary.Read(reader, binary.BigEndian, &s.Value)
+}
+
+func (s *Short) Write(writer io.Writer) (err os.Error) {
+	return binary.Write(writer, binary.BigEndian, &s.Value)
 }
 
 func (*Short) Lookup(path string) ITag {
@@ -166,6 +193,10 @@ func (i *Int) Read(reader io.Reader) (err os.Error) {
 	return binary.Read(reader, binary.BigEndian, &i.Value)
 }
 
+func (i *Int) Write(writer io.Writer) (err os.Error) {
+	return binary.Write(writer, binary.BigEndian, &i.Value)
+}
+
 func (*Int) Lookup(path string) ITag {
 	return nil
 }
@@ -180,6 +211,10 @@ func (*Long) GetType() byte {
 
 func (l *Long) Read(reader io.Reader) (err os.Error) {
 	return binary.Read(reader, binary.BigEndian, &l.Value)
+}
+
+func (l *Long) Write(writer io.Writer) (err os.Error) {
+	return binary.Write(writer, binary.BigEndian, &l.Value)
 }
 
 func (*Long) Lookup(path string) ITag {
@@ -198,6 +233,10 @@ func (f *Float) Read(reader io.Reader) (err os.Error) {
 	return binary.Read(reader, binary.BigEndian, &f.Value)
 }
 
+func (f *Float) Write(writer io.Writer) (err os.Error) {
+	return binary.Write(writer, binary.BigEndian, &f.Value)
+}
+
 func (*Float) Lookup(path string) ITag {
 	return nil
 }
@@ -212,6 +251,10 @@ func (*Double) GetType() byte {
 
 func (d *Double) Read(reader io.Reader) (err os.Error) {
 	return binary.Read(reader, binary.BigEndian, &d.Value)
+}
+
+func (d *Double) Write(writer io.Writer) (err os.Error) {
+	return binary.Write(writer, binary.BigEndian, &d.Value)
 }
 
 func (*Double) Lookup(path string) ITag {
@@ -241,6 +284,17 @@ func (b *ByteArray) Read(reader io.Reader) (err os.Error) {
 	}
 
 	b.Value = bs
+	return
+}
+
+func (b *ByteArray) Write(writer io.Writer) (err os.Error) {
+	length := Int{int32(len(b.Value))}
+
+	if err = length.Write(writer); err != nil {
+		return
+	}
+
+	_, err = writer.Write(b.Value)
 	return
 }
 
@@ -274,12 +328,24 @@ func (s *String) Read(reader io.Reader) (err os.Error) {
 	return
 }
 
+func (s *String) Write(writer io.Writer) (err os.Error) {
+	length := Short{int16(len(s.Value))}
+
+	if err = length.Write(writer); err != nil {
+		return
+	}
+
+	_, err = writer.Write([]byte(s.Value))
+	return
+}
+
 func (*String) Lookup(path string) ITag {
 	return nil
 }
 
 type List struct {
-	Value []ITag
+	TagType byte
+	Value   []ITag
 }
 
 func (*List) GetType() byte {
@@ -292,6 +358,8 @@ func (l *List) Read(reader io.Reader) (err os.Error) {
 	if err != nil {
 		return
 	}
+
+	l.TagType = byte(tagType.Value)
 
 	var length Int
 	err = length.Read(reader)
@@ -311,6 +379,26 @@ func (l *List) Read(reader io.Reader) (err os.Error) {
 	}
 
 	l.Value = list
+	return
+}
+
+func (l *List) Write(writer io.Writer) (err os.Error) {
+	tagType := Byte{int8(l.TagType)}
+	if err = tagType.Write(writer); err != nil {
+		return
+	}
+
+	length := Int{int32(len(l.Value))}
+	if err = length.Write(writer); err != nil {
+		return
+	}
+
+	for _, tag := range l.Value {
+		if err = tag.Write(writer); err != nil {
+			return
+		}
+	}
+
 	return
 }
 
@@ -344,6 +432,16 @@ func (c *Compound) Read(reader io.Reader) (err os.Error) {
 
 	c.Tags = tags
 	return
+}
+
+func (c *Compound) Write(writer io.Writer) (err os.Error) {
+	for _, tag := range c.Tags {
+		if err = tag.Write(writer); err != nil {
+			return
+		}
+	}
+
+	return binary.Write(writer, binary.BigEndian, byte(TagEnd))
 }
 
 func (c *Compound) Lookup(path string) (tag ITag) {

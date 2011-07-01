@@ -152,7 +152,7 @@ func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
 		} else {
 			// Odd - we don't have a shard connection for that chunk.
 			log.Printf("chunkSubscriptions.unsubscribeFromChunks() attempted to "+
-				"unsubscribe from chunk @%v in unconnected shard @%v.",chunkLoc, shardLoc)
+				"unsubscribe from chunk @%v in unconnected shard @%v.", chunkLoc, shardLoc)
 		}
 	}
 }
