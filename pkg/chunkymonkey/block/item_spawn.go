@@ -39,7 +39,7 @@ func (bdi *blockDropItem) drop(instance *BlockInstance) {
 		log.Printf(
 			"Warning: tried to create item with type ID #%d - "+
 				"but no such item type is defined. block and item "+
-				"definitions out of sync?",bdi.DroppedItem)
+				"definitions out of sync?", bdi.DroppedItem)
 
 		return
 	}

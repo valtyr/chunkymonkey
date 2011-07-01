@@ -374,11 +374,11 @@ const (
 	MinChunkRadius = 2
 
 	// Sometimes it is useful to convert block coordinates to pixels
-	PixelShift = 5
-	PixelsPerBlock = 1<<PixelShift
+	PixelShift     = 5
+	PixelsPerBlock = 1 << PixelShift
 
 	PixelsPerChunkShift = (ChunkHShift + PixelShift)
-	PixelsPerChunk = 1<<PixelsPerChunkShift
+	PixelsPerChunk      = 1 << PixelsPerChunkShift
 
 	// Millipixels are used in velocity values
 	MilliPixelsPerPixel = 1000
@@ -571,7 +571,7 @@ func (subLoc *SubChunkXyz) BlockIndex() (BlockIndex, bool) {
 
 	return ((BlockIndex(subLoc.X) << (ChunkHShift + ChunkYShift)) |
 		BlockIndex(subLoc.Y) |
-		(BlockIndex(subLoc.Z) << ChunkYShift)),true
+		(BlockIndex(subLoc.Z) << ChunkYShift)), true
 }
 
 type BlockIndex uint32
@@ -617,7 +617,7 @@ type BlockCoord int32
 type BlockYCoord int8
 
 func (b BlockCoord) ToChunkLocalCoord() (c ChunkCoord, s SubChunkCoord) {
-	return ChunkCoord(b>>ChunkHShift), SubChunkCoord(b&ChunkHMask)
+	return ChunkCoord(b >> ChunkHShift), SubChunkCoord(b & ChunkHMask)
 }
 
 // BlockXyz represents the position of a block within the world.
