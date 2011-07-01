@@ -64,9 +64,8 @@ func TestSerialization(t *testing.T) {
 		{"\x01\x00\x00\x00\x02\x01\x02", &List{TagByte, []ITag{&Byte{1}, &Byte{2}}}},
 		{"\x03\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x02", &List{TagInt, []ITag{&Int{1}, &Int{2}}}},
 		{
-			"\x0a" + // Compound
-				"\x01\x00\x03foo\x01" + // NamedTag "foo"
-				"\x80", // End
+			"\x01\x00\x03foo\x01" + // NamedTag "foo" Byte{1}
+				"\x00", // End
 			&Compound{
 				map[string]*NamedTag{
 					"foo": &NamedTag{"foo", &Byte{1}},

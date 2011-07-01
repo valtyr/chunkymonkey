@@ -116,8 +116,16 @@ func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
 }
 
 func (n *NamedTag) Write(writer io.Writer) (err os.Error) {
-	// TODO
-	return
+	if err = binary.Write(writer, binary.BigEndian, n.Tag.GetType()); err != nil {
+		return
+	}
+
+	name := String{n.Name}
+	if err = name.Write(writer); err != nil {
+		return
+	}
+
+	return n.Tag.Write(writer)
 }
 
 func (n *NamedTag) Lookup(path string) ITag {
@@ -427,8 +435,13 @@ func (c *Compound) Read(reader io.Reader) (err os.Error) {
 }
 
 func (c *Compound) Write(writer io.Writer) (err os.Error) {
-	// TODO
-	return
+	for _, tag := range c.Tags {
+		if err = tag.Write(writer); err != nil {
+			return
+		}
+	}
+
+	return binary.Write(writer, binary.BigEndian, byte(TagEnd))
 }
 
 func (c *Compound) Lookup(path string) (tag ITag) {
