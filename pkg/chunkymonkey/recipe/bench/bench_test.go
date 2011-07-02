@@ -44,11 +44,14 @@ func Benchmark_RecipeSet_Match_Simple2x2(b *testing.B) {
 
 	inputs := recipe.Slots(log, empty, empty, empty)
 
+	var matcher recipe.RecipeSetMatcher
+	matcher.Init(recipes)
+
 	b.ResetTimer()
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		recipes.Match(2, 2, inputs)
+		matcher.Match(2, 2, inputs)
 	}
 }
 
@@ -62,10 +65,13 @@ func Benchmark_RecipeSet_Match_Nothing2x2(b *testing.B) {
 
 	inputs := recipe.Slots(log, log, log, log)
 
+	var matcher recipe.RecipeSetMatcher
+	matcher.Init(recipes)
+
 	b.ResetTimer()
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		recipes.Match(2, 2, inputs)
+		matcher.Match(2, 2, inputs)
 	}
 }

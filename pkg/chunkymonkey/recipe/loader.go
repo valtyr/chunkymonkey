@@ -168,7 +168,7 @@ func LoadRecipes(reader io.Reader, itemTypes itemtype.ItemTypeMap) (recipes *Rec
 		}
 	}
 
-	recipes.Init()
+	recipes.init()
 
 	return
 }

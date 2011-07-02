@@ -132,10 +132,13 @@ func TestRecipeSet_Match(t *testing.T) {
 		},
 	}
 
+	var matcher RecipeSetMatcher
+	matcher.Init(recipes)
+
 	for i := range tests {
 		test := &tests[i]
 		t.Logf("Test #%d:\n%s", i, test.comment)
-		output := recipes.Match(test.width, test.height, test.input)
+		output := matcher.Match(test.width, test.height, test.input)
 		assertSlotEq(t, test.expect, &output)
 	}
 

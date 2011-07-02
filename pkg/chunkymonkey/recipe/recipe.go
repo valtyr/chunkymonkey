@@ -24,13 +24,13 @@ type Recipe struct {
 	Output  slot.Slot
 }
 
-func (r *Recipe) match(width, height byte, slots []*slot.Slot) (isMatch bool) {
+func (r *Recipe) match(width, height byte, slots []slot.Slot, indices []int) (isMatch bool) {
 	isMatch = false
 	if width != r.Width || height != r.Height {
 		return
 	}
 	for i := range r.Input {
-		inSlot := slots[i]
+		inSlot := &slots[indices[i]]
 		rSlot := &r.Input[i]
 		if inSlot.ItemType != rSlot.ItemType || inSlot.Data != rSlot.Data {
 			return
@@ -42,17 +42,19 @@ func (r *Recipe) match(width, height byte, slots []*slot.Slot) (isMatch bool) {
 }
 
 func (r *Recipe) hash() (hash uint32) {
-	slots := make([]*slot.Slot, len(r.Input))
+	indices := make([]int, len(r.Input))
 	for i := range r.Input {
-		slots[i] = &r.Input[i]
+		indices[i] = i
 	}
-	return inputHash(slots)
+	return inputHash(r.Input, indices)
 }
 
-func inputHash(slots []*slot.Slot) (hash uint32) {
+func inputHash(slots []slot.Slot, indices []int) (hash uint32) {
 	// Hash based on FNV-1a.
 	hash = fnv1_32_offset
-	for _, slot := range slots {
+	for _, index := range indices {
+		slot := &slots[index]
+
 		// Hash the lower 16 bits of the item type ID.
 		itemTypeId := slot.ItemTypeId()
 		hash ^= uint32(itemTypeId & 0xff)
@@ -71,13 +73,11 @@ func inputHash(slots []*slot.Slot) (hash uint32) {
 type RecipeSet struct {
 	recipes []Recipe
 
-	// TODO Recipe index data for fast lookup by recipe dimensions, or maybe by
-	// some sort of recipe input hash?
 	// Recipe by inputs hash.
 	recipeHash map[uint32][]*Recipe
 }
 
-func (r *RecipeSet) Init() {
+func (r *RecipeSet) init() {
 	r.recipeHash = make(map[uint32][]*Recipe)
 	for i := range r.recipes {
 		recipe := &r.recipes[i]
@@ -88,6 +88,21 @@ func (r *RecipeSet) Init() {
 	}
 }
 
+
+// RecipeSetMatcher looks up recipes within a RecipeSet, an instance must be
+// used from a single goroutine.
+type RecipeSetMatcher struct {
+	recipes *RecipeSet
+
+	// slotBuf is used in searching for a match. Having it in the struct saves
+	// reallocation per call to Match().
+	indicesArray [maxRecipeWidth * maxRecipeHeight]int
+}
+
+func (r *RecipeSetMatcher) Init(recipes *RecipeSet) {
+	r.recipes = recipes
+}
+
 // Match looks for a matching recipe for the input slots, and returns a Slot
 // with the result of any matching recipe. output.ItemType==nil and
 // output.Count==0 if nothing matched).
@@ -95,7 +110,7 @@ func (r *RecipeSet) Init() {
 // The order of slots is left to right, then top to bottom.
 //
 // Precondition: len(slots) == width * height
-func (r *RecipeSet) Match(width, height int, slots []slot.Slot) (output slot.Slot) {
+func (r *RecipeSetMatcher) Match(width, height int, slots []slot.Slot) (output slot.Slot) {
 
 	// Precondition check.
 	if width*height != len(slots) || width > maxRecipeWidth || height > maxRecipeHeight {
@@ -135,20 +150,20 @@ func (r *RecipeSet) Match(width, height int, slots []slot.Slot) (output slot.Slo
 		return
 	}
 
-	// Make used rectangle into a linear array of []*Slot.
-	rectSlots := make([]*slot.Slot, widthUsed*heightUsed)
+	// Make used rectangle into a linear array of []int indices.
+	indices := r.indicesArray[:widthUsed*heightUsed]
 	outIndex := 0
 	for y := minY; y <= maxY; y++ {
 		for x := minX; x <= maxX; x++ {
 			inIndex := y*width + x
-			rectSlots[outIndex] = &slots[inIndex]
+			indices[outIndex] = inIndex
 			outIndex++
 		}
 	}
 
-	hash := inputHash(rectSlots)
+	hash := inputHash(slots, indices)
 
-	bucket, ok := r.recipeHash[hash]
+	bucket, ok := r.recipes.recipeHash[hash]
 
 	if !ok {
 		return
@@ -157,7 +172,7 @@ func (r *RecipeSet) Match(width, height int, slots []slot.Slot) (output slot.Slo
 	// Find the matching recipe, if any.
 	for i := range bucket {
 		recipe := bucket[i]
-		if recipe.match(byte(widthUsed), byte(heightUsed), rectSlots) {
+		if recipe.match(byte(widthUsed), byte(heightUsed), slots, indices) {
 			// Found matching recipe.
 			output = recipe.Output
 		}
