@@ -1,86 +1,14 @@
 package player
 
 import (
-	"flag"
-	"os"
 	"bytes"
-	"runtime/pprof"
 	"strconv"
-	"sync"
 	"strings"
 
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
-
-var profileCmdsEnabled = flag.Bool("profile_cmds", false, "Enable profiling commands")
-
-var profiling bool
-var profilingMutex sync.Mutex
-
-const cpuprofileCmd = "cpuprofile"
-const cpuprofileUsage = ""
-const cpuprofileDesc = ""
-
-func (player *Player) cmdCpuProfile(message string) {
-	if !*profileCmdsEnabled {
-		return
-	}
-
-	profilingMutex.Lock()
-	defer profilingMutex.Unlock()
-
-	filename := "/tmp/chunkymonkey.cpu.pprof"
-
-	if !profiling {
-		w, err := os.Create(filename)
-		if err != nil {
-			buf := new(bytes.Buffer)
-			proto.WriteChatMessage(buf, err.String())
-			player.TransmitPacket(buf.Bytes())
-			return
-		}
-		pprof.StartCPUProfile(w)
-		profiling = true
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, "CPU profiling started and writing to "+filename)
-		player.TransmitPacket(buf.Bytes())
-	} else {
-		pprof.StopCPUProfile()
-		profiling = false
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, "CPU profiling stopped")
-		player.TransmitPacket(buf.Bytes())
-	}
-}
-
-const memprofileCmd = "memprofile"
-const memprofileUsage = ""
-const memprofileDesc = ""
-
-func (player *Player) cmdMemProfile(message string) {
-	if !*profileCmdsEnabled {
-		return
-	}
-
-	filename := "/tmp/chunkymonkey.heap.pprof"
-
-	w, err := os.Create(filename)
-	if err != nil {
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, err.String())
-		player.TransmitPacket(buf.Bytes())
-		return
-	}
-	defer w.Close()
-
-	pprof.WriteHeapProfile(w)
-
-	buf := new(bytes.Buffer)
-	proto.WriteChatMessage(buf, "Heap profile written to "+filename)
-	player.TransmitPacket(buf.Bytes())
-}
 
 const giveCmd = "give"
 const giveUsage = "/give <item ID> [<quantity> [<data>]]"

@@ -88,14 +88,6 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 		player.cmdGive(msg)
 	})
 	player.gameRules.CommandFramework.AddCommand(cmdGive)
-	cmdMemProfile := command.NewCommand(memprofileCmd, memprofileDesc, memprofileUsage, func(msg string) {
-		player.cmdMemProfile(msg)
-	})
-	player.gameRules.CommandFramework.AddCommand(cmdMemProfile)
-	cpuProfileCmd := command.NewCommand(cpuprofileCmd, cpuprofileDesc, cpuprofileUsage, func(msg string) {
-		player.cmdCpuProfile(msg)
-	})
-	player.gameRules.CommandFramework.AddCommand(cpuProfileCmd)
 
 	return player
 }
