@@ -38,6 +38,10 @@ func (cf *CommandFramework) Prefix() string {
 	return cf.prefix
 }
 
+func (cf *CommandFramework) Commands() map[string]*Command {
+	return cf.cmds
+}
+
 func (cf *CommandFramework) update() {
 	for {
 		select {
