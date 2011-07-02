@@ -11,10 +11,10 @@ import (
 
 // GameRules is a container type for block, item and recipe definitions.
 type GameRules struct {
-	BlockTypes  block.BlockTypeList
-	ItemTypes   itemtype.ItemTypeMap
-	Recipes     *recipe.RecipeSet
-	FurnaceData recipe.FurnaceData
+	BlockTypes       block.BlockTypeList
+	ItemTypes        itemtype.ItemTypeMap
+	Recipes          *recipe.RecipeSet
+	FurnaceData      recipe.FurnaceData
 	CommandFramework *command.CommandFramework
 }
 
@@ -40,15 +40,15 @@ func LoadGameRules(blocksDefFile, itemsDefFile, recipesDefFile, furnaceDefFile s
 	if err != nil {
 		return
 	}
-	
+
 	// TODO: Load the prefix from a config file
 	cmdFramework := command.NewCommandFramework("/")
 
 	rules = &GameRules{
-		BlockTypes:  blockTypes,
-		ItemTypes:   itemTypes,
-		Recipes:     recipes,
-		FurnaceData: furnaceData,
+		BlockTypes:       blockTypes,
+		ItemTypes:        itemTypes,
+		Recipes:          recipes,
+		FurnaceData:      furnaceData,
 		CommandFramework: cmdFramework,
 	}
 
