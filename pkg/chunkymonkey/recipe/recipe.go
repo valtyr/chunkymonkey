@@ -96,7 +96,7 @@ type RecipeSetMatcher struct {
 
 	// slotBuf is used in searching for a match. Having it in the struct saves
 	// reallocation per call to Match().
-	indicesArray [maxRecipeWidth*maxRecipeHeight]int
+	indicesArray [maxRecipeWidth * maxRecipeHeight]int
 }
 
 func (r *RecipeSetMatcher) Init(recipes *RecipeSet) {
