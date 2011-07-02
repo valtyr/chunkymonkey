@@ -19,7 +19,7 @@ func (test *Test) String() string {
 	return fmt.Sprintf("Test{Serialized=%v, Value=%#v}", test.Serialized, test.Value)
 }
 
-func (test *Test) testRead(t *testing.T, ) {
+func (test *Test) testRead(t *testing.T) {
 	bytesBuf := new(bytes.Buffer)
 	test.Serialized.Write(bytesBuf)
 
@@ -75,7 +75,7 @@ func TestSerialization(t *testing.T) {
 			// Single item Compound.
 			te.InOrder(
 				te.LiteralString("\x01\x00\x03foo\x01"), // NamedTag "foo" Byte{1}
-				te.LiteralString("\x00"), // End
+				te.LiteralString("\x00"),                // End
 			),
 			&Compound{
 				map[string]*NamedTag{
@@ -108,14 +108,14 @@ func TestSerialization(t *testing.T) {
 			),
 			&Compound{
 				map[string]*NamedTag{
-					"Byte": &NamedTag{"Byte", &Byte{1}},
-					"Short": &NamedTag{"Short", &Short{2}},
-					"Int": &NamedTag{"Int", &Int{3}},
-					"Long": &NamedTag{"Long", &Long{4}},
-					"Float": &NamedTag{"Float", &Float{5}},
+					"Byte":   &NamedTag{"Byte", &Byte{1}},
+					"Short":  &NamedTag{"Short", &Short{2}},
+					"Int":    &NamedTag{"Int", &Int{3}},
+					"Long":   &NamedTag{"Long", &Long{4}},
+					"Float":  &NamedTag{"Float", &Float{5}},
 					"Double": &NamedTag{"Double", &Double{6}},
 					"String": &NamedTag{"String", &String{"foo"}},
-					"List": &NamedTag{"List", &List{TagByte, []ITag{&Byte{1}, &Byte{2}}}},
+					"List":   &NamedTag{"List", &List{TagByte, []ITag{&Byte{1}, &Byte{2}}}},
 				},
 			},
 		},
