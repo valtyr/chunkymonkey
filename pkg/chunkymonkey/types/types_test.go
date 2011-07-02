@@ -398,6 +398,9 @@ func TestAddXyz_Overflow(t *testing.T) {
 	}
 	maxblock := &BlockXyz{MaxXCoord, MaxYCoord, MaxZCoord}
 	minblock := &BlockXyz{MinXCoord, MinYCoord, MinZCoord}
+	zeroblock := &BlockXyz{0, 0, 0}
+	oneblock := &BlockXyz{1, 10, 1}
+	negblock := &BlockXyz{-1, 10, -1}
 	var tests = []Test{
 		{&BlockXyz{0, 0, 0}, 5, 5, 5, &BlockXyz{5, 5, 5}},
 		{maxblock, 0, 0, 0, maxblock},
@@ -410,6 +413,13 @@ func TestAddXyz_Overflow(t *testing.T) {
 		{minblock, 0, 0, -1, nil},
 		{&BlockXyz{MaxXCoord, 0, 0}, 0, 5, -5, &BlockXyz{MaxXCoord, 5, -5}},
 		{&BlockXyz{MinXCoord, 0, 0}, 0, 5, -5, &BlockXyz{MinXCoord, 5, -5}},
+		{&BlockXyz{-156, 70, -91}, -1, 0, 0, &BlockXyz{-157, 70, -91}},
+		{zeroblock, -1, 0, -1, &BlockXyz{-1, 0, -1}},
+		{zeroblock, 1, 1, 1, &BlockXyz{1, 1, 1}},
+		{oneblock, 5, 5, 5, &BlockXyz{6, 15, 6}},
+		{oneblock, -5, -5, -5, &BlockXyz{-4, 5, -4}},
+		{negblock, -5, -5, -5, &BlockXyz{-6, 5, -6}},
+		{negblock, 5, 5, 5, &BlockXyz{4, 15, 4}},
 	}
 
 	for _, r := range tests {
@@ -418,9 +428,10 @@ func TestAddXyz_Overflow(t *testing.T) {
 			if result != nil {
 				t.Errorf("BlockXyz%v expected nil got BlockXyz%v", r.input, result)
 			}
+		} else if result == nil && r.expected != nil {
+			t.Errorf("BlockXyz%v expected BlockXyz%v got nil", r.input, r.expected)
 		} else if r.expected.X != result.X || r.expected.Y != result.Y || r.expected.Z != result.Z {
-			t.Errorf("BlockXyz%v expected BlockXyz%v got BlockXyz%v",
-				r.input, r.expected, result)
+			t.Errorf("BlockXyz%v expected BlockXyz%v got BlockXyz%v", r.input, r.expected, result)
 		}
 	}
 }
