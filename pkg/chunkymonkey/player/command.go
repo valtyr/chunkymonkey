@@ -92,6 +92,7 @@ func (player *Player) cmdGive(message string) {
 		Count:    ItemCount(quantity),
 		Data:     ItemData(data),
 	}
-
-	player.reqGiveItem(&player.position, &item)
+	player.Enqueue(func(player *Player) {
+		player.reqGiveItem(&player.position, &item)
+	})
 }
