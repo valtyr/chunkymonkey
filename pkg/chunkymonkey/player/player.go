@@ -89,6 +89,11 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	})
 	player.gameRules.CommandFramework.AddCommand(cmdGive)
 
+	cmdHelp := command.NewCommand(helpCmd, helpDesc, helpUsage, func(msg string) {
+		player.cmdHelp(msg, player.gameRules.CommandFramework)
+	})
+	player.gameRules.CommandFramework.AddCommand(cmdHelp)
+
 	return player
 }
 
