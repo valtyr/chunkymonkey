@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"chunkymonkey/block"
+	"chunkymonkey/command"
 	"chunkymonkey/itemtype"
 	"chunkymonkey/recipe"
-	"chunkymonkey/command"
 )
 
 // GameRules is a container type for block, item and recipe definitions.

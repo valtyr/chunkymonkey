@@ -1,8 +1,8 @@
 package command
 
 import (
-	"os"
 	"strings"
+	"os"
 )
 
 var ErrCmdExists = os.NewError("The command already exists.")

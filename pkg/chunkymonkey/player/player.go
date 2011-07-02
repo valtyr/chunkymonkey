@@ -10,13 +10,13 @@ import (
 	"os"
 	"sync"
 
+	"chunkymonkey/command"
 	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 	"chunkymonkey/window"
-	"chunkymonkey/command"
 )
 
 var (
