@@ -185,9 +185,9 @@ func (f Face) Dxyz() (dx BlockCoord, dy BlockYCoord, dz BlockCoord) {
 		dy = -1
 	case FaceTop:
 		dy = 1
-	case FaceWest:
-		dz = -1
 	case FaceEast:
+		dz = -1
+	case FaceWest:
 		dz = 1
 	case FaceNorth:
 		dx = -1
