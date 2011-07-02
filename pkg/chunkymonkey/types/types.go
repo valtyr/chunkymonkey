@@ -637,49 +637,44 @@ func (b *BlockXyz) IsNull() bool {
 	return b.Y == -1 && b.X == -1 && b.Z == -1
 }
 
-// val: 0, min: 0, max: 255, delta: -1
-func willOverflow(val, min, max, delta int64) bool {
-	if delta == 0 {
-		return false
-	} else if val > 0 && delta > 0 {
-		return delta > (max - val)
-	} else if val > 0 && delta < 0 {
-		return delta < (min - val)
-	} else if val < 0 && delta > 0 {
-		return delta > (max - val)
-	} else if val < 0 && delta < 0 {
-		return delta < (min - val)
-	} else if val == 0 && delta > 0 {
-		return delta > max
-	} else if val == 0 && delta < 0 {
-		return delta < min
-	}
-
-	return false
-}
-
 // Translate one block location to another by dx, dy, dz, checking for
 // overflow. If overflow occurs, return nil. There may be a more elegant
 // solution to check this, here we go for simplicity and clarity. This
 // function assumes we cannot have a negative Y coordinate.
 func (b *BlockXyz) AddXyz(dx BlockCoord, dy BlockYCoord, dz BlockCoord) (newb *BlockXyz) {
-	if willOverflow(int64(b.X), MinXCoord, MaxXCoord, int64(dx)) {
+	// Check for overflow
+	sumx := b.X + dx
+	if b.X >= 0 && sumx < dx {
+		return nil
+	} else if b.X < 0 && sumx > dx {
 		return nil
 	}
 
-	if willOverflow(int64(b.Y), MinYCoord, MaxYCoord, int64(dy)) {
+	sumy := b.Y + dy
+	if b.Y >= 0 && sumy < dy {
+		return nil
+	} else if b.Y < 0 && sumy > dy {
 		return nil
 	}
 
-	if willOverflow(int64(b.Z), MinZCoord, MaxZCoord, int64(dz)) {
+	sumz := b.Z + dz
+	if b.Z >= 0 && sumz < dz {
+		return nil
+	} else if b.Z < 0 && sumz > dz {
 		return nil
 	}
 
-	return &BlockXyz{
-		b.X + dx,
-		b.Y + dy,
-		b.Z + dz,
+	if sumx > MaxXCoord || sumx < MinXCoord {
+		return nil
 	}
+	if sumy > MaxYCoord || sumy < MinYCoord {
+		return nil
+	}
+	if sumz > MaxZCoord || sumz < MinZCoord {
+		return nil
+	}
+
+	return &BlockXyz{sumx, sumy, sumz}
 }
 
 // Convert an (x, y, z) block coordinate to chunk coordinates.
