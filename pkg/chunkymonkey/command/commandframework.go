@@ -34,6 +34,10 @@ func (cf *CommandFramework) RemoveCommand(trigger string) {
 	cf.modifyCmds <- &Command{Trigger: trigger}
 }
 
+func (cf *CommandFramework) Prefix() string {
+	return cf.prefix
+}
+
 func (cf *CommandFramework) update() {
 	for {
 		select {
