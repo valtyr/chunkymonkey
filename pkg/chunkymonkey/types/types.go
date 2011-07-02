@@ -392,11 +392,6 @@ type AbsXyz struct {
 	X, Y, Z AbsCoord
 }
 
-// TODO Remove - this method is wasted space.
-func (p *AbsXyz) Copy() *AbsXyz {
-	return &AbsXyz{p.X, p.Y, p.Z}
-}
-
 // Convert an (x, z) absolute coordinate pair to chunk coordinates
 func (p *AbsXyz) ToChunkXz() ChunkXz {
 	return ChunkXz{

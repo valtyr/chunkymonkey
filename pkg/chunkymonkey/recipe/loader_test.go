@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"chunkymonkey/itemtype"
+	"chunkymonkey/slot"
 )
 
 const threeRecipes = ("[\n" +
@@ -99,8 +100,8 @@ func TestLoadRecipes(t *testing.T) {
 	if recipes == nil {
 		t.Fatal("Got nil *RecipeSet")
 	}
-	if len(recipes.Recipes) != 5 {
-		t.Fatalf("Expected 5 recipes, got: %d", len(recipes.Recipes))
+	if len(recipes.recipes) != 5 {
+		t.Fatalf("Expected 5 recipes, got: %d", len(recipes.recipes))
 	}
 
 	// We expect to see:
@@ -111,13 +112,12 @@ func TestLoadRecipes(t *testing.T) {
 			Comment: "log->planks",
 			Width:   1,
 			Height:  1,
-			Input: []RecipeSlot{
-				{itemTypes[17], 0},
+			Input: []slot.Slot{
+				{itemTypes[17], 0, 0},
 			},
-			Output:      RecipeSlot{itemTypes[5], 0},
-			OutputCount: 4,
+			Output: slot.Slot{itemTypes[5], 4, 0},
 		},
-		&recipes.Recipes[0],
+		&recipes.recipes[0],
 	)
 	// spruce logs to planks
 	assertRecipesEq(
@@ -126,13 +126,12 @@ func TestLoadRecipes(t *testing.T) {
 			Comment: "log->planks",
 			Width:   1,
 			Height:  1,
-			Input: []RecipeSlot{
-				{itemTypes[17], 1},
+			Input: []slot.Slot{
+				{itemTypes[17], 0, 1},
 			},
-			Output:      RecipeSlot{itemTypes[5], 0},
-			OutputCount: 4,
+			Output: slot.Slot{itemTypes[5], 4, 0},
 		},
-		&recipes.Recipes[1],
+		&recipes.recipes[1],
 	)
 	// birch logs to planks
 	assertRecipesEq(
@@ -141,13 +140,12 @@ func TestLoadRecipes(t *testing.T) {
 			Comment: "log->planks",
 			Width:   1,
 			Height:  1,
-			Input: []RecipeSlot{
-				{itemTypes[17], 2},
+			Input: []slot.Slot{
+				{itemTypes[17], 0, 2},
 			},
-			Output:      RecipeSlot{itemTypes[5], 0},
-			OutputCount: 4,
+			Output: slot.Slot{itemTypes[5], 4, 0},
 		},
-		&recipes.Recipes[2],
+		&recipes.recipes[2],
 	)
 	// TNT
 	assertRecipesEq(
@@ -156,21 +154,20 @@ func TestLoadRecipes(t *testing.T) {
 			Comment: "TNT",
 			Width:   3,
 			Height:  3,
-			Input: []RecipeSlot{
-				{itemTypes[289], 0},
-				{itemTypes[12], 0},
-				{itemTypes[289], 0},
-				{itemTypes[12], 0},
-				{itemTypes[289], 0},
-				{itemTypes[12], 0},
-				{itemTypes[289], 0},
-				{itemTypes[12], 0},
-				{itemTypes[289], 0},
+			Input: []slot.Slot{
+				{itemTypes[289], 0, 0},
+				{itemTypes[12], 0, 0},
+				{itemTypes[289], 0, 0},
+				{itemTypes[12], 0, 0},
+				{itemTypes[289], 0, 0},
+				{itemTypes[12], 0, 0},
+				{itemTypes[289], 0, 0},
+				{itemTypes[12], 0, 0},
+				{itemTypes[289], 0, 0},
 			},
-			Output:      RecipeSlot{itemTypes[46], 0},
-			OutputCount: 1,
+			Output: slot.Slot{itemTypes[46], 1, 0},
 		},
-		&recipes.Recipes[3],
+		&recipes.recipes[3],
 	)
 	// flight and steel
 	assertRecipesEq(
@@ -179,16 +176,15 @@ func TestLoadRecipes(t *testing.T) {
 			Comment: "flint and steel",
 			Width:   2,
 			Height:  2,
-			Input: []RecipeSlot{
-				{itemTypes[318], 0},
-				{nil, 0},
-				{nil, 0},
-				{itemTypes[265], 0},
+			Input: []slot.Slot{
+				{itemTypes[318], 0, 0},
+				{nil, 0, 0},
+				{nil, 0, 0},
+				{itemTypes[265], 0, 0},
 			},
-			Output:      RecipeSlot{itemTypes[259], 0},
-			OutputCount: 1,
+			Output: slot.Slot{itemTypes[259], 1, 0},
 		},
-		&recipes.Recipes[4],
+		&recipes.recipes[4],
 	)
 }
 

@@ -8,6 +8,7 @@ import (
 
 	"chunkymonkey/itemtype"
 	. "chunkymonkey/types"
+	"chunkymonkey/slot"
 )
 
 type typeInstance struct {
@@ -15,9 +16,9 @@ type typeInstance struct {
 	Data ItemData
 }
 
-func (ti *typeInstance) createRecipeSlot(itemTypes itemtype.ItemTypeMap) (slot RecipeSlot, err os.Error) {
+func (ti *typeInstance) createRecipeSlot(itemTypes itemtype.ItemTypeMap) (slot slot.Slot, err os.Error) {
 	var ok bool
-	slot.Type, ok = itemTypes[ti.Id]
+	slot.ItemType, ok = itemTypes[ti.Id]
 	if !ok {
 		err = fmt.Errorf("Item type %d does not exist")
 		return
@@ -87,18 +88,17 @@ func (rt *recipeTemplate) numRecipes() int {
 func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes itemtype.ItemTypeMap) (recipe Recipe, err os.Error) {
 
 	recipe = Recipe{
-		Comment:     rt.Comment,
-		Width:       byte(rt.width),
-		Height:      byte(rt.height),
-		Input:       make([]RecipeSlot, rt.width*rt.height),
-		OutputCount: rt.OutputCount,
+		Comment: rt.Comment,
+		Width:   byte(rt.width),
+		Height:  byte(rt.height),
+		Input:   make([]slot.Slot, rt.width*rt.height),
 	}
 
 	slotIndex := 0
 	for _, inRow := range rt.Input {
 		for _, inSlot := range inRow {
 			if inSlot == ' ' {
-				recipe.Input[slotIndex] = RecipeSlot{nil, 0}
+				recipe.Input[slotIndex] = slot.Slot{nil, 0, 0}
 			} else {
 				typeKey := string(inSlot)
 				inputTypeSeq, ok := rt.InputTypes[typeKey]
@@ -122,6 +122,7 @@ func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes itemtype.ItemT
 	if err != nil {
 		return
 	}
+	recipe.Output.Count = rt.OutputCount
 
 	return
 }
@@ -150,7 +151,7 @@ func LoadRecipes(reader io.Reader, itemTypes itemtype.ItemTypeMap) (recipes *Rec
 	}
 
 	recipes = &RecipeSet{
-		Recipes: make([]Recipe, numRecipes),
+		recipes: make([]Recipe, numRecipes),
 	}
 
 	curRecipe := 0
@@ -159,13 +160,15 @@ func LoadRecipes(reader io.Reader, itemTypes itemtype.ItemTypeMap) (recipes *Rec
 
 		numRecipes := tmpl.numRecipes()
 		for recipeIndex := 0; recipeIndex < numRecipes; recipeIndex++ {
-			recipes.Recipes[curRecipe], err = tmpl.createRecipe(recipeIndex, itemTypes)
+			recipes.recipes[curRecipe], err = tmpl.createRecipe(recipeIndex, itemTypes)
 			if err != nil {
 				return
 			}
 			curRecipe++
 		}
 	}
+
+	recipes.Init()
 
 	return
 }

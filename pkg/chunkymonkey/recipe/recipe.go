@@ -3,9 +3,12 @@
 package recipe
 
 import (
-	"chunkymonkey/itemtype"
 	"chunkymonkey/slot"
-	. "chunkymonkey/types"
+)
+
+const (
+	fnv1_32_offset = 2166136261
+	fnv1_32_prime  = 16777619
 )
 
 const (
@@ -13,18 +16,12 @@ const (
 	maxRecipeHeight = 3
 )
 
-type RecipeSlot struct {
-	Type *itemtype.ItemType
-	Data ItemData
-}
-
 type Recipe struct {
-	Comment     string
-	Width       byte
-	Height      byte
-	Input       []RecipeSlot
-	Output      RecipeSlot
-	OutputCount ItemCount
+	Comment string
+	Width   byte
+	Height  byte
+	Input   []slot.Slot
+	Output  slot.Slot
 }
 
 func (r *Recipe) match(width, height byte, slots []*slot.Slot) (isMatch bool) {
@@ -35,7 +32,7 @@ func (r *Recipe) match(width, height byte, slots []*slot.Slot) (isMatch bool) {
 	for i := range r.Input {
 		inSlot := slots[i]
 		rSlot := &r.Input[i]
-		if inSlot.ItemType != rSlot.Type {
+		if inSlot.ItemType != rSlot.ItemType || inSlot.Data != rSlot.Data {
 			return
 		}
 
@@ -44,10 +41,51 @@ func (r *Recipe) match(width, height byte, slots []*slot.Slot) (isMatch bool) {
 	return
 }
 
+func (r *Recipe) hash() (hash uint32) {
+	slots := make([]*slot.Slot, len(r.Input))
+	for i := range r.Input {
+		slots[i] = &r.Input[i]
+	}
+	return inputHash(slots)
+}
+
+func inputHash(slots []*slot.Slot) (hash uint32) {
+	// Hash based on FNV-1a.
+	hash = fnv1_32_offset
+	for _, slot := range slots {
+		// Hash the lower 16 bits of the item type ID.
+		itemTypeId := slot.ItemTypeId()
+		hash ^= uint32(itemTypeId & 0xff)
+		hash *= fnv1_32_prime
+		hash ^= uint32((itemTypeId >> 8) & 0xff)
+		hash *= fnv1_32_prime
+
+		// Hash the data value
+		hash ^= uint32(slot.Data & 0xff)
+		hash *= fnv1_32_prime
+	}
+
+	return
+}
+
 type RecipeSet struct {
-	Recipes []Recipe
+	recipes []Recipe
+
 	// TODO Recipe index data for fast lookup by recipe dimensions, or maybe by
 	// some sort of recipe input hash?
+	// Recipe by inputs hash.
+	recipeHash map[uint32][]*Recipe
+}
+
+func (r *RecipeSet) Init() {
+	r.recipeHash = make(map[uint32][]*Recipe)
+	for i := range r.recipes {
+		recipe := &r.recipes[i]
+		hash := recipe.hash()
+		bucket := r.recipeHash[hash]
+		bucket = append(bucket, recipe)
+		r.recipeHash[hash] = bucket
+	}
 }
 
 // Match looks for a matching recipe for the input slots, and returns a Slot
@@ -108,13 +146,20 @@ func (r *RecipeSet) Match(width, height int, slots []slot.Slot) (output slot.Slo
 		}
 	}
 
+	hash := inputHash(rectSlots)
+
+	bucket, ok := r.recipeHash[hash]
+
+	if !ok {
+		return
+	}
+
 	// Find the matching recipe, if any.
-	for i := range r.Recipes {
-		recipe := &r.Recipes[i]
+	for i := range bucket {
+		recipe := bucket[i]
 		if recipe.match(byte(widthUsed), byte(heightUsed), rectSlots) {
-			output.ItemType = recipe.Output.Type
-			output.Count = recipe.OutputCount
-			output.Data = recipe.Output.Data
+			// Found matching recipe.
+			output = recipe.Output
 		}
 	}
 
