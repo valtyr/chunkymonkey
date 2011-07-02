@@ -1,4 +1,4 @@
-package cmd
+package command
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ func TestCommandFramework(t *testing.T) {
 			t.Errorf("Input message %s is not equal to received message %s .", message, msg)
 		}
 	}
-	command := NewCommand(cmdText, desc, usage, cmdHandler)
-	cf.AddCommand(command)
+	cmd := NewCommand(cmdText, desc, usage, cmdHandler)
+	cf.AddCommand(cmd)
 	cf.Message <- message
 }

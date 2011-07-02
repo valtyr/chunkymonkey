@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	"chunkymonkey/command"
 	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
@@ -83,6 +84,16 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player, gameRules.Recipes)
 
+	cmdGive := command.NewCommand(giveCmd, giveDesc, giveUsage, func(msg string) {
+		player.cmdGive(msg)
+	})
+	player.gameRules.CommandFramework.AddCommand(cmdGive)
+
+	cmdHelp := command.NewCommand(helpCmd, helpDesc, helpUsage, func(msg string) {
+		player.cmdHelp(msg, player.gameRules.CommandFramework)
+	})
+	player.gameRules.CommandFramework.AddCommand(cmdHelp)
+
 	return player
 }
 
@@ -109,8 +120,9 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-	if message[0] == '/' {
-		runCommand(player, message[1:])
+	prefix := player.gameRules.CommandFramework.Prefix()
+	if message[0:len(prefix)] == prefix {
+		player.gameRules.CommandFramework.Message <- message
 	} else {
 		player.sendChatMessage(message)
 	}

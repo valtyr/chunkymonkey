@@ -1,8 +1,8 @@
-package cmd
+package command
 
 import (
-	"os"
 	"strings"
+	"os"
 )
 
 var ErrCmdExists = os.NewError("The command already exists.")
@@ -25,8 +25,8 @@ func NewCommandFramework(prefix string) *CommandFramework {
 
 // Adds the command to the framework if the command already exists it will be overwritten.
 // Commands without a CommandHandler in Func will be ignored.
-func (cf *CommandFramework) AddCommand(command *Command) {
-	cf.modifyCmds <- command
+func (cf *CommandFramework) AddCommand(cmd *Command) {
+	cf.modifyCmds <- cmd
 }
 
 // Removes the command from the framework.
@@ -34,20 +34,28 @@ func (cf *CommandFramework) RemoveCommand(trigger string) {
 	cf.modifyCmds <- &Command{Trigger: trigger}
 }
 
+func (cf *CommandFramework) Prefix() string {
+	return cf.prefix
+}
+
+func (cf *CommandFramework) Commands() map[string]*Command {
+	return cf.cmds
+}
+
 func (cf *CommandFramework) update() {
 	for {
 		select {
-		case command := <-cf.modifyCmds:
-			if command == nil {
+		case cmd := <-cf.modifyCmds:
+			if cmd == nil {
 				continue
 			}
-			if len(command.Trigger) == 0 {
+			if len(cmd.Trigger) == 0 {
 				continue
 			}
-			if command.Func == nil { // Remove
-				cf.cmds[command.Trigger] = nil
+			if cmd.Func == nil { // Remove
+				cf.cmds[cmd.Trigger] = nil
 			} else { // Add
-				cf.cmds[command.Trigger] = command
+				cf.cmds[cmd.Trigger] = cmd
 			}
 		case msg := <-cf.Message:
 			if len(msg) < 2 || msg[0:len(cf.prefix)] != cf.prefix {
@@ -55,8 +63,8 @@ func (cf *CommandFramework) update() {
 			}
 			attr := strings.Split(msg, " ", -1)
 			trigger := attr[0][1:]
-			if command, ok := cf.cmds[trigger]; ok {
-				command.Func(msg)
+			if cmd, ok := cf.cmds[trigger]; ok {
+				cmd.Func(msg)
 			}
 		}
 	}

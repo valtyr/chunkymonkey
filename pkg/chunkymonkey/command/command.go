@@ -1,4 +1,4 @@
-package cmd
+package command
 
 type CommandHandler func(string)
 
