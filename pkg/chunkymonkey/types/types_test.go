@@ -302,9 +302,14 @@ func TestSubChunkXyz_BlockIndex(t *testing.T) {
 			continue
 		}
 		// Test reverse conversion.
+		beforeReverse := index
 		subLoc := index.ToSubChunkXyz()
 		if subLoc.X != r.input.X || subLoc.Y != r.input.Y || subLoc.Z != r.input.Z {
 			t.Errorf("  reverse conversion to SubChunkXyz resulted in %#v", subLoc)
+		}
+
+		if beforeReverse != index {
+			t.Errorf("  reverse conversion altered index value from %d to %d", beforeReverse, index)
 		}
 	}
 }

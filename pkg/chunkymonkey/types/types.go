@@ -564,24 +564,24 @@ type SubChunkXyz struct {
 // BlockIndex returns the relevant index for a block with a given position
 // within a chunk. If subLoc represents an invalid position, then ok=False is
 // returned.
-func (subLoc *SubChunkXyz) BlockIndex() (BlockIndex, bool) {
-	if subLoc.X < 0 || subLoc.Y < 0 || subLoc.Z < 0 || subLoc.X >= ChunkSizeH || subLoc.Y >= ChunkSizeY || subLoc.Z >= ChunkSizeH {
-		return 0, false
-	}
-
-	return ((BlockIndex(subLoc.X) << (ChunkHShift + ChunkYShift)) |
+func (subLoc *SubChunkXyz) BlockIndex() (index BlockIndex, ok bool) {
+	ok = (subLoc.X|subLoc.Z)&^ChunkHMask == 0 && subLoc.Y&^ChunkYMask == 0
+	index = ((BlockIndex(subLoc.X) << (ChunkHShift + ChunkYShift)) |
 		BlockIndex(subLoc.Y) |
-		(BlockIndex(subLoc.Z) << ChunkYShift)), true
+		(BlockIndex(subLoc.Z) << ChunkYShift))
+
+	return
 }
 
 type BlockIndex uint32
 
-func (bi BlockIndex) ToSubChunkXyz() SubChunkXyz {
-	return SubChunkXyz{
-		X: ChunkHMask & SubChunkCoord(bi>>(ChunkHShift+ChunkYShift)),
-		Y: ChunkYMask & SubChunkCoord(bi),
-		Z: ChunkHMask & SubChunkCoord(bi>>ChunkYShift),
-	}
+func (bi BlockIndex) ToSubChunkXyz() (subLoc SubChunkXyz) {
+	subLoc.Y = SubChunkCoord(bi & ChunkYMask)
+	bi >>= ChunkYShift
+	subLoc.Z = SubChunkCoord(bi & ChunkHMask)
+	bi >>= ChunkHShift
+	subLoc.X = SubChunkCoord(bi & ChunkHMask)
+	return
 }
 
 func (bi BlockIndex) BlockId(blocks []byte) BlockId {
