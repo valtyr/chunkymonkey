@@ -18,14 +18,14 @@ const (
 type CraftingInventory struct {
 	Inventory
 	width, height int
-	recipes       *recipe.RecipeSet
+	recipes       recipe.RecipeSetMatcher
 }
 
 func (inv *CraftingInventory) init(width, height int, recipes *recipe.RecipeSet) {
 	inv.Inventory.Init(1 + width*height)
 	inv.width = width
 	inv.height = height
-	inv.recipes = recipes
+	inv.recipes.Init(recipes)
 }
 
 // InitWorkbenchInventory initializes inv as a 2x2 player crafting inventory.
