@@ -15,7 +15,8 @@ all: $(BINARIES)
 
 clean: cleantestobj
 	@-rm -f $(BINARIES)
-	@gd $(GD_OPTS) -lib _obj -clean .
+	@gd $(GD_OPTS) -lib _obj -clean pkg
+	@gd $(GD_OPTS) -clean cmd
 
 fmt:
 	@gd $(GD_OPTS) -fmt -tab pkg
