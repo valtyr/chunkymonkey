@@ -13,12 +13,9 @@ DIAGRAMS=diagrams/top-level-architecture.png
 
 all: $(BINARIES)
 
-cleanobj:
-	@gd $(GD_OPTS) -lib _obj -clean .
-	@gd $(GD_OPTS) -lib _test -clean .
-
-clean: cleanobj
+clean: cleantestobj
 	@-rm -f $(BINARIES)
+	@gd $(GD_OPTS) -lib _obj -clean .
 
 fmt:
 	@gd $(GD_OPTS) -fmt -tab pkg
@@ -27,14 +24,16 @@ fmt:
 check: bin/style
 	@bin/style `find . -name \*.go`
 
+cleantestobj:
+	@gd $(GD_OPTS) -lib _test -clean .
+
 # requires clean-up due to bug in godag
-test: cleanobj
+test: cleantestobj
 	@gd $(GD_OPTS) -lib _test/pkg -test pkg
 
-bench: cleanobj
+bench: cleantestobj
 	@gd $(GD_OPTS) -lib _test/pkg -bench 'Bench' -match 'Regex That Matches 0 Tests' -test pkg
 
-# Note that this will also compile code in the src/util directory.
 libs:
 	@gd $(GD_OPTS) -lib _obj/pkg pkg
 
@@ -49,4 +48,4 @@ docs: $(DIAGRAMS)
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all bench check clean cleanobj docs fmt test test_data
+.PHONY: all bench check clean cleantestobj docs fmt test test_data
