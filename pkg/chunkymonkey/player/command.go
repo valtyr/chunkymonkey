@@ -11,6 +11,15 @@ import (
 	. "chunkymonkey/types"
 )
 
+// /kill 
+const killCmd = "kill"
+const killUsage = "kill"
+const killDesc = "Inflicts damage to self. Useful when lost or stuck."
+
+func (player *Player) cmdKill(message string) {
+	// TODO inflict damage to player
+}
+
 // /tell player message 
 const tellCmd = "tell"
 const tellUsage = "tell <player> <message>"

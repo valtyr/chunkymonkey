@@ -105,6 +105,12 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	})
 	player.gameRules.CommandFramework.AddCommand(cmdTell)
 
+	// Chat command: "kill"
+	cmdKill := command.NewCommand(killCmd, killDesc, killUsage, func(msg string) {
+		player.cmdKill(msg)
+	})
+	player.gameRules.CommandFramework.AddCommand(cmdKill)
+
 	return player
 }
 
