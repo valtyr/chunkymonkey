@@ -8,8 +8,8 @@ BINARIES=\
 	bin/style
 
 MOCK_FILES=\
-	pkg/chunkymonkey/command/mock_icommandhandler_test.go \
-	pkg/chunkymonkey/stub/mock_stub_test.go
+	src/chunkymonkey/command/mock_icommandhandler_test.go \
+	src/chunkymonkey/stub/mock_stub_test.go
 
 GD_OPTS=-quiet
 
@@ -19,29 +19,29 @@ all: $(BINARIES)
 
 clean:
 	@-rm -f $(BINARIES)
-	@gd $(GD_OPTS) -lib _obj -clean pkg
+	@gd $(GD_OPTS) -lib _obj -clean src
 	@gd $(GD_OPTS) -lib _test -clean .
 
 fmt:
-	@gd $(GD_OPTS) -fmt -tab pkg
+	@gd $(GD_OPTS) -fmt -tab src
 
 check: bin/style
 	@bin/style `find . -name \*.go`
 
 test: mocks
-	@gd $(GD_OPTS) -lib _test -test pkg
+	@gd $(GD_OPTS) -lib _test -test src
 
 bench: mocks
-	@gd $(GD_OPTS) -lib _test -bench 'Benchmark' -match '^$$' -test pkg
+	@gd $(GD_OPTS) -lib _test -bench 'Benchmark' -match '^$$' -test src
 
 libs:
-	@gd $(GD_OPTS) -lib _obj pkg
+	@gd $(GD_OPTS) -lib _obj src
 
 test_data: bin/datatests
 	@bin/datatests
 
 bin/%: libs
-	@gd $(GD_OPTS) -I _obj -lib _obj -M cmd/$*/main -output $@ pkg
+	@gd $(GD_OPTS) -I _obj -lib _obj -M cmd/$*/main -output $@ src
 
 docs: $(DIAGRAMS)
 
@@ -50,10 +50,10 @@ docs: $(DIAGRAMS)
 
 mocks: $(MOCK_FILES)
 
-pkg/chunkymonkey/command/mock_icommandhandler_test.go: pkg/chunkymonkey/command/icommandhandler.go
+src/chunkymonkey/command/mock_icommandhandler_test.go: src/chunkymonkey/command/icommandhandler.go
 	mockgen -package command -destination $@ -source $<
 
-pkg/chunkymonkey/stub/mock_stub_test.go: pkg/chunkymonkey/stub/stub.go
+src/chunkymonkey/stub/mock_stub_test.go: src/chunkymonkey/stub/stub.go
 	mockgen -package stub -destination $@ -source $< -imports .=chunkymonkey/types
 
 
