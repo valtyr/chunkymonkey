@@ -26,7 +26,7 @@ func (player *Player) cmdSay(message string) {
 	}
 	msg := strings.Join(cmdParts[1:], " ")
 	player.Enqueue(func(player *Player) {
-		player.sendChatMessage(msg)
+		player.sendChatMessage( "§d" + msg, true)
 	})
 }
 
