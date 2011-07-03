@@ -602,7 +602,7 @@
     "InputTypes": {
       "X": [{"Id": 5}, {"Id": 265}]
     },
-    "OutputTypes": [{"Id": 64}, {"Id": 71}],
+    "OutputTypes": [{"Id": 324}, {"Id": 330}],
     "OutputCount": 1
   },
   {
