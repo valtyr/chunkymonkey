@@ -11,8 +11,9 @@ import (
 	. "chunkymonkey/types"
 )
 
+const helpShortCmd = "?"
 const helpCmd = "help"
-const helpUsage = "/help"
+const helpUsage = "help|?"
 const helpDesc = "Shows a list of all commands."
 // TODO: Implement help <command> to show the description and usage of a command
 func (player *Player) cmdHelp(message string, cmdFramework *command.CommandFramework) {
@@ -33,7 +34,7 @@ func (player *Player) cmdHelp(message string, cmdFramework *command.CommandFrame
 }
 
 const giveCmd = "give"
-const giveUsage = "/give <item ID> [<quantity> [<data>]]"
+const giveUsage = "give <item ID> [<quantity> [<data>]]"
 const giveDesc = "Gives x amount of y items to player."
 
 func (player *Player) cmdGive(message string) {

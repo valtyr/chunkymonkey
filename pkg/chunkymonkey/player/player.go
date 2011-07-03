@@ -84,15 +84,20 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player, gameRules.Recipes)
 
+	// Chat command: "give"
 	cmdGive := command.NewCommand(giveCmd, giveDesc, giveUsage, func(msg string) {
 		player.cmdGive(msg)
 	})
 	player.gameRules.CommandFramework.AddCommand(cmdGive)
 
-	cmdHelp := command.NewCommand(helpCmd, helpDesc, helpUsage, func(msg string) {
+	// Chat command "help" and "?"
+	cmdHelpFunc := func(msg string) {
 		player.cmdHelp(msg, player.gameRules.CommandFramework)
-	})
+	}
+	cmdHelp := command.NewCommand(helpCmd, helpDesc, helpUsage, cmdHelpFunc)
 	player.gameRules.CommandFramework.AddCommand(cmdHelp)
+	cmdHelpShort := command.NewCommand(helpShortCmd, helpDesc, helpUsage, cmdHelpFunc)
+	player.gameRules.CommandFramework.AddCommand(cmdHelpShort)
 
 	return player
 }
