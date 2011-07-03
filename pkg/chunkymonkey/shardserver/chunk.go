@@ -28,7 +28,6 @@ var enableMobs = flag.Bool(
 
 // A chunk is slice of the world map.
 type Chunk struct {
-	mgr          *LocalShardManager
 	shard        *ChunkShard
 	loc          ChunkXz
 	blocks       []byte
@@ -48,9 +47,8 @@ type Chunk struct {
 	newActiveBlocks map[BlockIndex]bool // Blocks added as active for next "tick".
 }
 
-func newChunkFromReader(reader chunkstore.IChunkReader, mgr *LocalShardManager, shard *ChunkShard) (chunk *Chunk) {
+func newChunkFromReader(reader chunkstore.IChunkReader, shard *ChunkShard) (chunk *Chunk) {
 	chunk = &Chunk{
-		mgr:         mgr,
 		shard:       shard,
 		loc:         reader.ChunkLoc(),
 		blocks:      reader.Blocks(),
@@ -117,7 +115,7 @@ func (chunk *Chunk) Rand() *rand.Rand {
 }
 
 func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool) {
-	itemType, ok = chunk.mgr.gameRules.ItemTypes[itemTypeId]
+	itemType, ok = chunk.shard.gameRules.ItemTypes[itemTypeId]
 	return
 }
 
@@ -129,7 +127,7 @@ func (chunk *Chunk) transferEntity(s object.INonPlayerEntity) {
 // AddEntity creates a mob or item in this chunk and notifies all chunk
 // subscribers of the new entity
 func (chunk *Chunk) AddEntity(s object.INonPlayerEntity) {
-	newEntityId := chunk.mgr.entityMgr.NewEntity()
+	newEntityId := chunk.shard.entityMgr.NewEntity()
 	s.SetEntityId(newEntityId)
 	chunk.entities[newEntityId] = s
 
@@ -141,7 +139,7 @@ func (chunk *Chunk) AddEntity(s object.INonPlayerEntity) {
 
 func (chunk *Chunk) removeEntity(s object.INonPlayerEntity) {
 	e := s.GetEntityId()
-	chunk.mgr.entityMgr.RemoveEntityById(e)
+	chunk.shard.entityMgr.RemoveEntityById(e)
 	chunk.entities[e] = nil, false
 	// Tell all subscribers that the spawn's entity is destroyed.
 	buf := new(bytes.Buffer)
@@ -183,7 +181,7 @@ func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockInde
 func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *block.BlockType, blockData byte, ok bool) {
 	blockTypeId := index.BlockId(chunk.blocks)
 
-	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
+	blockType, ok = chunk.shard.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok {
 		log.Printf(
 			"%v.blockTypeAndData: unknown block type %d at index %d",
@@ -220,15 +218,15 @@ func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *blo
 }
 
 func (chunk *Chunk) RecipeSet() *recipe.RecipeSet {
-	return chunk.mgr.gameRules.Recipes
+	return chunk.shard.gameRules.Recipes
 }
 
 func (chunk *Chunk) FurnaceData() *recipe.FurnaceData {
-	return &chunk.mgr.gameRules.FurnaceData
+	return &chunk.shard.gameRules.FurnaceData
 }
 
 func (chunk *Chunk) ItemTypes() itemtype.ItemTypeMap {
-	return chunk.mgr.gameRules.ItemTypes
+	return chunk.shard.gameRules.ItemTypes
 }
 
 func (chunk *Chunk) reqHitBlock(player stub.IShardPlayerClient, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
@@ -301,7 +299,7 @@ func (chunk *Chunk) reqPlaceItem(player stub.IShardPlayerClient, target *BlockXy
 
 	// Blocks can only replace certain blocks.
 	blockTypeId := index.BlockId(chunk.blocks)
-	blockType, ok := chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
+	blockType, ok := chunk.shard.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok || !blockType.Replaceable {
 		return
 	}
@@ -390,7 +388,7 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, 
 		}
 	}
 
-	blockType, ok = chunk.mgr.gameRules.BlockTypes.Get(blockTypeId)
+	blockType, ok = chunk.shard.gameRules.BlockTypes.Get(blockTypeId)
 	if !ok {
 		log.Printf(
 			"%v.blockQuery found unknown block type Id %d at %+v",
@@ -761,7 +759,7 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = item.NewItem(chunk.mgr.gameRules.ItemTypes[id], count, data, pos, velocity)
+			newEntity = item.NewItem(chunk.shard.gameRules.ItemTypes[id], count, data, pos, velocity)
 		case "Chicken":
 			newEntity = mob.NewHen(pos, velocity, look)
 		case "Cow":
@@ -793,7 +791,7 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 		}
 
 		if newEntity != nil {
-			entityId := chunk.mgr.entityMgr.NewEntity()
+			entityId := chunk.shard.entityMgr.NewEntity()
 			newEntity.SetEntityId(entityId)
 			chunk.entities[entityId] = newEntity
 		}

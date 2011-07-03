@@ -42,7 +42,7 @@ func (mgr *LocalShardManager) getShard(loc ShardXz, create bool) *ChunkShard {
 	}
 
 	// Create shard.
-	shard := NewChunkShard(mgr, loc)
+	shard := NewChunkShard(mgr, mgr.chunkStore, mgr.gameRules, mgr.entityMgr, loc)
 	mgr.shards[shardKey] = shard
 	go shard.serve()
 

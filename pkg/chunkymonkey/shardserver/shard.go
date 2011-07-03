@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"chunkymonkey/chunkstore"
+	"chunkymonkey/entity"
+	"chunkymonkey/gamerules"
 	"chunkymonkey/object"
 	"chunkymonkey/stub"
 	. "chunkymonkey/types"
@@ -22,7 +24,10 @@ func chunkXzToChunkIndex(locDelta *ChunkXz) int {
 // ChunkShard represents a square shard of chunks that share a master
 // goroutine.
 type ChunkShard struct {
-	mgr              *LocalShardManager
+	shardConnecter   stub.IShardConnecter
+	chunkStore       chunkstore.IChunkStore
+	gameRules        *gamerules.GameRules
+	entityMgr        *entity.EntityManager
 	loc              ShardXz
 	originChunkLoc   ChunkXz // The lowest X and Z located chunk in the shard.
 	chunks           [chunksPerShard]*Chunk
@@ -36,9 +41,12 @@ type ChunkShard struct {
 	selfClient   shardSelfClient
 }
 
-func NewChunkShard(mgr *LocalShardManager, loc ShardXz) (shard *ChunkShard) {
+func NewChunkShard(shardConnecter stub.IShardConnecter, chunkStore chunkstore.IChunkStore, gameRules *gamerules.GameRules, entityMgr *entity.EntityManager, loc ShardXz) (shard *ChunkShard) {
 	shard = &ChunkShard{
-		mgr:              mgr,
+		shardConnecter:   shardConnecter,
+		chunkStore:       chunkStore,
+		gameRules:        gameRules,
+		entityMgr:        entityMgr,
 		loc:              loc,
 		originChunkLoc:   loc.ToChunkXz(),
 		requests:         make(chan iShardRequest, 256),
@@ -104,7 +112,7 @@ func (shard *ChunkShard) clientForShard(shardLoc ShardXz) (client stub.IShardSha
 	shardKey := shardLoc.Key()
 
 	if client, ok = shard.shardClients[shardKey]; !ok {
-		client = shard.mgr.ShardShardConnect(shardLoc)
+		client = shard.shardConnecter.ShardShardConnect(shardLoc)
 		if client != nil {
 			shard.shardClients[shardKey] = client
 		}
@@ -245,7 +253,7 @@ func (shard *ChunkShard) chunkAt(loc ChunkXz) *Chunk {
 // loc - The absolute world position of the chunk.
 // locDelta - The relative position of the chunk within the shard.
 func (shard *ChunkShard) loadChunk(loc ChunkXz, locDelta ChunkXz) *Chunk {
-	chunkResult := <-shard.mgr.chunkStore.LoadChunk(loc)
+	chunkResult := <-shard.chunkStore.LoadChunk(loc)
 	chunkReader, err := chunkResult.Reader, chunkResult.Err
 	if err != nil {
 		if _, ok := err.(chunkstore.NoSuchChunkError); !ok {
@@ -257,7 +265,7 @@ func (shard *ChunkShard) loadChunk(loc ChunkXz, locDelta ChunkXz) *Chunk {
 		}
 	}
 
-	chunk := newChunkFromReader(chunkReader, shard.mgr, shard)
+	chunk := newChunkFromReader(chunkReader, shard)
 
 	return chunk
 }
