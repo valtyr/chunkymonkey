@@ -13,40 +13,35 @@ DIAGRAMS=diagrams/top-level-architecture.png
 
 all: $(BINARIES)
 
-clean: cleantestobj
+clean:
 	@-rm -f $(BINARIES)
 	@gd $(GD_OPTS) -lib _obj -clean pkg
-	@gd $(GD_OPTS) -clean cmd
+	@gd $(GD_OPTS) -lib _test -clean .
 
 fmt:
 	@gd $(GD_OPTS) -fmt -tab pkg
-	@gd $(GD_OPTS) -fmt -tab cmd
 
 check: bin/style
 	@bin/style `find . -name \*.go`
 
-cleantestobj:
-	@gd $(GD_OPTS) -lib _test -clean .
+test:
+	@gd $(GD_OPTS) -lib _test -test pkg
 
-# requires clean-up due to bug in godag
-test: cleantestobj
-	@gd $(GD_OPTS) -lib _test/pkg -test pkg
-
-bench: cleantestobj
-	@gd $(GD_OPTS) -lib _test/pkg -bench 'Bench' -match 'Regex That Matches 0 Tests' -test pkg
+bench:
+	@gd $(GD_OPTS) -lib _test -bench 'Benchmark' -match '^$$' -test pkg
 
 libs:
-	@gd $(GD_OPTS) -lib _obj/pkg pkg
+	@gd $(GD_OPTS) -lib _obj pkg
 
 test_data: bin/datatests
 	@bin/datatests
 
 bin/%: libs
-	@gd $(GD_OPTS) -I _obj/pkg -output $@ cmd/$*
+	@gd $(GD_OPTS) -I _obj -lib _obj -M cmd/$*/main -output $@ pkg
 
 docs: $(DIAGRAMS)
 
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all bench check clean cleantestobj docs fmt test test_data
+.PHONY: all bench check clean docs fmt test test_data
