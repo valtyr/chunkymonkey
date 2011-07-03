@@ -70,12 +70,19 @@ against the current stable release of the Go toolchain, so might not compile
 against the weekly releases (gofix might be able to fix such cases).
 
 
-Building
---------
+Building & Testing
+------------------
 
 [Godag][2] is used to build chunkymonkey. Install it, and run:
 
     $ make
+
+If you are developing, you are encouraged to run the unit tests with:
+
+    $ make test
+
+The unit tests require [GoMock][4] to be installed.
+
 
 Running
 -------
@@ -112,3 +119,4 @@ To replay a session:
 [1]: http://golang.org/doc/install.html          "Go toolchain installation"
 [2]: http://code.google.com/p/godag/wiki/Install "Godag builder"
 [3]: https://github.com/huin                     "Huin on Github"
+[4]: http://code.google.com/p/gomock/            "GoMock mocking library"
