@@ -7,6 +7,9 @@ BINARIES=\
 	bin/replay \
 	bin/style
 
+MOCK_FILES=\
+	pkg/chunkymonkey/command/mock_icommandhandler.go
+
 GD_OPTS=-quiet
 
 DIAGRAMS=diagrams/top-level-architecture.png
@@ -24,10 +27,10 @@ fmt:
 check: bin/style
 	@bin/style `find . -name \*.go`
 
-test:
+test: mocks
 	@gd $(GD_OPTS) -lib _test -test pkg
 
-bench:
+bench: mocks
 	@gd $(GD_OPTS) -lib _test -bench 'Benchmark' -match '^$$' -test pkg
 
 libs:
@@ -44,4 +47,10 @@ docs: $(DIAGRAMS)
 %.png: %.dot
 	@dot -Tpng $< -o $@
 
-.PHONY: all bench check clean docs fmt test test_data
+mocks: $(MOCK_FILES)
+
+pkg/chunkymonkey/command/mock_icommandhandler.go: pkg/chunkymonkey/command/icommandhandler.go
+	mockgen -package command -destination $@ -source $<
+
+
+.PHONY: all bench check clean docs fmt mocks test test_data

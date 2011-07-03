@@ -4,5 +4,6 @@
 .*.swp
 _obj
 _test
+mock_*.go
 /bin
 *.log
