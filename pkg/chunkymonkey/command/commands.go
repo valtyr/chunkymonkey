@@ -81,10 +81,27 @@ const helpShortCmd = "?"
 const helpCmd = "help"
 const helpUsage = "help|?"
 const helpDesc = "Shows a list of all commands."
-// TODO: Implement help <command> to show the description and usage of a command
+const msgUnknownCommand = "Command not available."
+
 func cmdHelp(message string, cmdFramework *CommandFramework, cmdHandler ICommandHandler) {
-	var resp string
+	cmdParts := strings.Split(message, " ", -1)
+	if len(cmdParts) > 2 {
+		cmdHandler.SendMessageToPlayer(helpUsage)
+		return
+	}
 	cmds := cmdFramework.Commands()
+	if len(cmdParts) == 2 {
+		cmd := cmdParts[1]
+		if command, ok := cmds[cmd]; ok {
+			cmdHandler.SendMessageToPlayer("Command: " + cmdFramework.Prefix() + command.Trigger)
+			cmdHandler.SendMessageToPlayer("Usage: " + command.Usage)
+			cmdHandler.SendMessageToPlayer("Description: " + command.Description)
+			return
+		}
+		cmdHandler.SendMessageToPlayer(msgUnknownCommand)
+		return
+	}
+	var resp string
 	if len(cmds) == 0 {
 		resp = "No commands available."
 	} else {
