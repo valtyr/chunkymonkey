@@ -11,6 +11,24 @@ import (
 	. "chunkymonkey/types"
 )
 
+// tp player1 player2 
+
+const tpCmd = "tp"
+const tpUsage = "tp <player1> <player2>"
+const tpDesc = "Teleports player1 to player2."
+
+func (player *Player) cmdTp(message string) {
+	cmdParts := strings.Split(message, " ", -1)
+	if len(cmdParts) < 3 {
+		buf := new(bytes.Buffer)
+		proto.WriteChatMessage(buf, tpUsage)
+		player.TransmitPacket(buf.Bytes())
+		return
+	}
+	// TODO implement teleporting
+}
+
+
 // /kill 
 const killCmd = "kill"
 const killUsage = "kill"

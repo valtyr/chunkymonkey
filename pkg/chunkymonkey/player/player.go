@@ -111,6 +111,12 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	})
 	player.gameRules.CommandFramework.AddCommand(cmdKill)
 
+	// Chat command: "tp"
+	cmdTp := command.NewCommand(tpCmd, tpDesc, tpUsage, func(msg string) {
+		player.cmdTp(msg)
+	})
+	player.gameRules.CommandFramework.AddCommand(cmdTp)
+
 	return player
 }
 
