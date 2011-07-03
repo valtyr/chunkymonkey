@@ -1,33 +1,35 @@
-package player
+package command
 
 import (
-	"bytes"
 	"strconv"
 	"strings"
-
-	"chunkymonkey/command"
-	"chunkymonkey/proto"
-	"chunkymonkey/slot"
-	. "chunkymonkey/types"
 )
 
+func getCommands() map[string]*Command {
+	cmds := map[string]*Command{}
+	cmds[sayCmd] = NewCommand(sayCmd, sayDesc, sayUsage, cmdSay)
+	cmds[tpCmd] = NewCommand(tpCmd, tpDesc, tpUsage, cmdTp)
+	cmds[killCmd] = NewCommand(killCmd, killDesc, killUsage, cmdKill)
+	cmds[tellCmd] = NewCommand(tellCmd, tellDesc, tellUsage, cmdTell)
+	cmds[giveCmd] = NewCommand(giveCmd, giveDesc, giveUsage, cmdGive)
+	return cmds
+}
+
+const msgNotImplemented = "We are sorry. This command is not yet implemented."
+const msgUnknownItem = "Unknown item ID"
 // say message 
 const sayCmd = "say"
 const sayUsage = "say <message>"
 const sayDesc = "Broadcasts a message to all players without showing a player name. The message is colored pink."
 
-func (player *Player) cmdSay(message string) {
+func cmdSay(message string, cmdHandler ICommandHandler) {
 	cmdParts := strings.Split(message, " ", -1)
 	if len(cmdParts) < 2 {
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, sayUsage)
-		player.TransmitPacket(buf.Bytes())
+		cmdHandler.SendMessageToPlayer(sayUsage)
 		return
 	}
 	msg := strings.Join(cmdParts[1:], " ")
-	player.Enqueue(func(player *Player) {
-		player.sendChatMessage( "§d" + msg, true)
-	})
+	cmdHandler.BroadcastMessage("§d"+msg, true)
 }
 
 // tp player1 player2 
@@ -36,14 +38,13 @@ const tpCmd = "tp"
 const tpUsage = "tp <player1> <player2>"
 const tpDesc = "Teleports player1 to player2."
 
-func (player *Player) cmdTp(message string) {
+func cmdTp(message string, cmdHandler ICommandHandler) {
 	cmdParts := strings.Split(message, " ", -1)
 	if len(cmdParts) < 3 {
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, tpUsage)
-		player.TransmitPacket(buf.Bytes())
+		cmdHandler.SendMessageToPlayer(tpUsage)
 		return
 	}
+	cmdHandler.SendMessageToPlayer(msgNotImplemented)
 	// TODO implement teleporting
 }
 
@@ -53,8 +54,9 @@ const killCmd = "kill"
 const killUsage = "kill"
 const killDesc = "Inflicts damage to self. Useful when lost or stuck."
 
-func (player *Player) cmdKill(message string) {
+func cmdKill(message string, cmdHandler ICommandHandler) {
 	// TODO inflict damage to player
+	cmdHandler.SendMessageToPlayer(msgNotImplemented)
 }
 
 // /tell player message 
@@ -62,18 +64,17 @@ const tellCmd = "tell"
 const tellUsage = "tell <player> <message>"
 const tellDesc = "Tells a player a message."
 
-func (player *Player) cmdTell(message string) {
+func cmdTell(message string, cmdHandler ICommandHandler) {
 	cmdParts := strings.Split(message, " ", -1)
 	if len(cmdParts) < 3 {
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, tellUsage)
-		player.TransmitPacket(buf.Bytes())
+		cmdHandler.SendMessageToPlayer(tellUsage)
 		return
 	}
 	/* TODO Get player to send message, too
 	player := cmdParts[1]
 	message := strings.Join(cmdParts[2:], " ")
 	*/
+	cmdHandler.SendMessageToPlayer(msgNotImplemented)
 }
 
 const helpShortCmd = "?"
@@ -81,7 +82,7 @@ const helpCmd = "help"
 const helpUsage = "help|?"
 const helpDesc = "Shows a list of all commands."
 // TODO: Implement help <command> to show the description and usage of a command
-func (player *Player) cmdHelp(message string, cmdFramework *command.CommandFramework) {
+func cmdHelp(message string, cmdFramework *CommandFramework, cmdHandler ICommandHandler) {
 	var resp string
 	cmds := cmdFramework.Commands()
 	if len(cmds) == 0 {
@@ -93,21 +94,17 @@ func (player *Player) cmdHelp(message string, cmdFramework *command.CommandFrame
 		}
 		resp = resp[:len(resp)-1]
 	}
-	buf := new(bytes.Buffer)
-	proto.WriteChatMessage(buf, resp)
-	player.TransmitPacket(buf.Bytes())
+	cmdHandler.SendMessageToPlayer(resp)
 }
 
 const giveCmd = "give"
 const giveUsage = "give <item ID> [<quantity> [<data>]]"
 const giveDesc = "Gives x amount of y items to player."
 
-func (player *Player) cmdGive(message string) {
+func cmdGive(message string, cmdHandler ICommandHandler) {
 	cmdParts := strings.Split(message, " ", -1)
 	if len(cmdParts) < 2 || len(cmdParts) > 4 {
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, giveUsage)
-		player.TransmitPacket(buf.Bytes())
+		cmdHandler.SendMessageToPlayer(giveUsage)
 		return
 	}
 	cmdParts = cmdParts[1:]
@@ -117,9 +114,7 @@ func (player *Player) cmdGive(message string) {
 	// gives it to the current player.
 	itemId, err := strconv.Atoi(cmdParts[0])
 	if err != nil {
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, giveUsage)
-		player.TransmitPacket(buf.Bytes())
+		cmdHandler.SendMessageToPlayer(giveUsage)
 		return
 	}
 
@@ -127,9 +122,7 @@ func (player *Player) cmdGive(message string) {
 	if len(cmdParts) >= 2 {
 		quantity, err = strconv.Atoi(cmdParts[1])
 		if err != nil {
-			buf := new(bytes.Buffer)
-			proto.WriteChatMessage(buf, giveUsage)
-			player.TransmitPacket(buf.Bytes())
+			cmdHandler.SendMessageToPlayer(giveUsage)
 			return
 		}
 	}
@@ -138,27 +131,10 @@ func (player *Player) cmdGive(message string) {
 	if len(cmdParts) >= 3 {
 		data, err = strconv.Atoi(cmdParts[2])
 		if err != nil {
-			buf := new(bytes.Buffer)
-			proto.WriteChatMessage(buf, giveUsage)
-			player.TransmitPacket(buf.Bytes())
+			cmdHandler.SendMessageToPlayer(giveUsage)
 			return
 		}
 	}
 
-	itemType, ok := player.gameRules.ItemTypes[ItemTypeId(itemId)]
-	if !ok {
-		buf := new(bytes.Buffer)
-		proto.WriteChatMessage(buf, "Unknown item ID")
-		player.TransmitPacket(buf.Bytes())
-		return
-	}
-
-	item := slot.Slot{
-		ItemType: itemType,
-		Count:    ItemCount(quantity),
-		Data:     ItemData(data),
-	}
-	player.Enqueue(func(player *Player) {
-		player.reqGiveItem(&player.position, &item)
-	})
+	cmdHandler.GiveItem(itemId, quantity, data)
 }

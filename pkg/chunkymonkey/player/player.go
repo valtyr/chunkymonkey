@@ -10,7 +10,6 @@ import (
 	"os"
 	"sync"
 
-	"chunkymonkey/command"
 	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
 	"chunkymonkey/slot"
@@ -22,6 +21,7 @@ import (
 var (
 	expVarPlayerConnectionCount    *expvar.Int
 	expVarPlayerDisconnectionCount *expvar.Int
+	errUnknownItemID               os.Error
 )
 
 const StanceNormal = 1.62
@@ -29,6 +29,7 @@ const StanceNormal = 1.62
 func init() {
 	expVarPlayerConnectionCount = expvar.NewInt("player-connection-count")
 	expVarPlayerDisconnectionCount = expvar.NewInt("player-disconnection-count")
+	errUnknownItemID = os.NewError("Unknown item ID")
 }
 
 type Player struct {
@@ -84,45 +85,6 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player, gameRules.Recipes)
 
-	// Chat command: "give"
-	cmdGive := command.NewCommand(giveCmd, giveDesc, giveUsage, func(msg string) {
-		player.cmdGive(msg)
-	})
-	player.gameRules.CommandFramework.AddCommand(cmdGive)
-
-	// Chat command "help" and "?"
-	cmdHelpFunc := func(msg string) {
-		player.cmdHelp(msg, player.gameRules.CommandFramework)
-	}
-	cmdHelp := command.NewCommand(helpCmd, helpDesc, helpUsage, cmdHelpFunc)
-	player.gameRules.CommandFramework.AddCommand(cmdHelp)
-	cmdHelpShort := command.NewCommand(helpShortCmd, helpDesc, helpUsage, cmdHelpFunc)
-	player.gameRules.CommandFramework.AddCommand(cmdHelpShort)
-
-	// Chat command: "tell"
-	cmdTell := command.NewCommand(tellCmd, tellDesc, tellUsage, func(msg string) {
-		player.cmdTell(msg)
-	})
-	player.gameRules.CommandFramework.AddCommand(cmdTell)
-
-	// Chat command: "kill"
-	cmdKill := command.NewCommand(killCmd, killDesc, killUsage, func(msg string) {
-		player.cmdKill(msg)
-	})
-	player.gameRules.CommandFramework.AddCommand(cmdKill)
-
-	// Chat command: "tp"
-	cmdTp := command.NewCommand(tpCmd, tpDesc, tpUsage, func(msg string) {
-		player.cmdTp(msg)
-	})
-	player.gameRules.CommandFramework.AddCommand(cmdTp)
-
-	// Chat command: "say"
-	cmdSay := command.NewCommand(sayCmd, sayDesc, sayUsage, func(msg string) {
-		player.cmdSay(msg)
-	})
-	player.gameRules.CommandFramework.AddCommand(cmdSay)
-
 	return player
 }
 
@@ -151,7 +113,7 @@ func (player *Player) PacketKeepAlive() {
 func (player *Player) PacketChatMessage(message string) {
 	prefix := player.gameRules.CommandFramework.Prefix()
 	if message[0:len(prefix)] == prefix {
-		player.gameRules.CommandFramework.Message <- message
+		player.gameRules.CommandFramework.Process(message, player)
 	} else {
 		player.sendChatMessage(fmt.Sprintf("<%s> %s", player.name, message), true)
 	}
@@ -590,4 +552,31 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 	}
 
 	player.inventory.Resubscribe()
+}
+
+// ICommandHandler implementations
+func (player *Player) SendMessageToPlayer(msg string) {
+	buf := new(bytes.Buffer)
+	proto.WriteChatMessage(buf, msg)
+	packet := buf.Bytes()
+	player.TransmitPacket(packet)
+}
+
+func (player *Player) BroadcastMessage(msg string, self bool) {
+	player.sendChatMessage(msg, self)
+}
+
+func (player *Player) GiveItem(id int, quantity int, data int) os.Error {
+	itemType, ok := player.gameRules.ItemTypes[ItemTypeId(id)]
+	if !ok {
+		return errUnknownItemID
+	}
+
+	item := slot.Slot{
+		ItemType: itemType,
+		Count:    ItemCount(quantity),
+		Data:     ItemData(data),
+	}
+	player.reqGiveItem(&player.position, &item)
+	return nil
 }
