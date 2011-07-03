@@ -124,7 +124,7 @@ func (player *Player) PacketChatMessage(message string) {
 	if message[0:len(prefix)] == prefix {
 		player.gameRules.CommandFramework.Message <- message
 	} else {
-		player.sendChatMessage(message)
+		player.sendChatMessage(fmt.Sprintf("<%s> %s", player.name, message), true)
 	}
 }
 
@@ -312,7 +312,7 @@ func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 func (player *Player) PacketDisconnect(reason string) {
 	log.Printf("Player %s disconnected reason=%s", player.name, reason)
 
-	player.sendChatMessage(fmt.Sprintf("%s has left", player.name))
+	player.sendChatMessage(fmt.Sprintf("%s has left", player.name), false)
 
 	player.onDisconnect <- player.EntityId
 	player.txQueue <- nil
@@ -371,7 +371,7 @@ func (player *Player) mainLoop() {
 	player.chunkSubs.Init(player)
 	defer player.chunkSubs.Close()
 
-	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name))
+	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name), false)
 
 	for {
 		f, ok := <-player.mainQueue
@@ -530,14 +530,20 @@ func (player *Player) Enqueue(f func(*Player)) {
 	player.mainQueue <- f
 }
 
-func (player *Player) sendChatMessage(message string) {
+func (player *Player) sendChatMessage(message string, sendToSelf bool) {
 	buf := new(bytes.Buffer)
 	proto.WriteChatMessage(buf, message)
+
+	packet := buf.Bytes()
+
+	if sendToSelf {
+		player.TransmitPacket(packet)
+	}
 
 	player.chunkSubs.curShard.ReqMulticastPlayers(
 		player.chunkSubs.curChunkLoc,
 		player.EntityId,
-		buf.Bytes(),
+		packet,
 	)
 }
 
