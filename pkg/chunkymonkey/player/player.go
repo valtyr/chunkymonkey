@@ -99,6 +99,12 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	cmdHelpShort := command.NewCommand(helpShortCmd, helpDesc, helpUsage, cmdHelpFunc)
 	player.gameRules.CommandFramework.AddCommand(cmdHelpShort)
 
+	// Chat command: "tell"
+	cmdTell := command.NewCommand(tellCmd, tellDesc, tellUsage, func(msg string) {
+		player.cmdTell(msg)
+	})
+	player.gameRules.CommandFramework.AddCommand(cmdTell)
+
 	return player
 }
 

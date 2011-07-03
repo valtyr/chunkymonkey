@@ -11,6 +11,25 @@ import (
 	. "chunkymonkey/types"
 )
 
+// /tell player message 
+const tellCmd = "tell"
+const tellUsage = "tell <player> <message>"
+const tellDesc = "Tells a player a message."
+
+func (player *Player) cmdTell(message string) {
+	cmdParts := strings.Split(message, " ", -1)
+	if len(cmdParts) < 3 {
+		buf := new(bytes.Buffer)
+		proto.WriteChatMessage(buf, tellUsage)
+		player.TransmitPacket(buf.Bytes())
+		return
+	}
+	/* TODO Get player to send message, too
+	player := cmdParts[1]
+	message := strings.Join(cmdParts[2:], " ")
+	*/
+}
+
 const helpShortCmd = "?"
 const helpCmd = "help"
 const helpUsage = "help|?"
