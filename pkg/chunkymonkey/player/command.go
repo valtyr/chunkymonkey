@@ -11,6 +11,25 @@ import (
 	. "chunkymonkey/types"
 )
 
+// say message 
+const sayCmd = "say"
+const sayUsage = "say <message>"
+const sayDesc = "Broadcasts a message to all players without showing a player name. The message is colored pink."
+
+func (player *Player) cmdSay(message string) {
+	cmdParts := strings.Split(message, " ", -1)
+	if len(cmdParts) < 2 {
+		buf := new(bytes.Buffer)
+		proto.WriteChatMessage(buf, sayUsage)
+		player.TransmitPacket(buf.Bytes())
+		return
+	}
+	msg := strings.Join(cmdParts[1:], " ")
+	player.Enqueue(func(player *Player) {
+		player.sendChatMessage(msg)
+	})
+}
+
 // tp player1 player2 
 
 const tpCmd = "tp"

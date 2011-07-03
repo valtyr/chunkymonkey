@@ -117,6 +117,12 @@ func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules
 	})
 	player.gameRules.CommandFramework.AddCommand(cmdTp)
 
+	// Chat command: "say"
+	cmdSay := command.NewCommand(sayCmd, sayDesc, sayUsage, func(msg string) {
+		player.cmdSay(msg)
+	})
+	player.gameRules.CommandFramework.AddCommand(cmdSay)
+
 	return player
 }
 
@@ -144,9 +150,11 @@ func (player *Player) PacketKeepAlive() {
 
 func (player *Player) PacketChatMessage(message string) {
 	prefix := player.gameRules.CommandFramework.Prefix()
+	log.Printf("DEBUG: Prefix: %s Message: %s", prefix, message)
 	if message[0:len(prefix)] == prefix {
 		player.gameRules.CommandFramework.Message <- message
 	} else {
+		log.Printf("DEBUG: sendChatMessage(%s)", message)
 		player.sendChatMessage(message)
 	}
 }
