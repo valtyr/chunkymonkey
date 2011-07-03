@@ -8,13 +8,6 @@ import (
 	"testmatcher"
 )
 
-const (
-	cmdText = "give"
-	desc    = "Gives x y to player z"
-	usage   = "Usage text"
-	message = "/give 1 64 admin"
-)
-
 func TestCommandFramework(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
