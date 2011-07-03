@@ -5,7 +5,7 @@ import (
 )
 
 type ICommandHandler interface {
-	GiveItem(int, int, int) os.Error // ID, quantity, data
-	SendMessageToPlayer(string)
-	BroadcastMessage(string, bool)
+	GiveItem(itemTypeId int, quantity int, data int) os.Error
+	SendMessageToPlayer(msg string)
+	BroadcastMessage(msg string, self bool)
 }

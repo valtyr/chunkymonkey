@@ -17,7 +17,7 @@ func getCommands() map[string]*Command {
 
 const msgNotImplemented = "We are sorry. This command is not yet implemented."
 const msgUnknownItem = "Unknown item ID"
-// say message 
+// say message
 const sayCmd = "say"
 const sayUsage = "say <message>"
 const sayDesc = "Broadcasts a message to all players without showing a player name. The message is colored pink."
@@ -32,7 +32,7 @@ func cmdSay(message string, cmdHandler ICommandHandler) {
 	cmdHandler.BroadcastMessage("§d"+msg, true)
 }
 
-// tp player1 player2 
+// tp player1 player2
 
 const tpCmd = "tp"
 const tpUsage = "tp <player1> <player2>"
@@ -59,7 +59,7 @@ func cmdKill(message string, cmdHandler ICommandHandler) {
 	cmdHandler.SendMessageToPlayer(msgNotImplemented)
 }
 
-// /tell player message 
+// /tell player message
 const tellCmd = "tell"
 const tellUsage = "tell <player> <message>"
 const tellDesc = "Tells a player a message."
