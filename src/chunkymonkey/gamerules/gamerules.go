@@ -7,47 +7,39 @@ import (
 )
 
 // GameRules is a container type for block, item and recipe definitions.
-type GameRules struct {
-	BlockTypes       BlockTypeList
-	ItemTypes        ItemTypeMap
+var (
+	Blocks       BlockTypeList
+	Items        ItemTypeMap
 	Recipes          *RecipeSet
-	FurnaceData      FurnaceData
+	FurnaceReactions FurnaceData
 	CommandFramework *command.CommandFramework
-}
+)
 
-func LoadGameRules(blocksDefFile, itemsDefFile, recipesDefFile, furnaceDefFile string) (rules *GameRules, err os.Error) {
-	blockTypes, err := LoadBlocksFromFile(blocksDefFile)
+func LoadGameRules(blocksDefFile, itemsDefFile, recipesDefFile, furnaceDefFile string) (err os.Error) {
+	Blocks, err = LoadBlocksFromFile(blocksDefFile)
 	if err != nil {
 		return
 	}
 
-	itemTypes, err := LoadItemTypesFromFile(itemsDefFile)
+	Items, err = LoadItemTypesFromFile(itemsDefFile)
 	if err != nil {
 		return
 	}
 
-	blockTypes.CreateBlockItemTypes(itemTypes)
+	Blocks.CreateBlockItemTypes(Items)
 
-	recipes, err := LoadRecipesFromFile(recipesDefFile, itemTypes)
+	Recipes, err = LoadRecipesFromFile(recipesDefFile, Items)
 	if err != nil {
 		return
 	}
 
-	furnaceData, err := LoadFurnaceDataFromFile(furnaceDefFile)
+	FurnaceReactions, err = LoadFurnaceDataFromFile(furnaceDefFile)
 	if err != nil {
 		return
 	}
 
 	// TODO: Load the prefix from a config file
-	cmdFramework := command.NewCommandFramework("/")
-
-	rules = &GameRules{
-		BlockTypes:       blockTypes,
-		ItemTypes:        itemTypes,
-		Recipes:          recipes,
-		FurnaceData:      furnaceData,
-		CommandFramework: cmdFramework,
-	}
+	CommandFramework = command.NewCommandFramework("/")
 
 	return
 }

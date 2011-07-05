@@ -19,29 +19,27 @@ type CraftingInventory struct {
 	recipes       RecipeSetMatcher
 }
 
-func (inv *CraftingInventory) init(width, height int, recipes *RecipeSet) {
+func (inv *CraftingInventory) init(width, height int) {
 	inv.Inventory.Init(1 + width*height)
 	inv.width = width
 	inv.height = height
-	inv.recipes.Init(recipes)
+	inv.recipes.Init(Recipes)
 }
 
 // InitWorkbenchInventory initializes inv as a 2x2 player crafting inventory.
-func (inv *CraftingInventory) InitPlayerCraftingInventory(recipes *RecipeSet) {
+func (inv *CraftingInventory) InitPlayerCraftingInventory() {
 	inv.init(
 		playerInvCraftWidth,
 		playerInvCraftHeight,
-		recipes,
 	)
 }
 
 // NewWorkbenchInventory creates a 3x3 workbench crafting inventory.
-func NewWorkbenchInventory(recipes *RecipeSet) *CraftingInventory {
+func NewWorkbenchInventory() *CraftingInventory {
 	inv := new(CraftingInventory)
 	inv.init(
 		workbenchInvCraftWidth,
 		workbenchInvCraftHeight,
-		recipes,
 	)
 	return inv
 }

@@ -110,7 +110,7 @@ func (chunk *Chunk) Rand() *rand.Rand {
 }
 
 func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *gamerules.ItemType, ok bool) {
-	itemType, ok = chunk.shard.gameRules.ItemTypes[itemTypeId]
+	itemType, ok = gamerules.Items[itemTypeId]
 	return
 }
 
@@ -176,7 +176,7 @@ func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockInde
 func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *gamerules.BlockType, blockData byte, ok bool) {
 	blockTypeId := index.BlockId(chunk.blocks)
 
-	blockType, ok = chunk.shard.gameRules.BlockTypes.Get(blockTypeId)
+	blockType, ok = gamerules.Blocks.Get(blockTypeId)
 	if !ok {
 		log.Printf(
 			"%v.blockTypeAndData: unknown block type %d at index %d",
@@ -210,18 +210,6 @@ func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *gam
 	}
 
 	return
-}
-
-func (chunk *Chunk) RecipeSet() *gamerules.RecipeSet {
-	return chunk.shard.gameRules.Recipes
-}
-
-func (chunk *Chunk) FurnaceData() *gamerules.FurnaceData {
-	return &chunk.shard.gameRules.FurnaceData
-}
-
-func (chunk *Chunk) ItemTypes() gamerules.ItemTypeMap {
-	return chunk.shard.gameRules.ItemTypes
 }
 
 func (chunk *Chunk) reqHitBlock(player gamerules.IShardPlayerClient, held gamerules.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
@@ -294,7 +282,7 @@ func (chunk *Chunk) reqPlaceItem(player gamerules.IShardPlayerClient, target *Bl
 
 	// Blocks can only replace certain blocks.
 	blockTypeId := index.BlockId(chunk.blocks)
-	blockType, ok := chunk.shard.gameRules.BlockTypes.Get(blockTypeId)
+	blockType, ok := gamerules.Blocks.Get(blockTypeId)
 	if !ok || !blockType.Replaceable {
 		return
 	}
@@ -383,7 +371,7 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockTy
 		}
 	}
 
-	blockType, ok = chunk.shard.gameRules.BlockTypes.Get(blockTypeId)
+	blockType, ok = gamerules.Blocks.Get(blockTypeId)
 	if !ok {
 		log.Printf(
 			"%v.blockQuery found unknown block type Id %d at %+v",
@@ -754,7 +742,7 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = gamerules.NewItem(chunk.shard.gameRules.ItemTypes[id], count, data, pos, velocity)
+			newEntity = gamerules.NewItem(gamerules.Items[id], count, data, pos, velocity)
 		case "Chicken":
 			newEntity = mob.NewHen(pos, velocity, look)
 		case "Cow":

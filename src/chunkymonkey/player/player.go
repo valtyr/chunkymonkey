@@ -47,8 +47,6 @@ type Player struct {
 	nextWindowId WindowId
 	remoteInv    *RemoteInventory
 
-	gameRules *gamerules.GameRules
-
 	mainQueue chan func(*Player)
 	txQueue   chan []byte
 
@@ -59,7 +57,7 @@ type Player struct {
 	onDisconnect chan<- EntityId
 }
 
-func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, gameRules *gamerules.GameRules, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
+func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
 	player := &Player{
 		EntityId:       entityId,
 		shardConnecter: shardConnecter,
@@ -71,8 +69,6 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, game
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
 
-		gameRules: gameRules,
-
 		mainQueue: make(chan func(*Player), 128),
 		txQueue:   make(chan []byte, 128),
 
@@ -81,7 +77,7 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, game
 
 	player.shardReceiver.Init(player)
 	player.cursor.Init()
-	player.inventory.Init(player.EntityId, player, gameRules.Recipes)
+	player.inventory.Init(player.EntityId, player)
 
 	return player
 }
@@ -109,9 +105,9 @@ func (player *Player) PacketKeepAlive() {
 }
 
 func (player *Player) PacketChatMessage(message string) {
-	prefix := player.gameRules.CommandFramework.Prefix()
+	prefix := gamerules.CommandFramework.Prefix()
 	if message[0:len(prefix)] == prefix {
-		player.gameRules.CommandFramework.Process(message, player)
+		gamerules.CommandFramework.Process(message, player)
 	} else {
 		player.sendChatMessage(fmt.Sprintf("<%s> %s", player.name, message), true)
 	}
@@ -256,7 +252,7 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 			windowId)
 	}
 
-	expectedItemType, ok := player.gameRules.ItemTypes[expectedSlot.ItemTypeId]
+	expectedItemType, ok := gamerules.Items[expectedSlot.ItemTypeId]
 	if !ok {
 		return
 	}
@@ -565,7 +561,7 @@ func (player *Player) BroadcastMessage(msg string, self bool) {
 }
 
 func (player *Player) GiveItem(id int, quantity int, data int) os.Error {
-	itemType, ok := player.gameRules.ItemTypes[ItemTypeId(id)]
+	itemType, ok := gamerules.Items[ItemTypeId(id)]
 	if !ok {
 		return errUnknownItemID
 	}

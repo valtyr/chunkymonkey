@@ -15,16 +15,14 @@ import (
 type LocalShardManager struct {
 	entityMgr  *entity.EntityManager
 	chunkStore chunkstore.IChunkStore
-	gameRules  *gamerules.GameRules
 	shards     map[uint64]*ChunkShard
 	lock       sync.Mutex
 }
 
-func NewLocalShardManager(chunkStore chunkstore.IChunkStore, entityMgr *entity.EntityManager, gameRules *gamerules.GameRules) *LocalShardManager {
+func NewLocalShardManager(chunkStore chunkstore.IChunkStore, entityMgr *entity.EntityManager) *LocalShardManager {
 	return &LocalShardManager{
 		entityMgr:  entityMgr,
 		chunkStore: chunkStore,
-		gameRules:  gameRules,
 		shards:     make(map[uint64]*ChunkShard),
 	}
 }
@@ -41,7 +39,7 @@ func (mgr *LocalShardManager) getShard(loc ShardXz, create bool) *ChunkShard {
 	}
 
 	// Create shard.
-	shard := NewChunkShard(mgr, mgr.chunkStore, mgr.gameRules, mgr.entityMgr, loc)
+	shard := NewChunkShard(mgr, mgr.chunkStore, mgr.entityMgr, loc)
 	mgr.shards[shardKey] = shard
 	go shard.serve()
 

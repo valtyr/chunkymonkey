@@ -12,7 +12,7 @@ func makeWorkbenchAspect() (aspect IBlockAspect) {
 }
 
 func createWorkbenchInventory(instance *BlockInstance) *blockInventory {
-	inv := NewWorkbenchInventory(instance.Chunk.RecipeSet())
+	inv := NewWorkbenchInventory()
 	return newBlockInventory(
 		instance,
 		inv,

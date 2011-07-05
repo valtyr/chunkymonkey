@@ -25,7 +25,6 @@ func chunkXzToChunkIndex(locDelta *ChunkXz) int {
 type ChunkShard struct {
 	shardConnecter   gamerules.IShardConnecter
 	chunkStore       chunkstore.IChunkStore
-	gameRules        *gamerules.GameRules
 	entityMgr        *entity.EntityManager
 	loc              ShardXz
 	originChunkLoc   ChunkXz // The lowest X and Z located chunk in the shard.
@@ -40,11 +39,10 @@ type ChunkShard struct {
 	selfClient   shardSelfClient
 }
 
-func NewChunkShard(shardConnecter gamerules.IShardConnecter, chunkStore chunkstore.IChunkStore, gameRules *gamerules.GameRules, entityMgr *entity.EntityManager, loc ShardXz) (shard *ChunkShard) {
+func NewChunkShard(shardConnecter gamerules.IShardConnecter, chunkStore chunkstore.IChunkStore, entityMgr *entity.EntityManager, loc ShardXz) (shard *ChunkShard) {
 	shard = &ChunkShard{
 		shardConnecter:   shardConnecter,
 		chunkStore:       chunkStore,
-		gameRules:        gameRules,
 		entityMgr:        entityMgr,
 		loc:              loc,
 		originChunkLoc:   loc.ToChunkXz(),

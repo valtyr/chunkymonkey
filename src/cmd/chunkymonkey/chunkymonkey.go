@@ -67,7 +67,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	gameRules, err := gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs, *furnaceDefs)
+	err = gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs, *furnaceDefs)
 	if err != nil {
 		log.Print("Error loading game rules: ", err)
 		os.Exit(1)
@@ -84,7 +84,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	game, err := chunkymonkey.NewGame(worldPath, gameRules)
+	game, err := chunkymonkey.NewGame(worldPath)
 	if err != nil {
 		log.Fatal(err)
 	}

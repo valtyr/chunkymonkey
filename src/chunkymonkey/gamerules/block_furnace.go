@@ -22,7 +22,7 @@ type FurnaceAspect struct {
 func createFurnaceInventory(instance *BlockInstance) *blockInventory {
 	return newBlockInventory(
 		instance,
-		NewFurnaceInventory(instance.Chunk.FurnaceData(), instance.Chunk.ItemTypes()),
+		NewFurnaceInventory(),
 		false,
 		InvTypeIdFurnace,
 	)

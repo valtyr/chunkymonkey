@@ -26,10 +26,10 @@ type PlayerInventory struct {
 
 // Init initializes PlayerInventory.
 // entityId - The EntityId of the player who holds the inventory.
-func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *gamerules.RecipeSet) {
+func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer) {
 	w.entityId = entityId
 
-	w.crafting.InitPlayerCraftingInventory(recipes)
+	w.crafting.InitPlayerCraftingInventory()
 	w.armor.Init(playerInvArmorNum)
 	w.main.Init(playerInvMainNum)
 	w.holding.Init(playerInvHoldingNum)

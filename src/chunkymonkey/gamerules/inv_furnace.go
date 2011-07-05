@@ -18,8 +18,6 @@ const (
 
 type FurnaceInventory struct {
 	Inventory
-	furnaceData       *FurnaceData
-	itemTypes         ItemTypeMap
 	maxFuel           Ticks
 	curFuel           Ticks
 	reactionRemaining Ticks
@@ -30,10 +28,8 @@ type FurnaceInventory struct {
 }
 
 // NewFurnaceInventory creates a furnace inventory.
-func NewFurnaceInventory(furnaceData *FurnaceData, itemTypes ItemTypeMap) (inv *FurnaceInventory) {
+func NewFurnaceInventory() (inv *FurnaceInventory) {
 	inv = &FurnaceInventory{
-		furnaceData:       furnaceData,
-		itemTypes:         itemTypes,
 		maxFuel:           0,
 		curFuel:           0,
 		reactionRemaining: reactionDuration,
@@ -59,7 +55,7 @@ func (inv *FurnaceInventory) Click(slotId SlotId, cursor *Slot, rightClick bool,
 		}
 	case furnaceSlotFuel:
 		cursorItemId := cursor.ItemTypeId()
-		_, cursorIsFuel := inv.furnaceData.Fuels[cursorItemId]
+		_, cursorIsFuel := FurnaceReactions.Fuels[cursorItemId]
 		if cursorIsFuel || cursor.IsEmpty() {
 			txState = inv.Inventory.Click(
 				slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
@@ -82,8 +78,8 @@ func (inv *FurnaceInventory) stateCheck() {
 	fuelSlot := &inv.slots[furnaceSlotFuel]
 	outputSlot := &inv.slots[furnaceSlotOutput]
 
-	reaction, haveReagent := inv.furnaceData.Reactions[reagentSlot.ItemTypeId()]
-	fuelTicks, haveFuel := inv.furnaceData.Fuels[fuelSlot.ItemTypeId()]
+	reaction, haveReagent := FurnaceReactions.Reactions[reagentSlot.ItemTypeId()]
+	fuelTicks, haveFuel := FurnaceReactions.Fuels[fuelSlot.ItemTypeId()]
 
 	// Work out if the output slot is ready for items to be produced from the
 	// reaction.
@@ -113,7 +109,7 @@ func (inv *FurnaceInventory) stateCheck() {
 			inv.reactionRemaining = reactionDuration
 		} else if haveReagent && inv.reactionRemaining == 0 {
 			// One reaction complete.
-			if itemType, ok := inv.itemTypes[reaction.Output]; !ok {
+			if itemType, ok := Items[reaction.Output]; !ok {
 				log.Printf("Furnace encountered unknown output type in reaction %#v", reaction)
 			} else {
 				itemCreated := Slot{

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	. "chunkymonkey/entity"
-	"chunkymonkey/gamerules"
 	"chunkymonkey/player"
 	"chunkymonkey/proto"
 	"chunkymonkey/server_auth"
@@ -33,15 +32,13 @@ type Game struct {
 	entityManager    EntityManager
 	players          map[EntityId]*player.Player
 	time             Ticks
-	gameRules        gamerules.GameRules
-	itemTypes        gamerules.ItemTypeMap
 	serverId         string
 	worldStore       *worldstore.WorldStore
 	// If set, logins are not allowed.
 	UnderMaintenanceMsg string
 }
 
-func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err os.Error) {
+func NewGame(worldPath string) (game *Game, err os.Error) {
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
 	if err != nil {
 		return nil, err
@@ -52,7 +49,6 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 		playerDisconnect: make(chan EntityId),
 		players:          make(map[EntityId]*player.Player),
 		time:             worldStore.Time,
-		gameRules:        *gameRules,
 		worldStore:       worldStore,
 	}
 
@@ -61,7 +57,7 @@ func NewGame(worldPath string, gameRules *gamerules.GameRules) (game *Game, err 
 	game.serverId = fmt.Sprintf("%016x", rand.NewSource(worldStore.Seed).Int63())
 	//game.serverId = "-"
 
-	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, &game.entityManager, &game.gameRules)
+	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, &game.entityManager)
 
 	go game.mainLoop()
 	return
@@ -154,7 +150,7 @@ func (game *Game) login(conn net.Conn) {
 		}
 	}
 
-	player := player.NewPlayer(entityId, game.chunkManager, &game.gameRules, conn, username, startPosition, game.playerDisconnect)
+	player := player.NewPlayer(entityId, game.chunkManager, conn, username, startPosition, game.playerDisconnect)
 
 	addedChan := make(chan struct{})
 	game.enqueue(func(_ *Game) {
