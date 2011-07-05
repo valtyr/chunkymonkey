@@ -1,13 +1,13 @@
 package player
 
 import (
+	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
-	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
 // shardPlayerClient receives events from chunk shards and acts upon them. It
-// implements stub.IShardPlayerClient.
+// implements gamerules.IShardPlayerClient.
 type shardPlayerClient struct {
 	player *Player
 }
@@ -36,7 +36,7 @@ func (psr *shardPlayerClient) ReqInventorySubscribed(block BlockXyz, invTypeId I
 	})
 }
 
-func (psr *shardPlayerClient) ReqInventorySlotUpdate(block BlockXyz, slot slot.Slot, slotId SlotId) {
+func (psr *shardPlayerClient) ReqInventorySlotUpdate(block BlockXyz, slot gamerules.Slot, slotId SlotId) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqInventorySlotUpdate(&block, &slot, slotId)
 	})
@@ -48,7 +48,7 @@ func (psr *shardPlayerClient) ReqInventoryProgressUpdate(block BlockXyz, prgBarI
 	})
 }
 
-func (psr *shardPlayerClient) ReqInventoryCursorUpdate(block BlockXyz, cursor slot.Slot) {
+func (psr *shardPlayerClient) ReqInventoryCursorUpdate(block BlockXyz, cursor gamerules.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqInventoryCursorUpdate(&block, &cursor)
 	})
@@ -66,19 +66,19 @@ func (psr *shardPlayerClient) ReqInventoryUnsubscribed(block BlockXyz) {
 	})
 }
 
-func (psr *shardPlayerClient) ReqPlaceHeldItem(target BlockXyz, wasHeld slot.Slot) {
+func (psr *shardPlayerClient) ReqPlaceHeldItem(target BlockXyz, wasHeld gamerules.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqPlaceHeldItem(&target, &wasHeld)
 	})
 }
 
-func (psr *shardPlayerClient) ReqOfferItem(fromChunk ChunkXz, entityId EntityId, item slot.Slot) {
+func (psr *shardPlayerClient) ReqOfferItem(fromChunk ChunkXz, entityId EntityId, item gamerules.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqOfferItem(&fromChunk, entityId, &item)
 	})
 }
 
-func (psr *shardPlayerClient) ReqGiveItem(atPosition AbsXyz, item slot.Slot) {
+func (psr *shardPlayerClient) ReqGiveItem(atPosition AbsXyz, item gamerules.Slot) {
 	psr.player.Enqueue(func(_ *Player) {
 		psr.player.reqGiveItem(&atPosition, &item)
 	})

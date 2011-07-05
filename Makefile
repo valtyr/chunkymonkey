@@ -9,7 +9,7 @@ BINARIES=\
 
 MOCK_FILES=\
 	src/chunkymonkey/command/mock_icommandhandler_test.go \
-	src/chunkymonkey/stub/mock_stub_test.go
+	src/chunkymonkey/gamerules/mock_stub_test.go
 
 GD_OPTS=-quiet
 
@@ -53,8 +53,8 @@ mocks: $(MOCK_FILES)
 src/chunkymonkey/command/mock_icommandhandler_test.go: src/chunkymonkey/command/icommandhandler.go
 	mockgen -package command -destination $@ -source $<
 
-src/chunkymonkey/stub/mock_stub_test.go: src/chunkymonkey/stub/stub.go
-	mockgen -package stub -destination $@ -source $< -imports .=chunkymonkey/types
+src/chunkymonkey/gamerules/mock_stub_test.go: src/chunkymonkey/gamerules/stub.go
+	mockgen -package gamerules -destination $@ -source $< -imports .=chunkymonkey/types
 
 
 .PHONY: all bench check clean docs fmt mocks test test_data

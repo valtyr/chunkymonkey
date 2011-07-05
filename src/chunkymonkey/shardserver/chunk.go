@@ -8,17 +8,12 @@ import (
 	"rand"
 	"time"
 
-	"chunkymonkey/block"
 	"chunkymonkey/chunkstore"
-	"chunkymonkey/item"
-	"chunkymonkey/itemtype"
+	"chunkymonkey/gamerules"
 	"chunkymonkey/mob"
 	"chunkymonkey/nbtutil"
 	"chunkymonkey/object"
 	"chunkymonkey/proto"
-	"chunkymonkey/recipe"
-	"chunkymonkey/slot"
-	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 	"nbt"
 )
@@ -38,10 +33,10 @@ type Chunk struct {
 	entities     map[EntityId]object.INonPlayerEntity // Entities (mobs, items, etc)
 	blockExtra   map[BlockIndex]interface{}           // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
-	cachedPacket []byte                               // Cached packet data for this chunk.
-	subscribers  map[EntityId]stub.IShardPlayerClient // Players getting updates from the chunk.
-	playersData  map[EntityId]*playerData             // Some player data for player(s) in the chunk.
-	onUnsub      map[EntityId][]block.IUnsubscribed   // Functions to be called when unsubscribed.
+	cachedPacket []byte                                    // Cached packet data for this chunk.
+	subscribers  map[EntityId]gamerules.IShardPlayerClient // Players getting updates from the chunk.
+	playersData  map[EntityId]*playerData                  // Some player data for player(s) in the chunk.
+	onUnsub      map[EntityId][]gamerules.IUnsubscribed    // Functions to be called when unsubscribed.
 
 	activeBlocks    map[BlockIndex]bool // Blocks that need to "tick".
 	newActiveBlocks map[BlockIndex]bool // Blocks added as active for next "tick".
@@ -59,9 +54,9 @@ func newChunkFromReader(reader chunkstore.IChunkReader, shard *ChunkShard) (chun
 		entities:    make(map[EntityId]object.INonPlayerEntity),
 		blockExtra:  make(map[BlockIndex]interface{}),
 		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers: make(map[EntityId]stub.IShardPlayerClient),
+		subscribers: make(map[EntityId]gamerules.IShardPlayerClient),
 		playersData: make(map[EntityId]*playerData),
-		onUnsub:     make(map[EntityId][]block.IUnsubscribed),
+		onUnsub:     make(map[EntityId][]gamerules.IUnsubscribed),
 
 		activeBlocks:    make(map[BlockIndex]bool),
 		newActiveBlocks: make(map[BlockIndex]bool),
@@ -114,7 +109,7 @@ func (chunk *Chunk) Rand() *rand.Rand {
 	return chunk.rand
 }
 
-func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *itemtype.ItemType, ok bool) {
+func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *gamerules.ItemType, ok bool) {
 	itemType, ok = chunk.shard.gameRules.ItemTypes[itemTypeId]
 	return
 }
@@ -178,7 +173,7 @@ func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockInde
 	return
 }
 
-func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *block.BlockType, blockData byte, ok bool) {
+func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *gamerules.BlockType, blockData byte, ok bool) {
 	blockTypeId := index.BlockId(chunk.blocks)
 
 	blockType, ok = chunk.shard.gameRules.BlockTypes.Get(blockTypeId)
@@ -194,7 +189,7 @@ func (chunk *Chunk) blockTypeAndData(index BlockIndex) (blockType *block.BlockTy
 	return
 }
 
-func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *block.BlockInstance, blockType *block.BlockType, ok bool) {
+func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *gamerules.BlockInstance, blockType *gamerules.BlockType, ok bool) {
 	index, subLoc, ok := chunk.getBlockIndexByBlockXyz(blockLoc)
 	if !ok {
 		return
@@ -205,7 +200,7 @@ func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *blo
 		return
 	}
 
-	blockInstance = &block.BlockInstance{
+	blockInstance = &gamerules.BlockInstance{
 		Chunk:     chunk,
 		BlockLoc:  *blockLoc,
 		SubLoc:    *subLoc,
@@ -217,19 +212,19 @@ func (chunk *Chunk) blockInstanceAndType(blockLoc *BlockXyz) (blockInstance *blo
 	return
 }
 
-func (chunk *Chunk) RecipeSet() *recipe.RecipeSet {
+func (chunk *Chunk) RecipeSet() *gamerules.RecipeSet {
 	return chunk.shard.gameRules.Recipes
 }
 
-func (chunk *Chunk) FurnaceData() *recipe.FurnaceData {
+func (chunk *Chunk) FurnaceData() *gamerules.FurnaceData {
 	return &chunk.shard.gameRules.FurnaceData
 }
 
-func (chunk *Chunk) ItemTypes() itemtype.ItemTypeMap {
+func (chunk *Chunk) ItemTypes() gamerules.ItemTypeMap {
 	return chunk.shard.gameRules.ItemTypes
 }
 
-func (chunk *Chunk) reqHitBlock(player stub.IShardPlayerClient, held slot.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
+func (chunk *Chunk) reqHitBlock(player gamerules.IShardPlayerClient, held gamerules.Slot, digStatus DigStatus, target *BlockXyz, face Face) {
 
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(target)
 	if !ok {
@@ -244,7 +239,7 @@ func (chunk *Chunk) reqHitBlock(player stub.IShardPlayerClient, held slot.Slot, 
 	return
 }
 
-func (chunk *Chunk) reqInteractBlock(player stub.IShardPlayerClient, held slot.Slot, target *BlockXyz, againstFace Face) {
+func (chunk *Chunk) reqInteractBlock(player gamerules.IShardPlayerClient, held gamerules.Slot, target *BlockXyz, againstFace Face) {
 	// TODO use held item to better check of if the player is trying to place a
 	// block vs. perform some other interaction (e.g hoeing dirt). This is
 	// perhaps best solved by sending held item type and the face to
@@ -278,7 +273,7 @@ func (chunk *Chunk) reqInteractBlock(player stub.IShardPlayerClient, held slot.S
 // placeBlock attempts to place a block. This is called by PlayerBlockInteract
 // in the situation where the player interacts with an attachable block
 // (potentially in a different chunk to the one where the block gets placed).
-func (chunk *Chunk) reqPlaceItem(player stub.IShardPlayerClient, target *BlockXyz, slot *slot.Slot) {
+func (chunk *Chunk) reqPlaceItem(player gamerules.IShardPlayerClient, target *BlockXyz, slot *gamerules.Slot) {
 	// TODO defer a check for remaining items in slot, and do something with them
 	// (send to player or drop on the ground).
 
@@ -310,9 +305,9 @@ func (chunk *Chunk) reqPlaceItem(player stub.IShardPlayerClient, target *BlockXy
 	slot.Decrement()
 }
 
-func (chunk *Chunk) reqTakeItem(player stub.IShardPlayerClient, entityId EntityId) {
+func (chunk *Chunk) reqTakeItem(player gamerules.IShardPlayerClient, entityId EntityId) {
 	if entity, ok := chunk.entities[entityId]; ok {
-		if item, ok := entity.(*item.Item); ok {
+		if item, ok := entity.(*gamerules.Item); ok {
 			player.ReqGiveItem(*item.Position(), *item.GetSlot())
 
 			// Tell all subscribers to animate the item flying at the
@@ -325,8 +320,8 @@ func (chunk *Chunk) reqTakeItem(player stub.IShardPlayerClient, entityId EntityI
 	}
 }
 
-func (chunk *Chunk) reqDropItem(player stub.IShardPlayerClient, content *slot.Slot, position *AbsXyz, velocity *AbsVelocity) {
-	spawnedItem := item.NewItem(
+func (chunk *Chunk) reqDropItem(player gamerules.IShardPlayerClient, content *gamerules.Slot, position *AbsXyz, velocity *AbsVelocity) {
+	spawnedItem := gamerules.NewItem(
 		content.ItemType,
 		content.Count,
 		content.Data,
@@ -337,7 +332,7 @@ func (chunk *Chunk) reqDropItem(player stub.IShardPlayerClient, content *slot.Sl
 	chunk.AddEntity(spawnedItem)
 }
 
-func (chunk *Chunk) reqInventoryClick(player stub.IShardPlayerClient, blockLoc *BlockXyz, slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) {
+func (chunk *Chunk) reqInventoryClick(player gamerules.IShardPlayerClient, blockLoc *BlockXyz, slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) {
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
 	if !ok {
 		return
@@ -349,7 +344,7 @@ func (chunk *Chunk) reqInventoryClick(player stub.IShardPlayerClient, blockLoc *
 		txId, expectedSlot)
 }
 
-func (chunk *Chunk) reqInventoryUnsubscribed(player stub.IShardPlayerClient, blockLoc *BlockXyz) {
+func (chunk *Chunk) reqInventoryUnsubscribed(player gamerules.IShardPlayerClient, blockLoc *BlockXyz) {
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
 	if !ok {
 		return
@@ -360,7 +355,7 @@ func (chunk *Chunk) reqInventoryUnsubscribed(player stub.IShardPlayerClient, blo
 
 // Used to read the BlockId of a block that's either in the chunk, or
 // immediately adjoining it in a neighbouring chunk via the side caches.
-func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *block.BlockType, isWithinChunk bool, blockUnknownId bool) {
+func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockType, isWithinChunk bool, blockUnknownId bool) {
 	chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
 	var blockTypeId BlockId
@@ -485,7 +480,7 @@ func (chunk *Chunk) blockTick() {
 	}
 
 	var ok bool
-	var blockInstance block.BlockInstance
+	var blockInstance gamerules.BlockInstance
 	blockInstance.Chunk = chunk
 
 	for blockIndex := range chunk.activeBlocks {
@@ -530,18 +525,18 @@ func (chunk *Chunk) mobs() (s []*mob.Mob) {
 	return
 }
 
-func (chunk *Chunk) items() (s []*item.Item) {
-	s = make([]*item.Item, 0, 10)
+func (chunk *Chunk) items() (s []*gamerules.Item) {
+	s = make([]*gamerules.Item, 0, 10)
 	for _, e := range chunk.entities {
 		switch e.(type) {
-		case *item.Item:
-			s = append(s, e.(*item.Item))
+		case *gamerules.Item:
+			s = append(s, e.(*gamerules.Item))
 		}
 	}
 	return
 }
 
-func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player stub.IShardPlayerClient, notify bool) {
+func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player gamerules.IShardPlayerClient, notify bool) {
 	if _, ok := chunk.subscribers[entityId]; ok {
 		// Already subscribed.
 		return
@@ -602,14 +597,14 @@ func (chunk *Chunk) reqUnsubscribeChunk(entityId EntityId, sendPacket bool) {
 
 // AddOnUnsubscribe registers a function to be called when the given subscriber
 // unsubscribes.
-func (chunk *Chunk) AddOnUnsubscribe(entityId EntityId, observer block.IUnsubscribed) {
+func (chunk *Chunk) AddOnUnsubscribe(entityId EntityId, observer gamerules.IUnsubscribed) {
 	observers := chunk.onUnsub[entityId]
 	observers = append(observers, observer)
 	chunk.onUnsub[entityId] = observers
 }
 
 // RemoveOnUnsubscribe removes a function previously registered
-func (chunk *Chunk) RemoveOnUnsubscribe(entityId EntityId, observer block.IUnsubscribed) {
+func (chunk *Chunk) RemoveOnUnsubscribe(entityId EntityId, observer gamerules.IUnsubscribed) {
 	observers, ok := chunk.onUnsub[entityId]
 	if !ok {
 		return
@@ -759,7 +754,7 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = item.NewItem(chunk.shard.gameRules.ItemTypes[id], count, data, pos, velocity)
+			newEntity = gamerules.NewItem(chunk.shard.gameRules.ItemTypes[id], count, data, pos, velocity)
 		case "Chicken":
 			newEntity = mob.NewHen(pos, velocity, look)
 		case "Cow":

@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"chunkymonkey/block"
-	"chunkymonkey/itemtype"
-	"chunkymonkey/recipe"
+	"chunkymonkey/gamerules"
 )
 
 var blockDefs = flag.String(
@@ -31,13 +29,13 @@ var furnaceDefs = flag.String(
 func main() {
 	var err os.Error
 
-	blockTypes, err := block.LoadBlocksFromFile(*blockDefs)
+	blockTypes, err := gamerules.LoadBlocksFromFile(*blockDefs)
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "Error loading block definitions: %v\n", err)
 		os.Exit(1)
 	}
 
-	itemTypes, err := itemtype.LoadItemTypesFromFile(*itemDefs)
+	itemTypes, err := gamerules.LoadItemTypesFromFile(*itemDefs)
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "Error loading item definitions: %v\n", err)
 		os.Exit(1)
@@ -45,13 +43,13 @@ func main() {
 
 	blockTypes.CreateBlockItemTypes(itemTypes)
 
-	_, err = recipe.LoadRecipesFromFile(*recipeDefs, itemTypes)
+	_, err = gamerules.LoadRecipesFromFile(*recipeDefs, itemTypes)
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "Error loading recipe definitions: %v\n", err)
 		os.Exit(1)
 	}
 
-	_, err = recipe.LoadFurnaceDataFromFile(*furnaceDefs)
+	_, err = gamerules.LoadFurnaceDataFromFile(*furnaceDefs)
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "Error loading furnace data definitions: %v\n", err)
 		os.Exit(1)

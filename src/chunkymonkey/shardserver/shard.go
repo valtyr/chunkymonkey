@@ -9,7 +9,6 @@ import (
 	"chunkymonkey/entity"
 	"chunkymonkey/gamerules"
 	"chunkymonkey/object"
-	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -24,7 +23,7 @@ func chunkXzToChunkIndex(locDelta *ChunkXz) int {
 // ChunkShard represents a square shard of chunks that share a master
 // goroutine.
 type ChunkShard struct {
-	shardConnecter   stub.IShardConnecter
+	shardConnecter   gamerules.IShardConnecter
 	chunkStore       chunkstore.IChunkStore
 	gameRules        *gamerules.GameRules
 	entityMgr        *entity.EntityManager
@@ -37,11 +36,11 @@ type ChunkShard struct {
 	newActiveBlocks []BlockXyz
 	newActiveShards map[uint64]*destActiveShard
 
-	shardClients map[uint64]stub.IShardShardClient
+	shardClients map[uint64]gamerules.IShardShardClient
 	selfClient   shardSelfClient
 }
 
-func NewChunkShard(shardConnecter stub.IShardConnecter, chunkStore chunkstore.IChunkStore, gameRules *gamerules.GameRules, entityMgr *entity.EntityManager, loc ShardXz) (shard *ChunkShard) {
+func NewChunkShard(shardConnecter gamerules.IShardConnecter, chunkStore chunkstore.IChunkStore, gameRules *gamerules.GameRules, entityMgr *entity.EntityManager, loc ShardXz) (shard *ChunkShard) {
 	shard = &ChunkShard{
 		shardConnecter:   shardConnecter,
 		chunkStore:       chunkStore,
@@ -54,7 +53,7 @@ func NewChunkShard(shardConnecter stub.IShardConnecter, chunkStore chunkstore.IC
 
 		newActiveShards: make(map[uint64]*destActiveShard),
 
-		shardClients: make(map[uint64]stub.IShardShardClient),
+		shardClients: make(map[uint64]gamerules.IShardShardClient),
 	}
 
 	shard.selfClient.shard = shard
@@ -102,7 +101,7 @@ func (shard *ChunkShard) tick() {
 // clientForShard is used to get a IShardShardClient for a given shard, reusing
 // IShardShardClient connections for use within the shard. Returns nil if the
 // shard does not exist.
-func (shard *ChunkShard) clientForShard(shardLoc ShardXz) (client stub.IShardShardClient) {
+func (shard *ChunkShard) clientForShard(shardLoc ShardXz) (client gamerules.IShardShardClient) {
 	var ok bool
 
 	if shard.loc.Equals(&shardLoc) {

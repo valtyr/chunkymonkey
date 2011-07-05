@@ -6,17 +6,16 @@ import (
 	"io"
 	"os"
 
-	"chunkymonkey/inventory"
+	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
-	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
 // IInventory is the interface that windows require of inventories.
 type IInventory interface {
 	NumSlots() SlotId
-	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState)
-	SetSubscriber(subscriber inventory.IInventorySubscriber)
+	Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) (txState TxState)
+	SetSubscriber(subscriber gamerules.IInventorySubscriber)
 	WriteProtoSlots(slots []proto.WindowSlot)
 }
 
@@ -24,7 +23,7 @@ type IInventory interface {
 // inventories.
 type IWindow interface {
 	WindowId() WindowId
-	Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState)
+	Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) (txState TxState)
 	WriteWindowOpen(writer io.Writer) (err os.Error)
 	WriteWindowItems(writer io.Writer) (err os.Error)
 	Finalize(sendClosePacket bool)
@@ -64,7 +63,7 @@ func (iv *inventoryView) Finalize() {
 
 // Implementing IInventorySubscriber - relays inventory changes to the viewer
 // of the window.
-func (iv *inventoryView) SlotUpdate(slot *slot.Slot, slotId SlotId) {
+func (iv *inventoryView) SlotUpdate(slot *gamerules.Slot, slotId SlotId) {
 	buf := new(bytes.Buffer)
 	slot.SendUpdate(buf, iv.window.windowId, iv.startSlot+slotId)
 	iv.window.viewer.TransmitPacket(buf.Bytes())
@@ -157,7 +156,7 @@ func (w *Window) WriteWindowItems(writer io.Writer) (err os.Error) {
 	return
 }
 
-func (w *Window) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) TxState {
+func (w *Window) Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) TxState {
 	if slotId >= 0 {
 		for _, inventoryView := range w.views {
 

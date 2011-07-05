@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"chunkymonkey/item"
+	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
 )
@@ -46,7 +46,7 @@ func (player *playerData) sendPositionLook(writer io.Writer) os.Error {
 		&player.look)
 }
 
-func (player *playerData) OverlapsItem(item *item.Item) bool {
+func (player *playerData) OverlapsItem(item *gamerules.Item) bool {
 	// TODO note that calling this function repeatedly is not as efficient as it
 	// could be.
 

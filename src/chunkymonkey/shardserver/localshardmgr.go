@@ -6,7 +6,6 @@ import (
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/entity"
 	"chunkymonkey/gamerules"
-	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 )
 
@@ -49,7 +48,7 @@ func (mgr *LocalShardManager) getShard(loc ShardXz, create bool) *ChunkShard {
 	return shard
 }
 
-func (mgr *LocalShardManager) PlayerShardConnect(entityId EntityId, player stub.IShardPlayerClient, shardLoc ShardXz) stub.IPlayerShardClient {
+func (mgr *LocalShardManager) PlayerShardConnect(entityId EntityId, player gamerules.IShardPlayerClient, shardLoc ShardXz) gamerules.IPlayerShardClient {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 
@@ -57,7 +56,7 @@ func (mgr *LocalShardManager) PlayerShardConnect(entityId EntityId, player stub.
 	return newLocalPlayerShardClient(entityId, player, shard)
 }
 
-func (mgr *LocalShardManager) ShardShardConnect(shardLoc ShardXz) stub.IShardShardClient {
+func (mgr *LocalShardManager) ShardShardConnect(shardLoc ShardXz) gamerules.IShardShardClient {
 	mgr.lock.Lock()
 	defer mgr.lock.Unlock()
 

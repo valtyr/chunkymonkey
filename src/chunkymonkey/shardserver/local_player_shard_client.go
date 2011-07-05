@@ -1,19 +1,18 @@
 package shardserver
 
 import (
-	"chunkymonkey/stub"
-	"chunkymonkey/slot"
+	"chunkymonkey/gamerules"
 	. "chunkymonkey/types"
 )
 
 // localPlayerShardClient implements IPlayerShardClient for LocalShardManager.
 type localPlayerShardClient struct {
 	entityId EntityId
-	player   stub.IShardPlayerClient
+	player   gamerules.IShardPlayerClient
 	shard    *ChunkShard
 }
 
-func newLocalPlayerShardClient(entityId EntityId, player stub.IShardPlayerClient, shard *ChunkShard) *localPlayerShardClient {
+func newLocalPlayerShardClient(entityId EntityId, player gamerules.IShardPlayerClient, shard *ChunkShard) *localPlayerShardClient {
 	return &localPlayerShardClient{
 		entityId: entityId,
 		player:   player,
@@ -65,7 +64,7 @@ func (conn *localPlayerShardClient) ReqSetPlayerPositionLook(chunkLoc ChunkXz, p
 	})
 }
 
-func (conn *localPlayerShardClient) ReqHitBlock(held slot.Slot, target BlockXyz, digStatus DigStatus, face Face) {
+func (conn *localPlayerShardClient) ReqHitBlock(held gamerules.Slot, target BlockXyz, digStatus DigStatus, face Face) {
 	chunkLoc := target.ToChunkXz()
 
 	conn.shard.enqueueOnChunk(*chunkLoc, func(chunk *Chunk) {
@@ -73,7 +72,7 @@ func (conn *localPlayerShardClient) ReqHitBlock(held slot.Slot, target BlockXyz,
 	})
 }
 
-func (conn *localPlayerShardClient) ReqInteractBlock(held slot.Slot, target BlockXyz, face Face) {
+func (conn *localPlayerShardClient) ReqInteractBlock(held gamerules.Slot, target BlockXyz, face Face) {
 	chunkLoc := target.ToChunkXz()
 
 	conn.shard.enqueueOnChunk(*chunkLoc, func(chunk *Chunk) {
@@ -81,7 +80,7 @@ func (conn *localPlayerShardClient) ReqInteractBlock(held slot.Slot, target Bloc
 	})
 }
 
-func (conn *localPlayerShardClient) ReqPlaceItem(target BlockXyz, slot slot.Slot) {
+func (conn *localPlayerShardClient) ReqPlaceItem(target BlockXyz, slot gamerules.Slot) {
 	chunkLoc, _ := target.ToChunkLocal()
 
 	conn.shard.enqueueOnChunk(*chunkLoc, func(chunk *Chunk) {
@@ -95,14 +94,14 @@ func (conn *localPlayerShardClient) ReqTakeItem(chunkLoc ChunkXz, entityId Entit
 	})
 }
 
-func (conn *localPlayerShardClient) ReqDropItem(content slot.Slot, position AbsXyz, velocity AbsVelocity) {
+func (conn *localPlayerShardClient) ReqDropItem(content gamerules.Slot, position AbsXyz, velocity AbsVelocity) {
 	chunkLoc := position.ToChunkXz()
 	conn.shard.enqueueOnChunk(chunkLoc, func(chunk *Chunk) {
 		chunk.reqDropItem(conn.player, &content, &position, &velocity)
 	})
 }
 
-func (conn *localPlayerShardClient) ReqInventoryClick(block BlockXyz, slotId SlotId, cursor slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot slot.Slot) {
+func (conn *localPlayerShardClient) ReqInventoryClick(block BlockXyz, slotId SlotId, cursor gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot gamerules.Slot) {
 	chunkLoc := block.ToChunkXz()
 	conn.shard.enqueueOnChunk(*chunkLoc, func(chunk *Chunk) {
 		chunk.reqInventoryClick(conn.player, &block, slotId, &cursor, rightClick, shiftClick, txId, &expectedSlot)

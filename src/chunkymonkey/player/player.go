@@ -12,8 +12,6 @@ import (
 
 	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
-	"chunkymonkey/slot"
-	"chunkymonkey/stub"
 	. "chunkymonkey/types"
 	"chunkymonkey/window"
 )
@@ -35,7 +33,7 @@ func init() {
 type Player struct {
 	EntityId
 	shardReceiver  shardPlayerClient
-	shardConnecter stub.IShardConnecter
+	shardConnecter gamerules.IShardConnecter
 	conn           net.Conn
 	name           string
 	position       AbsXyz
@@ -43,7 +41,7 @@ type Player struct {
 	chunkSubs      chunkSubscriptions
 	loginComplete  bool
 
-	cursor       slot.Slot // Item being moved by mouse cursor.
+	cursor       gamerules.Slot // Item being moved by mouse cursor.
 	inventory    window.PlayerInventory
 	curWindow    window.IWindow
 	nextWindowId WindowId
@@ -61,7 +59,7 @@ type Player struct {
 	onDisconnect chan<- EntityId
 }
 
-func NewPlayer(entityId EntityId, shardConnecter stub.IShardConnecter, gameRules *gamerules.GameRules, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
+func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, gameRules *gamerules.GameRules, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
 	player := &Player{
 		EntityId:       entityId,
 		shardConnecter: shardConnecter,
@@ -263,7 +261,7 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 		return
 	}
 
-	expectedSlotContent := &slot.Slot{
+	expectedSlotContent := &gamerules.Slot{
 		ItemType: expectedItemType,
 		Count:    expectedSlot.Count,
 		Data:     expectedSlot.Data,
@@ -416,7 +414,7 @@ func (player *Player) reqInventorySubscribed(block *BlockXyz, invTypeId InvTypeI
 	player.TransmitPacket(buf.Bytes())
 }
 
-func (player *Player) reqInventorySlotUpdate(block *BlockXyz, slot *slot.Slot, slotId SlotId) {
+func (player *Player) reqInventorySlotUpdate(block *BlockXyz, slot *gamerules.Slot, slotId SlotId) {
 	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) {
 		return
 	}
@@ -432,7 +430,7 @@ func (player *Player) reqInventoryProgressUpdate(block *BlockXyz, prgBarId PrgBa
 	player.remoteInv.progressUpdate(prgBarId, value)
 }
 
-func (player *Player) reqInventoryCursorUpdate(block *BlockXyz, cursor *slot.Slot) {
+func (player *Player) reqInventoryCursorUpdate(block *BlockXyz, cursor *gamerules.Slot) {
 	if player.remoteInv == nil || !player.remoteInv.IsForBlock(block) {
 		return
 	}
@@ -461,7 +459,7 @@ func (player *Player) reqInventoryUnsubscribed(block *BlockXyz) {
 	player.closeCurrentWindow(true)
 }
 
-func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
+func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *gamerules.Slot) {
 	curHeld, _ := player.inventory.HeldItem()
 
 	// Currently held item has changed since chunk saw it.
@@ -473,7 +471,7 @@ func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
 
 	shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(target)
 	if ok {
-		var into slot.Slot
+		var into gamerules.Slot
 		into.Init()
 
 		player.inventory.TakeOneHeldItem(&into)
@@ -485,7 +483,7 @@ func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *slot.Slot) {
 // Used to receive items picked up from chunks. It is synchronous so that the
 // passed item can be looked at by the caller afterwards to see if it has been
 // consumed.
-func (player *Player) reqOfferItem(fromChunk *ChunkXz, entityId EntityId, item *slot.Slot) {
+func (player *Player) reqOfferItem(fromChunk *ChunkXz, entityId EntityId, item *gamerules.Slot) {
 	if player.inventory.CanTakeItem(item) {
 		shardClient, ok := player.chunkSubs.ShardClientForChunkXz(fromChunk)
 		if ok {
@@ -496,7 +494,7 @@ func (player *Player) reqOfferItem(fromChunk *ChunkXz, entityId EntityId, item *
 	return
 }
 
-func (player *Player) reqGiveItem(atPosition *AbsXyz, item *slot.Slot) {
+func (player *Player) reqGiveItem(atPosition *AbsXyz, item *gamerules.Slot) {
 	defer func() {
 		// Check if item not fully consumed. If it is not, then throw the remains
 		// back to the chunk.
@@ -572,7 +570,7 @@ func (player *Player) GiveItem(id int, quantity int, data int) os.Error {
 		return errUnknownItemID
 	}
 
-	item := slot.Slot{
+	item := gamerules.Slot{
 		ItemType: itemType,
 		Count:    ItemCount(quantity),
 		Data:     ItemData(data),

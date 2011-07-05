@@ -12,7 +12,6 @@ import (
 
 	. "chunkymonkey/entity"
 	"chunkymonkey/gamerules"
-	"chunkymonkey/itemtype"
 	"chunkymonkey/player"
 	"chunkymonkey/proto"
 	"chunkymonkey/server_auth"
@@ -35,7 +34,7 @@ type Game struct {
 	players          map[EntityId]*player.Player
 	time             Ticks
 	gameRules        gamerules.GameRules
-	itemTypes        itemtype.ItemTypeMap
+	itemTypes        gamerules.ItemTypeMap
 	serverId         string
 	worldStore       *worldstore.WorldStore
 	// If set, logins are not allowed.

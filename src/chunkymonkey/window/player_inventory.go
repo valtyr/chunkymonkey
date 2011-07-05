@@ -4,9 +4,7 @@ import (
 	"io"
 	"os"
 
-	"chunkymonkey/inventory"
-	"chunkymonkey/recipe"
-	"chunkymonkey/slot"
+	"chunkymonkey/gamerules"
 	. "chunkymonkey/types"
 )
 
@@ -19,16 +17,16 @@ const (
 type PlayerInventory struct {
 	Window
 	entityId     EntityId
-	crafting     inventory.CraftingInventory
-	armor        inventory.Inventory
-	main         inventory.Inventory
-	holding      inventory.Inventory
+	crafting     gamerules.CraftingInventory
+	armor        gamerules.Inventory
+	main         gamerules.Inventory
+	holding      gamerules.Inventory
 	holdingIndex SlotId
 }
 
 // Init initializes PlayerInventory.
 // entityId - The EntityId of the player who holds the inventory.
-func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *recipe.RecipeSet) {
+func (w *PlayerInventory) Init(entityId EntityId, viewer IWindowViewer, recipes *gamerules.RecipeSet) {
 	w.entityId = entityId
 
 	w.crafting.InitPlayerCraftingInventory(recipes)
@@ -90,14 +88,14 @@ func (w *PlayerInventory) SetHolding(holding SlotId) {
 // HeldItem returns the slot that is the current "held" item.
 // TODO need any changes to the held item slot to create notifications to
 // players.
-func (w *PlayerInventory) HeldItem() (slot slot.Slot, slotId SlotId) {
+func (w *PlayerInventory) HeldItem() (slot gamerules.Slot, slotId SlotId) {
 	return w.holding.Slot(w.holdingIndex), w.holdingIndex
 }
 
 // TakeOneHeldItem takes one item from the stack of items the player is holding
 // and puts it in `into`. It does nothing if the player is holding no items, or
 // if `into` cannot take any items of that type.
-func (w *PlayerInventory) TakeOneHeldItem(into *slot.Slot) {
+func (w *PlayerInventory) TakeOneHeldItem(into *gamerules.Slot) {
 	w.holding.TakeOneItem(w.holdingIndex, into)
 }
 
@@ -122,7 +120,7 @@ func (w *PlayerInventory) SendFullEquipmentUpdate(writer io.Writer) (err os.Erro
 
 // PutItem attempts to put the item stack into the player's inventory. The item
 // will be modified as a result.
-func (w *PlayerInventory) PutItem(item *slot.Slot) {
+func (w *PlayerInventory) PutItem(item *gamerules.Slot) {
 	w.holding.PutItem(item)
 	w.main.PutItem(item)
 	return
@@ -130,6 +128,6 @@ func (w *PlayerInventory) PutItem(item *slot.Slot) {
 
 // CanTakeItem returns true if it can take at least one item from the passed
 // Slot.
-func (w *PlayerInventory) CanTakeItem(item *slot.Slot) bool {
+func (w *PlayerInventory) CanTakeItem(item *gamerules.Slot) bool {
 	return w.holding.CanTakeItem(item) || w.main.CanTakeItem(item)
 }

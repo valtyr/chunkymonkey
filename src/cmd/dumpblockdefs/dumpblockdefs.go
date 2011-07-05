@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"chunkymonkey/block"
+	"chunkymonkey/gamerules"
 )
 
 func dumpBlocks(filename string) (err os.Error) {
@@ -15,19 +15,19 @@ func dumpBlocks(filename string) (err os.Error) {
 	defer outputFile.Close()
 
 	blocks, _ := loadBlocks()
-	err = block.SaveBlockDefs(outputFile, blocks)
+	err = gamerules.SaveBlockDefs(outputFile, blocks)
 
 	return
 }
 
-func loadBlocks() (blocks block.BlockTypeList, err os.Error) {
+func loadBlocks() (blocks gamerules.BlockTypeList, err os.Error) {
 	file, err := os.Open("blocks.json")
 	if err != nil {
 		return
 	}
 	defer file.Close()
 
-	return block.LoadBlockDefs(file)
+	return gamerules.LoadBlockDefs(file)
 }
 
 func main() {

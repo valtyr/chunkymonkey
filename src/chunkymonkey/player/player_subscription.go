@@ -3,14 +3,14 @@ package player
 import (
 	"log"
 
-	"chunkymonkey/stub"
+	"chunkymonkey/gamerules"
 	. "chunkymonkey/types"
 )
 
 // shardRef holds a reference to a shard connection and context for the number
 // of subscribed chunks inside the shard.
 type shardRef struct {
-	shard stub.IPlayerShardClient
+	shard gamerules.IPlayerShardClient
 	count int
 }
 
@@ -20,13 +20,13 @@ type shardRef struct {
 // * and moving the player from one shard to another.
 type chunkSubscriptions struct {
 	player         *Player
-	shardConnecter stub.IShardConnecter
-	shardReceiver  stub.IShardPlayerClient
+	shardConnecter gamerules.IShardConnecter
+	shardReceiver  gamerules.IShardPlayerClient
 	entityId       EntityId
-	curShardLoc    ShardXz                 // Shard the player is currently in.
-	curChunkLoc    ChunkXz                 // Chunk the player is currently in.
-	curShard       stub.IPlayerShardClient // Shard the player is hosted on.
-	shardClients   map[uint64]*shardRef    // Connections to shards.
+	curShardLoc    ShardXz                      // Shard the player is currently in.
+	curChunkLoc    ChunkXz                      // Chunk the player is currently in.
+	curShard       gamerules.IPlayerShardClient // Shard the player is hosted on.
+	shardClients   map[uint64]*shardRef         // Connections to shards.
 }
 
 func (sub *chunkSubscriptions) Init(player *Player) {
@@ -83,7 +83,7 @@ func (sub *chunkSubscriptions) Close() {
 // connection and the ChunkXz within that chunk for a given BlockXyz position.
 // Returns ok = false if there is no open connection for that shard. Note that
 // this doesn't check if the chunk actually exists.
-func (sub *chunkSubscriptions) ShardClientForBlockXyz(blockLoc *BlockXyz) (conn stub.IPlayerShardClient, chunkLoc *ChunkXz, ok bool) {
+func (sub *chunkSubscriptions) ShardClientForBlockXyz(blockLoc *BlockXyz) (conn gamerules.IPlayerShardClient, chunkLoc *ChunkXz, ok bool) {
 
 	chunkLoc = blockLoc.ToChunkXz()
 
@@ -103,7 +103,7 @@ func (sub *chunkSubscriptions) ShardClientForBlockXyz(blockLoc *BlockXyz) (conn 
 // connection for a given ChunkXz position. Returns ok = false if there is no
 // open connection for that shard. Note that this doesn't check if the chunk
 // actually exists.
-func (sub *chunkSubscriptions) ShardClientForChunkXz(chunkLoc *ChunkXz) (conn stub.IPlayerShardClient, ok bool) {
+func (sub *chunkSubscriptions) ShardClientForChunkXz(chunkLoc *ChunkXz) (conn gamerules.IPlayerShardClient, ok bool) {
 
 	shardLoc := chunkLoc.ToShardXz()
 	ref, ok := sub.shardClients[shardLoc.Key()]

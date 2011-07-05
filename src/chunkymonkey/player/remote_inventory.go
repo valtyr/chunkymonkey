@@ -1,9 +1,8 @@
 package player
 
 import (
-	"chunkymonkey/inventory"
+	"chunkymonkey/gamerules"
 	"chunkymonkey/proto"
-	"chunkymonkey/slot"
 	. "chunkymonkey/types"
 )
 
@@ -11,7 +10,7 @@ type RemoteInventory struct {
 	blockLoc   BlockXyz
 	chunkSubs  *chunkSubscriptions
 	slots      []proto.WindowSlot
-	subscriber inventory.IInventorySubscriber
+	subscriber gamerules.IInventorySubscriber
 }
 
 func NewRemoteInventory(block *BlockXyz, chunkSubs *chunkSubscriptions, slots []proto.WindowSlot) *RemoteInventory {
@@ -27,7 +26,7 @@ func (inv *RemoteInventory) IsForBlock(block *BlockXyz) bool {
 	return inv.blockLoc.X == block.X && inv.blockLoc.Y == block.Y && inv.blockLoc.Z == block.Z
 }
 
-func (inv *RemoteInventory) slotUpdate(slot *slot.Slot, slotId SlotId) {
+func (inv *RemoteInventory) slotUpdate(slot *gamerules.Slot, slotId SlotId) {
 	if inv.subscriber != nil {
 		inv.subscriber.SlotUpdate(slot, slotId)
 	}
@@ -53,7 +52,7 @@ func (inv *RemoteInventory) NumSlots() SlotId {
 	return SlotId(len(inv.slots))
 }
 
-func (inv *RemoteInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *slot.Slot) (txState TxState) {
+func (inv *RemoteInventory) Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) (txState TxState) {
 	shard, _, ok := inv.chunkSubs.ShardClientForBlockXyz(&inv.blockLoc)
 
 	if ok {
@@ -63,7 +62,7 @@ func (inv *RemoteInventory) Click(slotId SlotId, cursor *slot.Slot, rightClick b
 	return TxStateDeferred
 }
 
-func (inv *RemoteInventory) SetSubscriber(subscriber inventory.IInventorySubscriber) {
+func (inv *RemoteInventory) SetSubscriber(subscriber gamerules.IInventorySubscriber) {
 	inv.subscriber = subscriber
 }
 
