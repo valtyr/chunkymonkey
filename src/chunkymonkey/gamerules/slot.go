@@ -36,6 +36,10 @@ func (s *Slot) IsSameType(other *Slot) bool {
 		s.Data == other.Data)
 }
 
+func (s *Slot) IsCompatible(other *Slot) bool {
+	return s.IsEmpty() || other.IsEmpty() || s.IsSameType(other)
+}
+
 // MaxStack returns the maximum number of items that can be held in the slot
 // for its current item type. It returns 0 for unknown items or MaxStackDefault
 // for empty slots.
@@ -97,7 +101,7 @@ func (s *Slot) setCount(count ItemCount) {
 func (s *Slot) Add(src *Slot) (changed bool) {
 	// NOTE: This code assumes that 2*ItemType.MaxStack will not overflow the
 	// ItemCount type.
-	if src.IsEmpty() || !s.IsSameType(src) {
+	if src.IsEmpty() || !s.IsCompatible(src) {
 		return
 	}
 
@@ -130,7 +134,7 @@ func (s *Slot) Add(src *Slot) (changed bool) {
 func (s *Slot) AddWhole(src *Slot) (changed bool) {
 	// NOTE: This code assumes that 2*ItemType.MaxStack will not overflow the
 	// ItemCount type.
-	if src.IsEmpty() || !s.IsSameType(src) {
+	if src.IsEmpty() || !s.IsCompatible(src) {
 		return
 	}
 
