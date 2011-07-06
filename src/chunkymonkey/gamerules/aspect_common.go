@@ -1,14 +1,12 @@
 package gamerules
 
 import (
-	"log"
-
 	. "chunkymonkey/types"
 )
 
 // spawnItemInBlock creates an item in a block. It must be run within
 // instance.Chunk's goroutine.
-func spawnItemInBlock(instance *BlockInstance, itemType *ItemType, count ItemCount, data ItemData) {
+func spawnItemInBlock(instance *BlockInstance, itemTypeId ItemTypeId, count ItemCount, data ItemData) {
 	rand := instance.Chunk.Rand()
 	position := instance.BlockLoc.ToAbsXyz()
 	position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
@@ -16,7 +14,7 @@ func spawnItemInBlock(instance *BlockInstance, itemType *ItemType, count ItemCou
 	position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
 	instance.Chunk.AddEntity(
 		NewItem(
-			itemType, count, data,
+			itemTypeId, count, data,
 			position,
 			&AbsVelocity{0, 0, 0},
 		),
@@ -31,17 +29,6 @@ type blockDropItem struct {
 }
 
 func (bdi *blockDropItem) drop(instance *BlockInstance) {
-	itemType, ok := instance.Chunk.ItemType(bdi.DroppedItem)
-
-	if !ok {
-		log.Printf(
-			"Warning: tried to create item with type ID #%d - "+
-				"but no such item type is defined. block and item "+
-				"definitions out of sync?", bdi.DroppedItem)
-
-		return
-	}
-
 	var itemData ItemData
 	if bdi.CopyData {
 		itemData = ItemData(instance.Data)
@@ -50,6 +37,6 @@ func (bdi *blockDropItem) drop(instance *BlockInstance) {
 	}
 
 	for i := bdi.Count; i > 0; i-- {
-		spawnItemInBlock(instance, itemType, 1, itemData)
+		spawnItemInBlock(instance, bdi.DroppedItem, 1, itemData)
 	}
 }

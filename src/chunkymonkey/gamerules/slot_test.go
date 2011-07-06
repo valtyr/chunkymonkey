@@ -8,7 +8,7 @@ import (
 )
 
 func slotEq(s1, s2 *Slot) bool {
-	return (s1.ItemType == s2.ItemType &&
+	return (s1.ItemTypeId == s2.ItemTypeId &&
 		s1.Count == s2.Count &&
 		s1.Data == s2.Data)
 }
@@ -56,8 +56,8 @@ func runTests(t *testing.T, tests []slotTest, op func(a, b *Slot) bool) {
 	}
 }
 
-func makeItemType(id ItemTypeId) *ItemType {
-	return &ItemType{
+func makeItemType(id ItemTypeId) {
+	Items[id] = &ItemType{
 		Id:       id,
 		Name:     fmt.Sprintf("<Test ItemType #%d>", id),
 		MaxStack: 64,
@@ -68,39 +68,43 @@ func makeItemType(id ItemTypeId) *ItemType {
 
 // Tests cases that are common to both Slot.Add and Slot.AddWhole.
 func TestSlot_Add_Common(t *testing.T) {
-	apple := makeItemType(1)
-	orange := makeItemType(2)
+	Items = make(ItemTypeMap)
+	apple := ItemTypeId(1)
+	orange := ItemTypeId(2)
+
+	makeItemType(apple)
+	makeItemType(orange)
 
 	tests := []slotTest{
 		{
 			"one empty slot added to another",
-			Slot{nil, 0, 0}, Slot{nil, 0, 0},
-			Slot{nil, 0, 0}, Slot{nil, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
 			false,
 		},
 		// Tests involving the same item types: (or empty plus an item)
 		{
 			"1 + 0 => 1 + 0",
-			Slot{apple, 1, 0}, Slot{nil, 0, 0},
-			Slot{apple, 1, 0}, Slot{nil, 0, 0},
+			Slot{apple, 1, 0}, Slot{ItemTypeIdNull, 0, 0},
+			Slot{apple, 1, 0}, Slot{ItemTypeIdNull, 0, 0},
 			false,
 		},
 		{
 			"1 + 1 => 2 + 0",
 			Slot{apple, 1, 0}, Slot{apple, 1, 0},
-			Slot{apple, 2, 0}, Slot{nil, 0, 0},
+			Slot{apple, 2, 0}, Slot{ItemTypeIdNull, 0, 0},
 			true,
 		},
 		{
 			"0 + 20 => 20 + 0",
-			Slot{nil, 0, 0}, Slot{apple, 20, 0},
-			Slot{apple, 20, 0}, Slot{nil, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 20, 0},
+			Slot{apple, 20, 0}, Slot{ItemTypeIdNull, 0, 0},
 			true,
 		},
 		{
 			"0 + 64 => 64 + 0",
-			Slot{nil, 0, 0}, Slot{apple, 64, 0},
-			Slot{apple, 64, 0}, Slot{nil, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 64, 0},
+			Slot{apple, 64, 0}, Slot{ItemTypeIdNull, 0, 0},
 			true,
 		},
 		{
@@ -124,13 +128,13 @@ func TestSlot_Add_Common(t *testing.T) {
 		{
 			"1 + 1 => 2 + 0 where items' \"Data\" value is the same",
 			Slot{apple, 1, 5}, Slot{apple, 1, 5},
-			Slot{apple, 2, 5}, Slot{nil, 0, 0},
+			Slot{apple, 2, 5}, Slot{ItemTypeIdNull, 0, 0},
 			true,
 		},
 		{
 			"0 + 1 => 1 + 0 - carrying the \"Data\" value",
-			Slot{nil, 0, 0}, Slot{apple, 1, 5},
-			Slot{apple, 1, 5}, Slot{nil, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 1, 5},
+			Slot{apple, 1, 5}, Slot{ItemTypeIdNull, 0, 0},
 			true,
 		},
 		// Tests involving different item types:
@@ -160,7 +164,9 @@ func TestSlot_Add_Common(t *testing.T) {
 }
 
 func TestSlot_Add(t *testing.T) {
-	apple := makeItemType(1)
+	Items = make(ItemTypeMap)
+	apple := ItemTypeId(1)
+	makeItemType(apple)
 
 	tests := []slotTest{
 		{
@@ -180,7 +186,9 @@ func TestSlot_Add(t *testing.T) {
 }
 
 func TestSlot_AddWhole(t *testing.T) {
-	apple := makeItemType(1)
+	Items = make(ItemTypeMap)
+	apple := ItemTypeId(1)
+	makeItemType(apple)
 
 	tests := []slotTest{
 		{
@@ -200,8 +208,12 @@ func TestSlot_AddWhole(t *testing.T) {
 }
 
 func TestSlot_Swap(t *testing.T) {
-	apple := makeItemType(1)
-	orange := makeItemType(2)
+	Items = make(ItemTypeMap)
+	apple := ItemTypeId(1)
+	orange := ItemTypeId(2)
+
+	makeItemType(apple)
+	makeItemType(orange)
 
 	tests := []slotTest{
 		{
@@ -227,15 +239,19 @@ func TestSlot_Swap(t *testing.T) {
 }
 
 func TestSlot_Split(t *testing.T) {
-	apple := makeItemType(1)
-	orange := makeItemType(2)
+	Items = make(ItemTypeMap)
+	apple := ItemTypeId(1)
+	orange := ItemTypeId(2)
+
+	makeItemType(apple)
+	makeItemType(orange)
 
 	tests := []slotTest{
 		// No-op tests.
 		{
 			"splitting an empty slot",
-			Slot{nil, 0, 0}, Slot{nil, 0, 0},
-			Slot{nil, 0, 0}, Slot{nil, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
 			false,
 		},
 		{
@@ -246,8 +262,8 @@ func TestSlot_Split(t *testing.T) {
 		},
 		{
 			"splitting from an empty slot to a non-empty",
-			Slot{nil, 0, 0}, Slot{apple, 3, 0},
-			Slot{nil, 0, 0}, Slot{apple, 3, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 3, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 3, 0},
 			false,
 		},
 		{
@@ -261,32 +277,32 @@ func TestSlot_Split(t *testing.T) {
 		// non-empty subject slot and into the src empty slot.
 		{
 			"splitting even-numbered stack",
-			Slot{apple, 64, 0}, Slot{nil, 0, 0},
+			Slot{apple, 64, 0}, Slot{ItemTypeIdNull, 0, 0},
 			Slot{apple, 32, 0}, Slot{apple, 32, 0},
 			true,
 		},
 		{
 			"splitting odd-numbered stack",
-			Slot{apple, 5, 0}, Slot{nil, 0, 0},
+			Slot{apple, 5, 0}, Slot{ItemTypeIdNull, 0, 0},
 			Slot{apple, 2, 0}, Slot{apple, 3, 0},
 			true,
 		},
 		{
 			"splitting single-item stack",
-			Slot{apple, 1, 0}, Slot{nil, 0, 0},
-			Slot{nil, 0, 0}, Slot{apple, 1, 0},
+			Slot{apple, 1, 0}, Slot{ItemTypeIdNull, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 1, 0},
 			true,
 		},
 		{
 			"item type and data copy",
-			Slot{apple, 64, 5}, Slot{nil, 0, 0},
+			Slot{apple, 64, 5}, Slot{ItemTypeIdNull, 0, 0},
 			Slot{apple, 32, 5}, Slot{apple, 32, 5},
 			true,
 		},
 		{
 			"item type and data move",
-			Slot{apple, 1, 5}, Slot{nil, 0, 0},
-			Slot{nil, 0, 0}, Slot{apple, 1, 5},
+			Slot{apple, 1, 5}, Slot{ItemTypeIdNull, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 1, 5},
 			true,
 		},
 	}
@@ -300,21 +316,25 @@ func TestSlot_Split(t *testing.T) {
 }
 
 func TestSlot_AddOne(t *testing.T) {
-	apple := makeItemType(1)
-	orange := makeItemType(2)
+	Items = make(ItemTypeMap)
+	apple := ItemTypeId(1)
+	orange := ItemTypeId(2)
+
+	makeItemType(apple)
+	makeItemType(orange)
 
 	tests := []slotTest{
 		// No-op tests.
 		{
 			"adding from empty to empty",
-			Slot{nil, 0, 0}, Slot{nil, 0, 0},
-			Slot{nil, 0, 0}, Slot{nil, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{ItemTypeIdNull, 0, 0},
 			false,
 		},
 		{
 			"adding from empty to non-empty",
-			Slot{apple, 1, 0}, Slot{nil, 0, 0},
-			Slot{apple, 1, 0}, Slot{nil, 0, 0},
+			Slot{apple, 1, 0}, Slot{ItemTypeIdNull, 0, 0},
+			Slot{apple, 1, 0}, Slot{ItemTypeIdNull, 0, 0},
 			false,
 		},
 		{
@@ -339,7 +359,7 @@ func TestSlot_AddOne(t *testing.T) {
 		// non-empty src slot into a compatible subject slot.
 		{
 			"adding item to empty, copies type and data",
-			Slot{nil, 0, 0}, Slot{apple, 3, 0},
+			Slot{ItemTypeIdNull, 0, 0}, Slot{apple, 3, 0},
 			Slot{apple, 1, 0}, Slot{apple, 2, 0},
 			true,
 		},
@@ -352,7 +372,7 @@ func TestSlot_AddOne(t *testing.T) {
 		{
 			"adding item to non-empty, empties src",
 			Slot{apple, 5, 2}, Slot{apple, 1, 2},
-			Slot{apple, 6, 2}, Slot{nil, 0, 0},
+			Slot{apple, 6, 2}, Slot{ItemTypeIdNull, 0, 0},
 			true,
 		},
 	}

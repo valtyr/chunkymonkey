@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	. "chunkymonkey/types"
 )
 
 const threeRecipes = ("[\n" +
@@ -110,9 +112,9 @@ func TestLoadRecipes(t *testing.T) {
 			Width:   1,
 			Height:  1,
 			Input: []Slot{
-				{itemTypes[17], 0, 0},
+				{17, 0, 0},
 			},
-			Output: Slot{itemTypes[5], 4, 0},
+			Output: Slot{5, 4, 0},
 		},
 		&recipes.recipes[0],
 	)
@@ -124,9 +126,9 @@ func TestLoadRecipes(t *testing.T) {
 			Width:   1,
 			Height:  1,
 			Input: []Slot{
-				{itemTypes[17], 0, 1},
+				{17, 0, 1},
 			},
-			Output: Slot{itemTypes[5], 4, 0},
+			Output: Slot{5, 4, 0},
 		},
 		&recipes.recipes[1],
 	)
@@ -138,9 +140,9 @@ func TestLoadRecipes(t *testing.T) {
 			Width:   1,
 			Height:  1,
 			Input: []Slot{
-				{itemTypes[17], 0, 2},
+				{17, 0, 2},
 			},
-			Output: Slot{itemTypes[5], 4, 0},
+			Output: Slot{5, 4, 0},
 		},
 		&recipes.recipes[2],
 	)
@@ -152,17 +154,17 @@ func TestLoadRecipes(t *testing.T) {
 			Width:   3,
 			Height:  3,
 			Input: []Slot{
-				{itemTypes[289], 0, 0},
-				{itemTypes[12], 0, 0},
-				{itemTypes[289], 0, 0},
-				{itemTypes[12], 0, 0},
-				{itemTypes[289], 0, 0},
-				{itemTypes[12], 0, 0},
-				{itemTypes[289], 0, 0},
-				{itemTypes[12], 0, 0},
-				{itemTypes[289], 0, 0},
+				{289, 0, 0},
+				{12, 0, 0},
+				{289, 0, 0},
+				{12, 0, 0},
+				{289, 0, 0},
+				{12, 0, 0},
+				{289, 0, 0},
+				{12, 0, 0},
+				{289, 0, 0},
 			},
-			Output: Slot{itemTypes[46], 1, 0},
+			Output: Slot{46, 1, 0},
 		},
 		&recipes.recipes[3],
 	)
@@ -174,12 +176,12 @@ func TestLoadRecipes(t *testing.T) {
 			Width:   2,
 			Height:  2,
 			Input: []Slot{
-				{itemTypes[318], 0, 0},
-				{nil, 0, 0},
-				{nil, 0, 0},
-				{itemTypes[265], 0, 0},
+				{318, 0, 0},
+				{ItemTypeIdNull, 0, 0},
+				{ItemTypeIdNull, 0, 0},
+				{265, 0, 0},
 			},
-			Output: Slot{itemTypes[259], 1, 0},
+			Output: Slot{259, 1, 0},
 		},
 		&recipes.recipes[4],
 	)

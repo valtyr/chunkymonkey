@@ -1,11 +1,7 @@
 package command
 
-import (
-	"os"
-)
-
 type ICommandHandler interface {
-	GiveItem(itemTypeId int, quantity int, data int) os.Error
+	GiveItem(itemTypeId int, quantity int, data int)
 	SendMessageToPlayer(msg string)
 	BroadcastMessage(msg string, self bool)
 }

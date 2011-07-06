@@ -14,59 +14,79 @@ type Slot struct {
 	// ItemType can be nil, specifically for empty slots.
 	// TODO: change ItemType back to an ID, passing around as a pointer will
 	// produce slightly odd results when passing over a network connection.
-	ItemType *ItemType
+	ItemTypeId ItemTypeId
 	Count    ItemCount
 	Data     ItemData
 }
 
 func (s *Slot) Init() {
-	s.ItemType = nil
+	s.ItemTypeId = ItemTypeIdNull
 	s.Count = 0
 	s.Data = 0
 }
 
 func (s *Slot) Equals(other *Slot) bool {
-	return (s.ItemType == other.ItemType &&
+	return (s.ItemTypeId == other.ItemTypeId &&
 		s.Count == other.Count &&
 		s.Data == other.Data)
 }
 
+func (s *Slot) IsSameType(other *Slot) bool {
+	return (s.ItemTypeId == other.ItemTypeId &&
+		s.Data == other.Data)
+}
+
+// MaxStack returns the maximum number of items that can be held in the slot
+// for its current item type. It returns 0 for unknown items or MaxStackDefault
+// for empty slots.
+func (s *Slot) MaxStack() ItemCount {
+	if s.IsEmpty() {
+		return MaxStackDefault
+	}
+
+	itemType := s.ItemType()
+	if itemType == nil {
+		return 0
+	}
+
+	return itemType.MaxStack
+}
+
 func (s *Slot) Normalize() {
-	if s.Count == 0 || s.ItemType == nil {
+	if s.Count == 0 || s.ItemTypeId == ItemTypeIdNull {
 		s.Count = 0
-		s.ItemType = nil
+		s.ItemTypeId = ItemTypeIdNull
 	}
 }
 
 func (s *Slot) IsEmpty() bool {
-	return s.Count == 0 || s.ItemType == nil
+	return s.Count == 0 || s.ItemTypeId == ItemTypeIdNull
 }
 
-func (s *Slot) ItemTypeId() (itemTypeId ItemTypeId) {
-	if s.ItemType != nil {
-		itemTypeId = s.ItemType.Id
-	} else {
-		itemTypeId = ItemTypeIdNull
+func (s *Slot) ItemType() (itemType *ItemType) {
+	var ok bool
+	if itemType, ok = Items[s.ItemTypeId]; !ok {
+		itemType = nil
 	}
 	return
 }
 
 func (s *Slot) Attr() (ItemTypeId, ItemCount, ItemData) {
-	return s.ItemTypeId(), s.Count, s.Data
+	return s.ItemTypeId, s.Count, s.Data
 }
 
 func (s *Slot) SendUpdate(writer io.Writer, windowId WindowId, slotId SlotId) os.Error {
-	return proto.WriteWindowSetSlot(writer, windowId, slotId, s.ItemTypeId(), s.Count, s.Data)
+	return proto.WriteWindowSetSlot(writer, windowId, slotId, s.ItemTypeId, s.Count, s.Data)
 }
 
 func (s *Slot) SendEquipmentUpdate(writer io.Writer, entityId EntityId, slotId SlotId) os.Error {
-	return proto.WriteEntityEquipment(writer, entityId, slotId, s.ItemTypeId(), s.Data)
+	return proto.WriteEntityEquipment(writer, entityId, slotId, s.ItemTypeId, s.Data)
 }
 
 func (s *Slot) setCount(count ItemCount) {
 	s.Count = count
 	if s.Count == 0 {
-		s.ItemType = nil
+		s.ItemTypeId = ItemTypeIdNull
 		s.Data = 0
 	}
 }
@@ -77,26 +97,17 @@ func (s *Slot) setCount(count ItemCount) {
 func (s *Slot) Add(src *Slot) (changed bool) {
 	// NOTE: This code assumes that 2*ItemType.MaxStack will not overflow the
 	// ItemCount type.
-	if src.ItemType == nil {
+	if src.IsEmpty() || !s.IsSameType(src) {
 		return
 	}
 
-	maxStack := src.ItemType.MaxStack
-
-	if s.ItemType != nil {
-		if s.ItemType != src.ItemType {
-			return
-		}
-		if s.Data != src.Data {
-			return
-		}
-	}
+	maxStack := src.MaxStack()
 
 	if s.Count >= maxStack {
 		return
 	}
 
-	s.ItemType = src.ItemType
+	s.ItemTypeId = src.ItemTypeId
 
 	toTransfer := src.Count
 	if s.Count+toTransfer > maxStack {
@@ -119,11 +130,16 @@ func (s *Slot) Add(src *Slot) (changed bool) {
 func (s *Slot) AddWhole(src *Slot) (changed bool) {
 	// NOTE: This code assumes that 2*ItemType.MaxStack will not overflow the
 	// ItemCount type.
-	if src.ItemType == nil {
+	if src.IsEmpty() || !s.IsSameType(src) {
 		return
 	}
 
-	maxStack := src.ItemType.MaxStack
+	srcItemType := src.ItemType()
+	if srcItemType == nil {
+		return
+	}
+
+	maxStack := srcItemType.MaxStack
 
 	if src.Count+s.Count > maxStack {
 		return
@@ -135,10 +151,10 @@ func (s *Slot) AddWhole(src *Slot) (changed bool) {
 // Swaps the contents of the slots.
 // Returns true if slots changed as a result.
 func (s *Slot) Swap(src *Slot) (changed bool) {
-	if s.ItemType != src.ItemType {
-		tmp := src.ItemType
-		src.ItemType = s.ItemType
-		s.ItemType = tmp
+	if !s.IsSameType(src) {
+		s.ItemTypeId ^= src.ItemTypeId
+		src.ItemTypeId ^= s.ItemTypeId
+		s.ItemTypeId ^= src.ItemTypeId
 		changed = true
 	}
 
@@ -164,12 +180,12 @@ func (s *Slot) Swap(src *Slot) (changed bool) {
 // If src is not empty, then this does nothing.
 // Returns true if slots changed as a result.
 func (s *Slot) Split(src *Slot) (changed bool) {
-	if s.Count == 0 || src.Count != 0 {
+	if s.IsEmpty() || !src.IsEmpty() {
 		return
 	}
 
 	changed = true
-	src.ItemType = s.ItemType
+	src.ItemTypeId = s.ItemTypeId
 	src.Data = s.Data
 
 	count := s.Count >> 1
@@ -185,15 +201,12 @@ func (s *Slot) Split(src *Slot) (changed bool) {
 // if the items in the slots are not compatible.
 // Returns true if slots changed as a result.
 func (s *Slot) AddOne(src *Slot) (changed bool) {
-	if src.ItemType == nil {
+	if src.IsEmpty() {
 		return
 	}
-	maxStack := src.ItemType.MaxStack
+	maxStack := src.MaxStack()
 
-	if s.ItemType != src.ItemType && s.ItemType != nil {
-		return
-	}
-	if src.Data != s.Data {
+	if !s.IsSameType(src) && !s.IsEmpty() {
 		return
 	}
 
@@ -203,7 +216,7 @@ func (s *Slot) AddOne(src *Slot) (changed bool) {
 
 	changed = true
 	s.setCount(s.Count + 1)
-	s.ItemType = src.ItemType
+	s.ItemTypeId = src.ItemTypeId
 	s.Data = src.Data
 	src.setCount(src.Count - 1)
 

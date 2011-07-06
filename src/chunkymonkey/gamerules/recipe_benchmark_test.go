@@ -31,13 +31,13 @@ func loadRecipesAndItems() (recipes *RecipeSet, itemTypes ItemTypeMap, err os.Er
 }
 
 func Benchmark_RecipeSet_Match_Simple2x2(b *testing.B) {
-	recipes, itemTypes, err := loadRecipesAndItems()
+	recipes, _, err := loadRecipesAndItems()
 	if err != nil {
 		panic(err)
 	}
 
-	empty := *RSlot(itemTypes, ItemTypeIdNull, 0, 0)
-	log := *RSlot(itemTypes, 17, 1, 0)
+	empty := Slot{ItemTypeIdNull, 0, 0}
+	log := Slot{17, 1, 0}
 
 	inputs := Slots(log, empty, empty, empty)
 
@@ -53,12 +53,12 @@ func Benchmark_RecipeSet_Match_Simple2x2(b *testing.B) {
 }
 
 func Benchmark_RecipeSet_Match_Nothing2x2(b *testing.B) {
-	recipes, itemTypes, err := loadRecipesAndItems()
+	recipes, _, err := loadRecipesAndItems()
 	if err != nil {
 		panic(err)
 	}
 
-	log := *RSlot(itemTypes, 17, 1, 0)
+	log := Slot{17, 1, 0}
 
 	inputs := Slots(log, log, log, log)
 

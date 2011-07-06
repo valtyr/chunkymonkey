@@ -15,19 +15,6 @@ func Slots(slots ...Slot) []Slot {
 	return slots
 }
 
-// Helper for defining slots with less syntactic boilerplate.
-func RSlot(itemTypes ItemTypeMap, itemTypeId ItemTypeId, count ItemCount, data ItemData) (out *Slot) {
-	out = &Slot{
-		ItemType: nil,
-		Count:    count,
-		Data:     data,
-	}
-	if itemTypeId != ItemTypeIdNull {
-		out.ItemType = itemTypes[itemTypeId]
-	}
-	return
-}
-
 func assertSlotEq(t *testing.T, expected, result *Slot) {
 	if !reflect.DeepEqual(expected, result) {
 		t.Error("Slots did not match:")
@@ -45,12 +32,12 @@ func TestRecipeSet_Match(t *testing.T) {
 		t.Fatal("Failed to load recipes for match test")
 	}
 
-	empty := *RSlot(itemTypes, ItemTypeIdNull, 0, 0)
-	plank := *RSlot(itemTypes, 5, 1, 0)
-	log := *RSlot(itemTypes, 17, 1, 0)
-	flintAndSteel := *RSlot(itemTypes, 259, 1, 0)
-	iron := *RSlot(itemTypes, 265, 1, 0)
-	flint := *RSlot(itemTypes, 318, 1, 0)
+	empty := Slot{ItemTypeIdNull, 0, 0}
+	plank := Slot{5, 1, 0}
+	log := Slot{17, 1, 0}
+	flintAndSteel := Slot{259, 1, 0}
+	iron := Slot{265, 1, 0}
+	flint := Slot{318, 1, 0}
 
 	tests := []struct {
 		comment string
@@ -89,25 +76,25 @@ func TestRecipeSet_Match(t *testing.T) {
 			"L.\n..",
 			2, 2,
 			Slots(log, empty, empty, empty),
-			RSlot(itemTypes, 5, 4, 0),
+			&Slot{5, 4, 0},
 		},
 		{
 			".L\n..",
 			2, 2,
 			Slots(empty, log, empty, empty),
-			RSlot(itemTypes, 5, 4, 0),
+			&Slot{5, 4, 0},
 		},
 		{
 			"..\nL.",
 			2, 2,
 			Slots(empty, empty, log, empty),
-			RSlot(itemTypes, 5, 4, 0),
+			&Slot{5, 4, 0},
 		},
 		{
 			"..\n.L",
 			2, 2,
 			Slots(empty, empty, empty, log),
-			RSlot(itemTypes, 5, 4, 0),
+			&Slot{5, 4, 0},
 		},
 		// Flint and steel
 		{

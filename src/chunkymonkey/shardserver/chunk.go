@@ -238,7 +238,7 @@ func (chunk *Chunk) reqInteractBlock(player gamerules.IShardPlayerClient, held g
 		return
 	}
 
-	if _, isBlockHeld := held.ItemTypeId().ToBlockId(); isBlockHeld && blockType.Attachable {
+	if _, isBlockHeld := held.ItemTypeId.ToBlockId(); isBlockHeld && blockType.Attachable {
 		// The player is interacting with a block that can be attached to.
 
 		// Work out the position to put the block at.
@@ -269,7 +269,7 @@ func (chunk *Chunk) reqPlaceItem(player gamerules.IShardPlayerClient, target *Bl
 	// items on farmland doesn't fit this current simplistic model). The block
 	// type for the block being placed against should probably contain this logic
 	// (i.e farmland block should know about the seed item).
-	heldBlockType, ok := slot.ItemTypeId().ToBlockId()
+	heldBlockType, ok := slot.ItemTypeId.ToBlockId()
 	if !ok || slot.Count < 1 {
 		// Not a placeable item.
 		return
@@ -310,7 +310,7 @@ func (chunk *Chunk) reqTakeItem(player gamerules.IShardPlayerClient, entityId En
 
 func (chunk *Chunk) reqDropItem(player gamerules.IShardPlayerClient, content *gamerules.Slot, position *AbsXyz, velocity *AbsVelocity) {
 	spawnedItem := gamerules.NewItem(
-		content.ItemType,
+		content.ItemTypeId,
 		content.Count,
 		content.Data,
 		position,
@@ -742,7 +742,7 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = gamerules.NewItem(gamerules.Items[id], count, data, pos, velocity)
+			newEntity = gamerules.NewItem(id, count, data, pos, velocity)
 		case "Chicken":
 			newEntity = mob.NewHen(pos, velocity, look)
 		case "Cow":

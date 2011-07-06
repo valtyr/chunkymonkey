@@ -170,12 +170,8 @@ func (inv *Inventory) MakeProtoSlots() []proto.WindowSlot {
 func (inv *Inventory) WriteProtoSlots(slots []proto.WindowSlot) {
 	for i := range inv.slots {
 		src := &inv.slots[i]
-		itemTypeId := ItemTypeIdNull
-		if src.ItemType != nil {
-			itemTypeId = src.ItemType.Id
-		}
 		slots[i] = proto.WindowSlot{
-			ItemTypeId: itemTypeId,
+			ItemTypeId: src.ItemTypeId,
 			Count:      src.Count,
 			Data:       src.Data,
 		}

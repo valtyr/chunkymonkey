@@ -29,7 +29,7 @@ func (r *Recipe) match(width, height byte, slots []Slot, indices []int) (isMatch
 	for i := range r.Input {
 		inSlot := &slots[indices[i]]
 		rSlot := &r.Input[i]
-		if inSlot.ItemType != rSlot.ItemType || inSlot.Data != rSlot.Data {
+		if inSlot.ItemTypeId != rSlot.ItemTypeId || inSlot.Data != rSlot.Data {
 			return
 		}
 
@@ -53,7 +53,7 @@ func inputHash(slots []Slot, indices []int) (hash uint32) {
 		slot := &slots[index]
 
 		// Hash the lower 16 bits of the item type ID.
-		itemTypeId := slot.ItemTypeId()
+		itemTypeId := slot.ItemTypeId
 		hash ^= uint32(itemTypeId & 0xff)
 		hash *= fnv1_32_prime
 		hash ^= uint32((itemTypeId >> 8) & 0xff)
@@ -121,8 +121,7 @@ func (r *RecipeSetMatcher) Match(width, height int, slots []Slot) (output Slot) 
 	// non-empty slots.
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			hasItem := slots[curIndex].ItemType != nil
-			if hasItem {
+			if slots[curIndex].Count > 0 {
 				if x < minX {
 					minX = x
 				}

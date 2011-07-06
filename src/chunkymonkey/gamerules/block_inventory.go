@@ -93,6 +93,6 @@ func (blkInv *blockInventory) EjectItems() {
 	items := blkInv.inv.TakeAllItems()
 
 	for _, slot := range items {
-		spawnItemInBlock(&blkInv.instance, slot.ItemType, slot.Count, slot.Data)
+		spawnItemInBlock(&blkInv.instance, slot.ItemTypeId, slot.Count, slot.Data)
 	}
 }

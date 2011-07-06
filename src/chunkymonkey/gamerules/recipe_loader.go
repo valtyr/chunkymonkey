@@ -14,13 +14,8 @@ type typeInstance struct {
 	Data ItemData
 }
 
-func (ti *typeInstance) createRecipeSlot(itemTypes ItemTypeMap) (slot Slot, err os.Error) {
-	var ok bool
-	slot.ItemType, ok = itemTypes[ti.Id]
-	if !ok {
-		err = fmt.Errorf("Item type %d does not exist")
-		return
-	}
+func (ti *typeInstance) createRecipeSlot(itemTypes ItemTypeMap) (slot Slot) {
+	slot.ItemTypeId = ti.Id
 	slot.Data = ti.Data
 	return
 }
@@ -96,7 +91,7 @@ func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes ItemTypeMap) (
 	for _, inRow := range rt.Input {
 		for _, inSlot := range inRow {
 			if inSlot == ' ' {
-				recipe.Input[slotIndex] = Slot{nil, 0, 0}
+				recipe.Input[slotIndex] = Slot{ItemTypeIdNull, 0, 0}
 			} else {
 				typeKey := string(inSlot)
 				inputTypeSeq, ok := rt.InputTypes[typeKey]
@@ -107,7 +102,7 @@ func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes ItemTypeMap) (
 						rt.Comment, typeKey)
 					return
 				}
-				recipe.Input[slotIndex], _ = inputTypeSeq[recipeIndex].createRecipeSlot(itemTypes)
+				recipe.Input[slotIndex] = inputTypeSeq[recipeIndex].createRecipeSlot(itemTypes)
 				if err != nil {
 					return
 				}
@@ -116,7 +111,7 @@ func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes ItemTypeMap) (
 		}
 	}
 
-	recipe.Output, err = rt.OutputTypes[recipeIndex].createRecipeSlot(itemTypes)
+	recipe.Output = rt.OutputTypes[recipeIndex].createRecipeSlot(itemTypes)
 	if err != nil {
 		return
 	}

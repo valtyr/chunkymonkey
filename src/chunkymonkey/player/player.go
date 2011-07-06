@@ -84,7 +84,7 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 
 func (player *Player) getHeldItemTypeId() ItemTypeId {
 	heldSlot, _ := player.inventory.HeldItem()
-	heldItemId := heldSlot.ItemTypeId()
+	heldItemId := heldSlot.ItemTypeId
 	if heldItemId < 0 {
 		return 0
 	}
@@ -252,13 +252,8 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 			windowId)
 	}
 
-	expectedItemType, ok := gamerules.Items[expectedSlot.ItemTypeId]
-	if !ok {
-		return
-	}
-
 	expectedSlotContent := &gamerules.Slot{
-		ItemType: expectedItemType,
+		ItemTypeId: expectedSlot.ItemTypeId,
 		Count:    expectedSlot.Count,
 		Data:     expectedSlot.Data,
 	}
@@ -461,7 +456,7 @@ func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *gamerules.Slot
 	// Currently held item has changed since chunk saw it.
 	// TODO think about having the slot index passed as well so if that changes,
 	// we can still track the original item and improve placement success rate.
-	if curHeld.ItemType != wasHeld.ItemType || curHeld.Data != wasHeld.Data {
+	if curHeld.IsSameType(wasHeld) {
 		return
 	}
 
@@ -560,17 +555,11 @@ func (player *Player) BroadcastMessage(msg string, self bool) {
 	player.sendChatMessage(msg, self)
 }
 
-func (player *Player) GiveItem(id int, quantity int, data int) os.Error {
-	itemType, ok := gamerules.Items[ItemTypeId(id)]
-	if !ok {
-		return errUnknownItemID
-	}
-
+func (player *Player) GiveItem(id int, quantity int, data int) {
 	item := gamerules.Slot{
-		ItemType: itemType,
+		ItemTypeId: ItemTypeId(id),
 		Count:    ItemCount(quantity),
 		Data:     ItemData(data),
 	}
 	player.reqGiveItem(&player.position, &item)
-	return nil
 }
