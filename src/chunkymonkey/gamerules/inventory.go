@@ -34,9 +34,6 @@ type Inventory struct {
 // called initially).
 func (inv *Inventory) Init(size int) {
 	inv.slots = make([]Slot, size)
-	for i := range inv.slots {
-		inv.slots[i].Init()
-	}
 }
 
 func (inv *Inventory) NumSlots() SlotId {
@@ -187,7 +184,6 @@ func (inv *Inventory) TakeAllItems() (items []Slot) {
 		curSlot := &inv.slots[i]
 		if curSlot.Count > 0 {
 			var taken Slot
-			taken.Init()
 			taken.Swap(curSlot)
 			items = append(items, taken)
 			inv.slotUpdate(curSlot, SlotId(i))

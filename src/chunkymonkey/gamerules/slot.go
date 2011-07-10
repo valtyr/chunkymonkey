@@ -19,7 +19,7 @@ type Slot struct {
 	Data     ItemData
 }
 
-func (s *Slot) Init() {
+func (s *Slot) Clear() {
 	s.ItemTypeId = ItemTypeIdNull
 	s.Count = 0
 	s.Data = 0

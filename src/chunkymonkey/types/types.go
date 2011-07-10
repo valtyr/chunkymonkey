@@ -33,7 +33,7 @@ const (
 // Item type ID
 type ItemTypeId int16
 
-const ItemTypeIdNull = ItemTypeId(-1)
+const ItemTypeIdNull = ItemTypeId(0)
 
 // ToBlockId returns the ItemTypeId as a BlockId, or 0, ok=false if it's not a
 // valid BlockId.

@@ -82,7 +82,7 @@ func (inv *CraftingInventory) TakeAllItems() (items []Slot) {
 	// The output slot gets emptied, the only items that are to be taken are
 	// those in the input slots.
 	output := &inv.slots[0]
-	output.Init()
+	output.Clear()
 	inv.slotUpdate(output, 0)
 
 	return inv.Inventory.TakeAllItems()

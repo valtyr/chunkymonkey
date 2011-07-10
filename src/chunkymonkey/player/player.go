@@ -76,7 +76,6 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 	}
 
 	player.shardReceiver.Init(player)
-	player.cursor.Init()
 	player.inventory.Init(player.EntityId, player)
 
 	return player
@@ -463,7 +462,6 @@ func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *gamerules.Slot
 	shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(target)
 	if ok {
 		var into gamerules.Slot
-		into.Init()
 
 		player.inventory.TakeOneHeldItem(&into)
 

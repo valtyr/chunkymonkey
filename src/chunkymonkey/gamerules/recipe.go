@@ -109,8 +109,6 @@ func (r *RecipeSetMatcher) Init(recipes *RecipeSet) {
 // Precondition: len(slots) == width * height
 func (r *RecipeSetMatcher) Match(width, height int, slots []Slot) (output Slot) {
 
-	output.Init()
-
 	// Precondition check.
 	if width*height != len(slots) || width > maxRecipeWidth || height > maxRecipeHeight {
 		return
