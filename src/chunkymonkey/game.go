@@ -200,8 +200,7 @@ func (game *Game) Serve(addr string) {
 	}
 }
 
-// addPlayer sends spawn messages to all players in range. It also spawns all
-// existing players so the new player can see them.
+// addPlayer adds the player to the set of connected players.
 func (game *Game) addPlayer(newPlayer *player.Player) {
 	game.players[newPlayer.GetEntityId()] = newPlayer
 }
