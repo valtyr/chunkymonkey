@@ -162,8 +162,8 @@ func (game *Game) login(conn net.Conn) {
 	player.Start()
 
 	buf := &bytes.Buffer{}
-	// TODO pass proper dimension. This is low priority, because there is
-	// currently no way to update the client's dimension after login.
+	// TODO pass proper dimension. This is low priority, because we don't yet
+	// support multiple dimensions.
 	proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
 	proto.WriteSpawnPosition(buf, startPosition.ToBlockXyz())
 	player.TransmitPacket(buf.Bytes())
