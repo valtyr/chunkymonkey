@@ -28,6 +28,9 @@ const (
 	DimensionNormal = DimensionId(0)
 )
 
+// Player/mob health.
+type Health int16
+
 // Item-related types
 
 // Item type ID

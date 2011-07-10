@@ -124,7 +124,7 @@ type IClientPacketHandler interface {
 	PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemTypeId)
 	PacketEntityEquipment(entityId EntityId, slot SlotId, itemTypeId ItemTypeId, data ItemData)
 	PacketSpawnPosition(position *BlockXyz)
-	PacketUpdateHealth(health int16)
+	PacketUpdateHealth(health Health)
 	PacketItemSpawn(entityId EntityId, itemTypeId ItemTypeId, count ItemCount, data ItemData, location *AbsIntXyz, orientation *OrientationBytes)
 	PacketItemCollect(collectedItem EntityId, collector EntityId)
 	PacketObjectSpawn(entityId EntityId, objType ObjTypeId, position *AbsIntXyz, objectData *ObjectData)
@@ -710,10 +710,10 @@ func readUseEntity(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 // packetIdUpdateHealth
 
-func WriteUpdateHealth(writer io.Writer, health int16) (err os.Error) {
+func WriteUpdateHealth(writer io.Writer, health Health) (err os.Error) {
 	var packet = struct {
 		PacketId byte
-		health   int16
+		health   Health
 	}{
 		packetIdUpdateHealth,
 		health,
@@ -723,7 +723,7 @@ func WriteUpdateHealth(writer io.Writer, health int16) (err os.Error) {
 }
 
 func readUpdateHealth(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
-	var health int16
+	var health Health
 
 	err = binary.Read(reader, binary.BigEndian, &health)
 	if err != nil {

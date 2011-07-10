@@ -122,7 +122,7 @@ func (p *MessageParser) PacketUseEntity(user EntityId, target EntityId, leftClic
 	p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%t)", user, target, leftClick)
 }
 
-func (p *MessageParser) PacketUpdateHealth(health int16) {
+func (p *MessageParser) PacketUpdateHealth(health Health) {
 	p.printf("PacketUpdateHealth(health=%d)", health)
 }
 

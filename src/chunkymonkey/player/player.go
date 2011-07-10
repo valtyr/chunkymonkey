@@ -24,7 +24,10 @@ var (
 	errUnknownItemID               os.Error
 )
 
-const StanceNormal = 1.62
+const (
+	StanceNormal = 1.62
+	MaxHealth    = 20
+)
 
 func init() {
 	expVarPlayerConnectionCount = expvar.NewInt("player-connection-count")
@@ -43,6 +46,8 @@ type Player struct {
 	look           LookDegrees
 	chunkSubs      chunkSubscriptions
 	loginComplete  bool
+
+	health Health
 
 	cursor       gamerules.Slot // Item being moved by mouse cursor.
 	inventory    window.PlayerInventory
@@ -74,6 +79,8 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 		},
 		look: LookDegrees{0, 0},
 
+		health: MaxHealth,
+
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
 
@@ -92,11 +99,19 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 // ReadNbt reads the player data from their persistently stored NBT data. It
 // must only be called before Player.Start().
 func (player *Player) ReadNbt(playerData nbt.ITag) (err os.Error) {
-	var ok bool
-
-	if player.position, ok = nbtutil.ReadAbsXyz(playerData, "/Pos"); !ok {
-		return os.NewError("Bad /Pos")
+	if player.position, err = nbtutil.ReadAbsXyz(playerData, "/Pos"); err != nil {
+		return
 	}
+
+	if player.look, err = nbtutil.ReadLookDegrees(playerData, "/Rotation"); err != nil {
+		return
+	}
+
+	health, err := nbtutil.ReadShort(playerData, "/Health")
+	if err != nil {
+		return
+	}
+	player.health = Health(health)
 
 	return
 }
@@ -395,6 +410,7 @@ func (player *Player) reqNotifyChunkLoad() {
 			&player.position, player.position.Y+StanceNormal,
 			&player.look, false)
 		player.inventory.WriteWindowItems(buf)
+		proto.WriteUpdateHealth(buf, player.health)
 
 		player.TransmitPacket(buf.Bytes())
 	}

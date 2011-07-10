@@ -709,20 +709,20 @@ func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
 func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 	for _, entity := range entities {
 		// Position within the chunk
-		pos, ok := nbtutil.ReadAbsXyz(entity, "Pos")
-		if !ok {
+		pos, err := nbtutil.ReadAbsXyz(entity, "Pos")
+		if err != nil {
 			continue
 		}
 
 		// Motion
-		velocity, ok := nbtutil.ReadAbsVelocity(entity, "Motion")
-		if !ok {
+		velocity, err := nbtutil.ReadAbsVelocity(entity, "Motion")
+		if err != nil {
 			continue
 		}
 
 		// Look
-		look, ok := nbtutil.ReadLookDegrees(entity, "Rotation")
-		if !ok {
+		look, err := nbtutil.ReadLookDegrees(entity, "Rotation")
+		if err != nil {
 			continue
 		}
 
