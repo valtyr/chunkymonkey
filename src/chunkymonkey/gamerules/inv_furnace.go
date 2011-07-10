@@ -114,8 +114,8 @@ func (inv *FurnaceInventory) stateCheck() {
 			// One reaction complete.
 			itemCreated := Slot{
 				ItemTypeId: reaction.Output,
-				Count:    1,
-				Data:     reaction.OutputData,
+				Count:      1,
+				Data:       reaction.OutputData,
 			}
 			inv.reactionRemaining = reactionDuration
 

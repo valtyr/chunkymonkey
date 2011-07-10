@@ -11,12 +11,9 @@ import (
 // Represents an inventory slot, e.g in a player's inventory, their cursor, a
 // chest.
 type Slot struct {
-	// ItemType can be nil, specifically for empty slots.
-	// TODO: change ItemType back to an ID, passing around as a pointer will
-	// produce slightly odd results when passing over a network connection.
 	ItemTypeId ItemTypeId
-	Count    ItemCount
-	Data     ItemData
+	Count      ItemCount
+	Data       ItemData
 }
 
 func (s *Slot) Clear() {

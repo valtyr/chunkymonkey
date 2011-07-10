@@ -253,8 +253,8 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 
 	expectedSlotContent := &gamerules.Slot{
 		ItemTypeId: expectedSlot.ItemTypeId,
-		Count:    expectedSlot.Count,
-		Data:     expectedSlot.Data,
+		Count:      expectedSlot.Count,
+		Data:       expectedSlot.Data,
 	}
 	// The client tends to send item IDs even when the count is zero.
 	expectedSlotContent.Normalize()
@@ -556,8 +556,8 @@ func (player *Player) BroadcastMessage(msg string, self bool) {
 func (player *Player) GiveItem(id int, quantity int, data int) {
 	item := gamerules.Slot{
 		ItemTypeId: ItemTypeId(id),
-		Count:    ItemCount(quantity),
-		Data:     ItemData(data),
+		Count:      ItemCount(quantity),
+		Data:       ItemData(data),
 	}
 	player.reqGiveItem(&player.position, &item)
 }

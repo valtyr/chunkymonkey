@@ -8,8 +8,8 @@ import (
 
 // GameRules is a container type for block, item and recipe definitions.
 var (
-	Blocks       BlockTypeList
-	Items        ItemTypeMap
+	Blocks           BlockTypeList
+	Items            ItemTypeMap
 	Recipes          *RecipeSet
 	FurnaceReactions FurnaceData
 	CommandFramework *command.CommandFramework
