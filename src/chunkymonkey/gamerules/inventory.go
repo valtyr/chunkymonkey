@@ -1,8 +1,11 @@
 package gamerules
 
 import (
+	"os"
+
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
 type IInventorySubscriber interface {
@@ -22,6 +25,7 @@ type IInventory interface {
 	MakeProtoSlots() []proto.WindowSlot
 	WriteProtoSlots(slots []proto.WindowSlot)
 	TakeAllItems() (items []Slot)
+	ReadNbtSlot(tag nbt.ITag, slotId SlotId) (err os.Error)
 }
 
 type Inventory struct {
@@ -198,4 +202,11 @@ func (inv *Inventory) slotUpdate(slot *Slot, slotId SlotId) {
 	if inv.subscriber != nil {
 		inv.subscriber.SlotUpdate(slot, slotId)
 	}
+}
+
+func (inv *Inventory) ReadNbtSlot(tag nbt.ITag, slotId SlotId) (err os.Error) {
+	if slotId < 0 || int(slotId) >= len(inv.slots) {
+		return os.NewError("Bad slot ID")
+	}
+	return inv.slots[slotId].ReadNbt(tag)
 }

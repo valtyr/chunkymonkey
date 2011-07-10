@@ -6,6 +6,7 @@ import (
 
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
 // Represents an inventory slot, e.g in a player's inventory, their cursor, a
@@ -232,5 +233,27 @@ func (s *Slot) Decrement() (changed bool) {
 
 	s.setCount(s.Count - 1)
 	changed = true
+	return
+}
+
+func (s *Slot) ReadNbt(tag nbt.ITag) (err os.Error) {
+	var ok bool
+	var idTag, damageTag *nbt.Short
+	var countTag *nbt.Byte
+
+	if idTag, ok = tag.Lookup("id").(*nbt.Short); !ok {
+		return os.NewError("id tag not Short")
+	}
+	if countTag, ok = tag.Lookup("Count").(*nbt.Byte); !ok {
+		return os.NewError("Count tag not Byte")
+	}
+	if damageTag, ok = tag.Lookup("Damage").(*nbt.Short); !ok {
+		return os.NewError("Damage tag not Short")
+	}
+
+	s.ItemTypeId = ItemTypeId(idTag.Value)
+	s.Count = ItemCount(countTag.Value)
+	s.Data = ItemData(damageTag.Value)
+
 	return
 }

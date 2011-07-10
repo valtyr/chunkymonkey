@@ -2,10 +2,12 @@ package window
 
 import (
 	"io"
+	"fmt"
 	"os"
 
 	"chunkymonkey/gamerules"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
 const (
@@ -130,4 +132,45 @@ func (w *PlayerInventory) PutItem(item *gamerules.Slot) {
 // Slot.
 func (w *PlayerInventory) CanTakeItem(item *gamerules.Slot) bool {
 	return w.holding.CanTakeItem(item) || w.main.CanTakeItem(item)
+}
+
+func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
+	if tag == nil {
+		return
+	}
+
+	list, ok := tag.(*nbt.List)
+	if !ok {
+		return os.NewError("Bad inventory - not a list")
+	}
+
+	for _, slotTag := range list.Value {
+		var slotIdTag *nbt.Byte
+		if slotIdTag, ok = slotTag.Lookup("Slot").(*nbt.Byte); !ok {
+			return os.NewError("Slot ID not a byte")
+		}
+		slotId := SlotId(slotIdTag.Value)
+		// The mapping order in NBT differs from that used in the window protocol.
+		// 0-8 = holding
+		// 9-35 = main inventory
+		var inv gamerules.IInventory
+		var invSlotId SlotId
+		switch {
+		case 0 <= slotId && slotId < playerInvHoldingNum:
+			inv = &w.holding
+			invSlotId = slotId
+		case playerInvHoldingNum < slotId && slotId < (playerInvHoldingNum+playerInvMainNum):
+			inv = &w.main
+			invSlotId = slotId - playerInvHoldingNum
+			// TODO Find out how armor and crafting slots are represented in player
+			// NBT data.
+		default:
+			return fmt.Errorf("Inventory slot %d out of range", slotId)
+		}
+		if err = inv.ReadNbtSlot(slotTag, invSlotId); err != nil {
+			return
+		}
+	}
+
+	return
 }

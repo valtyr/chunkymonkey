@@ -113,6 +113,10 @@ func (player *Player) ReadNbt(playerData nbt.ITag) (err os.Error) {
 	}
 	player.health = Health(health)
 
+	if err = player.inventory.ReadNbt(playerData.Lookup("/Inventory")); err != nil {
+		return
+	}
+
 	return
 }
 
