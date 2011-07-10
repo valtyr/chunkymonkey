@@ -742,32 +742,32 @@ func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = gamerules.NewItem(id, count, data, pos, velocity)
+			newEntity = gamerules.NewItem(id, count, data, &pos, &velocity)
 		case "Chicken":
-			newEntity = mob.NewHen(pos, velocity, look)
+			newEntity = mob.NewHen(&pos, &velocity, &look)
 		case "Cow":
-			newEntity = mob.NewCow(pos, velocity, look)
+			newEntity = mob.NewCow(&pos, &velocity, &look)
 		case "Creeper":
-			newEntity = mob.NewCreeper(pos, velocity, look)
+			newEntity = mob.NewCreeper(&pos, &velocity, &look)
 		case "Pig":
-			newEntity = mob.NewPig(pos, velocity, look)
+			newEntity = mob.NewPig(&pos, &velocity, &look)
 		case "Sheep":
-			newEntity = mob.NewSheep(pos, velocity, look)
+			newEntity = mob.NewSheep(&pos, &velocity, &look)
 		case "Skeleton":
-			newEntity = mob.NewSkeleton(pos, velocity, look)
+			newEntity = mob.NewSkeleton(&pos, &velocity, &look)
 		case "Squid":
-			newEntity = mob.NewSquid(pos, velocity, look)
+			newEntity = mob.NewSquid(&pos, &velocity, &look)
 		case "Spider":
-			newEntity = mob.NewSpider(pos, velocity, look)
+			newEntity = mob.NewSpider(&pos, &velocity, &look)
 		case "Wolf":
-			newEntity = mob.NewWolf(pos, velocity, look)
+			newEntity = mob.NewWolf(&pos, &velocity, &look)
 		case "Zombie":
-			newEntity = mob.NewZombie(pos, velocity, look)
+			newEntity = mob.NewZombie(&pos, &velocity, &look)
 		default:
 			// Handle all other objects
 			objType, ok := ObjTypeMap[entityObjectId]
 			if ok {
-				newEntity = object.NewObject(objType, pos, velocity)
+				newEntity = object.NewObject(objType, &pos, &velocity)
 			} else {
 				log.Printf("Found unhandled entity type: %s", entityObjectId)
 			}

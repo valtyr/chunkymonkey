@@ -39,29 +39,29 @@ func ReadDouble3(tag nbt.ITag, path string) (x, y, z float64, ok bool) {
 	return
 }
 
-func ReadAbsXyz(tag nbt.ITag, path string) (pos *AbsXyz, ok bool) {
+func ReadAbsXyz(tag nbt.ITag, path string) (pos AbsXyz, ok bool) {
 	x, y, z, ok := ReadDouble3(tag, path)
 	if !ok {
 		return
 	}
 
-	return &AbsXyz{AbsCoord(x), AbsCoord(y), AbsCoord(z)}, true
+	return AbsXyz{AbsCoord(x), AbsCoord(y), AbsCoord(z)}, true
 }
 
-func ReadAbsVelocity(tag nbt.ITag, path string) (pos *AbsVelocity, ok bool) {
+func ReadAbsVelocity(tag nbt.ITag, path string) (pos AbsVelocity, ok bool) {
 	x, y, z, ok := ReadDouble3(tag, path)
 	if !ok {
 		return
 	}
 
-	return &AbsVelocity{AbsVelocityCoord(x), AbsVelocityCoord(y), AbsVelocityCoord(z)}, true
+	return AbsVelocity{AbsVelocityCoord(x), AbsVelocityCoord(y), AbsVelocityCoord(z)}, true
 }
 
-func ReadLookDegrees(tag nbt.ITag, path string) (pos *LookDegrees, ok bool) {
+func ReadLookDegrees(tag nbt.ITag, path string) (pos LookDegrees, ok bool) {
 	x, y, ok := ReadFloat2(tag, path)
 	if !ok {
 		return
 	}
 
-	return &LookDegrees{AngleDegrees(x), AngleDegrees(y)}, true
+	return LookDegrees{AngleDegrees(x), AngleDegrees(y)}, true
 }
