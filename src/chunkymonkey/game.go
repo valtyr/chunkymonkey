@@ -124,15 +124,19 @@ func (game *Game) login(conn net.Conn) {
 
 	entityId := game.entityManager.NewEntity()
 
-	startPosition := game.worldStore.SpawnPosition
 	playerData, err := game.worldStore.PlayerData(username)
-	if playerData != nil {
+	var startPosition AbsXyz
+	if err != nil {
+		log.Printf("Error reading player data for %q: %v", username, err)
+		proto.WriteDisconnect(conn, "error reading your user data")
+		conn.Close()
+		return
+	} else if playerData != nil {
 		// Data for this player already exists in the world, so attempt to
 		// load that and use the player's last position instead of the spawn
 		// position.
 		posData, ok := playerData.Lookup("/Pos").(*nbt.List)
 
-		// TODO: This appears to load the player slightly too low
 		if ok {
 			posList := posData.Value
 			if len(posList) == 3 { // Paranoid check for valid data
@@ -148,7 +152,16 @@ func (game *Game) login(conn net.Conn) {
 				}
 			}
 		}
+	} else {
+		// Player hasn't logged in before.
+		spawnPos := &game.worldStore.SpawnPosition
+		startPosition.X = AbsCoord(spawnPos.X)
+		startPosition.Y = AbsCoord(spawnPos.Y)
+		startPosition.Z = AbsCoord(spawnPos.Z)
 	}
+
+	// Player seems to fall through block unless elevated very slightly.
+	startPosition.Y += 0.01
 
 	player := player.NewPlayer(entityId, game.chunkManager, conn, username, startPosition, game.playerDisconnect)
 
@@ -159,14 +172,14 @@ func (game *Game) login(conn net.Conn) {
 	})
 	_ = <-addedChan
 
-	player.Start()
-
 	buf := &bytes.Buffer{}
 	// TODO pass proper dimension. This is low priority, because we don't yet
 	// support multiple dimensions.
 	proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
-	proto.WriteSpawnPosition(buf, startPosition.ToBlockXyz())
+	proto.WriteSpawnPosition(buf, &game.worldStore.SpawnPosition)
 	player.TransmitPacket(buf.Bytes())
+
+	player.Start()
 }
 
 func (game *Game) Serve(addr string) {

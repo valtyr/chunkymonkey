@@ -13,6 +13,7 @@ import (
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/generation"
 	. "chunkymonkey/types"
+	"chunkymonkey/util"
 	"nbt"
 )
 
@@ -24,7 +25,7 @@ type WorldStore struct {
 
 	LevelData     *nbt.NamedTag
 	ChunkStore    chunkstore.IChunkStore
-	SpawnPosition AbsXyz
+	SpawnPosition BlockXyz
 }
 
 func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
@@ -35,21 +36,17 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 
 	// In both single-player and SMP maps, the 'spawn position' is stored in
 	// the level data.
-	var spawnPosition AbsXyz
-
 	x, xok := levelData.Lookup("/Data/SpawnX").(*nbt.Int)
 	y, yok := levelData.Lookup("/Data/SpawnY").(*nbt.Int)
 	z, zok := levelData.Lookup("/Data/SpawnZ").(*nbt.Int)
-
-	if xok && yok && zok {
-		spawnPosition = AbsXyz{
-			AbsCoord(x.Value),
-			AbsCoord(y.Value),
-			AbsCoord(z.Value),
-		}
-	} else {
+	if !xok || !yok || !zok {
 		err = os.NewError("Invalid map level data: does not contain Spawn{X,Y,Z}")
 		return
+	}
+	spawnPosition := BlockXyz{
+		BlockCoord(x.Value),
+		BlockYCoord(y.Value),
+		BlockCoord(z.Value),
 	}
 
 	var timeTicks Ticks
@@ -124,6 +121,11 @@ func (world *WorldStore) ChunkStoreForDimension(dimension DimensionId) (store ch
 func (world *WorldStore) PlayerData(user string) (playerData *nbt.NamedTag, err os.Error) {
 	file, err := os.Open(path.Join(world.WorldPath, "players", user+".dat"))
 	if err != nil {
+		if errno, ok := util.Errno(err); ok && errno == os.ENOENT {
+			// Player data simply doesn't exist. Not an error, playerData = nil is
+			// the result.
+			return nil, nil
+		}
 		return
 	}
 	defer file.Close()
