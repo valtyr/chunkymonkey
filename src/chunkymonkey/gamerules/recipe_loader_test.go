@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	. "chunkymonkey/types"
 )
 
 const threeRecipes = ("[\n" +
@@ -177,8 +175,8 @@ func TestLoadRecipes(t *testing.T) {
 			Height:  2,
 			Input: []Slot{
 				{318, 0, 0},
-				{ItemTypeIdNull, 0, 0},
-				{ItemTypeIdNull, 0, 0},
+				{0, 0, 0},
+				{0, 0, 0},
 				{265, 0, 0},
 			},
 			Output: Slot{259, 1, 0},

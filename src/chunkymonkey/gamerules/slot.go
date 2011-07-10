@@ -17,7 +17,7 @@ type Slot struct {
 }
 
 func (s *Slot) Clear() {
-	s.ItemTypeId = ItemTypeIdNull
+	s.ItemTypeId = 0
 	s.Count = 0
 	s.Data = 0
 }
@@ -54,14 +54,14 @@ func (s *Slot) MaxStack() ItemCount {
 }
 
 func (s *Slot) Normalize() {
-	if s.Count == 0 || s.ItemTypeId == ItemTypeIdNull {
+	if s.Count == 0 || s.ItemTypeId == 0 {
 		s.Count = 0
-		s.ItemTypeId = ItemTypeIdNull
+		s.ItemTypeId = 0
 	}
 }
 
 func (s *Slot) IsEmpty() bool {
-	return s.Count == 0 || s.ItemTypeId == ItemTypeIdNull
+	return s.Count == 0 || s.ItemTypeId == 0
 }
 
 func (s *Slot) ItemType() (itemType *ItemType) {
@@ -87,7 +87,7 @@ func (s *Slot) SendEquipmentUpdate(writer io.Writer, entityId EntityId, slotId S
 func (s *Slot) setCount(count ItemCount) {
 	s.Count = count
 	if s.Count == 0 {
-		s.ItemTypeId = ItemTypeIdNull
+		s.ItemTypeId = 0
 		s.Data = 0
 	}
 }

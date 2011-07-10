@@ -91,7 +91,7 @@ func (rt *recipeTemplate) createRecipe(recipeIndex int, itemTypes ItemTypeMap) (
 	for _, inRow := range rt.Input {
 		for _, inSlot := range inRow {
 			if inSlot == ' ' {
-				recipe.Input[slotIndex] = Slot{ItemTypeIdNull, 0, 0}
+				recipe.Input[slotIndex] = Slot{0, 0, 0}
 			} else {
 				typeKey := string(inSlot)
 				inputTypeSeq, ok := rt.InputTypes[typeKey]

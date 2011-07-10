@@ -2504,30 +2504,32 @@ func readWindowClick(reader io.Reader, handler IServerPacketHandler) (err os.Err
 
 func WriteWindowSetSlot(writer io.Writer, windowId WindowId, slot SlotId, itemTypeId ItemTypeId, amount ItemCount, data ItemData) (err os.Error) {
 	var packet = struct {
-		PacketId   byte
-		WindowId   WindowId
-		Slot       SlotId
-		ItemTypeId ItemTypeId
+		PacketId byte
+		WindowId WindowId
+		Slot     SlotId
 	}{
 		packetIdWindowSetSlot,
 		windowId,
 		slot,
-		itemTypeId,
 	}
 
 	if err = binary.Write(writer, binary.BigEndian, &packet); err != nil {
 		return
 	}
 
-	if itemTypeId != -1 {
+	if itemTypeId > 0 {
 		var packetEnd = struct {
-			Amount ItemCount
-			Data   ItemData
+			ItemTypeId ItemTypeId
+			Amount     ItemCount
+			Data       ItemData
 		}{
+			itemTypeId,
 			amount,
 			data,
 		}
 		err = binary.Write(writer, binary.BigEndian, &packetEnd)
+	} else {
+		err = binary.Write(writer, binary.BigEndian, ItemTypeId(-1))
 	}
 
 	return err
@@ -2555,6 +2557,9 @@ func readWindowSetSlot(reader io.Reader, handler IClientPacketHandler) (err os.E
 		if err != nil {
 			return
 		}
+	} else {
+		// We use zero as the null item internally.
+		packetStart.ItemTypeId = 0
 	}
 
 	handler.PacketWindowSetSlot(
@@ -2586,14 +2591,14 @@ func WriteWindowItems(writer io.Writer, windowId WindowId, items []WindowSlot) (
 
 	for i := range items {
 		slot := &items[i]
-		if slot.ItemTypeId != -1 {
-			if err = binary.Write(writer, binary.BigEndian, slot); err != nil {
-				return
-			}
+		if slot.ItemTypeId > 0 {
+			err = binary.Write(writer, binary.BigEndian, slot)
 		} else {
-			if err = binary.Write(writer, binary.BigEndian, slot.ItemTypeId); err != nil {
-				return
-			}
+			err = binary.Write(writer, binary.BigEndian, ItemTypeId(-1))
+		}
+
+		if err != nil {
+			return
 		}
 	}
 
@@ -2615,21 +2620,28 @@ func readWindowItems(reader io.Reader, handler IClientPacketHandler) (err os.Err
 
 	items := make([]WindowSlot, 0, packetStart.Count)
 
+	var itemInfo struct {
+		Count ItemCount
+		Data  ItemData
+	}
+
 	for i := int16(0); i < packetStart.Count; i++ {
 		err = binary.Read(reader, binary.BigEndian, &itemTypeId)
 		if err != nil {
 			return
 		}
 
-		var itemInfo struct {
-			Count ItemCount
-			Data  ItemData
-		}
-		if itemTypeId != -1 {
+		if itemTypeId > 0 {
 			err = binary.Read(reader, binary.BigEndian, &itemInfo)
 			if err != nil {
 				return
 			}
+		} else if itemTypeId == 0 {
+			err = os.NewError("Invalid item ID 0 in window")
+			return
+		} else {
+			// We use zero as the null item internally.
+			itemTypeId = 0
 		}
 
 		items = append(items, WindowSlot{

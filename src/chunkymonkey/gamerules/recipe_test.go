@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	. "chunkymonkey/types"
 )
 
 // Borrows some test code from loader_test.go
@@ -32,7 +30,7 @@ func TestRecipeSet_Match(t *testing.T) {
 		t.Fatal("Failed to load recipes for match test")
 	}
 
-	empty := Slot{ItemTypeIdNull, 0, 0}
+	empty := Slot{0, 0, 0}
 	plank := Slot{5, 1, 0}
 	log := Slot{17, 1, 0}
 	flintAndSteel := Slot{259, 1, 0}

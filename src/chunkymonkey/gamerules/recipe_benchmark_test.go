@@ -5,8 +5,6 @@ package gamerules
 import (
 	"os"
 	"testing"
-
-	. "chunkymonkey/types"
 )
 
 func loadRecipesAndItems() (recipes *RecipeSet, itemTypes ItemTypeMap, err os.Error) {
@@ -36,7 +34,7 @@ func Benchmark_RecipeSet_Match_Simple2x2(b *testing.B) {
 		panic(err)
 	}
 
-	empty := Slot{ItemTypeIdNull, 0, 0}
+	empty := Slot{0, 0, 0}
 	log := Slot{17, 1, 0}
 
 	inputs := Slots(log, empty, empty, empty)

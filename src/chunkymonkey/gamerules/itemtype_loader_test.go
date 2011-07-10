@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	. "chunkymonkey/types"
 )
 
 const threeItems = ("{\n" +
@@ -49,22 +47,10 @@ func TestLoadItemDefs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error but got %v", err)
 	}
-	// All 3 items should be defined, plus the "null" item.
-	if len(items) != 4 {
-		t.Fatalf("Expected 4 item types, but got %d", len(items))
+	// All 3 items should be defined.
+	if len(items) != 3 {
+		t.Fatalf("Expected 3 item types, but got %d", len(items))
 	}
-
-	assertItemTypeEq(
-		t,
-		&ItemType{
-			Id:       ItemTypeIdNull,
-			Name:     "null item",
-			MaxStack: 0,
-			ToolType: 0,
-			ToolUses: 0,
-		},
-		items[ItemTypeIdNull],
-	)
 
 	assertItemTypeEq(
 		t,

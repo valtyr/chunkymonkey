@@ -29,13 +29,6 @@ func LoadItemDefs(reader io.Reader) (items ItemTypeMap, err os.Error) {
 		items[ItemTypeId(id)] = itemsStr[idStr]
 	}
 
-	// Include a "null" item type.
-	items[ItemTypeIdNull] = &ItemType{
-		Id:       ItemTypeIdNull,
-		Name:     "null item",
-		MaxStack: 0,
-	}
-
 	return
 }
 

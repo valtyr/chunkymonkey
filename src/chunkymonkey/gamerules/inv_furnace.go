@@ -82,7 +82,7 @@ func (inv *FurnaceInventory) stateCheck() {
 	// Work out if the output slot is ready for items to be produced from the
 	// reaction.
 	var outputReady bool
-	if outputSlot.ItemTypeId != ItemTypeIdNull {
+	if outputSlot.ItemTypeId != 0 {
 		itemType := outputSlot.ItemType()
 		maxStack := MaxStackDefault
 		if itemType != nil {
