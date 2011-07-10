@@ -7,3 +7,4 @@ _test
 mock_*.go
 /bin
 *.log
+deps.dot*
