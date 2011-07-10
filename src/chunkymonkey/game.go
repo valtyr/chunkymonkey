@@ -17,7 +17,6 @@ import (
 	"chunkymonkey/shardserver"
 	. "chunkymonkey/types"
 	"chunkymonkey/worldstore"
-	"nbt"
 )
 
 // We regard usernames as valid if they don't contain "dangerous" characters.
@@ -125,45 +124,25 @@ func (game *Game) login(conn net.Conn) {
 	entityId := game.entityManager.NewEntity()
 
 	playerData, err := game.worldStore.PlayerData(username)
-	var startPosition AbsXyz
 	if err != nil {
 		log.Printf("Error reading player data for %q: %v", username, err)
-		proto.WriteDisconnect(conn, "error reading your user data")
+		proto.WriteDisconnect(
+			conn, "Error reading your user data. Please contact the server administrator.")
 		conn.Close()
 		return
-	} else if playerData != nil {
-		// Data for this player already exists in the world, so attempt to
-		// load that and use the player's last position instead of the spawn
-		// position.
-		posData, ok := playerData.Lookup("/Pos").(*nbt.List)
-
-		if ok {
-			posList := posData.Value
-			if len(posList) == 3 { // Paranoid check for valid data
-				x, xok := posList[0].(*nbt.Double)
-				y, yok := posList[1].(*nbt.Double)
-				z, zok := posList[2].(*nbt.Double)
-				if xok && yok && zok {
-					startPosition = AbsXyz{
-						AbsCoord(x.Value),
-						AbsCoord(y.Value),
-						AbsCoord(z.Value),
-					}
-				}
-			}
-		}
-	} else {
-		// Player hasn't logged in before.
-		spawnPos := &game.worldStore.SpawnPosition
-		startPosition.X = AbsCoord(spawnPos.X)
-		startPosition.Y = AbsCoord(spawnPos.Y)
-		startPosition.Z = AbsCoord(spawnPos.Z)
 	}
 
-	// Player seems to fall through block unless elevated very slightly.
-	startPosition.Y += 0.01
-
-	player := player.NewPlayer(entityId, game.chunkManager, conn, username, startPosition, game.playerDisconnect)
+	player := player.NewPlayer(entityId, game.chunkManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect)
+	if playerData != nil {
+		err = player.ReadNbt(playerData)
+		if err != nil {
+			log.Printf("Error parsing player data for %q: %v", username, err)
+			proto.WriteDisconnect(
+				conn, "Error reading your user data. Please contact the server administrator.")
+			conn.Close()
+			return
+		}
+	}
 
 	addedChan := make(chan struct{})
 	game.enqueue(func(_ *Game) {

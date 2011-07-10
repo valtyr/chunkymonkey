@@ -11,9 +11,11 @@ import (
 	"sync"
 
 	"chunkymonkey/gamerules"
+	"chunkymonkey/nbtutil"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
 	"chunkymonkey/window"
+	"nbt"
 )
 
 var (
@@ -36,6 +38,7 @@ type Player struct {
 	shardConnecter gamerules.IShardConnecter
 	conn           net.Conn
 	name           string
+	spawnBlock     BlockXyz
 	position       AbsXyz
 	look           LookDegrees
 	chunkSubs      chunkSubscriptions
@@ -57,14 +60,19 @@ type Player struct {
 	onDisconnect chan<- EntityId
 }
 
-func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn net.Conn, name string, position AbsXyz, onDisconnect chan<- EntityId) *Player {
+func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn net.Conn, name string, spawnBlock BlockXyz, onDisconnect chan<- EntityId) *Player {
 	player := &Player{
 		EntityId:       entityId,
 		shardConnecter: shardConnecter,
 		conn:           conn,
 		name:           name,
-		position:       position,
-		look:           LookDegrees{0, 0},
+		spawnBlock:     spawnBlock,
+		position: AbsXyz{
+			X: AbsCoord(spawnBlock.X),
+			Y: AbsCoord(spawnBlock.Y),
+			Z: AbsCoord(spawnBlock.Z),
+		},
+		look: LookDegrees{0, 0},
 
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
@@ -79,6 +87,18 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 	player.inventory.Init(player.EntityId, player)
 
 	return player
+}
+
+// ReadNbt reads the player data from their persistently stored NBT data. It
+// must only be called before Player.Start().
+func (player *Player) ReadNbt(playerData nbt.ITag) (err os.Error) {
+	if startPosition, ok := nbtutil.ReadAbsXyz(playerData, "/Pos"); ok {
+		player.position = *startPosition
+	} else {
+		return os.NewError("Bad /Pos")
+	}
+
+	return
 }
 
 func (player *Player) getHeldItemTypeId() ItemTypeId {
@@ -362,6 +382,9 @@ func (player *Player) mainLoop() {
 }
 
 func (player *Player) reqNotifyChunkLoad() {
+	// Player seems to fall through block unless elevated very slightly.
+	player.position.Y += 0.01
+
 	if !player.loginComplete {
 		player.loginComplete = true
 

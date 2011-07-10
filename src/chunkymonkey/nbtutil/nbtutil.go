@@ -6,7 +6,7 @@ import (
 	"nbt"
 )
 
-func ReadFloat2(tag *nbt.Compound, path string) (x, y float32, ok bool) {
+func ReadFloat2(tag nbt.ITag, path string) (x, y float32, ok bool) {
 	list, ok := tag.Lookup(path).(*nbt.List)
 	if !ok || len(list.Value) != 2 {
 		return
@@ -22,7 +22,7 @@ func ReadFloat2(tag *nbt.Compound, path string) (x, y float32, ok bool) {
 	return
 }
 
-func ReadDouble3(tag *nbt.Compound, path string) (x, y, z float64, ok bool) {
+func ReadDouble3(tag nbt.ITag, path string) (x, y, z float64, ok bool) {
 	list, ok := tag.Lookup(path).(*nbt.List)
 	if !ok || len(list.Value) != 3 {
 		return
@@ -39,7 +39,7 @@ func ReadDouble3(tag *nbt.Compound, path string) (x, y, z float64, ok bool) {
 	return
 }
 
-func ReadAbsXyz(tag *nbt.Compound, path string) (pos *AbsXyz, ok bool) {
+func ReadAbsXyz(tag nbt.ITag, path string) (pos *AbsXyz, ok bool) {
 	x, y, z, ok := ReadDouble3(tag, path)
 	if !ok {
 		return
@@ -48,7 +48,7 @@ func ReadAbsXyz(tag *nbt.Compound, path string) (pos *AbsXyz, ok bool) {
 	return &AbsXyz{AbsCoord(x), AbsCoord(y), AbsCoord(z)}, true
 }
 
-func ReadAbsVelocity(tag *nbt.Compound, path string) (pos *AbsVelocity, ok bool) {
+func ReadAbsVelocity(tag nbt.ITag, path string) (pos *AbsVelocity, ok bool) {
 	x, y, z, ok := ReadDouble3(tag, path)
 	if !ok {
 		return
@@ -57,7 +57,7 @@ func ReadAbsVelocity(tag *nbt.Compound, path string) (pos *AbsVelocity, ok bool)
 	return &AbsVelocity{AbsVelocityCoord(x), AbsVelocityCoord(y), AbsVelocityCoord(z)}, true
 }
 
-func ReadLookDegrees(tag *nbt.Compound, path string) (pos *LookDegrees, ok bool) {
+func ReadLookDegrees(tag nbt.ITag, path string) (pos *LookDegrees, ok bool) {
 	x, y, ok := ReadFloat2(tag, path)
 	if !ok {
 		return
