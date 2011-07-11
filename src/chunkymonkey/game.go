@@ -17,6 +17,7 @@ import (
 	"chunkymonkey/shardserver"
 	. "chunkymonkey/types"
 	"chunkymonkey/worldstore"
+	"nbt"
 )
 
 // We regard usernames as valid if they don't contain "dangerous" characters.
@@ -65,32 +66,41 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 // login negotiates a player client login, and adds a new player if successful.
 // Note that it does not run in the game's goroutine.
 func (game *Game) login(conn net.Conn) {
-	username, err := proto.ServerReadHandshake(conn)
+	var err, clientErr os.Error
+
+	defer func() {
+		if err != nil {
+			log.Print(err.String())
+			if clientErr == nil {
+				clientErr = os.NewError("Server error.")
+			}
+			proto.WriteDisconnect(conn, clientErr.String())
+			conn.Close()
+		}
+	}()
+
+	var username string
+	if username, err = proto.ServerReadHandshake(conn); err != nil {
+		clientErr = os.NewError("Handshake error.")
+		return
+	}
 
 	if !validPlayerUsername.MatchString(username) {
-		proto.WriteDisconnect(conn, "Bad username")
-		conn.Close()
+		err = os.NewError("Bad username")
+		clientErr = err
 		return
 	}
 
-	if err != nil {
-		log.Print("ServerReadHandshake: ", err.String())
-		proto.WriteDisconnect(conn, err.String())
-		conn.Close()
-		return
-	}
 	log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
+
 	if game.UnderMaintenanceMsg != "" {
-		log.Println("Server under maintenance, kicking player:", username)
-		proto.WriteDisconnect(conn, game.UnderMaintenanceMsg)
+		err = fmt.Errorf("Server under maintenance, kicking player: %q", username)
+		clientErr = os.NewError(game.UnderMaintenanceMsg)
 		return
 	}
 
-	err = proto.ServerWriteHandshake(conn, game.serverId)
-	if err != nil {
-		log.Print("ServerWriteHandshake: ", err.String())
-		proto.WriteDisconnect(conn, err.String())
-		conn.Close()
+	if err = proto.ServerWriteHandshake(conn, game.serverId); err != nil {
+		clientErr = os.NewError("Handshake error.")
 		return
 	}
 
@@ -105,41 +115,34 @@ func (game *Game) login(conn net.Conn) {
 			} else {
 				reason = "Failed authentication"
 			}
-			log.Print("Client ", conn.RemoteAddr(), " ", reason)
-			proto.WriteDisconnect(conn, reason)
-			conn.Close()
+			err = fmt.Errorf("Client %v: %s", conn.RemoteAddr(), reason)
+			clientErr = os.NewError(reason)
 			return
 		}
 		log.Print("Client ", conn.RemoteAddr(), " passed minecraft.net authentication")
 	}
 
-	_, err = proto.ServerReadLogin(conn)
-	if err != nil {
-		log.Print("ServerReadLogin: ", err.String())
-		proto.WriteDisconnect(conn, err.String())
-		conn.Close()
+	if _, err = proto.ServerReadLogin(conn); err != nil {
+		clientErr = os.NewError("Login error.")
 		return
 	}
 
 	entityId := game.entityManager.NewEntity()
 
-	playerData, err := game.worldStore.PlayerData(username)
-	if err != nil {
-		log.Printf("Error reading player data for %q: %v", username, err)
-		proto.WriteDisconnect(
-			conn, "Error reading your user data. Please contact the server administrator.")
-		conn.Close()
+	var playerData nbt.ITag
+	if playerData, err = game.worldStore.PlayerData(username); err != nil {
+		clientErr = os.NewError("Error reading user data. Please contact the server administrator.")
 		return
 	}
 
 	player := player.NewPlayer(entityId, game.chunkManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect)
 	if playerData != nil {
-		err = player.ReadNbt(playerData)
-		if err != nil {
-			log.Printf("Error parsing player data for %q: %v", username, err)
-			proto.WriteDisconnect(
-				conn, "Error reading your user data. Please contact the server administrator.")
-			conn.Close()
+		if err = player.ReadNbt(playerData); err != nil {
+			// Don't let the player log in, as they will only have default inventory
+			// etc., which could lose items from them. Better for an administrator to
+			// sort this out.
+			err = fmt.Errorf("Error parsing player data for %q: %v", username, err)
+			clientErr = os.NewError("Error reading user data. Please contact the server administrator.")
 			return
 		}
 	}
@@ -150,13 +153,6 @@ func (game *Game) login(conn net.Conn) {
 		addedChan <- struct{}{}
 	})
 	_ = <-addedChan
-
-	buf := &bytes.Buffer{}
-	// TODO pass proper dimension. This is low priority, because we don't yet
-	// support multiple dimensions.
-	proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
-	proto.WriteSpawnPosition(buf, &game.worldStore.SpawnPosition)
-	player.TransmitPacket(buf.Bytes())
 
 	player.Start()
 }

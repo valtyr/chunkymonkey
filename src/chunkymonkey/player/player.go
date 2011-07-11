@@ -130,6 +130,13 @@ func (player *Player) getHeldItemTypeId() ItemTypeId {
 }
 
 func (player *Player) Start() {
+	buf := &bytes.Buffer{}
+	// TODO pass proper dimension. This is low priority, because we don't yet
+	// support multiple dimensions.
+	proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
+	proto.WriteSpawnPosition(buf, &player.spawnBlock)
+	player.TransmitPacket(buf.Bytes())
+
 	go player.receiveLoop()
 	go player.transmitLoop()
 	go player.mainLoop()

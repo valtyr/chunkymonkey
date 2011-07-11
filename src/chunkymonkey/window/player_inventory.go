@@ -167,7 +167,7 @@ func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 			invSlotId = slotId - playerInvHoldingNum
 		case 100 <= slotId && slotId <= 103:
 			inv = &w.armor
-			invSlotId = 103-slotId
+			invSlotId = 103 - slotId
 		default:
 			return fmt.Errorf("Inventory slot %d out of range", slotId)
 		}
