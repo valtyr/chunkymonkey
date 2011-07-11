@@ -153,6 +153,9 @@ func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 		// The mapping order in NBT differs from that used in the window protocol.
 		// 0-8 = holding
 		// 9-35 = main inventory
+		// 100-103 = armor slots (in order: feet, legs, torso, head)
+		// Crafting slots appear not to be present on the official server, as the
+		// items are ejected into the world when the client disconnects.
 		var inv gamerules.IInventory
 		var invSlotId SlotId
 		switch {
@@ -162,8 +165,9 @@ func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 		case playerInvHoldingNum < slotId && slotId < (playerInvHoldingNum+playerInvMainNum):
 			inv = &w.main
 			invSlotId = slotId - playerInvHoldingNum
-			// TODO Find out how armor and crafting slots are represented in player
-			// NBT data.
+		case 100 <= slotId && slotId <= 103:
+			inv = &w.armor
+			invSlotId = 103-slotId
 		default:
 			return fmt.Errorf("Inventory slot %d out of range", slotId)
 		}
