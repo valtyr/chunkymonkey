@@ -148,23 +148,23 @@ func Test_Lookup(t *testing.T) {
 	var tag ITag
 
 	// Absolute lookup from root.
-	tag = root.Lookup("/Data")
+	tag = root.Lookup("Data")
 	if _, ok = tag.(*Compound); !ok {
 		t.Fatalf("Failed to look up /Data Compound, got: %#v", tag)
 	}
 
-	tag = root.Lookup("/Data/Byte")
+	tag = root.Lookup("Data/Byte")
 	if _, ok = tag.(*Byte); !ok {
 		t.Fatalf("Failed to look up /Data/Byte, got: %#v", tag)
 	}
 
-	tag = root.Lookup("/Data/List")
+	tag = root.Lookup("Data/List")
 	if _, ok = tag.(*List); !ok {
 		t.Fatalf("Failed to look up /Data/List, got: %#v", tag)
 	}
 
 	// Relative lookup from compound.
-	compound := root.Lookup("/Data")
+	compound := root.Lookup("Data")
 	tag = compound.Lookup("Byte")
 	if _, ok = tag.(*Byte); !ok {
 		t.Fatalf("Failed to look up Byte, got: %#v", tag)

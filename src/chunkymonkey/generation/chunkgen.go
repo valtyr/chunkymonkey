@@ -60,7 +60,7 @@ func (data *ChunkData) Entities() []*nbt.Compound {
 	return nil
 }
 
-func (data *ChunkData) RootTag() *nbt.NamedTag {
+func (data *ChunkData) RootTag() nbt.ITag {
 	return nil
 }
 

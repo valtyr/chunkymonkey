@@ -44,13 +44,13 @@ type IChunkReader interface {
 
 	// For low-level NBT access. Not for regular use. It's possible that this
 	// might return nil if the underlying system doesn't use NBT.
-	RootTag() *nbt.NamedTag
+	RootTag() nbt.ITag
 }
 
 // Given the NamedTag for a level.dat, returns an appropriate
 // IChunkStoreForeground.
-func ChunkStoreForLevel(worldPath string, levelData *nbt.NamedTag, dimension DimensionId) (store IChunkStoreForeground, err os.Error) {
-	versionTag, ok := levelData.Lookup("/Data/version").(*nbt.Int)
+func ChunkStoreForLevel(worldPath string, levelData nbt.ITag, dimension DimensionId) (store IChunkStoreForeground, err os.Error) {
+	versionTag, ok := levelData.Lookup("Data/version").(*nbt.Int)
 
 	if !ok {
 		store = newChunkStoreAlpha(worldPath, dimension)

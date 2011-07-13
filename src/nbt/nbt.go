@@ -463,15 +463,15 @@ func (c *Compound) Lookup(path string) (tag ITag) {
 	return tag
 }
 
-func Read(reader io.Reader) (compound *NamedTag, err os.Error) {
-	compound = &NamedTag{}
-	err = compound.Read(reader)
+func Read(reader io.Reader) (compound ITag, err os.Error) {
+	nTag := &NamedTag{}
+	err = nTag.Read(reader)
 	if err != nil {
 		return
 	}
 
-	if compound.Type() != TagNamed|TagCompound {
+	if nTag.Type() != TagNamed|TagCompound {
 		return nil, os.NewError("Expected named compound tag")
 	}
-	return
+	return nTag.Tag, nil
 }

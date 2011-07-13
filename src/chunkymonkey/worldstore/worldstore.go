@@ -5,6 +5,7 @@ package worldstore
 import (
 	"compress/gzip"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"rand"
@@ -23,7 +24,7 @@ type WorldStore struct {
 	Seed int64
 	Time Ticks
 
-	LevelData     *nbt.NamedTag
+	LevelData     nbt.ITag
 	ChunkStore    chunkstore.IChunkStore
 	SpawnPosition BlockXyz
 }
@@ -36,11 +37,12 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 
 	// In both single-player and SMP maps, the 'spawn position' is stored in
 	// the level data.
-	x, xok := levelData.Lookup("/Data/SpawnX").(*nbt.Int)
-	y, yok := levelData.Lookup("/Data/SpawnY").(*nbt.Int)
-	z, zok := levelData.Lookup("/Data/SpawnZ").(*nbt.Int)
+	x, xok := levelData.Lookup("Data/SpawnX").(*nbt.Int)
+	y, yok := levelData.Lookup("Data/SpawnY").(*nbt.Int)
+	z, zok := levelData.Lookup("Data/SpawnZ").(*nbt.Int)
 	if !xok || !yok || !zok {
 		err = os.NewError("Invalid map level data: does not contain Spawn{X,Y,Z}")
+		log.Printf("%#v", levelData)
 		return
 	}
 	spawnPosition := BlockXyz{
@@ -50,7 +52,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	}
 
 	var timeTicks Ticks
-	if timeTag, ok := levelData.Lookup("/Data/Time").(*nbt.Long); ok {
+	if timeTag, ok := levelData.Lookup("Data/Time").(*nbt.Long); ok {
 		timeTicks = Ticks(timeTag.Value)
 	}
 
@@ -62,7 +64,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	chunkStores = append(chunkStores, chunkstore.NewChunkService(persistantChunkStore))
 
 	var seed int64
-	if seedNbt, ok := levelData.Lookup("/Data/RandomSeed").(*nbt.Long); ok {
+	if seedNbt, ok := levelData.Lookup("Data/RandomSeed").(*nbt.Long); ok {
 		seed = seedNbt.Value
 	} else {
 		seed = rand.NewSource(time.Seconds()).Int63()
@@ -88,7 +90,7 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	return
 }
 
-func loadLevelData(worldPath string) (levelData *nbt.NamedTag, err os.Error) {
+func loadLevelData(worldPath string) (levelData nbt.ITag, err os.Error) {
 	file, err := os.Open(path.Join(worldPath, "level.dat"))
 	if err != nil {
 		return
@@ -118,7 +120,7 @@ func (world *WorldStore) ChunkStoreForDimension(dimension DimensionId) (store ch
 	return
 }
 
-func (world *WorldStore) PlayerData(user string) (playerData *nbt.NamedTag, err os.Error) {
+func (world *WorldStore) PlayerData(user string) (playerData nbt.ITag, err os.Error) {
 	file, err := os.Open(path.Join(world.WorldPath, "players", user+".dat"))
 	if err != nil {
 		if errno, ok := util.Errno(err); ok && errno == os.ENOENT {

@@ -11,7 +11,7 @@ import (
 
 // Returned to chunks to pull their data from.
 type chunkReader struct {
-	chunkTag *nbt.NamedTag
+	chunkTag nbt.ITag
 }
 
 // Load a chunk from its NBT representation
@@ -30,33 +30,33 @@ func newChunkReader(reader io.Reader) (r *chunkReader, err os.Error) {
 
 func (r *chunkReader) ChunkLoc() ChunkXz {
 	return ChunkXz{
-		X: ChunkCoord(r.chunkTag.Lookup("/Level/xPos").(*nbt.Int).Value),
-		Z: ChunkCoord(r.chunkTag.Lookup("/Level/zPos").(*nbt.Int).Value),
+		X: ChunkCoord(r.chunkTag.Lookup("Level/xPos").(*nbt.Int).Value),
+		Z: ChunkCoord(r.chunkTag.Lookup("Level/zPos").(*nbt.Int).Value),
 	}
 }
 
 func (r *chunkReader) Blocks() []byte {
-	return r.chunkTag.Lookup("/Level/Blocks").(*nbt.ByteArray).Value
+	return r.chunkTag.Lookup("Level/Blocks").(*nbt.ByteArray).Value
 }
 
 func (r *chunkReader) BlockData() []byte {
-	return r.chunkTag.Lookup("/Level/Data").(*nbt.ByteArray).Value
+	return r.chunkTag.Lookup("Level/Data").(*nbt.ByteArray).Value
 }
 
 func (r *chunkReader) BlockLight() []byte {
-	return r.chunkTag.Lookup("/Level/BlockLight").(*nbt.ByteArray).Value
+	return r.chunkTag.Lookup("Level/BlockLight").(*nbt.ByteArray).Value
 }
 
 func (r *chunkReader) SkyLight() []byte {
-	return r.chunkTag.Lookup("/Level/SkyLight").(*nbt.ByteArray).Value
+	return r.chunkTag.Lookup("Level/SkyLight").(*nbt.ByteArray).Value
 }
 
 func (r *chunkReader) HeightMap() []byte {
-	return r.chunkTag.Lookup("/Level/HeightMap").(*nbt.ByteArray).Value
+	return r.chunkTag.Lookup("Level/HeightMap").(*nbt.ByteArray).Value
 }
 
 func (r *chunkReader) Entities() []*nbt.Compound {
-	list := r.chunkTag.Lookup("/Level/Entities").(*nbt.List).Value
+	list := r.chunkTag.Lookup("Level/Entities").(*nbt.List).Value
 	entities := make([]*nbt.Compound, len(list))
 
 	for idx, data := range list {
@@ -64,12 +64,12 @@ func (r *chunkReader) Entities() []*nbt.Compound {
 		if ok {
 			entities[idx] = entity
 		} else {
-			log.Printf("Non-Compound entity in /Level/Entities/%d", idx)
+			log.Printf("Non-Compound entity in Level/Entities/%d", idx)
 		}
 	}
 	return entities
 }
 
-func (r *chunkReader) RootTag() *nbt.NamedTag {
+func (r *chunkReader) RootTag() nbt.ITag {
 	return r.chunkTag
 }
