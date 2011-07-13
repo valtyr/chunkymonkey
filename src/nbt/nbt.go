@@ -1,11 +1,11 @@
 package nbt
 
 import (
-	"os"
-	"io"
-	"fmt"
-	"strings"
 	"encoding/binary"
+	"fmt"
+	"io"
+	"os"
+	"strings"
 )
 
 const (
@@ -129,16 +129,20 @@ func (n *NamedTag) Write(writer io.Writer) (err os.Error) {
 }
 
 func (n *NamedTag) Lookup(path string) ITag {
+	if path[0] == '/' {
+		path = path[1:]
+	}
+
 	components := strings.Split(path, "/", 2)
 	if components[0] != n.Name {
 		return nil
 	}
 
-	if len(components) == 1 {
-		return n.Tag
+	if len(components) >= 2 {
+		return n.Tag.Lookup(components[1])
 	}
 
-	return n.Tag.Lookup(components[1])
+	return n.Tag
 }
 
 type Byte struct {
@@ -407,7 +411,7 @@ func (*List) Lookup(path string) ITag {
 }
 
 type Compound struct {
-	Tags map[string]*NamedTag
+	Tags map[string]ITag
 }
 
 func (*Compound) Type() byte {
@@ -415,7 +419,7 @@ func (*Compound) Type() byte {
 }
 
 func (c *Compound) Read(reader io.Reader) (err os.Error) {
-	tags := make(map[string]*NamedTag)
+	tags := make(map[string]ITag)
 	for {
 		tag := &NamedTag{}
 		err = tag.Read(reader)
@@ -427,7 +431,7 @@ func (c *Compound) Read(reader io.Reader) (err os.Error) {
 			break
 		}
 
-		tags[tag.Name] = tag
+		tags[tag.Name] = tag.Tag
 	}
 
 	c.Tags = tags
@@ -435,8 +439,9 @@ func (c *Compound) Read(reader io.Reader) (err os.Error) {
 }
 
 func (c *Compound) Write(writer io.Writer) (err os.Error) {
-	for _, tag := range c.Tags {
-		if err = tag.Write(writer); err != nil {
+	for name, tag := range c.Tags {
+		nTag := NamedTag{name, tag}
+		if err = nTag.Write(writer); err != nil {
 			return
 		}
 	}
@@ -451,7 +456,11 @@ func (c *Compound) Lookup(path string) (tag ITag) {
 		return nil
 	}
 
-	return tag.Lookup(path)
+	if len(components) >= 2 {
+		return tag.Lookup(components[1])
+	}
+
+	return tag
 }
 
 func Read(reader io.Reader) (compound *NamedTag, err os.Error) {

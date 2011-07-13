@@ -78,8 +78,8 @@ func TestSerialization(t *testing.T) {
 				te.LiteralString("\x00"),                // End
 			),
 			&Compound{
-				map[string]*NamedTag{
-					"foo": &NamedTag{"foo", &Byte{1}},
+				map[string]ITag{
+					"foo": &Byte{1},
 				},
 			},
 		},
@@ -107,15 +107,15 @@ func TestSerialization(t *testing.T) {
 				te.LiteralString("\x00"), // End
 			),
 			&Compound{
-				map[string]*NamedTag{
-					"Byte":   &NamedTag{"Byte", &Byte{1}},
-					"Short":  &NamedTag{"Short", &Short{2}},
-					"Int":    &NamedTag{"Int", &Int{3}},
-					"Long":   &NamedTag{"Long", &Long{4}},
-					"Float":  &NamedTag{"Float", &Float{5}},
-					"Double": &NamedTag{"Double", &Double{6}},
-					"String": &NamedTag{"String", &String{"foo"}},
-					"List":   &NamedTag{"List", &List{TagByte, []ITag{&Byte{1}, &Byte{2}}}},
+				map[string]ITag{
+					"Byte":   &Byte{1},
+					"Short":  &Short{2},
+					"Int":    &Int{3},
+					"Long":   &Long{4},
+					"Float":  &Float{5},
+					"Double": &Double{6},
+					"String": &String{"foo"},
+					"List":   &List{TagByte, []ITag{&Byte{1}, &Byte{2}}},
 				},
 			},
 		},
@@ -124,5 +124,49 @@ func TestSerialization(t *testing.T) {
 	for i := range tests {
 		tests[i].testRead(t)
 		tests[i].testWrite(t)
+	}
+}
+
+func Test_Lookup(t *testing.T) {
+	root := &NamedTag{
+		Name: "Data",
+		Tag: &Compound{
+			map[string]ITag{
+				"Byte":   &Byte{1},
+				"Short":  &Short{2},
+				"Int":    &Int{3},
+				"Long":   &Long{4},
+				"Float":  &Float{5},
+				"Double": &Double{6},
+				"String": &String{"foo"},
+				"List":   &List{TagByte, []ITag{&Byte{1}, &Byte{2}}},
+			},
+		},
+	}
+
+	var ok bool
+	var tag ITag
+
+	// Absolute lookup from root.
+	tag = root.Lookup("/Data")
+	if _, ok = tag.(*Compound); !ok {
+		t.Fatalf("Failed to look up /Data Compound, got: %#v", tag)
+	}
+
+	tag = root.Lookup("/Data/Byte")
+	if _, ok = tag.(*Byte); !ok {
+		t.Fatalf("Failed to look up /Data/Byte, got: %#v", tag)
+	}
+
+	tag = root.Lookup("/Data/List")
+	if _, ok = tag.(*List); !ok {
+		t.Fatalf("Failed to look up /Data/List, got: %#v", tag)
+	}
+
+	// Relative lookup from compound.
+	compound := root.Lookup("/Data")
+	tag = compound.Lookup("Byte")
+	if _, ok = tag.(*Byte); !ok {
+		t.Fatalf("Failed to look up Byte, got: %#v", tag)
 	}
 }
