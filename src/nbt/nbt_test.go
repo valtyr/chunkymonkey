@@ -49,10 +49,10 @@ func (test *Test) testWrite(t *testing.T) {
 	}
 
 	result := resultBuf.Bytes()
-	n, matches := test.Serialized.Match(result)
+	n, err := test.Serialized.Match(result)
 
-	if !matches || n != len(result) {
-		t.Errorf("  Fail: got result = %T%v", result, result)
+	if err != nil || n != len(result) {
+		t.Errorf("  Fail: got result = %x:\n    %v", result, err)
 	}
 }
 
