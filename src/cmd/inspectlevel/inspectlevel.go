@@ -47,8 +47,6 @@ func displayNbt(indentCount int, tag nbt.ITag) {
 		fmt.Printf("ByteArray: %d bytes long\n", len(t.Value))
 	case *nbt.String:
 		fmt.Printf("String: %#v\n", t.Value)
-	case *nbt.NamedTag:
-		displayNbt(indentCount, t.Tag)
 	default:
 		fmt.Printf("<Unknown type>\n")
 	}

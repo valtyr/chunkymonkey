@@ -59,7 +59,6 @@ func (test *Test) testWrite(t *testing.T) {
 
 func TestSerialization(t *testing.T) {
 	tests := []Test{
-		{te.LiteralString(""), &End{}},
 		{te.LiteralString("\x01"), &Byte{1}},
 		{te.LiteralString("\x10\x20"), &Short{0x1020}},
 		{te.LiteralString("\x10\x20\x30\x40"), &Int{0x10203040}},
@@ -128,18 +127,19 @@ func TestSerialization(t *testing.T) {
 }
 
 func Test_Lookup(t *testing.T) {
-	root := &NamedTag{
-		Name: "Data",
-		Tag: &Compound{
-			map[string]ITag{
-				"Byte":   &Byte{1},
-				"Short":  &Short{2},
-				"Int":    &Int{3},
-				"Long":   &Long{4},
-				"Float":  &Float{5},
-				"Double": &Double{6},
-				"String": &String{"foo"},
-				"List":   &List{TagByte, []ITag{&Byte{1}, &Byte{2}}},
+	root := &Compound{
+		map[string]ITag{
+			"Data": &Compound{
+				map[string]ITag{
+					"Byte":   &Byte{1},
+					"Short":  &Short{2},
+					"Int":    &Int{3},
+					"Long":   &Long{4},
+					"Float":  &Float{5},
+					"Double": &Double{6},
+					"String": &String{"foo"},
+					"List":   &List{TagByte, []ITag{&Byte{1}, &Byte{2}}},
+				},
 			},
 		},
 	}

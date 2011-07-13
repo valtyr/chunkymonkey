@@ -23,7 +23,6 @@ const (
 	TagString    = TagType(8)
 	TagList      = TagType(9)
 	TagCompound  = TagType(10)
-	TagNamed     = 0x80
 )
 
 type ITag interface {
@@ -35,8 +34,6 @@ type ITag interface {
 
 func (tt TagType) NewTag() (tag ITag) {
 	switch tt {
-	case TagEnd:
-		tag = new(End)
 	case TagByte:
 		tag = new(Byte)
 	case TagShort:
@@ -72,89 +69,6 @@ func (tt TagType) Write(writer io.Writer) os.Error {
 	return binary.Write(writer, binary.BigEndian, tt)
 }
 
-
-type End struct{}
-
-func (end *End) Type() TagType {
-	return TagEnd
-}
-
-func (end *End) Read(io.Reader) os.Error {
-	return nil
-}
-
-func (end *End) Write(io.Writer) os.Error {
-	return nil
-}
-
-func (end *End) Lookup(path string) ITag {
-	return nil
-}
-
-type NamedTag struct {
-	Name string
-	Tag  ITag
-}
-
-func (n *NamedTag) Type() TagType {
-	return TagNamed | n.Tag.Type()
-}
-
-func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
-	var tagType TagType
-	err = binary.Read(reader, binary.BigEndian, &tagType)
-	if err != nil {
-		return
-	}
-
-	var name String
-	if tagType != TagEnd {
-		err = name.Read(reader)
-		if err != nil {
-			return
-		}
-	}
-
-	var value = tagType.NewTag()
-	err = value.Read(reader)
-	if err != nil {
-		return
-	}
-
-	n.Name = name.Value
-	n.Tag = value
-	return
-}
-
-func (n *NamedTag) Write(writer io.Writer) (err os.Error) {
-	if err = binary.Write(writer, binary.BigEndian, n.Tag.Type()); err != nil {
-		return
-	}
-
-	name := String{n.Name}
-	if err = name.Write(writer); err != nil {
-		return
-	}
-
-	return n.Tag.Write(writer)
-}
-
-func (n *NamedTag) Lookup(path string) ITag {
-	if path[0] == '/' {
-		path = path[1:]
-	}
-
-	components := strings.Split(path, "/", 2)
-	if components[0] != n.Name {
-		return nil
-	}
-
-	if len(components) >= 2 {
-		return n.Tag.Lookup(components[1])
-	}
-
-	return n.Tag
-}
 
 type Byte struct {
 	Value int8
@@ -425,35 +339,75 @@ func (*Compound) Type() TagType {
 	return TagCompound
 }
 
+func readTagAndName(reader io.Reader) (tag ITag, name string, err os.Error) {
+	var tagType TagType
+	if tagType.Read(reader); err != nil {
+		return
+	}
+
+	if tagType == TagEnd {
+		return
+	}
+
+	var nameTag String
+	if err = nameTag.Read(reader); err != nil {
+		return
+	}
+
+	name = nameTag.Value
+
+	tag = tagType.NewTag()
+	err = tag.Read(reader)
+
+	return
+}
+
 func (c *Compound) Read(reader io.Reader) (err os.Error) {
 	tags := make(map[string]ITag)
+	var tag ITag
+	var tagName string
+
 	for {
-		tag := &NamedTag{}
-		err = tag.Read(reader)
-		if err != nil {
+		if tag, tagName, err = readTagAndName(reader); err != nil {
 			return
 		}
 
-		if tag.Type() == TagNamed|TagEnd {
+		if tag == nil {
 			break
 		}
 
-		tags[tag.Name] = tag.Tag
+		tags[tagName] = tag
 	}
 
 	c.Tags = tags
 	return
 }
 
+func writeTagAndName(writer io.Writer, tag ITag, name string) (err os.Error) {
+	if err = tag.Type().Write(writer); err != nil {
+		return
+	}
+
+	nameTag := String{name}
+	if err = nameTag.Write(writer); err != nil {
+		return
+	}
+
+	err = tag.Write(writer)
+
+	return
+}
+
 func (c *Compound) Write(writer io.Writer) (err os.Error) {
 	for name, tag := range c.Tags {
-		nTag := NamedTag{name, tag}
-		if err = nTag.Write(writer); err != nil {
+		if err = writeTagAndName(writer, tag, name); err != nil {
 			return
 		}
 	}
 
-	return binary.Write(writer, binary.BigEndian, byte(TagEnd))
+	err = TagEnd.Write(writer)
+
+	return
 }
 
 func (c *Compound) Lookup(path string) (tag ITag) {
@@ -470,15 +424,19 @@ func (c *Compound) Lookup(path string) (tag ITag) {
 	return tag
 }
 
-func Read(reader io.Reader) (compound ITag, err os.Error) {
-	nTag := &NamedTag{}
-	err = nTag.Read(reader)
-	if err != nil {
+func Read(reader io.Reader) (tag ITag, err os.Error) {
+	var name string
+	if tag, name, err = readTagAndName(reader); err != nil {
 		return
 	}
 
-	if nTag.Type() != TagNamed|TagCompound {
+	if name != "" {
+		return nil, os.NewError("Root name should be empty")
+	}
+
+	if tag.Type() != TagCompound {
 		return nil, os.NewError("Expected named compound tag")
 	}
-	return nTag.Tag, nil
+
+	return
 }
