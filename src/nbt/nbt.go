@@ -8,31 +8,33 @@ import (
 	"strings"
 )
 
+type TagType byte
+
 const (
 	// Tag types
-	TagEnd       = 0
-	TagByte      = 1
-	TagShort     = 2
-	TagInt       = 3
-	TagLong      = 4
-	TagFloat     = 5
-	TagDouble    = 6
-	TagByteArray = 7
-	TagString    = 8
-	TagList      = 9
-	TagCompound  = 10
+	TagEnd       = TagType(0)
+	TagByte      = TagType(1)
+	TagShort     = TagType(2)
+	TagInt       = TagType(3)
+	TagLong      = TagType(4)
+	TagFloat     = TagType(5)
+	TagDouble    = TagType(6)
+	TagByteArray = TagType(7)
+	TagString    = TagType(8)
+	TagList      = TagType(9)
+	TagCompound  = TagType(10)
 	TagNamed     = 0x80
 )
 
 type ITag interface {
-	Type() byte
+	Type() TagType
 	Read(io.Reader) os.Error
 	Write(io.Writer) os.Error
 	Lookup(path string) ITag
 }
 
-func NewTagByType(tagType byte) (tag ITag) {
-	switch tagType {
+func (tt TagType) NewTag() (tag ITag) {
+	switch tt {
 	case TagEnd:
 		tag = new(End)
 	case TagByte:
@@ -57,14 +59,23 @@ func NewTagByType(tagType byte) (tag ITag) {
 		tag = new(Compound)
 	default:
 		// TODO Don't panic, produce an error.
-		panic(fmt.Sprintf("Invalid NBT tag type %#x", tagType))
+		panic(fmt.Sprintf("Invalid NBT tag type %#x", tt))
 	}
 	return
 }
 
+func (tt *TagType) Read(reader io.Reader) os.Error {
+	return binary.Read(reader, binary.BigEndian, tt)
+}
+
+func (tt TagType) Write(writer io.Writer) os.Error {
+	return binary.Write(writer, binary.BigEndian, tt)
+}
+
+
 type End struct{}
 
-func (end *End) Type() byte {
+func (end *End) Type() TagType {
 	return TagEnd
 }
 
@@ -85,12 +96,12 @@ type NamedTag struct {
 	Tag  ITag
 }
 
-func (n *NamedTag) Type() byte {
+func (n *NamedTag) Type() TagType {
 	return TagNamed | n.Tag.Type()
 }
 
 func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
-	var tagType byte
+	var tagType TagType
 	err = binary.Read(reader, binary.BigEndian, &tagType)
 	if err != nil {
 		return
@@ -104,7 +115,7 @@ func (n *NamedTag) Read(reader io.Reader) (err os.Error) {
 		}
 	}
 
-	var value = NewTagByType(tagType)
+	var value = tagType.NewTag()
 	err = value.Read(reader)
 	if err != nil {
 		return
@@ -149,7 +160,7 @@ type Byte struct {
 	Value int8
 }
 
-func (*Byte) Type() byte {
+func (*Byte) Type() TagType {
 	return TagByte
 }
 
@@ -169,7 +180,7 @@ type Short struct {
 	Value int16
 }
 
-func (*Short) Type() byte {
+func (*Short) Type() TagType {
 	return TagShort
 }
 
@@ -189,7 +200,7 @@ type Int struct {
 	Value int32
 }
 
-func (*Int) Type() byte {
+func (*Int) Type() TagType {
 	return TagInt
 }
 
@@ -209,7 +220,7 @@ type Long struct {
 	Value int64
 }
 
-func (*Long) Type() byte {
+func (*Long) Type() TagType {
 	return TagLong
 }
 
@@ -229,7 +240,7 @@ type Float struct {
 	Value float32
 }
 
-func (*Float) Type() byte {
+func (*Float) Type() TagType {
 	return TagFloat
 }
 
@@ -249,7 +260,7 @@ type Double struct {
 	Value float64
 }
 
-func (*Double) Type() byte {
+func (*Double) Type() TagType {
 	return TagDouble
 }
 
@@ -269,7 +280,7 @@ type ByteArray struct {
 	Value []byte
 }
 
-func (*ByteArray) Type() byte {
+func (*ByteArray) Type() TagType {
 	return TagByteArray
 }
 
@@ -310,7 +321,7 @@ type String struct {
 	Value string
 }
 
-func (*String) Type() byte {
+func (*String) Type() TagType {
 	return TagString
 }
 
@@ -348,22 +359,18 @@ func (*String) Lookup(path string) ITag {
 }
 
 type List struct {
-	TagType byte
+	TagType TagType
 	Value   []ITag
 }
 
-func (*List) Type() byte {
+func (*List) Type() TagType {
 	return TagList
 }
 
 func (l *List) Read(reader io.Reader) (err os.Error) {
-	var tagType Byte
-	err = tagType.Read(reader)
-	if err != nil {
+	if err = l.TagType.Read(reader); err != nil {
 		return
 	}
-
-	l.TagType = byte(tagType.Value)
 
 	var length Int
 	err = length.Read(reader)
@@ -373,7 +380,7 @@ func (l *List) Read(reader io.Reader) (err os.Error) {
 
 	list := make([]ITag, length.Value)
 	for i, _ := range list {
-		tag := NewTagByType(byte(tagType.Value))
+		tag := l.TagType.NewTag()
 		err = tag.Read(reader)
 		if err != nil {
 			return
@@ -414,7 +421,7 @@ type Compound struct {
 	Tags map[string]ITag
 }
 
-func (*Compound) Type() byte {
+func (*Compound) Type() TagType {
 	return TagCompound
 }
 

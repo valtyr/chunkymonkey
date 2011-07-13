@@ -23,7 +23,7 @@ func (test *Test) testRead(t *testing.T) {
 	bytesBuf := new(bytes.Buffer)
 	test.Serialized.Write(bytesBuf)
 
-	result := NewTagByType(test.Value.Type())
+	result := test.Value.Type().NewTag()
 	err := result.Read(bytesBuf)
 
 	t.Logf("Test read %v", test)
