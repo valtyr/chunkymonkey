@@ -4,7 +4,6 @@ import (
 	"expvar"
 	"io"
 	"os"
-	"sort"
 
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
@@ -39,6 +38,8 @@ func (mob *Mob) Init(id EntityMobType, position *AbsXyz, velocity *AbsVelocity, 
 		0:  byte(0),
 		16: byte(0),
 	}
+
+	expVarMobSpawnCount.Add(1)
 }
 
 func (mob *Mob) SetLook(look LookDegrees) {
@@ -59,20 +60,11 @@ func (mob *Mob) Tick(blockQuery physics.BlockQueryFn) (leftBlock bool) {
 }
 
 func (mob *Mob) FormatMetadata() []proto.EntityMetadata {
-	ks := make([]byte, len(mob.metadata))
-
-	// Sort by byte index. It's not strictly needed by helps with tests.
+	x := make([]proto.EntityMetadata, len(mob.metadata))
 	i := 0
-	for k, _ := range mob.metadata {
-		ks[i] = k
-		i++
-	}
-	sort.Sort(byteArray(ks))
-
-	x := make([]proto.EntityMetadata, len(ks))
-	for i, k := range ks {
-		v := mob.metadata[k]
+	for k, v := range mob.metadata {
 		x[i] = proto.EntityMetadata{0, k, v}
+		i++
 	}
 	return x
 }
@@ -106,7 +98,6 @@ func (mob *Mob) SendSpawn(writer io.Writer) (err os.Error) {
 	if err != nil {
 		return
 	}
-	expVarMobSpawnCount.Add(1)
 
 	return
 }

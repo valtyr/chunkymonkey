@@ -2,15 +2,17 @@ package mob
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	"chunkymonkey/types"
+	te "testencoding"
 )
 
 type testCase struct {
 	name   string
-	result func() string
-	want   string
+	result func(writer *bytes.Buffer) (err os.Error)
+	want   te.IBytesMatcher
 }
 
 
@@ -18,42 +20,71 @@ func TestMobSpawn(t *testing.T) {
 	tests := []testCase{
 		{
 			"pig",
-			func() string {
+			func(writer *bytes.Buffer) os.Error {
 				m := NewPig(&types.AbsXyz{11, 70, -172}, &types.AbsVelocity{0, 0, 0}, &types.LookDegrees{})
-				m.Mob.EntityId = 8888
+				m.Mob.EntityId = 0x1234
 				m.SetBurning(true)
 				m.SetBurning(false)
 				m.SetLook(types.LookDegrees{10, 20})
-				buf := bytes.NewBuffer(nil)
-				if err := m.SendSpawn(buf); err != nil {
-					return ""
-				}
-				return buf.String()
+				return m.SendSpawn(writer)
 			},
-			"\x18\x00\x00\"\xb8Z\x00\x00\x01`\x00\x00\b\xc0\xff\xff\xea\x80\a\x0e\x00\x00\x10\x00\x7f\x1c\x00\x00\"\xb8\x00\x00\x00\x00\x00\x00",
+			te.InOrder(
+				// packetIdEntitySpawn
+				te.LiteralString("\x18"+ // Packet ID
+					"\x00\x00\x12\x34"+ // EntityId
+					"Z"+ // EntityMobType
+					"\x00\x00\x01`\x00\x00\b\xc0\xff\xff\xea\x80"+ // X, Y, Z
+					"\a\x0e", // Yaw, Pitch
+				),
+				te.AnyOrder(
+					te.LiteralString("\x00\x00"), // burning=false
+					te.LiteralString("\x10\x00"), // 16=0 (?)
+				),
+				te.LiteralString("\x7f"), // 127 = end of metadata
+				// packetIdEntityVelocity
+				te.LiteralString("\x1c\x00\x00\x12\x34\x00\x00\x00\x00\x00\x00"),
+			),
 		},
 		{
 			"creeper",
-			func() string {
+			func(writer *bytes.Buffer) os.Error {
 				// Bogus position, changing below.
 				m := NewCreeper(&types.AbsXyz{11, 70, -172}, &types.AbsVelocity{}, &types.LookDegrees{})
-				m.Mob.EntityId = 7777
+				m.Mob.EntityId = 0x5678
 				m.CreeperSetBlueAura()
 				m.SetBurning(true)
 				m.SetLook(types.LookDegrees{0, 199})
-				buf := bytes.NewBuffer(nil)
-				if err := m.SendSpawn(buf); err != nil {
-					return ""
-				}
-				return buf.String()
+				return m.SendSpawn(writer)
 			},
-			"\x18\x00\x00\x1ea2\x00\x00\x01\x60\x00\x00\x08\xc0\xff\xff\xea\x80\x00\x8d\x00\x01\x10\xff\x11\x01\x7f\x1c\x00\x00\x1ea\x00\x00\x00\x00\x00\x00",
+			te.InOrder(
+				// packetIdEntitySpawn
+				te.LiteralString("\x18"+ // Packet ID
+					"\x00\x00\x56\x78"+ // EntityId
+					"2"+ // EntityMobType
+					"\x00\x00\x01\x60\x00\x00\x08\xc0\xff\xff\xea\x80"+ // X, Y, Z
+					"\x00\x8d", // Yaw, Pitch
+				),
+				te.AnyOrder(
+					te.LiteralString("\x00\x01"), // burning=true
+					te.LiteralString("\x10\xff"), // 16=255 (?)
+					te.LiteralString("\x11\x01"), // blue aura=true
+				),
+				te.LiteralString("\x7f"), // 127 = end of metadata
+				// packetIdEntityVelocity
+				te.LiteralString("\x1c\x00\x00\x56\x78\x00\x00\x00\x00\x00\x00"),
+			),
 		},
 	}
 	for _, x := range tests {
-		want, result := x.want, x.result()
-		if want != result {
-			t.Errorf("Resulting raw data mismatch for %v spawn, wanted:\n\t%x\n\tbut got: \n\t%x", x.name, want, result)
+		buf := new(bytes.Buffer)
+		want, err := x.want, x.result(buf)
+		if err != nil {
+			t.Errorf("Error when writing in test %s: %v", x.name, err)
+			continue
+		}
+		result := buf.Bytes()
+		if err = te.Matches(want, result); err != nil {
+			t.Errorf("Resulting raw data mismatch for %s spawn: %v\nGot bytes: %x", x.name, err, result)
 		}
 	}
 }
