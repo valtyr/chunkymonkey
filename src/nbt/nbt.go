@@ -492,3 +492,9 @@ func Read(reader io.Reader) (tag ITag, err os.Error) {
 
 	return
 }
+
+// Write writes an NBT structure to the given writer. It should be passed a
+// *Compound, but doesn't require it.
+func Write(writer io.Writer, tag ITag) (err os.Error) {
+	return writeTagAndName(writer, tag, "")
+}

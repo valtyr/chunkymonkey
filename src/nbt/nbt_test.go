@@ -131,8 +131,8 @@ func TestSerialization(t *testing.T) {
 	}
 }
 
-func Test_Read(t *testing.T) {
-	expected := &Compound{
+func Test_ReadAndWrite(t *testing.T) {
+	compound := &Compound{
 		map[string]ITag{
 			"Data": &Compound{
 				map[string]ITag{
@@ -142,21 +142,33 @@ func Test_Read(t *testing.T) {
 		},
 	}
 
-	input := []byte("" +
+	serialized := []byte("" +
 		"\x0a\x00\x00" + // Empty name containing Compound
 		"\x0a\x00\x04Data" + // "Data" Compound
 		"\x01\x00\x04Byte\x05" + // Byte{5}
 		"\x00\x00") // End of both compounds.
-	reader := bytes.NewBuffer(input)
+	reader := bytes.NewBuffer(serialized)
 
 	result, err := Read(reader)
 
 	if err != nil {
-		t.Errorf("Got error: %v", err)
+		t.Fatalf("Got Read error: %v", err)
 	}
 
-	if !reflect.DeepEqual(expected, result) {
+	if !reflect.DeepEqual(compound, result) {
 		t.Errorf("Got unexpected result: %#v", result)
+	}
+
+	// Test writing back out
+	writer := new(bytes.Buffer)
+	if err = Write(writer, compound); err != nil {
+		t.Fatalf("Got Write error: %v", err)
+		return
+	}
+
+	matcher := &te.BytesLiteral{serialized}
+	if err = te.Matches(matcher, writer.Bytes()); err != nil {
+		t.Errorf("Got unexpected output from Write: %v", err)
 	}
 }
 
