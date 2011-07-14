@@ -8,10 +8,19 @@ import (
 	"strings"
 )
 
+type ITag interface {
+	Type() TagType
+	Read(io.Reader) os.Error
+	Write(io.Writer) os.Error
+	Lookup(path string) ITag
+}
+
+
 type TagType byte
 
 const (
-	// Tag types
+	// Tag types. All these values can be used to create a new tag, except
+	// TagEnd.
 	TagEnd       = TagType(0)
 	TagByte      = TagType(1)
 	TagShort     = TagType(2)
@@ -24,13 +33,6 @@ const (
 	TagList      = TagType(9)
 	TagCompound  = TagType(10)
 )
-
-type ITag interface {
-	Type() TagType
-	Read(io.Reader) os.Error
-	Write(io.Writer) os.Error
-	Lookup(path string) ITag
-}
 
 func (tt TagType) NewTag() (tag ITag, err os.Error) {
 	switch tt {
@@ -60,11 +62,11 @@ func (tt TagType) NewTag() (tag ITag, err os.Error) {
 	return
 }
 
-func (tt *TagType) Read(reader io.Reader) os.Error {
+func (tt *TagType) read(reader io.Reader) os.Error {
 	return binary.Read(reader, binary.BigEndian, tt)
 }
 
-func (tt TagType) Write(writer io.Writer) os.Error {
+func (tt TagType) write(writer io.Writer) os.Error {
 	return binary.Write(writer, binary.BigEndian, tt)
 }
 
@@ -281,7 +283,7 @@ func (*List) Type() TagType {
 }
 
 func (l *List) Read(reader io.Reader) (err os.Error) {
-	if err = l.TagType.Read(reader); err != nil {
+	if err = l.TagType.read(reader); err != nil {
 		return
 	}
 
@@ -343,7 +345,7 @@ func (*Compound) Type() TagType {
 
 func readTagAndName(reader io.Reader) (tag ITag, name string, err os.Error) {
 	var tagType TagType
-	if tagType.Read(reader); err != nil {
+	if tagType.read(reader); err != nil {
 		return
 	}
 
@@ -388,7 +390,7 @@ func (c *Compound) Read(reader io.Reader) (err os.Error) {
 }
 
 func writeTagAndName(writer io.Writer, tag ITag, name string) (err os.Error) {
-	if err = tag.Type().Write(writer); err != nil {
+	if err = tag.Type().write(writer); err != nil {
 		return
 	}
 
@@ -409,7 +411,7 @@ func (c *Compound) Write(writer io.Writer) (err os.Error) {
 		}
 	}
 
-	err = TagEnd.Write(writer)
+	err = TagEnd.write(writer)
 
 	return
 }
