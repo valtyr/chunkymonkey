@@ -99,21 +99,21 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 // ReadNbt reads the player data from their persistently stored NBT data. It
 // must only be called before Player.Start().
 func (player *Player) ReadNbt(playerData nbt.ITag) (err os.Error) {
-	if player.position, err = nbtutil.ReadAbsXyz(playerData, "/Pos"); err != nil {
+	if player.position, err = nbtutil.ReadAbsXyz(playerData, "Pos"); err != nil {
 		return
 	}
 
-	if player.look, err = nbtutil.ReadLookDegrees(playerData, "/Rotation"); err != nil {
+	if player.look, err = nbtutil.ReadLookDegrees(playerData, "Rotation"); err != nil {
 		return
 	}
 
-	health, err := nbtutil.ReadShort(playerData, "/Health")
+	health, err := nbtutil.ReadShort(playerData, "Health")
 	if err != nil {
 		return
 	}
 	player.health = Health(health)
 
-	if err = player.inventory.ReadNbt(playerData.Lookup("/Inventory")); err != nil {
+	if err = player.inventory.ReadNbt(playerData.Lookup("Inventory")); err != nil {
 		return
 	}
 

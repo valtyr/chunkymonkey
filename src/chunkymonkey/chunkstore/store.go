@@ -49,8 +49,8 @@ type IChunkReader interface {
 
 // Given the NamedTag for a level.dat, returns an appropriate
 // IChunkStoreForeground.
-func ChunkStoreForLevel(worldPath string, levelData *nbt.NamedTag, dimension DimensionId) (store IChunkStoreForeground, err os.Error) {
-	versionTag, ok := levelData.Lookup("/Data/version").(*nbt.Int)
+func ChunkStoreForLevel(worldPath string, levelData nbt.ITag, dimension DimensionId) (store IChunkStoreForeground, err os.Error) {
+	versionTag, ok := levelData.Lookup("Data/version").(*nbt.Int)
 
 	if !ok {
 		store = newChunkStoreAlpha(worldPath, dimension)
