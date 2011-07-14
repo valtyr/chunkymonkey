@@ -56,7 +56,7 @@ func (data *ChunkData) HeightMap() []byte {
 	return data.heightMap
 }
 
-func (data *ChunkData) Entities() []*nbt.Compound {
+func (data *ChunkData) Entities() []nbt.ITag {
 	return nil
 }
 

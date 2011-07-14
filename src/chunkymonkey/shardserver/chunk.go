@@ -706,7 +706,7 @@ func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
 	return otherChunkLoc.X == chunk.loc.X && otherChunkLoc.Z == chunk.loc.Z
 }
 
-func (chunk *Chunk) addEntities(entities []*nbt.Compound) {
+func (chunk *Chunk) addEntities(entities []nbt.ITag) {
 	for _, entity := range entities {
 		// Position within the chunk
 		pos, err := nbtutil.ReadAbsXyz(entity, "Pos")
