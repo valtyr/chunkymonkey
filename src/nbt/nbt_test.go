@@ -131,6 +131,35 @@ func TestSerialization(t *testing.T) {
 	}
 }
 
+func Test_Read(t *testing.T) {
+	expected := &Compound{
+		map[string]ITag{
+			"Data": &Compound{
+				map[string]ITag{
+					"Byte": &Byte{5},
+				},
+			},
+		},
+	}
+
+	input := []byte("" +
+		"\x0a\x00\x00" + // Empty name containing Compound
+		"\x0a\x00\x04Data" + // "Data" Compound
+		"\x01\x00\x04Byte\x05" + // Byte{5}
+		"\x00\x00") // End of both compounds.
+	reader := bytes.NewBuffer(input)
+
+	result, err := Read(reader)
+
+	if err != nil {
+		t.Errorf("Got error: %v", err)
+	}
+
+	if !reflect.DeepEqual(expected, result) {
+		t.Errorf("Got unexpected result: %#v", result)
+	}
+}
+
 func Test_Lookup(t *testing.T) {
 	root := &Compound{
 		map[string]ITag{
