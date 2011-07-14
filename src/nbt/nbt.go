@@ -32,7 +32,7 @@ type ITag interface {
 	Lookup(path string) ITag
 }
 
-func (tt TagType) NewTag() (tag ITag) {
+func (tt TagType) NewTag() (tag ITag, err os.Error) {
 	switch tt {
 	case TagByte:
 		tag = new(Byte)
@@ -55,8 +55,7 @@ func (tt TagType) NewTag() (tag ITag) {
 	case TagCompound:
 		tag = new(Compound)
 	default:
-		// TODO Don't panic, produce an error.
-		panic(fmt.Sprintf("Invalid NBT tag type %#x", tt))
+		err = fmt.Errorf("invalid NBT tag type %#x", tt)
 	}
 	return
 }
@@ -294,7 +293,10 @@ func (l *List) Read(reader io.Reader) (err os.Error) {
 
 	list := make([]ITag, length.Value)
 	for i, _ := range list {
-		tag := l.TagType.NewTag()
+		var tag ITag
+		if tag, err = l.TagType.NewTag(); err != nil {
+			return
+		}
 		err = tag.Read(reader)
 		if err != nil {
 			return
@@ -356,7 +358,9 @@ func readTagAndName(reader io.Reader) (tag ITag, name string, err os.Error) {
 
 	name = nameTag.Value
 
-	tag = tagType.NewTag()
+	if tag, err = tagType.NewTag(); err != nil {
+		return
+	}
 	err = tag.Read(reader)
 
 	return

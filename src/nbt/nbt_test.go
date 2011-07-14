@@ -3,6 +3,7 @@ package nbt
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 
@@ -20,15 +21,19 @@ func (test *Test) String() string {
 }
 
 func (test *Test) testRead(t *testing.T) {
+	t.Logf("Test read %v", test)
+
 	bytesBuf := new(bytes.Buffer)
 	test.Serialized.Write(bytesBuf)
 
-	result := test.Value.Type().NewTag()
-	err := result.Read(bytesBuf)
+	var result ITag
+	var err os.Error
+	if result, err = test.Value.Type().NewTag(); err != nil {
+		t.Errorf("  Fail: failed to create tag to read into: :v", err)
+		return
+	}
 
-	t.Logf("Test read %v", test)
-
-	if err != nil {
+	if err = result.Read(bytesBuf); err != nil {
 		t.Errorf("  Fail: failed to read a %T: %T%v", result, err, err)
 		return
 	}
