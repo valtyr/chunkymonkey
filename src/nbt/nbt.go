@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// ITag is the interface for all tags that can be represented in an NBT tree.
 type ITag interface {
 	Type() TagType
 	Read(io.Reader) os.Error
@@ -16,6 +17,7 @@ type ITag interface {
 }
 
 
+// TagType is the header byte value that identifies the type of tag(s).
 type TagType byte
 
 const (
@@ -34,6 +36,8 @@ const (
 	TagCompound  = TagType(10)
 )
 
+// NewTag creates a new tag of the given TagType. TagEnd is not a valid value
+// here.
 func (tt TagType) NewTag() (tag ITag, err os.Error) {
 	switch tt {
 	case TagByte:
@@ -91,6 +95,7 @@ func (b *Byte) Write(writer io.Writer) (err os.Error) {
 	return binary.Write(writer, binary.BigEndian, &b.Value)
 }
 
+
 type Short struct {
 	Value int16
 }
@@ -110,6 +115,7 @@ func (s *Short) Write(writer io.Writer) (err os.Error) {
 func (*Short) Lookup(path string) ITag {
 	return nil
 }
+
 
 type Int struct {
 	Value int32
@@ -131,6 +137,7 @@ func (*Int) Lookup(path string) ITag {
 	return nil
 }
 
+
 type Long struct {
 	Value int64
 }
@@ -150,6 +157,7 @@ func (l *Long) Write(writer io.Writer) (err os.Error) {
 func (*Long) Lookup(path string) ITag {
 	return nil
 }
+
 
 type Float struct {
 	Value float32
@@ -171,6 +179,7 @@ func (*Float) Lookup(path string) ITag {
 	return nil
 }
 
+
 type Double struct {
 	Value float64
 }
@@ -190,6 +199,7 @@ func (d *Double) Write(writer io.Writer) (err os.Error) {
 func (*Double) Lookup(path string) ITag {
 	return nil
 }
+
 
 type ByteArray struct {
 	Value []byte
@@ -232,6 +242,7 @@ func (*ByteArray) Lookup(path string) ITag {
 	return nil
 }
 
+
 type String struct {
 	Value string
 }
@@ -272,6 +283,7 @@ func (s *String) Write(writer io.Writer) (err os.Error) {
 func (*String) Lookup(path string) ITag {
 	return nil
 }
+
 
 type List struct {
 	TagType TagType
@@ -334,6 +346,7 @@ func (l *List) Write(writer io.Writer) (err os.Error) {
 func (*List) Lookup(path string) ITag {
 	return nil
 }
+
 
 type Compound struct {
 	Tags map[string]ITag
@@ -430,6 +443,9 @@ func (c *Compound) Lookup(path string) (tag ITag) {
 	return tag
 }
 
+
+// Read reads an NBT structure from the given reader. It expects it to contain
+// a Compound at the root.
 func Read(reader io.Reader) (tag ITag, err os.Error) {
 	var name string
 	if tag, name, err = readTagAndName(reader); err != nil {
