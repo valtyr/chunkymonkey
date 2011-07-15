@@ -28,9 +28,9 @@ func createFurnaceInventory(instance *BlockInstance) *blockInventory {
 	)
 }
 
-func (aspect *FurnaceAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) {
+func (aspect *FurnaceAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, click *Click) {
 
-	aspect.InventoryAspect.InventoryClick(instance, player, slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+	aspect.InventoryAspect.InventoryClick(instance, player, click)
 
 	blockInv, furnaceInv := aspect.furnaceInventory(instance)
 	if furnaceInv == nil {

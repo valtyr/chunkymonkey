@@ -26,7 +26,7 @@ func (aspect *VoidAspect) Hit(instance *BlockInstance, player IShardPlayerClient
 func (aspect *VoidAspect) Interact(instance *BlockInstance, player IShardPlayerClient) {
 }
 
-func (aspect *VoidAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) {
+func (aspect *VoidAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, click *Click) {
 }
 
 func (aspect *VoidAspect) InventoryUnsubscribed(instance *BlockInstance, player IShardPlayerClient) {

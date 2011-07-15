@@ -1,9 +1,5 @@
 package gamerules
 
-import (
-	. "chunkymonkey/types"
-)
-
 // InventoryAspect is the common behaviour for blocks that have inventory.
 type InventoryAspect struct {
 	StandardAspect
@@ -22,14 +18,14 @@ func (aspect *InventoryAspect) Interact(instance *BlockInstance, player IShardPl
 	}
 }
 
-func (aspect *InventoryAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) {
+func (aspect *InventoryAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, click *Click) {
 	blkInv := aspect.blockInv(instance, false)
 	if blkInv != nil {
-		blkInv.Click(player, slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+		blkInv.Click(player, click)
 	} else {
 		// No inventory to act on (shouldn't happen, normally).
-		player.ReqInventoryTxState(blkInv.instance.BlockLoc, txId, false)
-		player.ReqInventoryCursorUpdate(instance.BlockLoc, *cursor)
+		player.ReqInventoryTxState(blkInv.instance.BlockLoc, click.TxId, false)
+		player.ReqInventoryCursorUpdate(instance.BlockLoc, click.Cursor)
 		return
 	}
 }

@@ -14,7 +14,7 @@ import (
 // IInventory is the interface that windows require of inventories.
 type IInventory interface {
 	NumSlots() SlotId
-	Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) (txState TxState)
+	Click(click *gamerules.Click) (txState TxState)
 	SetSubscriber(subscriber gamerules.IInventorySubscriber)
 	WriteProtoSlots(slots []proto.WindowSlot)
 }
@@ -23,7 +23,7 @@ type IInventory interface {
 // inventories.
 type IWindow interface {
 	WindowId() WindowId
-	Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) (txState TxState)
+	Click(click *gamerules.Click) (txState TxState)
 	WriteWindowOpen(writer io.Writer) (err os.Error)
 	WriteWindowItems(writer io.Writer) (err os.Error)
 	Finalize(sendClosePacket bool)
@@ -156,14 +156,19 @@ func (w *Window) WriteWindowItems(writer io.Writer) (err os.Error) {
 	return
 }
 
-func (w *Window) Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) TxState {
-	if slotId >= 0 {
+func (w *Window) Click(click *gamerules.Click) TxState {
+	if click.SlotId >= 0 {
 		for _, inventoryView := range w.views {
 
-			if slotId >= inventoryView.startSlot && slotId < inventoryView.endSlot {
-				return inventoryView.inventory.Click(
-					slotId-inventoryView.startSlot, cursor,
-					rightClick, shiftClick, txId, expectedSlot)
+			if click.SlotId >= inventoryView.startSlot && click.SlotId < inventoryView.endSlot {
+				invClick := *click
+				invClick.SlotId = click.SlotId - inventoryView.startSlot
+
+				result := inventoryView.inventory.Click(&invClick)
+
+				click.Cursor = invClick.Cursor
+
+				return result
 			}
 		}
 	}

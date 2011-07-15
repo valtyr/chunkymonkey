@@ -36,14 +36,13 @@ func NewFurnaceInventory() (inv *FurnaceInventory) {
 	return
 }
 
-func (inv *FurnaceInventory) Click(slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) (txState TxState) {
+func (inv *FurnaceInventory) Click(click *Click) (txState TxState) {
 
-	switch slotId {
+	switch click.SlotId {
 	case furnaceSlotReagent:
 		slotBefore := inv.slots[furnaceSlotReagent]
 
-		txState = inv.Inventory.Click(
-			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+		txState = inv.Inventory.Click(click)
 
 		slotAfter := &inv.slots[furnaceSlotReagent]
 
@@ -52,16 +51,14 @@ func (inv *FurnaceInventory) Click(slotId SlotId, cursor *Slot, rightClick bool,
 			inv.reactionRemaining = reactionDuration
 		}
 	case furnaceSlotFuel:
-		cursorItemId := cursor.ItemTypeId
+		cursorItemId := click.Cursor.ItemTypeId
 		_, cursorIsFuel := FurnaceReactions.Fuels[cursorItemId]
-		if cursorIsFuel || cursor.IsEmpty() {
-			txState = inv.Inventory.Click(
-				slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+		if cursorIsFuel || click.Cursor.IsEmpty() {
+			txState = inv.Inventory.Click(click)
 		}
 	case furnaceSlotOutput:
 		// Player may only *take* the *whole* stack from the output slot.
-		txState = inv.Inventory.TakeOnlyClick(
-			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+		txState = inv.Inventory.TakeOnlyClick(click)
 	}
 
 	inv.stateCheck()

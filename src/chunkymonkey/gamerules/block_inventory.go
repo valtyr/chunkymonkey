@@ -31,13 +31,13 @@ func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscri
 	return blkInv
 }
 
-func (blkInv *blockInventory) Click(player IShardPlayerClient, slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) {
-	txState := blkInv.inv.Click(slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+func (blkInv *blockInventory) Click(player IShardPlayerClient, click *Click) {
+	txState := blkInv.inv.Click(click)
 
-	player.ReqInventoryCursorUpdate(blkInv.instance.BlockLoc, *cursor)
+	player.ReqInventoryCursorUpdate(blkInv.instance.BlockLoc, click.Cursor)
 
 	// Inform client of operation status.
-	player.ReqInventoryTxState(blkInv.instance.BlockLoc, txId, txState == TxStateAccepted)
+	player.ReqInventoryTxState(blkInv.instance.BlockLoc, click.TxId, txState == TxStateAccepted)
 }
 
 func (blkInv *blockInventory) SlotUpdate(slot *Slot, slotId SlotId) {

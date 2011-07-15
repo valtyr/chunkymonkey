@@ -307,8 +307,17 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 
 	txState := TxStateRejected
 
+	click := gamerules.Click{
+		SlotId:     slotId,
+		Cursor:     player.cursor,
+		RightClick: rightClick,
+		ShiftClick: shiftClick,
+		TxId:       txId,
+	}
+	click.ExpectedSlot.SetWindowSlot(expectedSlot)
+
 	if clickedWindow != nil {
-		txState = clickedWindow.Click(slotId, &player.cursor, rightClick, shiftClick, txId, expectedSlotContent)
+		txState = clickedWindow.Click(&click)
 	}
 
 	switch txState {
@@ -316,6 +325,7 @@ func (player *Player) PacketWindowClick(windowId WindowId, slotId SlotId, rightC
 		// Inform client of operation status.
 		buf := new(bytes.Buffer)
 		proto.WriteWindowTransaction(buf, windowId, txId, txState == TxStateAccepted)
+		player.cursor = click.Cursor
 		player.cursor.SendUpdate(buf, WindowIdCursor, SlotIdCursor)
 		player.TransmitPacket(buf.Bytes())
 	case TxStateDeferred:

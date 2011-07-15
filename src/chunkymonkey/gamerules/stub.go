@@ -113,7 +113,7 @@ type IPlayerShardClient interface {
 	// inventory. The chunk should send a replying ReqInventoryCursorUpdate to
 	// reflect the new state of the cursor afterwards - in addition to any
 	// ReqInventorySlotUpdate to all subscribers to the inventory.
-	ReqInventoryClick(block BlockXyz, slotId SlotId, cursor Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot Slot)
+	ReqInventoryClick(block BlockXyz, click Click)
 
 	// ReqInventoryUnsubscribed requests that the inventory for the block be
 	// unsubscribed to.

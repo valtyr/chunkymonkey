@@ -20,12 +20,21 @@ type IInventorySubscriber interface {
 // IInventory is the general interface provided by inventory implementations.
 type IInventory interface {
 	NumSlots() SlotId
-	Click(slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) (txState TxState)
+	Click(click *Click) (txState TxState)
 	SetSubscriber(subscriber IInventorySubscriber)
 	MakeProtoSlots() []proto.WindowSlot
 	WriteProtoSlots(slots []proto.WindowSlot)
 	TakeAllItems() (items []Slot)
 	ReadNbtSlot(tag nbt.ITag, slotId SlotId) (err os.Error)
+}
+
+type Click struct {
+	SlotId       SlotId
+	Cursor       Slot
+	RightClick   bool
+	ShiftClick   bool
+	TxId         TxId
+	ExpectedSlot Slot
 }
 
 type Inventory struct {
@@ -48,65 +57,68 @@ func (inv *Inventory) SetSubscriber(subscriber IInventorySubscriber) {
 	inv.subscriber = subscriber
 }
 
-// Click takes the default actions upon a click event from a player.
-func (inv *Inventory) Click(slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) TxState {
-	if slotId < 0 || int(slotId) > len(inv.slots) {
+// Click takes the default actions upon a click event from a player. The Cursor
+// attribute of click may be modified to represent the cursors new contents.
+func (inv *Inventory) Click(click *Click) TxState {
+	if click.SlotId < 0 || int(click.SlotId) > len(inv.slots) {
 		return TxStateRejected
 	}
 
-	clickedSlot := &inv.slots[slotId]
+	clickedSlot := &inv.slots[click.SlotId]
 
-	if !expectedSlot.Equals(clickedSlot) {
+	if !click.ExpectedSlot.Equals(clickedSlot) {
 		return TxStateRejected
 	}
 
 	// Apply the change.
-	if cursor.Count == 0 {
-		if rightClick {
-			clickedSlot.Split(cursor)
+	if click.Cursor.Count == 0 {
+		if click.RightClick {
+			clickedSlot.Split(&click.Cursor)
 		} else {
-			clickedSlot.Swap(cursor)
+			clickedSlot.Swap(&click.Cursor)
 		}
 	} else {
 		var changed bool
 
-		if rightClick {
-			changed = clickedSlot.AddOne(cursor)
+		if click.RightClick {
+			changed = clickedSlot.AddOne(&click.Cursor)
 		} else {
-			changed = clickedSlot.Add(cursor)
+			changed = clickedSlot.Add(&click.Cursor)
 		}
 
 		if !changed {
-			clickedSlot.Swap(cursor)
+			clickedSlot.Swap(&click.Cursor)
 		}
 	}
 
 	// We send slot updates in case we have custom max counts that differ from
 	// the client's idea.
-	inv.slotUpdate(clickedSlot, slotId)
+	inv.slotUpdate(clickedSlot, click.SlotId)
 
 	return TxStateAccepted
 }
 
-// TakeOnlyClick only allows items to be taken from the slot, and it only
-// allows the *whole* stack to be taken, otherwise no items are taken at all.
-func (inv *Inventory) TakeOnlyClick(slotId SlotId, cursor *Slot, rightClick, shiftClick bool, txId TxId, expectedSlot *Slot) TxState {
-	if slotId < 0 || int(slotId) > len(inv.slots) {
+// TakeOnlyClick is similar to Click, but only allows items to be taken from
+// the slot, and it only allows the *whole* stack to be taken, otherwise no
+// items are taken at all. This is intended for use by crafting/furnace output
+// slots.
+func (inv *Inventory) TakeOnlyClick(click *Click) TxState {
+	if click.SlotId < 0 || int(click.SlotId) > len(inv.slots) {
 		return TxStateRejected
 	}
 
-	clickedSlot := &inv.slots[slotId]
+	clickedSlot := &inv.slots[click.SlotId]
 
-	if !expectedSlot.Equals(clickedSlot) {
+	if !click.ExpectedSlot.Equals(clickedSlot) {
 		return TxStateRejected
 	}
 
 	// Apply the change.
-	cursor.AddWhole(clickedSlot)
+	click.Cursor.AddWhole(clickedSlot)
 
 	// We send slot updates in case we have custom max counts that differ from
 	// the client's idea.
-	inv.slotUpdate(clickedSlot, slotId)
+	inv.slotUpdate(clickedSlot, click.SlotId)
 
 	return TxStateAccepted
 }

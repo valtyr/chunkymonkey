@@ -45,22 +45,20 @@ func NewWorkbenchInventory() *CraftingInventory {
 }
 
 // Click handles window clicks from a user with special handling for crafting.
-func (inv *CraftingInventory) Click(slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) (txState TxState) {
-	if slotId == 0 {
+func (inv *CraftingInventory) Click(click *Click) (txState TxState) {
+	if click.SlotId == 0 {
 		// Player may only *take* the *whole* stack from the output slot.
-		txState = inv.Inventory.TakeOnlyClick(
-			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+		txState = inv.Inventory.TakeOnlyClick(click)
 	} else {
 		// Player may interact with the input slots like any other slot.
-		txState = inv.Inventory.Click(
-			slotId, cursor, rightClick, shiftClick, txId, expectedSlot)
+		txState = inv.Inventory.Click(click)
 	}
 
 	if txState == TxStateRejected {
 		return
 	}
 
-	if slotId == 0 {
+	if click.SlotId == 0 {
 		// Player took items from the output slot. Subtract 1 count from each
 		// non-empty input slot.
 		for i := 1; i < len(inv.slots); i++ {

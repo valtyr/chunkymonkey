@@ -320,16 +320,13 @@ func (chunk *Chunk) reqDropItem(player gamerules.IShardPlayerClient, content *ga
 	chunk.AddEntity(spawnedItem)
 }
 
-func (chunk *Chunk) reqInventoryClick(player gamerules.IShardPlayerClient, blockLoc *BlockXyz, slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) {
+func (chunk *Chunk) reqInventoryClick(player gamerules.IShardPlayerClient, blockLoc *BlockXyz, click *gamerules.Click) {
 	blockInstance, blockType, ok := chunk.blockInstanceAndType(blockLoc)
 	if !ok {
 		return
 	}
 
-	blockType.Aspect.InventoryClick(
-		blockInstance, player, slotId, cursor,
-		rightClick, shiftClick,
-		txId, expectedSlot)
+	blockType.Aspect.InventoryClick(blockInstance, player, click)
 }
 
 func (chunk *Chunk) reqInventoryUnsubscribed(player gamerules.IShardPlayerClient, blockLoc *BlockXyz) {

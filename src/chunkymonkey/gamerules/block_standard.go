@@ -39,7 +39,7 @@ func (aspect *StandardAspect) Hit(instance *BlockInstance, player IShardPlayerCl
 func (aspect *StandardAspect) Interact(instance *BlockInstance, player IShardPlayerClient) {
 }
 
-func (aspect *StandardAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot) {
+func (aspect *StandardAspect) InventoryClick(instance *BlockInstance, player IShardPlayerClient, click *Click) {
 }
 
 func (aspect *StandardAspect) InventoryUnsubscribed(instance *BlockInstance, player IShardPlayerClient) {

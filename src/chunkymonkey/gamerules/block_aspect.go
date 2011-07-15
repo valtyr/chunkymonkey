@@ -66,7 +66,7 @@ type IBlockAspect interface {
 
 	// InventoryClick is called when the player clicked on a slot inside the
 	// inventory for the block (assuming it still has one).
-	InventoryClick(instance *BlockInstance, player IShardPlayerClient, slotId SlotId, cursor *Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *Slot)
+	InventoryClick(instance *BlockInstance, player IShardPlayerClient, click *Click)
 
 	// InventoryUnsubscribed is called when the player closes the window for the
 	// inventory for the block (assuming it still has one).

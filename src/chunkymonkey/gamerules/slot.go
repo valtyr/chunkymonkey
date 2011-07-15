@@ -77,6 +77,18 @@ func (s *Slot) Attr() (ItemTypeId, ItemCount, ItemData) {
 	return s.ItemTypeId, s.Count, s.Data
 }
 
+func (s *Slot) SetWindowSlot(windowSlot *proto.WindowSlot) {
+	if windowSlot.ItemTypeId == -1 || windowSlot.ItemTypeId == 0 {
+		s.ItemTypeId = 0
+		s.Count = 0
+	} else {
+		s.ItemTypeId = windowSlot.ItemTypeId
+		s.Count = windowSlot.Count
+	}
+	s.Data = windowSlot.Data
+
+}
+
 func (s *Slot) SendUpdate(writer io.Writer, windowId WindowId, slotId SlotId) os.Error {
 	return proto.WriteWindowSetSlot(writer, windowId, slotId, s.ItemTypeId, s.Count, s.Data)
 }

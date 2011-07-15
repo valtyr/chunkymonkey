@@ -52,11 +52,11 @@ func (inv *RemoteInventory) NumSlots() SlotId {
 	return SlotId(len(inv.slots))
 }
 
-func (inv *RemoteInventory) Click(slotId SlotId, cursor *gamerules.Slot, rightClick bool, shiftClick bool, txId TxId, expectedSlot *gamerules.Slot) (txState TxState) {
+func (inv *RemoteInventory) Click(click *gamerules.Click) (txState TxState) {
 	shard, _, ok := inv.chunkSubs.ShardClientForBlockXyz(&inv.blockLoc)
 
 	if ok {
-		shard.ReqInventoryClick(inv.blockLoc, slotId, *cursor, rightClick, shiftClick, txId, *expectedSlot)
+		shard.ReqInventoryClick(inv.blockLoc, *click)
 	}
 
 	return TxStateDeferred
