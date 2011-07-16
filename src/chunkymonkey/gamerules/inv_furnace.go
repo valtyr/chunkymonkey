@@ -141,6 +141,10 @@ func (inv *FurnaceInventory) stateCheck() {
 // sendProgressUpdates sends an update to the subscriber. Not every time,
 // however - to cut down on unnecessary communication.
 func (inv *FurnaceInventory) sendProgressUpdates() {
+	if inv.subscriber == nil {
+		return
+	}
+
 	inv.ticksSinceUpdate++
 	if inv.ticksSinceUpdate > 5 || !inv.IsLit() {
 		inv.ticksSinceUpdate = 0
