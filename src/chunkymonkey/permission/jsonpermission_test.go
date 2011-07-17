@@ -6,30 +6,43 @@ import (
 )
 
 const (
-	testUsersJson  = `
-{
-  "agon":{
-    "groups":["admin"],
-    "permissions":["server.web.*", "admin.*", "server.status"]
-  },
-  "huin":{
-    "groups":["admin"],
-    "permissions":["server.*", "admin.*"]
-  }
-}
-`
-	testGroupsJson = `
-{
-  "default":{
-    "default":true,
-    "permissions":["user.commands.help", "user.commands.kill", "user.commands.me", "world.build"]
-  },
-  "admin":{
-    "inheritance":["default"],
-    "permissions":["admin.commands.give", "world.*"]
-  }
-}
-`
+	testUsersJson  = `{
+		"agon": {
+			"groups": ["admin"],
+			"permissions": [
+				"server.web.*",
+				"admin.*",
+				"server.status"
+			]
+		},
+		"huin": {
+			"groups": ["admin"],
+			"permissions": [
+				"server.*",
+				"admin.*"
+			]
+		}
+	}`
+	testGroupsJson = `{
+		"default": {
+			"default": true,
+			"permissions": [
+				"login",
+				"user.commands.help",
+				"user.commands.kill",
+				"user.commands.me",
+				"world.build"
+			]
+		},
+		"admin": {
+			"inheritance": ["default"],
+			"permissions": [
+				"login",
+				"admin.commands.give",
+				"world.*"
+			]
+		}
+	}`
 )
 
 func TestJsonPermission(t *testing.T) {

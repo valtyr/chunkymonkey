@@ -1,10 +1,24 @@
 {
-  "default":{
+  "default": {
     "default":true,
-    "permissions":["user.commands.help", "user.commands.kill", "user.commands.me", "world.build"]
+    "permissions": [
+      "login",
+      "user.commands.help",
+      "user.commands.kill",
+      "user.commands.me",
+      "world.build"
+    ]
   },
-  "admin":{
-    "inheritance":["default"],
-    "permissions":["admin.commands.give", "world.*"]
+  "admin": {
+    "inheritance": ["default"],
+    "permissions": [
+      "login",
+      "admin.commands.give",
+      "world.*"
+    ]
+  },
+  "banned": {
+    "inheritance": [],
+    "permissions": []
   }
 }
