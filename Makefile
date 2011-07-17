@@ -13,7 +13,9 @@ MOCK_FILES=\
 
 GD_OPTS=-quiet
 
-DIAGRAMS=diagrams/top-level-architecture.png
+DIAGRAMS=\
+	diagrams/top-level-architecture.png \
+	diagrams/deps.png
 
 all: $(BINARIES)
 
@@ -47,6 +49,11 @@ docs: $(DIAGRAMS)
 
 %.png: %.dot
 	@dot -Tpng $< -o $@
+
+diagrams/deps.dot:
+	@gd -dot $@ src
+	# Omit dependencies upon packages not in the project for clarity.
+	@sed -ri '/->/{/"[^"]+" -> "(cmd|chunkymonkey|nbt|perlin|testencoding|testmatcher)[/"]/b ok ; d ; : ok}' $@
 
 mocks: $(MOCK_FILES)
 
