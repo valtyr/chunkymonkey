@@ -21,6 +21,9 @@ const (
 				"server.*",
 				"admin.*"
 			]
+		},
+		"griefy": {
+			"groups": ["banned"]
 		}
 	}`
 	testGroupsJson = `{
@@ -41,6 +44,10 @@ const (
 				"admin.commands.give",
 				"world.*"
 			]
+		},
+		"banned": {
+			"inheritance": [],
+			"permissions": []
 		}
 	}`
 )
@@ -69,6 +76,9 @@ func TestJsonPermission(t *testing.T) {
 		{"huin", "this.node.does.not.exist.tm", false},
 		// Wildcard check
 		{"huin", "server.stop", true},
+		// Banned player should have no permissions.
+		{"griefy", "login", false},
+		{"griefy", "world.build", false},
 	}
 
 	for i := range tests {
