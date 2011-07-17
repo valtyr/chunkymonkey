@@ -43,7 +43,7 @@ func LoadGameRules(blocksDefFile, itemsDefFile, recipesDefFile, furnaceDefFile, 
 	// TODO: Load the prefix from a config file
 	CommandFramework = command.NewCommandFramework("/")
 
-	Permissions, err = permission.LoadJsonPermission(userDefFile, groupDefFile)
+	Permissions, err = permission.LoadJsonPermissionFromFiles(userDefFile, groupDefFile)
 	if err != nil {
 		return
 	}

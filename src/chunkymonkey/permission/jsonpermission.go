@@ -1,9 +1,10 @@
 package permission
 
 import (
+	"io"
 	"json"
-	"strings"
 	"os"
+	"strings"
 )
 
 // This is a permission system based on groups and users, with data stored in
@@ -14,18 +15,13 @@ type JsonPermission struct {
 }
 
 
-func LoadJsonPermission(userDefFile, groupDefFile string) (jPermission *JsonPermission, err os.Error) {
+func LoadJsonPermissionFromFiles(userDefFile, groupDefFile string) (jPermission *JsonPermission, err os.Error) {
 	// Load users
 	usersFile, err := os.Open(userDefFile)
 	if err != nil {
 		return
 	}
 	defer usersFile.Close()
-	usersDecoder := json.NewDecoder(usersFile)
-	var users Users
-	if err = usersDecoder.Decode(&users); err != nil {
-		return
-	}
 
 	// Load groups
 	groupsFile, err := os.Open(groupDefFile)
@@ -33,7 +29,20 @@ func LoadJsonPermission(userDefFile, groupDefFile string) (jPermission *JsonPerm
 		return
 	}
 	defer groupsFile.Close()
-	groupsDecoder := json.NewDecoder(groupsFile)
+
+	return LoadJsonPermission(usersFile, groupsFile)
+}
+
+func LoadJsonPermission(userReader io.Reader, groupReader io.Reader) (jPermission *JsonPermission, err os.Error) {
+	// Load users
+	usersDecoder := json.NewDecoder(userReader)
+	var users Users
+	if err = usersDecoder.Decode(&users); err != nil {
+		return
+	}
+
+	// Load groups
+	groupsDecoder := json.NewDecoder(groupReader)
 	var groups Groups
 	if err = groupsDecoder.Decode(&groups); err != nil {
 		return nil, err
