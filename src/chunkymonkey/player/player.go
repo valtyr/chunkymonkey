@@ -515,7 +515,7 @@ func (player *Player) reqPlaceHeldItem(target *BlockXyz, wasHeld *gamerules.Slot
 	// Currently held item has changed since chunk saw it.
 	// TODO think about having the slot index passed as well so if that changes,
 	// we can still track the original item and improve placement success rate.
-	if curHeld.IsSameType(wasHeld) {
+	if !curHeld.IsSameType(wasHeld) {
 		return
 	}
 
