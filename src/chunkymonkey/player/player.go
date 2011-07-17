@@ -44,6 +44,7 @@ type Player struct {
 	name           string
 	spawnBlock     BlockXyz
 	position       AbsXyz
+	height         AbsCoord
 	look           LookDegrees
 	chunkSubs      chunkSubscriptions
 	loginComplete  bool
@@ -78,7 +79,8 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 			Y: AbsCoord(spawnBlock.Y),
 			Z: AbsCoord(spawnBlock.Z),
 		},
-		look: LookDegrees{0, 0},
+		height: StanceNormal,
+		look:   LookDegrees{0, 0},
 
 		health: MaxHealth,
 
@@ -185,6 +187,7 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
 		return
 	}
 	player.position = *position
+	player.height = stance - position.Y
 	player.chunkSubs.Move(position)
 
 	// TODO: Should keep track of when players enter/leave their mutual radius
@@ -230,7 +233,9 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 		player.inventory.TakeOneHeldItem(&itemToThrow)
 		if !itemToThrow.IsEmpty() {
 			velocity := physics.VelocityFromLook(player.look, 0.30)
-			shardClient.ReqDropItem(itemToThrow, player.position, velocity)
+			position := player.position
+			position.Y += player.height
+			shardClient.ReqDropItem(itemToThrow, position, velocity)
 		}
 		return
 	}
@@ -447,7 +452,7 @@ func (player *Player) reqNotifyChunkLoad() {
 		buf := new(bytes.Buffer)
 		proto.ServerWritePlayerPositionLook(
 			buf,
-			&player.position, player.position.Y+StanceNormal,
+			&player.position, player.position.Y+player.height,
 			&player.look, false)
 		player.inventory.WriteWindowItems(buf)
 		proto.WriteUpdateHealth(buf, player.health)
