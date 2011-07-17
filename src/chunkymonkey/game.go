@@ -11,6 +11,7 @@ import (
 	"time"
 
 	. "chunkymonkey/entity"
+	"chunkymonkey/gamerules"
 	"chunkymonkey/player"
 	"chunkymonkey/proto"
 	"chunkymonkey/server_auth"
@@ -96,6 +97,14 @@ func (game *Game) login(conn net.Conn) {
 	if game.UnderMaintenanceMsg != "" {
 		err = fmt.Errorf("Server under maintenance, kicking player: %q", username)
 		clientErr = os.NewError(game.UnderMaintenanceMsg)
+		return
+	}
+
+	// Load player permissions.
+	permissions := gamerules.Permissions.UserPermissions(username)
+	if !permissions.Has("login") {
+		err = fmt.Errorf("Player %q does not have login permission", username)
+		clientErr = os.NewError("You do not have access to this server.")
 		return
 	}
 
