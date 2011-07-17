@@ -12,6 +12,8 @@ const (
 	plankId     = ItemTypeId(5)
 	ironOreId   = ItemTypeId(15)
 	ironIngotId = ItemTypeId(265)
+
+	plankFuelTime = Ticks(300)
 )
 
 var (
@@ -146,7 +148,7 @@ func Test_FurnaceFinishBurning(t *testing.T) {
 
 	// 299 ticks later there should be an iron ingot present, and the furnace
 	// should still be lit.
-	runner.runFor(299)
+	runner.runFor(plankFuelTime - 1)
 	checkSlot(t, Slot{ironIngotId, 1, 0}, furnace.slots[furnaceSlotOutput])
 	checkLit(t, furnace, true)
 
@@ -160,7 +162,7 @@ func Test_FurnaceBurnsMultipleFuel(t *testing.T) {
 
 	// 299 ticks later there should be an iron ingot present, and the furnace
 	// should still be lit with one unit of fuel left to consume.
-	runner.runUntil(299)
+	runner.runUntil(plankFuelTime - 1)
 	checkSlot(t, Slot{ironIngotId, 1, 0}, furnace.slots[furnaceSlotOutput])
 	checkLit(t, furnace, true)
 	checkSlot(t, Slot{plankId, 1, 0}, furnace.slots[furnaceSlotFuel])
@@ -184,10 +186,10 @@ func Test_FurnaceBurnsMultipleFuel(t *testing.T) {
 
 	// The furnace should be lit after a total of 599 ticks, just before the
 	// second and last unit of fuel runs out.
-	runner.runUntil(599)
+	runner.runUntil(plankFuelTime*2 - 1)
 	checkLit(t, furnace, true)
 
 	// ... and then the furnace should be unlit after 600 ticks.
-	runner.runUntil(600)
+	runner.runUntil(plankFuelTime * 2)
 	checkLit(t, furnace, false)
 }
