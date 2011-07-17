@@ -5,7 +5,7 @@ import (
 )
 
 func TestJsonPermission(t *testing.T) {
-	perm, err := LoadJsonPermission("./")
+	perm, err := LoadJsonPermission("users.json", "groups.json")
 	if err != nil {
 		t.Fatalf("Error while loading JsonPermission: %s", err)
 	}

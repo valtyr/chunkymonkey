@@ -1,7 +1,6 @@
 package permission
 
 import (
-	"io/ioutil"
 	"json"
 	"strings"
 	"os"
@@ -27,28 +26,33 @@ type JsonPermission struct {
 
 func LoadJsonPermission(userDefFile, groupDefFile string) (jPermission *JsonPermission, err os.Error) {
 	// Load users
-	var bytesUsers []byte
-	bytesUsers, err = ioutil.ReadFile(userDefFile)
+	usersFile, err := os.Open(userDefFile)
 	if err != nil {
-		return nil, err
+		return
 	}
+	defer usersFile.Close()
+	usersDecoder := json.NewDecoder(usersFile)
 	var users Users
-	err = json.Unmarshal(bytesUsers, &users)
-	if err != nil {
-		return nil, err
+	if err = usersDecoder.Decode(&users); err != nil {
+		return
 	}
+
 	// Load groups
-	var bytesGroups []byte
-	bytesGroups, err = ioutil.ReadFile(groupDefFile)
+	groupsFile, err := os.Open(groupDefFile)
 	if err != nil {
-		return nil, err
+		return
 	}
+	defer groupsFile.Close()
+	groupsDecoder := json.NewDecoder(groupsFile)
 	var groups Groups
-	err = json.Unmarshal(bytesGroups, &groups)
-	if err != nil {
+	if err = groupsDecoder.Decode(&groups); err != nil {
 		return nil, err
 	}
-	jPermission = &JsonPermission{users: make(map[string]*CachedUser)}
+
+	jPermission = &JsonPermission{
+		users: make(map[string]*CachedUser),
+	}
+
 	// Cache users and merge groups into users
 	for name, user := range users {
 		permissions := make([]string, len(user.Permissions))
