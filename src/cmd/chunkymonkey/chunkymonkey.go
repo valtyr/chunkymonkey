@@ -41,6 +41,14 @@ var underMaintenaceMsg = flag.String(
 	"underMaintenanceMsg", "",
 	"If set, all logins will be denied and this message will be given as reason.")
 
+var userDefs = flag.String(
+	"users", "users.json",
+	"The JSON file container user permissions.")
+
+var groupDefs = flag.String(
+	"groups", "groups.json",
+	"The JSON file containing group permissions.")
+
 
 func usage() {
 	os.Stderr.WriteString("usage: " + os.Args[0] + " [flags] <world>\n")
@@ -67,7 +75,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs, *furnaceDefs)
+	err = gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs, *furnaceDefs, *userDefs, *groupDefs)
 	if err != nil {
 		log.Print("Error loading game rules: ", err)
 		os.Exit(1)

@@ -3,7 +3,6 @@ package permission
 import (
 	"io/ioutil"
 	"json"
-	"path"
 	"strings"
 	"os"
 )
@@ -18,40 +17,18 @@ var (
 	ErrFileUsers  = os.NewError("Couldn't find users.json")
 )
 
-// This is a permission system based on two json files "groups.json" and "users.json".
-// It has one world support.
+// This is a permission system based on groups and users, with data stored in
+// two json files "groups.json" and "users.json". It has one world support.
 type JsonPermission struct {
 	users       map[string]*CachedUser
 	defaultUser *CachedUser
 }
 
 
-// The expected folder structure is:
-// ./groups.json
-// ./users.yml
-func LoadJsonPermission(folder string) (*JsonPermission, os.Error) {
-	files, err := ioutil.ReadDir(folder)
-	if err != nil {
-		return nil, err
-	}
-	var fileNameUsers string
-	var fileNameGroups string
-	for _, file := range files {
-		fileName := path.Base(file.Name)
-		if fileName == FileNameGroups {
-			fileNameGroups = file.Name
-		} else if fileName == FileNameUsers {
-			fileNameUsers = file.Name
-		}
-	}
-	if len(fileNameUsers) == 0 {
-		return nil, ErrFileUsers
-	} else if len(fileNameGroups) == 0 {
-		return nil, ErrFileGroups
-	}
+func LoadJsonPermission(userDefFile, groupDefFile string) (jPermission *JsonPermission, err os.Error) {
 	// Load users
 	var bytesUsers []byte
-	bytesUsers, err = ioutil.ReadFile(fileNameUsers)
+	bytesUsers, err = ioutil.ReadFile(userDefFile)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +39,7 @@ func LoadJsonPermission(folder string) (*JsonPermission, os.Error) {
 	}
 	// Load groups
 	var bytesGroups []byte
-	bytesGroups, err = ioutil.ReadFile(fileNameGroups)
+	bytesGroups, err = ioutil.ReadFile(groupDefFile)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +48,7 @@ func LoadJsonPermission(folder string) (*JsonPermission, os.Error) {
 	if err != nil {
 		return nil, err
 	}
-	jPermission := &JsonPermission{users: make(map[string]*CachedUser)}
+	jPermission = &JsonPermission{users: make(map[string]*CachedUser)}
 	// Cache users and merge groups into users
 	for name, user := range users {
 		permissions := make([]string, len(user.Permissions))
