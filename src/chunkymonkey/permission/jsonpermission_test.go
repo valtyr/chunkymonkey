@@ -22,17 +22,24 @@ const (
 				"admin.*"
 			]
 		},
+		"defaulty": {
+			"groups": ["default"]
+		},
 		"griefy": {
 			"groups": ["banned"]
 		}
 	}`
 	testGroupsJson = `{
+		"basic": {
+			"permissions": [
+				"login"
+			]
+		},
 		"default": {
 			"default": true,
+			"inheritance": ["basic"],
 			"permissions": [
-				"login",
 				"user.commands.help",
-				"user.commands.kill",
 				"user.commands.me",
 				"world.build"
 			]
@@ -40,7 +47,6 @@ const (
 		"admin": {
 			"inheritance": ["default"],
 			"permissions": [
-				"login",
 				"admin.commands.give",
 				"world.*"
 			]
@@ -52,14 +58,20 @@ const (
 	}`
 )
 
-func TestJsonPermission(t *testing.T) {
+func testLoadPermission() (permissions IPermissions) {
 	usersReader := strings.NewReader(testUsersJson)
 	groupsReader := strings.NewReader(testGroupsJson)
 
-	perm, err := LoadJsonPermission(usersReader, groupsReader)
+	permissions, err := LoadJsonPermission(usersReader, groupsReader)
 	if err != nil {
-		t.Fatalf("Error while loading JsonPermission: %s", err)
+		panic(err)
 	}
+
+	return
+}
+
+func TestJsonPermission(t *testing.T) {
+	perm := testLoadPermission()
 
 	type Test struct {
 		username    string
@@ -68,14 +80,19 @@ func TestJsonPermission(t *testing.T) {
 	}
 
 	tests := []Test{
-		// Check User permissions
+		// Check user permissions
 		{"agon", "server.status", true},
-		// Check User permissions from groups
+		// Check user permissions from groups
 		{"agon", "admin.commands.give", true},
-		// Check if User has no permission
+		// Check if user has no permission
 		{"huin", "this.node.does.not.exist.tm", false},
+		// Check group inheritance.
+		{"huin", "user.commands.me", true},
 		// Wildcard check
 		{"huin", "server.stop", true},
+		// Default player permissions.
+		{"newbie", "login", true},
+		{"newbie", "admin.commands.give", false},
 		// Banned player should have no permissions.
 		{"griefy", "login", false},
 		{"griefy", "world.build", false},
@@ -85,11 +102,39 @@ func TestJsonPermission(t *testing.T) {
 		test := &tests[i]
 		result := perm.UserPermissions(test.username).Has(test.permission)
 		if test.expectedHas != result {
+			var msg string
 			if test.expectedHas {
-				t.Error("User %s should have node %s", test.username, test.permission)
+				msg = "User %s should have node %s"
 			} else {
-				t.Error("User %s should *not* have node %s", test.username, test.permission)
+				msg = "User %s should *not* have node %s"
 			}
+			t.Errorf(msg, test.username, test.permission)
 		}
+	}
+}
+
+func Benchmark_PermissionMatchExact(b *testing.B) {
+	perm := testLoadPermission()
+
+	userPerm := perm.UserPermissions("defaulty")
+
+	b.ResetTimer()
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		userPerm.Has("user.commands.me")
+	}
+}
+
+func Benchmark_PermissionMatchWildcard(b *testing.B) {
+	perm := testLoadPermission()
+
+	userPerm := perm.UserPermissions("huin")
+
+	b.ResetTimer()
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		userPerm.Has("world.foo")
 	}
 }
