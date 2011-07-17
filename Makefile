@@ -21,6 +21,7 @@ all: $(BINARIES)
 
 clean:
 	@-rm -f $(BINARIES)
+	@-rm -f $(MOCK_FILES)
 	@gd $(GD_OPTS) -lib _obj -clean src
 	@gd $(GD_OPTS) -lib _test -clean .
 
