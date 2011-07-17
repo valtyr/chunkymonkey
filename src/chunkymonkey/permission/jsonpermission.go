@@ -6,16 +6,6 @@ import (
 	"os"
 )
 
-const (
-	FileNameGroups = "groups.json"
-	FileNameUsers  = "users.json"
-)
-
-var (
-	ErrFileGroups = os.NewError("Couldn't find groups.json")
-	ErrFileUsers  = os.NewError("Couldn't find users.json")
-)
-
 // This is a permission system based on groups and users, with data stored in
 // two json files "groups.json" and "users.json". It has one world support.
 type JsonPermission struct {
@@ -53,7 +43,7 @@ func LoadJsonPermission(userDefFile, groupDefFile string) (jPermission *JsonPerm
 		users: make(map[string]*CachedUser),
 	}
 
-	// Cache users and merge groups into users
+	// Cache users and merge groups into users.
 	for name, user := range users {
 		permissions := make([]string, len(user.Permissions))
 		for i := range user.Permissions {
@@ -62,12 +52,14 @@ func LoadJsonPermission(userDefFile, groupDefFile string) (jPermission *JsonPerm
 		inhPerm := getInheritance(user.Groups, groups)
 		for _, perm := range inhPerm {
 			permissions = append(permissions, perm)
-
 		}
 		jPermission.users[name] = &CachedUser{permissions: permissions}
 	}
-	// Cache default group
-	defaultUser := &CachedUser{permissions: make([]string, 0)}
+
+	// Cache default user.
+	defaultUser := &CachedUser{
+		permissions: make([]string, 0),
+	}
 	for _, group := range groups {
 		if group.Default {
 			for _, perm := range group.Permissions {
