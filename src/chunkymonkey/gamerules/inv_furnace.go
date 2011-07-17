@@ -103,6 +103,21 @@ func (inv *FurnaceInventory) stateCheck() {
 		outputReady = true
 	}
 
+	if inv.curFuel <= 0 {
+		if haveReagent && haveFuel && outputReady {
+			// Everything is in place, light the furnace by consuming one unit of
+			// fuel.
+			fuelSlot.Decrement()
+			inv.maxFuel = fuelTicks
+			inv.curFuel = fuelTicks
+			inv.slotUpdate(fuelSlot, furnaceSlotFuel)
+		} else {
+			inv.reactionRemaining = reactionDuration
+			inv.maxFuel = 0
+			inv.curFuel = 0
+		}
+	}
+
 	if inv.curFuel > 0 {
 		// Furnace is lit.
 		if !outputReady {
@@ -120,20 +135,6 @@ func (inv *FurnaceInventory) stateCheck() {
 			inv.slotUpdate(outputSlot, furnaceSlotOutput)
 			reagentSlot.Decrement()
 			inv.slotUpdate(reagentSlot, furnaceSlotReagent)
-		}
-	} else {
-		inv.reactionRemaining = reactionDuration
-
-		// Furnace is unlit.
-		if haveReagent && haveFuel && outputReady {
-			// Everything is in place, light the furnace by consuming one unit of
-			// fuel.
-			fuelSlot.Decrement()
-			inv.maxFuel = fuelTicks
-			inv.curFuel = fuelTicks
-			inv.slotUpdate(fuelSlot, furnaceSlotFuel)
-		} else {
-			inv.reactionRemaining = reactionDuration
 		}
 	}
 }
