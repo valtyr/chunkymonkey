@@ -1,11 +1,42 @@
 package permission
 
 import (
+	"strings"
 	"testing"
 )
 
+const (
+	testUsersJson = `
+{
+  "agon":{
+    "groups":["admin"],
+    "permissions":["server.web.*", "admin.*", "server.status"]
+  },
+  "huin":{
+    "groups":["admin"],
+    "permissions":["server.*", "admin.*"]
+  }
+}
+`
+	testGroupsJson = `
+{
+  "default":{
+    "default":true,
+    "permissions":["user.commands.help", "user.commands.kill", "user.commands.me", "world.build"]
+  },
+  "admin":{
+    "inheritance":["default"],
+    "permissions":["admin.commands.give", "world.*"]
+  }
+}
+`
+)
+
 func TestJsonPermission(t *testing.T) {
-	perm, err := LoadJsonPermissionFromFiles("users.json", "groups.json")
+	usersReader := strings.NewReader(testUsersJson)
+	groupsReader := strings.NewReader(testGroupsJson)
+
+	perm, err := LoadJsonPermission(usersReader, groupsReader)
 	if err != nil {
 		t.Fatalf("Error while loading JsonPermission: %s", err)
 	}
