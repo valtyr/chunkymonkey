@@ -21,5 +21,8 @@ func TestJsonPermission(t *testing.T) {
 	if perm.UserPermissions("huin").Has("this.node.does.not.exist.tm") {
 		t.Error("User huin should not have this.node.does.not.exist.tm as a permission node.")
 	}
-	// TODO Implement wildcard checks
+	// Wildcard check
+	if perm.UserPermissions("huin").Has("server.stop") == false { // huin has "server.*", means he has permission for "server.stop"
+		t.Error("User huin should have permission for server.stop.")
+	}
 }

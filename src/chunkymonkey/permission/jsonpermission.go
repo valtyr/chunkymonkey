@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"json"
 	"path"
+	"strings"
 	"os"
 )
 
@@ -130,10 +131,13 @@ type CachedUser struct {
 
 // Implementation of IUserPermissions
 func (u *CachedUser) Has(node string) bool {
-	// TODO Implement wildcard * for nodes
 	for _, p := range u.permissions {
 		if p == node {
 			return true
+		} else if strings.HasSuffix(p, "*") && len(p) > 0 {
+			if strings.HasPrefix(node, p[:len(p)-1]) {
+				return true
+			}
 		}
 	}
 	return false
