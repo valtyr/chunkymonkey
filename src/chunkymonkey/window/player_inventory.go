@@ -162,7 +162,7 @@ func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 		case 0 <= slotId && slotId < playerInvHoldingNum:
 			inv = &w.holding
 			invSlotId = slotId
-		case playerInvHoldingNum < slotId && slotId < (playerInvHoldingNum+playerInvMainNum):
+		case playerInvHoldingNum <= slotId && slotId < (playerInvHoldingNum+playerInvMainNum):
 			inv = &w.main
 			invSlotId = slotId - playerInvHoldingNum
 		case 100 <= slotId && slotId <= 103:
