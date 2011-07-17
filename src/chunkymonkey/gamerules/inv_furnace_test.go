@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	oneCoal = Slot{263, 1, 0}
+	onePlank = Slot{5, 1, 0}
 	oneIronOre = Slot{15, 1, 0}
 	oneIronIngot = Slot{265, 1, 0}
 	emptySlot = Slot{}
@@ -46,7 +46,7 @@ func checkSlot(t *testing.T, expected, result Slot) {
 	}
 }
 
-// Creates a furnace, and loads with one coal and one iron ore, performing
+// Creates a furnace, and loads with one plank and one iron ore, performing
 // common tests along the way.
 func loadedFurnace(t *testing.T) (furnace *FurnaceInventory) {
 	var txState TxState
@@ -55,10 +55,10 @@ func loadedFurnace(t *testing.T) (furnace *FurnaceInventory) {
 
 	checkLit(t, furnace, false)
 
-	// Put a coal into the fuel slot.
+	// Put a plank into the fuel slot.
 	click = Click{
 		furnaceSlotFuel,
-		oneCoal,
+		onePlank,
 		false, false,
 		0,
 		emptySlot,
@@ -111,9 +111,9 @@ func Test_FurnaceProducesIronIngot(t *testing.T) {
 func Test_FurnaceFinishBurning(t *testing.T) {
 	furnace := loadedFurnace(t)
 
-	// 1599 ticks later there should be an iron ingot present, and the furnace
+	// 299 ticks later there should be an iron ingot present, and the furnace
 	// should still be lit.
-	for i := Ticks(0); i < 1599; i++ {
+	for i := Ticks(0); i < 299; i++ {
 		furnace.Tick()
 	}
 	checkSlot(t, oneIronIngot, furnace.slots[furnaceSlotOutput])
