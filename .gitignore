@@ -8,3 +8,5 @@ mock_*.go
 /bin
 *.log
 deps.dot*
+diagrams/*.png
+diagrams/deps.dot
