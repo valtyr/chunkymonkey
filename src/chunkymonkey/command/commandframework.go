@@ -18,8 +18,8 @@ type CommandFramework struct {
 func NewCommandFramework(prefix string) *CommandFramework {
 	cf := &CommandFramework{prefix: prefix}
 	cmds := getCommands()
-	commandHelp := NewCommand(helpCmd, helpDesc, helpUsage, func(msg string, cmdHandler ICommandHandler) {
-		cmdHelp(msg, cf, cmdHandler)
+	commandHelp := NewCommand(helpCmd, helpDesc, helpUsage, func(player, msg string, cmdHandler ICommandHandler) {
+		cmdHelp(player, msg, cf, cmdHandler)
 	})
 	cmds[helpCmd] = commandHelp
 	cmds[helpShortCmd] = commandHelp
@@ -35,13 +35,13 @@ func (cf *CommandFramework) Commands() map[string]*Command {
 	return cf.cmds
 }
 
-func (cf *CommandFramework) Process(message string, cmdHandler ICommandHandler) {
+func (cf *CommandFramework) Process(player, message string, cmdHandler ICommandHandler) {
 	if len(message) < 2 || message[0:len(cf.prefix)] != cf.prefix {
 		return
 	}
 	attr := strings.Split(message, " ", -1)
 	trigger := attr[0][1:]
 	if cmd, ok := cf.cmds[trigger]; ok {
-		cmd.Callback(message, cmdHandler)
+		cmd.Callback(player, message, cmdHandler)
 	}
 }

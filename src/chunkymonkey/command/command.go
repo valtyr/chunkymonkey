@@ -1,6 +1,9 @@
 package command
 
-type CommandCallback func(string, ICommandHandler)
+// A CommandCallback takes the name of the player invoking the command, any
+// text supplied after the trigger for the command, and an interface via which
+// game-wide 'actions' can be taken.
+type CommandCallback func(string, string, ICommandHandler)
 
 type Command struct {
 	Trigger     string          // The initial text eg. "give".

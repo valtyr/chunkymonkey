@@ -144,7 +144,7 @@ func (game *Game) login(conn net.Conn) {
 		return
 	}
 
-	player := player.NewPlayer(entityId, game.chunkManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect)
+	player := player.NewPlayer(entityId, game.chunkManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect, game)
 	if playerData != nil {
 		if err = player.ReadNbt(playerData); err != nil {
 			// Don't let the player log in, as they will only have default inventory
@@ -240,4 +240,50 @@ func (game *Game) tick() {
 	if game.time%TicksPerSecond == 0 {
 		game.sendTimeUpdate()
 	}
+}
+
+func (game *Game) getPlayerFromName(name string) *player.Player {
+	// TODO: This should be made more efficient through a lookup, etc.
+	result := make(chan *player.Player)
+	game.enqueue(func(_ *Game) {
+		for _, player := range game.players {
+			if player.Name() == name {
+				result <- player
+			}
+		}
+		close(result)
+	})
+	return <-result
+}
+
+// GiveItem implements ICommandHandler.GiveItem
+func (game *Game) GiveItem(name string, id, quantity, data int) {
+	//	player := game.getPlayerFromName(name)
+	//	item := gamerules.Slot{
+	//		ItemTypeId: ItemTypeId(id),
+	//		Count:      ItemCount(quantity),
+	//		Data:       ItemData(data),
+	//	}
+
+	// TODO: Spawn the item created at the player's block location
+}
+
+// SendMessageToPlayer implements ICommandHandler.SendMessageToPlayer
+func (game *Game) SendMessageToPlayer(name, msg string) {
+	player := game.getPlayerFromName(name)
+
+	buf := new(bytes.Buffer)
+	proto.WriteChatMessage(buf, msg)
+	packet := buf.Bytes()
+	player.TransmitPacket(packet)
+}
+
+// BroadcastMessage implements ICommandHandler.BroadcastMessage
+func (game *Game) BroadcastMessage(name, msg string) {
+	buf := new(bytes.Buffer)
+	proto.WriteChatMessage(buf, msg)
+
+	game.enqueue(func(_ *Game) {
+		game.multicastPacket(buf.Bytes(), nil)
+	})
 }

@@ -2,6 +2,7 @@ package player
 
 import (
 	"bytes"
+	"chunkymonkey/command"
 	"expvar"
 	"fmt"
 	"log"
@@ -59,6 +60,8 @@ type Player struct {
 	mainQueue chan func(*Player)
 	txQueue   chan []byte
 
+	commandHandler command.ICommandHandler
+
 	// TODO remove this lock, packet handling shouldn't use a lock, it should use
 	// a channel instead (ideally).
 	lock sync.Mutex
@@ -66,7 +69,7 @@ type Player struct {
 	onDisconnect chan<- EntityId
 }
 
-func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn net.Conn, name string, spawnBlock BlockXyz, onDisconnect chan<- EntityId) *Player {
+func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn net.Conn, name string, spawnBlock BlockXyz, onDisconnect chan<- EntityId, commandHandler command.ICommandHandler) *Player {
 	player := &Player{
 		EntityId:       entityId,
 		shardConnecter: shardConnecter,
@@ -88,6 +91,8 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 		mainQueue: make(chan func(*Player), 128),
 		txQueue:   make(chan []byte, 128),
 
+		commandHandler: commandHandler,
+
 		onDisconnect: onDisconnect,
 	}
 
@@ -95,6 +100,14 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 	player.inventory.Init(player.EntityId, player)
 
 	return player
+}
+
+func (player *Player) Name() string {
+	return player.name
+}
+
+func (player *Player) Position() AbsXyz {
+	return player.position
 }
 
 // ReadNbt reads the player data from their persistently stored NBT data. It
@@ -153,7 +166,7 @@ func (player *Player) PacketKeepAlive() {
 func (player *Player) PacketChatMessage(message string) {
 	prefix := gamerules.CommandFramework.Prefix()
 	if message[0:len(prefix)] == prefix {
-		gamerules.CommandFramework.Process(message, player)
+		gamerules.CommandFramework.Process(player.name, message, player.commandHandler)
 	} else {
 		player.sendChatMessage(fmt.Sprintf("<%s> %s", player.name, message), true)
 	}
@@ -618,25 +631,4 @@ func (player *Player) closeCurrentWindow(sendClosePacket bool) {
 	}
 
 	player.inventory.Resubscribe()
-}
-
-// ICommandHandler implementations
-func (player *Player) SendMessageToPlayer(msg string) {
-	buf := new(bytes.Buffer)
-	proto.WriteChatMessage(buf, msg)
-	packet := buf.Bytes()
-	player.TransmitPacket(packet)
-}
-
-func (player *Player) BroadcastMessage(msg string, self bool) {
-	player.sendChatMessage(msg, self)
-}
-
-func (player *Player) GiveItem(id int, quantity int, data int) {
-	item := gamerules.Slot{
-		ItemTypeId: ItemTypeId(id),
-		Count:      ItemCount(quantity),
-		Data:       ItemData(data),
-	}
-	player.reqGiveItem(&player.position, &item)
 }

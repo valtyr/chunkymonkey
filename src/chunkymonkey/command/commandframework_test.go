@@ -12,23 +12,23 @@ func TestCommandFramework(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockPlayer := NewMockICommandHandler(mockCtrl)
+	mockGame := NewMockICommandHandler(mockCtrl)
 
 	cf := NewCommandFramework("/")
 
-	mockPlayer.EXPECT().BroadcastMessage("§dthis is a broadcast", true)
-	cf.Process("/say this is a broadcast", mockPlayer)
+	mockGame.EXPECT().BroadcastMessage("thePlayer", "§dthis is a broadcast")
+	cf.Process("thePlayer", "/say this is a broadcast", mockGame)
 
-	mockPlayer.EXPECT().GiveItem(1, 64, 0)
-	cf.Process("/give 1 64", mockPlayer)
+	mockGame.EXPECT().GiveItem("thePlayer", 1, 64, 0)
+	cf.Process("thePlayer", "/give 1 64", mockGame)
 
-	mockPlayer.EXPECT().SendMessageToPlayer(&testmatcher.StringPrefix{"Commands:"})
-	cf.Process("/help", mockPlayer)
+	mockGame.EXPECT().SendMessageToPlayer("thePlayer", &testmatcher.StringPrefix{"Commands:"})
+	cf.Process("thePlayer", "/help", mockGame)
 
 	gomock.InOrder(
-		mockPlayer.EXPECT().SendMessageToPlayer("Command: /help"),
-		mockPlayer.EXPECT().SendMessageToPlayer("Usage: help|?"),
-		mockPlayer.EXPECT().SendMessageToPlayer("Description: Shows a list of all commands."),
+		mockGame.EXPECT().SendMessageToPlayer("thePlayer", "Command: /help"),
+		mockGame.EXPECT().SendMessageToPlayer("thePlayer", "Usage: help|?"),
+		mockGame.EXPECT().SendMessageToPlayer("thePlayer", "Description: Shows a list of all commands."),
 	)
-	cf.Process("/help help", mockPlayer)
+	cf.Process("thePlayer", "/help help", mockGame)
 }

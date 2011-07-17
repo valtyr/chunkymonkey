@@ -1,7 +1,10 @@
 package command
 
 type ICommandHandler interface {
-	GiveItem(itemTypeId int, quantity int, data int)
-	SendMessageToPlayer(msg string)
-	BroadcastMessage(msg string, self bool)
+	// Give a player 'quantity' of 'itemTypeId' with data value 'data'
+	GiveItem(player string, itemTypeId, quantity, data int)
+	// Sends a message from the server to the player
+	SendMessageToPlayer(player, msg string)
+	// Send a message to all users connected to the game
+	BroadcastMessage(player, msg string)
 }
