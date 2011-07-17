@@ -35,7 +35,7 @@ func (item *Item) GetSlot() *Slot {
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
 	// TODO pass uses value instead of 0
 	err = proto.WriteItemSpawn(
-		writer, item.EntityId, item.ItemTypeId, item.Slot.Count, 0,
+		writer, item.EntityId, item.ItemTypeId, item.Slot.Count, item.Slot.Data,
 		&item.PointObject.LastSentPosition, &item.orientation)
 	if err != nil {
 		return
