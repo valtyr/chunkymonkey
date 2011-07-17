@@ -540,13 +540,13 @@
     "AspectArgs": {
       "DroppedItems": [
         {
-          "DroppedItem": 37,
+          "DroppedItem": 35,
           "Probability": 100,
           "Count": 1,
           "CopyData": true
         }
       ],
-      "BreakOn": 0
+      "BreakOn": 2
     }
   },
   "37": {
