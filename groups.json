@@ -2,6 +2,7 @@
   "default": {
     "default":true,
     "permissions": [
+      "login",
       "user.commands.help",
       "user.commands.kill",
       "user.commands.me",
