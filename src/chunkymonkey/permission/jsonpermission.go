@@ -55,7 +55,7 @@ func LoadJsonPermission(folder string) (*JsonPermission, os.Error) {
 		return nil, err
 	}
 	var users Users
-	err = json.Unmarshal(bytesUsers, users)
+	err = json.Unmarshal(bytesUsers, &users)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func LoadJsonPermission(folder string) (*JsonPermission, os.Error) {
 		return nil, err
 	}
 	var groups Groups
-	err = json.Unmarshal(bytesGroups, groups)
+	err = json.Unmarshal(bytesGroups, &groups)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +130,7 @@ type CachedUser struct {
 
 // Implementation of IUserPermissions
 func (u *CachedUser) Has(node string) bool {
+	// TODO Implement wildcard * for nodes
 	for _, p := range u.permissions {
 		if p == node {
 			return true
