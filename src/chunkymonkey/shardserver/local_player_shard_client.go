@@ -94,10 +94,10 @@ func (conn *localPlayerShardClient) ReqTakeItem(chunkLoc ChunkXz, entityId Entit
 	})
 }
 
-func (conn *localPlayerShardClient) ReqDropItem(content gamerules.Slot, position AbsXyz, velocity AbsVelocity) {
+func (conn *localPlayerShardClient) ReqDropItem(content gamerules.Slot, position AbsXyz, velocity AbsVelocity, pickupImmunity Ticks) {
 	chunkLoc := position.ToChunkXz()
 	conn.shard.enqueueOnChunk(chunkLoc, func(chunk *Chunk) {
-		chunk.reqDropItem(conn.player, &content, &position, &velocity)
+		chunk.reqDropItem(conn.player, &content, &position, &velocity, pickupImmunity)
 	})
 }
 

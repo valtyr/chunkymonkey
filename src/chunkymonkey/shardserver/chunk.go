@@ -308,13 +308,14 @@ func (chunk *Chunk) reqTakeItem(player gamerules.IShardPlayerClient, entityId En
 	}
 }
 
-func (chunk *Chunk) reqDropItem(player gamerules.IShardPlayerClient, content *gamerules.Slot, position *AbsXyz, velocity *AbsVelocity) {
+func (chunk *Chunk) reqDropItem(player gamerules.IShardPlayerClient, content *gamerules.Slot, position *AbsXyz, velocity *AbsVelocity, pickupImmunity Ticks) {
 	spawnedItem := gamerules.NewItem(
 		content.ItemTypeId,
 		content.Count,
 		content.Data,
 		position,
 		velocity,
+		pickupImmunity,
 	)
 
 	chunk.AddEntity(spawnedItem)
@@ -671,6 +672,10 @@ func (chunk *Chunk) reqSetPlayerPositionLook(entityId EntityId, pos AbsXyz, look
 		if ok {
 			// Does the player overlap with any items?
 			for _, item := range chunk.items() {
+				if item.PickupImmunity > 0 {
+					item.PickupImmunity--
+					continue
+				}
 				// TODO This check should be performed when items move as well.
 				if data.OverlapsItem(item) {
 					slot := item.GetSlot()
@@ -739,7 +744,7 @@ func (chunk *Chunk) addEntities(entities []nbt.ITag) {
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = gamerules.NewItem(id, count, data, &pos, &velocity)
+			newEntity = gamerules.NewItem(id, count, data, &pos, &velocity, 0)
 		case "Chicken":
 			newEntity = mob.NewHen(&pos, &velocity, &look)
 		case "Cow":

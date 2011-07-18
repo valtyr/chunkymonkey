@@ -17,6 +17,7 @@ func spawnItemInBlock(instance *BlockInstance, itemTypeId ItemTypeId, count Item
 			itemTypeId, count, data,
 			position,
 			&AbsVelocity{0, 0, 0},
+			0,
 		),
 	)
 }

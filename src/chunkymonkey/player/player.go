@@ -235,7 +235,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 			velocity := physics.VelocityFromLook(player.look, 0.30)
 			position := player.position
 			position.Y += player.height
-			shardClient.ReqDropItem(itemToThrow, position, velocity)
+			shardClient.ReqDropItem(itemToThrow, position, velocity, TicksPerSecond/2)
 		}
 		return
 	}
@@ -575,7 +575,7 @@ func (player *Player) reqGiveItem(atPosition *AbsXyz, item *gamerules.Slot) {
 			chunkLoc := atPosition.ToChunkXz()
 			shardClient, ok := player.chunkSubs.ShardClientForChunkXz(&chunkLoc)
 			if ok {
-				shardClient.ReqDropItem(*item, *atPosition, AbsVelocity{})
+				shardClient.ReqDropItem(*item, *atPosition, AbsVelocity{}, TicksPerSecond)
 			}
 		}
 	}()

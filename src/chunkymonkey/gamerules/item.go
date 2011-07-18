@@ -13,16 +13,18 @@ type Item struct {
 	EntityId
 	Slot
 	physics.PointObject
-	orientation OrientationBytes
+	orientation    OrientationBytes
+	PickupImmunity Ticks
 }
 
-func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *AbsXyz, velocity *AbsVelocity) (item *Item) {
+func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *AbsXyz, velocity *AbsVelocity, pickupImmunity Ticks) (item *Item) {
 	item = &Item{
 		Slot: Slot{
 			ItemTypeId: itemTypeId,
 			Count:      count,
 			Data:       data,
 		},
+		PickupImmunity: pickupImmunity,
 	}
 	item.PointObject.Init(position, velocity)
 	return
