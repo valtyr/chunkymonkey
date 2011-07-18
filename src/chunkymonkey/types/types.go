@@ -264,25 +264,35 @@ const (
 
 // Movement-related types and constants
 
-// VelocityComponent in millipixels / tick
+// VelocityComponent in VelocityComponentBlocksPerTick
 type VelocityComponent int16
 
 const (
 	VelocityComponentMax = 28800
 	VelocityComponentMin = -28800
 
-	MaxVelocityBlocksPerTick = VelocityComponentMax / AbsVelocityCoord(MilliPixelsPerBlock)
-	MinVelocityBlocksPerTick = VelocityComponentMin / AbsVelocityCoord(MilliPixelsPerBlock)
+	// AbsToIntVelocityComponent based on Protocol wiki statement that "Velocity
+	// is believed to be in units of 1/32000 of a block per server tick (200ms)".
+	// Although chunkymonkey has 20 ticks per second, so convert to 20 ticks per
+	// second instead of 5.
+	AbsToIntVelocityComponent = TicksPerSecond * 32000 / 5
 )
 
 type Velocity struct {
 	X, Y, Z VelocityComponent
 }
 
+// AbsVelocityCoord is measured in blocks per tick.
 type AbsVelocityCoord AbsCoord
 
 func (v AbsVelocityCoord) ToVelocityComponent() VelocityComponent {
-	return VelocityComponent(v * MilliPixelsPerBlock)
+	scaledV := v * AbsToIntVelocityComponent
+	if scaledV > VelocityComponentMax {
+		return VelocityComponentMax
+	} else if scaledV < VelocityComponentMin {
+		return VelocityComponentMin
+	}
+	return VelocityComponent(scaledV)
 }
 
 type AbsVelocity struct {
@@ -294,14 +304,6 @@ func (v *AbsVelocity) ToVelocity() *Velocity {
 		v.X.ToVelocityComponent(),
 		v.Y.ToVelocityComponent(),
 		v.Z.ToVelocityComponent(),
-	}
-}
-
-func (v *AbsVelocityCoord) Constrain() {
-	if *v > MaxVelocityBlocksPerTick {
-		*v = MaxVelocityBlocksPerTick
-	} else if *v < MinVelocityBlocksPerTick {
-		*v = MinVelocityBlocksPerTick
 	}
 }
 

@@ -124,11 +124,6 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 		return
 	}
 
-	// Enforce max absolute velocity per dimension
-	v.X.Constrain()
-	v.Y.Constrain()
-	v.Z.Constrain()
-
 	// t0 = time at start of tick,
 	// t1 = time at end of tick,
 	// t = current time in tick (t0 <= t <= t1)
