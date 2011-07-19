@@ -68,6 +68,8 @@ func ReadAbsXyz(tag nbt.ITag, path string) (pos AbsXyz, err os.Error) {
 }
 
 func ReadAbsVelocity(tag nbt.ITag, path string) (pos AbsVelocity, err os.Error) {
+	// TODO Check if the units of velocity in NBT files are the same that we use
+	// internally.
 	x, y, z, err := ReadDouble3(tag, path)
 	if err != nil {
 		return
