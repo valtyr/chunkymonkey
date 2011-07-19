@@ -32,6 +32,7 @@ type Game struct {
 	playerDisconnect chan EntityId
 	entityManager    EntityManager
 	players          map[EntityId]*player.Player
+	playerNames      map[string]*player.Player
 	time             Ticks
 	serverId         string
 	worldStore       *worldstore.WorldStore
@@ -49,6 +50,7 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 		mainQueue:        make(chan func(*Game), 256),
 		playerDisconnect: make(chan EntityId),
 		players:          make(map[EntityId]*player.Player),
+		playerNames:      make(map[string]*player.Player),
 		time:             worldStore.Time,
 		worldStore:       worldStore,
 	}
@@ -187,10 +189,13 @@ func (game *Game) Serve(addr string) {
 // addPlayer adds the player to the set of connected players.
 func (game *Game) addPlayer(newPlayer *player.Player) {
 	game.players[newPlayer.GetEntityId()] = newPlayer
+	game.playerNames[newPlayer.Name()] = newPlayer
 }
 
 func (game *Game) removePlayer(entityId EntityId) {
+	oldPlayer := game.players[entityId]
 	game.players[entityId] = nil, false
+	game.playerNames[oldPlayer.Name()] = nil, false
 	game.entityManager.RemoveEntityById(entityId)
 }
 
@@ -243,13 +248,13 @@ func (game *Game) tick() {
 }
 
 func (game *Game) getPlayerFromName(name string) *player.Player {
-	// TODO: This should be made more efficient through a lookup, etc.
 	result := make(chan *player.Player)
 	game.enqueue(func(_ *Game) {
-		for _, player := range game.players {
-			if player.Name() == name {
-				result <- player
-			}
+		player, ok := game.playerNames[name]
+		if ok {
+			result <- player
+		} else {
+			result <- nil
 		}
 		close(result)
 	})
