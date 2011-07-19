@@ -276,6 +276,9 @@ func (game *Game) GiveItem(name string, id, quantity, data int) {
 // SendMessageToPlayer implements ICommandHandler.SendMessageToPlayer
 func (game *Game) SendMessageToPlayer(name, msg string) {
 	player := game.getPlayerFromName(name)
+	if player == nil {
+		return
+	}
 
 	buf := new(bytes.Buffer)
 	proto.WriteChatMessage(buf, msg)
