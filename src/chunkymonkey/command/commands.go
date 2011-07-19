@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -23,12 +24,12 @@ const sayUsage = "say <message>"
 const sayDesc = "Broadcasts a message to all players without showing a player name. The message is colored pink."
 
 func cmdSay(player, message string, cmdHandler ICommandHandler) {
-	cmdParts := strings.Split(message, " ", -1)
-	if len(cmdParts) < 2 {
+	args := strings.Split(message, " ", -1)
+	if len(args) < 2 {
 		cmdHandler.SendMessageToPlayer(player, sayUsage)
 		return
 	}
-	msg := strings.Join(cmdParts[1:], " ")
+	msg := strings.Join(args[1:], " ")
 	cmdHandler.BroadcastMessage("§d" + msg)
 }
 
@@ -39,8 +40,8 @@ const tpUsage = "tp <player1> <player2>"
 const tpDesc = "Teleports player1 to player2."
 
 func cmdTp(player, message string, cmdHandler ICommandHandler) {
-	cmdParts := strings.Split(message, " ", -1)
-	if len(cmdParts) < 3 {
+	args := strings.Split(message, " ", -1)
+	if len(args) < 3 {
 		cmdHandler.SendMessageToPlayer(player, tpUsage)
 		return
 	}
@@ -65,14 +66,14 @@ const tellUsage = "tell <player> <message>"
 const tellDesc = "Tells a player a message."
 
 func cmdTell(player, message string, cmdHandler ICommandHandler) {
-	cmdParts := strings.Split(message, " ", -1)
-	if len(cmdParts) < 3 {
+	args := strings.Split(message, " ", -1)
+	if len(args) < 3 {
 		cmdHandler.SendMessageToPlayer(player, tellUsage)
 		return
 	}
 	/* TODO Get player to send message, too
-	player := cmdParts[1]
-	message := strings.Join(cmdParts[2:], " ")
+	player := args[1]
+	message := strings.Join(args[2:], " ")
 	*/
 	cmdHandler.SendMessageToPlayer(player, msgNotImplemented)
 }
@@ -84,14 +85,14 @@ const helpDesc = "Shows a list of all commands."
 const msgUnknownCommand = "Command not available."
 
 func cmdHelp(player, message string, cmdFramework *CommandFramework, cmdHandler ICommandHandler) {
-	cmdParts := strings.Split(message, " ", -1)
-	if len(cmdParts) > 2 {
+	args := strings.Split(message, " ", -1)
+	if len(args) > 2 {
 		cmdHandler.SendMessageToPlayer(player, helpUsage)
 		return
 	}
 	cmds := cmdFramework.Commands()
-	if len(cmdParts) == 2 {
-		cmd := cmdParts[1]
+	if len(args) == 2 {
+		cmd := args[1]
 		if command, ok := cmds[cmd]; ok {
 			cmdHandler.SendMessageToPlayer(player, "Command: "+cmdFramework.Prefix()+command.Trigger)
 			cmdHandler.SendMessageToPlayer(player, "Usage: "+command.Usage)
@@ -115,43 +116,63 @@ func cmdHelp(player, message string, cmdFramework *CommandFramework, cmdHandler 
 }
 
 const giveCmd = "give"
-const giveUsage = "give <item ID> [<quantity> [<data>]]"
+const giveUsage = "give <player> <item ID> [<quantity> [<data>]]"
 const giveDesc = "Gives x amount of y items to player."
 
 func cmdGive(player, message string, cmdHandler ICommandHandler) {
-	cmdParts := strings.Split(message, " ", -1)
-	if len(cmdParts) < 2 || len(cmdParts) > 4 {
+	args := strings.Split(message, " ", -1)
+	if len(args) < 3 || len(args) > 5 {
 		cmdHandler.SendMessageToPlayer(player, giveUsage)
 		return
 	}
-	cmdParts = cmdParts[1:]
+	args = args[1:]
 
-	// TODO Check for item IDs which could break the client
-	// TODO First argument should be player to receive item. Right now it just
-	// gives it to the current player.
-	itemId, err := strconv.Atoi(cmdParts[0])
-	if err != nil {
-		cmdHandler.SendMessageToPlayer(player, giveUsage)
+	// Check to make sure this is a valid player name (at the moment command
+	// is being run, the player may log off before command completes).
+	target := args[0]
+	if !cmdHandler.IsValidPlayerName(target) {
+		msg := fmt.Sprintf("'%s' is not logged in", target)
+		cmdHandler.SendMessageToPlayer(player, msg)
+		return
+	}
+
+	itemId, err := strconv.Atoi(args[1])
+	if err != nil || !cmdHandler.IsValidItemId(itemId) {
+		msg := fmt.Sprintf("'%s' is not a valid item id", args[1])
+		cmdHandler.SendMessageToPlayer(player, msg)
 		return
 	}
 
 	quantity := 1
-	if len(cmdParts) >= 2 {
-		quantity, err = strconv.Atoi(cmdParts[1])
+	if len(args) >= 3 {
+		quantity, err = strconv.Atoi(args[2])
 		if err != nil {
 			cmdHandler.SendMessageToPlayer(player, giveUsage)
+			return
+		}
+
+		if quantity > 512 {
+			msg := "Cannot give more than 512 items at once"
+			cmdHandler.SendMessageToPlayer(player, msg)
 			return
 		}
 	}
 
 	data := 0
-	if len(cmdParts) >= 3 {
-		data, err = strconv.Atoi(cmdParts[2])
+	if len(args) >= 4 {
+		data, err = strconv.Atoi(args[2])
 		if err != nil {
 			cmdHandler.SendMessageToPlayer(player, giveUsage)
 			return
 		}
 	}
 
-	cmdHandler.GiveItem(player, itemId, quantity, data)
+	// TODO: How can we get the name of this item without a dependency loop?
+	msg := fmt.Sprintf("Giving %d of %d to %s", quantity, itemId, target)
+	cmdHandler.SendMessageToPlayer(player, msg)
+	cmdHandler.GiveItem(target, itemId, quantity, data)
+	if player != target {
+		msg = fmt.Sprintf("%s gave you %d of %d", player, quantity, itemId)
+		cmdHandler.SendMessageToPlayer(target, msg)
+	}
 }

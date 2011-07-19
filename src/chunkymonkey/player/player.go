@@ -110,6 +110,10 @@ func (player *Player) Position() AbsXyz {
 	return player.position
 }
 
+func (player *Player) Client() gamerules.IPlayerClient {
+	return &player.shardReceiver
+}
+
 // ReadNbt reads the player data from their persistently stored NBT data. It
 // must only be called before Player.Start().
 func (player *Player) ReadNbt(playerData nbt.ITag) (err os.Error) {

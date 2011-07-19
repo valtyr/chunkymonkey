@@ -261,19 +261,32 @@ func (game *Game) getPlayerFromName(name string) *player.Player {
 	return <-result
 }
 
-// GiveItem implements ICommandHandler.GiveItem
-func (game *Game) GiveItem(name string, id, quantity, data int) {
-	//	player := game.getPlayerFromName(name)
-	//	item := gamerules.Slot{
-	//		ItemTypeId: ItemTypeId(id),
-	//		Count:      ItemCount(quantity),
-	//		Data:       ItemData(data),
-	//	}
+// ICommandHandler implementations
 
-	// TODO: Spawn the item created at the player's block location
+func (game *Game) GiveItem(name string, id, quantity, data int) {
+	player := game.getPlayerFromName(name)
+
+	itemId := ItemTypeId(id)
+	itemInfo := gamerules.Items[itemId]
+	maxStack := int(itemInfo.MaxStack)
+
+	for quantity > 0 {
+		count := quantity
+		if count > maxStack {
+			count = maxStack
+		}
+
+		item := gamerules.Slot{
+			ItemTypeId: ItemTypeId(id),
+			Count:      ItemCount(count),
+			Data:       ItemData(data),
+		}
+		client := player.Client()
+		client.ReqGiveItem(player.Position(), item)
+		quantity -= count
+	}
 }
 
-// SendMessageToPlayer implements ICommandHandler.SendMessageToPlayer
 func (game *Game) SendMessageToPlayer(name, msg string) {
 	player := game.getPlayerFromName(name)
 	if player == nil {
@@ -286,7 +299,6 @@ func (game *Game) SendMessageToPlayer(name, msg string) {
 	player.TransmitPacket(packet)
 }
 
-// BroadcastMessage implements ICommandHandler.BroadcastMessage
 func (game *Game) BroadcastMessage(msg string) {
 	buf := new(bytes.Buffer)
 	proto.WriteChatMessage(buf, msg)
@@ -294,4 +306,14 @@ func (game *Game) BroadcastMessage(msg string) {
 	game.enqueue(func(_ *Game) {
 		game.multicastPacket(buf.Bytes(), nil)
 	})
+}
+
+func (game *Game) IsValidPlayerName(name string) bool {
+	return game.getPlayerFromName(name) != nil
+}
+
+func (game *Game) IsValidItemId(id int) bool {
+	itemTypeId := ItemTypeId(id)
+	itemType, ok := gamerules.Items[itemTypeId]
+	return ok && itemType != nil
 }
