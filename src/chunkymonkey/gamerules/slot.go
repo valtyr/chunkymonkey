@@ -34,6 +34,11 @@ func (s *Slot) IsSameType(other *Slot) bool {
 		s.Data == other.Data)
 }
 
+func (s *Slot) IsValidType() (ok bool) {
+	_, ok = Items[s.ItemTypeId]
+	return
+}
+
 func (s *Slot) IsCompatible(other *Slot) bool {
 	return s.IsEmpty() || other.IsEmpty() || s.IsSameType(other)
 }

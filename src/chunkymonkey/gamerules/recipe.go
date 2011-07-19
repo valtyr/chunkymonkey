@@ -3,6 +3,11 @@
 
 package gamerules
 
+import (
+	"fmt"
+	"os"
+)
+
 const (
 	fnv1_32_offset = 2166136261
 	fnv1_32_prime  = 16777619
@@ -46,6 +51,19 @@ func (r *Recipe) hash() (hash uint32) {
 	return inputHash(r.Input, indices)
 }
 
+func (r *Recipe) check() os.Error {
+	for i := range r.Input {
+		slot := &r.Input[i]
+		if !slot.IsValidType() {
+			return fmt.Errorf("Recipe %q input slot %d has unknown item type %d", r.Comment, i, slot.ItemTypeId)
+		}
+	}
+	if !r.Output.IsValidType() {
+		return fmt.Errorf("Recipe %q output slot has unknown item type %d", r.Comment, r.Output.ItemTypeId)
+	}
+	return nil
+}
+
 func inputHash(slots []Slot, indices []int) (hash uint32) {
 	// Hash based on FNV-1a.
 	hash = fnv1_32_offset
@@ -74,7 +92,7 @@ type RecipeSet struct {
 	recipeHash map[uint32][]*Recipe
 }
 
-func (r *RecipeSet) init() {
+func (r *RecipeSet) init() os.Error {
 	r.recipeHash = make(map[uint32][]*Recipe)
 	for i := range r.recipes {
 		recipe := &r.recipes[i]
@@ -83,6 +101,19 @@ func (r *RecipeSet) init() {
 		bucket = append(bucket, recipe)
 		r.recipeHash[hash] = bucket
 	}
+
+	return r.check()
+}
+
+// check checks all the recipes to ensure that they seem consistent, i.e item
+// type IDs exist, etc.
+func (r *RecipeSet) check() os.Error {
+	for i := range r.recipes {
+		if err := r.recipes[i].check(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 
