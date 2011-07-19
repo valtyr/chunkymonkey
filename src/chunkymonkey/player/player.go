@@ -235,7 +235,12 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 		return
 	}
 
-	// TODO validate that the player is actually somewhere near the block
+	// Validate that the player is actually somewhere near the block.
+	targetAbsPos := target.MidPointToAbsXyz()
+	if !targetAbsPos.IsWithinDistanceOf(&player.position, MaxInteractDistance) {
+		log.Printf("Player/PacketPlayerBlockHit: ignoring player dig at %v (too far away)", target)
+		return
+	}
 
 	// TODO measure the dig time on the target block and relay to the shard to
 	// stop speed hacking (based on block type and tool used - non-trivial).
