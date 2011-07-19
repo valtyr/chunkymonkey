@@ -9,16 +9,16 @@ import (
 // IShardConnecter is used to look up shards and connect to them.
 type IShardConnecter interface {
 	// PlayerShardConnect makes a connection from a player to a shard.
-	PlayerShardConnect(entityId EntityId, player IShardPlayerClient, shardLoc ShardXz) IPlayerShardClient
+	PlayerShardConnect(entityId EntityId, player IPlayerClient, shardLoc ShardXz) IPlayerShardClient
 
 	// ShardShardConnect makes a connection from one shard to another.
 	// TODO Consider making this package-private to shardserver.
 	ShardShardConnect(shardLoc ShardXz) IShardShardClient
 }
 
-// IShardPlayerClient is the interface by which shards communicate to players on
+// IShardClient is the interface by which shards communicate to players on
 // the frontend.
-type IShardPlayerClient interface {
+type IPlayerClient interface {
 	GetEntityId() EntityId
 
 	TransmitPacket(packet []byte)

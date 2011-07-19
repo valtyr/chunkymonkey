@@ -7,7 +7,7 @@ import (
 )
 
 // shardPlayerClient receives events from chunk shards and acts upon them. It
-// implements gamerules.IShardPlayerClient.
+// implements gamerules.IPlayerClient.
 type shardPlayerClient struct {
 	player *Player
 }

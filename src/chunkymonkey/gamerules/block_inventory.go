@@ -11,7 +11,7 @@ import (
 type blockInventory struct {
 	instance           BlockInstance
 	inv                IInventory
-	subscribers        map[EntityId]IShardPlayerClient
+	subscribers        map[EntityId]IPlayerClient
 	ejectOnUnsubscribe bool
 	invTypeId          InvTypeId
 }
@@ -21,7 +21,7 @@ func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscri
 	blkInv := &blockInventory{
 		instance:           *instance,
 		inv:                inv,
-		subscribers:        make(map[EntityId]IShardPlayerClient),
+		subscribers:        make(map[EntityId]IPlayerClient),
 		ejectOnUnsubscribe: ejectOnUnsubscribe,
 		invTypeId:          invTypeId,
 	}
@@ -31,7 +31,7 @@ func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscri
 	return blkInv
 }
 
-func (blkInv *blockInventory) Click(player IShardPlayerClient, click *Click) {
+func (blkInv *blockInventory) Click(player IPlayerClient, click *Click) {
 	txState := blkInv.inv.Click(click)
 
 	player.ReqInventoryCursorUpdate(blkInv.instance.BlockLoc, click.Cursor)
@@ -52,11 +52,11 @@ func (blkInv *blockInventory) ProgressUpdate(prgBarId PrgBarId, value PrgBarValu
 	}
 }
 
-func (blkInv *blockInventory) AddSubscriber(player IShardPlayerClient) {
+func (blkInv *blockInventory) AddSubscriber(player IPlayerClient) {
 	entityId := player.GetEntityId()
 	blkInv.subscribers[entityId] = player
 
-	// Register self for automatic removal when IShardPlayerClient unsubscribes
+	// Register self for automatic removal when IPlayerClient unsubscribes
 	// from the chunk.
 	blkInv.instance.Chunk.AddOnUnsubscribe(entityId, blkInv)
 

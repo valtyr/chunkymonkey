@@ -21,7 +21,7 @@ type shardRef struct {
 type chunkSubscriptions struct {
 	player         *Player
 	shardConnecter gamerules.IShardConnecter
-	shardReceiver  gamerules.IShardPlayerClient
+	shardReceiver  gamerules.IPlayerClient
 	entityId       EntityId
 	curShardLoc    ShardXz                      // Shard the player is currently in.
 	curChunkLoc    ChunkXz                      // Chunk the player is currently in.
