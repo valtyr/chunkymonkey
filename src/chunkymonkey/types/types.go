@@ -209,6 +209,13 @@ const (
 	DigDropItem = DigStatus(4)
 )
 
+const (
+	// MaxInteractDistance is the maximum distance at which a player can interact
+	// with something, such as dig.
+	// TODO Get a better value for this, the current value is just a guess.
+	MaxInteractDistance = AbsCoord(5)
+)
+
 // Window/inventory-related types and constants
 
 // ID specifying which slotted window, such as inventory
@@ -430,6 +437,13 @@ func (p *AbsXyz) ToShardXz() ShardXz {
 		X: ShardCoord(math.Floor(float64(p.X / (ChunkSizeH * ShardSize)))),
 		Z: ShardCoord(math.Floor(float64(p.Z / (ChunkSizeH * ShardSize)))),
 	}
+}
+
+func (p *AbsXyz) IsWithinDistanceOf(other *AbsXyz, maxDistance AbsCoord) bool {
+	dx := p.X - other.X
+	dy := p.Y - other.Y
+	dz := p.Z - other.Z
+	return (dx*dx + dy*dy + dz*dz) <= maxDistance*maxDistance
 }
 
 // Specifies approximate world distance in pixels (absolute / PixelsPerBlock)
@@ -720,6 +734,14 @@ func (blockLoc *BlockXyz) ToAbsXyz() *AbsXyz {
 		AbsCoord(blockLoc.X),
 		AbsCoord(blockLoc.Y),
 		AbsCoord(blockLoc.Z),
+	}
+}
+
+func (blockLoc *BlockXyz) MidPointToAbsXyz() AbsXyz {
+	return AbsXyz{
+		AbsCoord(blockLoc.X) + 0.5,
+		AbsCoord(blockLoc.Y) + 0.5,
+		AbsCoord(blockLoc.Z) + 0.5,
 	}
 }
 

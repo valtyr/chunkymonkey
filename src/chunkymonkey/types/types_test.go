@@ -101,6 +101,62 @@ func TestAbsXyz_ToBlockXyz(t *testing.T) {
 	}
 }
 
+func Test_AbsXyz_IsWithinDistanceOf(t *testing.T) {
+	type Test struct {
+		a, b     AbsXyz
+		dist     AbsCoord
+		expected bool
+	}
+
+	tests := []Test{
+		{AbsXyz{0, 0, 0}, AbsXyz{0, 0, 0}, 1, true},
+		{AbsXyz{0, 0, 0}, AbsXyz{0, 0, 1}, 1, true},
+		{AbsXyz{0, 0, 0}, AbsXyz{0, 0, 2}, 1, false},
+		{AbsXyz{0, 0, 0}, AbsXyz{1, 1, 1}, 1, false},
+		{AbsXyz{0, 0, 0}, AbsXyz{10, 10, 10}, 20, true},
+		{AbsXyz{0, 0, 0}, AbsXyz{20, 20, 20}, 20, false},
+	}
+
+	type Offset struct {
+		x, y, z AbsCoord
+	}
+
+	offsets := []Offset{
+		{0, 0, 0},
+		{-10, 0, 0},
+		{-10, -10, 0},
+		{-10, -10, -10},
+		{10, 0, 0},
+		{10, 10, 0},
+		{10, 10, 10},
+	}
+
+	for _, test := range tests {
+		for _, offset := range offsets {
+			a := AbsXyz{
+				X: test.a.X + offset.x,
+				Y: test.a.Y + offset.y,
+				Z: test.a.Z + offset.z,
+			}
+			b := AbsXyz{
+				X: test.b.X + offset.x,
+				Y: test.b.Y + offset.y,
+				Z: test.b.Z + offset.z,
+			}
+			result := a.IsWithinDistanceOf(&b, test.dist)
+			if test.expected != result {
+				t.Errorf("%v.IsWithinDistanceOf(%v, %f)=>%t expected %t", a, b, test.dist, result, test.expected)
+			}
+
+			// Test the reverse, should be the same.
+			result = b.IsWithinDistanceOf(&a, test.dist)
+			if test.expected != result {
+				t.Errorf("%v.IsWithinDistanceOf(%v, %f)=>%t expected %t", b, a, test.dist, result, test.expected)
+			}
+		}
+	}
+}
+
 func TestAbsIntXyz_ToChunkXz(t *testing.T) {
 	type Test struct {
 		input    AbsIntXyz
