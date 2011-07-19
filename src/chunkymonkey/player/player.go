@@ -5,7 +5,6 @@ import (
 	"expvar"
 	"fmt"
 	"log"
-	"math"
 	"net"
 	"os"
 	"sync"
@@ -177,11 +176,7 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
-	var delta = AbsXyz{position.X - player.position.X,
-		position.Y - player.position.Y,
-		position.Z - player.position.Z}
-	distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
-	if distance > 10 {
+	if !player.position.IsWithinDistanceOf(position, 10) {
 		log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
 			position.X, position.Y, position.Z)
 		return
