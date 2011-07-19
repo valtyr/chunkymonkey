@@ -262,6 +262,13 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, target *Block
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
+	// Validate that the player is actually somewhere near the block.
+	targetAbsPos := target.MidPointToAbsXyz()
+	if !targetAbsPos.IsWithinDistanceOf(&player.position, MaxInteractDistance) {
+		log.Printf("Player/PacketPlayerBlockInteract: ignoring player interact at %v (too far away)", target)
+		return
+	}
+
 	shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(target)
 	if ok {
 		held, _ := player.inventory.HeldItem()
