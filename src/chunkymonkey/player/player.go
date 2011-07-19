@@ -217,7 +217,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 
 	// This packet handles 'throwing' an item as well, with status = 4, and
 	// the zero values for target and face, so check for that.
-	if status == 4 && target.IsZero() && face == 0 {
+	if status == DigDropItem && target.IsZero() && face == 0 {
 		blockLoc := player.position.ToBlockXyz()
 		shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(blockLoc)
 		if !ok {
