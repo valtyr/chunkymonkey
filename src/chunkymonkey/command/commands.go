@@ -29,7 +29,7 @@ func cmdSay(player, message string, cmdHandler ICommandHandler) {
 		return
 	}
 	msg := strings.Join(cmdParts[1:], " ")
-	cmdHandler.BroadcastMessage(player, "§d"+msg)
+	cmdHandler.BroadcastMessage("§d" + msg)
 }
 
 // tp player1 player2

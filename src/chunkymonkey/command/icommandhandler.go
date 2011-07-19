@@ -6,5 +6,5 @@ type ICommandHandler interface {
 	// Sends a message from the server to the player
 	SendMessageToPlayer(player, msg string)
 	// Send a message to all users connected to the game
-	BroadcastMessage(player, msg string)
+	BroadcastMessage(msg string)
 }

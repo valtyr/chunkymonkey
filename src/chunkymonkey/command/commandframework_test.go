@@ -16,7 +16,7 @@ func TestCommandFramework(t *testing.T) {
 
 	cf := NewCommandFramework("/")
 
-	mockGame.EXPECT().BroadcastMessage("thePlayer", "§dthis is a broadcast")
+	mockGame.EXPECT().BroadcastMessage("§dthis is a broadcast")
 	cf.Process("thePlayer", "/say this is a broadcast", mockGame)
 
 	mockGame.EXPECT().GiveItem("thePlayer", 1, 64, 0)

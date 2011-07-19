@@ -279,7 +279,7 @@ func (game *Game) SendMessageToPlayer(name, msg string) {
 }
 
 // BroadcastMessage implements ICommandHandler.BroadcastMessage
-func (game *Game) BroadcastMessage(name, msg string) {
+func (game *Game) BroadcastMessage(msg string) {
 	buf := new(bytes.Buffer)
 	proto.WriteChatMessage(buf, msg)
 
