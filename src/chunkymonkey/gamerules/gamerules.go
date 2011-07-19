@@ -48,5 +48,13 @@ func LoadGameRules(blocksDefFile, itemsDefFile, recipesDefFile, furnaceDefFile, 
 		return
 	}
 
+	// Ensure that the block aspects are configured correctly, now that
+	// everything is loaded.
+	for i := range Blocks {
+		if err = Blocks[i].Aspect.Check(); err != nil {
+			return
+		}
+	}
+
 	return
 }
