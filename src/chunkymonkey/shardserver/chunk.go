@@ -647,43 +647,59 @@ func (chunk *Chunk) reqRemovePlayerData(entityId EntityId, isDisconnect bool) {
 	}
 }
 
-func (chunk *Chunk) reqSetPlayerPositionLook(entityId EntityId, pos AbsXyz, look LookBytes, moved bool) {
+func (chunk *Chunk) reqSetPlayerPosition(entityId EntityId, pos AbsXyz) {
 	data, ok := chunk.playersData[entityId]
 
 	if !ok {
 		log.Printf(
-			"%v.setPlayerPosition: called for EntityId (%d) not present as playerData.",
+			"%v.reqSetPlayerPosition: called for EntityId (%d) not present as playerData.",
 			chunk, entityId,
 		)
 		return
 	}
 
 	data.position = pos
-	data.look = look
 
 	// Update subscribers.
 	buf := new(bytes.Buffer)
 	data.sendPositionLook(buf)
 	chunk.reqMulticastPlayers(entityId, buf.Bytes())
 
-	if moved {
-		player, ok := chunk.subscribers[entityId]
+	player, ok := chunk.subscribers[entityId]
 
-		if ok {
-			// Does the player overlap with any items?
-			for _, item := range chunk.items() {
-				if item.PickupImmunity > 0 {
-					item.PickupImmunity--
-					continue
-				}
-				// TODO This check should be performed when items move as well.
-				if data.OverlapsItem(item) {
-					slot := item.GetSlot()
-					player.ReqOfferItem(chunk.loc, item.EntityId, *slot)
-				}
+	if ok {
+		// Does the player overlap with any items?
+		for _, item := range chunk.items() {
+			if item.PickupImmunity > 0 {
+				item.PickupImmunity--
+				continue
+			}
+			// TODO This check should be performed when items move as well.
+			if data.OverlapsItem(item) {
+				slot := item.GetSlot()
+				player.ReqOfferItem(chunk.loc, item.EntityId, *slot)
 			}
 		}
 	}
+}
+
+func (chunk *Chunk) reqSetPlayerLook(entityId EntityId, look LookBytes) {
+	data, ok := chunk.playersData[entityId]
+
+	if !ok {
+		log.Printf(
+			"%v.reqSetPlayerLook: called for EntityId (%d) not present as playerData.",
+			chunk, entityId,
+		)
+		return
+	}
+
+	data.look = look
+
+	// Update subscribers.
+	buf := new(bytes.Buffer)
+	data.sendPositionLook(buf)
+	chunk.reqMulticastPlayers(entityId, buf.Bytes())
 }
 
 func (chunk *Chunk) chunkPacket() []byte {

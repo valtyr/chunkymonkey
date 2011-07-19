@@ -61,7 +61,7 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 			sub.moveToShard(newShardLoc)
 		}
 	} else {
-		sub.curShard.ReqSetPlayerPositionLook(sub.curChunkLoc, *newLoc, *sub.player.look.ToLookBytes(), true)
+		sub.curShard.ReqSetPlayerPosition(sub.curChunkLoc, *newLoc)
 	}
 }
 
@@ -77,6 +77,15 @@ func (sub *chunkSubscriptions) Close() {
 		ref.shard.Disconnect()
 		sub.shardClients[key] = nil, false
 	}
+}
+
+// CurrentShardClient is a convenience function to get a client shard
+// connection for the player's current shard. ok=false if no such connection
+// exists.
+func (sub *chunkSubscriptions) CurrentShardClient() (conn gamerules.IPlayerShardClient, ok bool) {
+	curShardLoc := sub.curChunkLoc.ToShardXz()
+	shardRef, ok := sub.shardClients[curShardLoc.Key()]
+	return shardRef.shard, ok
 }
 
 // ShardClientForBlockXyz is a convenience function to get the correct shard

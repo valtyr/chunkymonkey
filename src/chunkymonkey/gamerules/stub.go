@@ -87,7 +87,9 @@ type IPlayerShardClient interface {
 
 	ReqRemovePlayerData(chunkLoc ChunkXz, isDisconnect bool)
 
-	ReqSetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool)
+	ReqSetPlayerPosition(chunkLoc ChunkXz, position AbsXyz)
+
+	ReqSetPlayerLook(chunkLoc ChunkXz, look LookBytes)
 
 	// ReqHitBlock requests that the targetted block be hit.
 	ReqHitBlock(held Slot, target BlockXyz, digStatus DigStatus, face Face)

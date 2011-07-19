@@ -199,16 +199,10 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	// TODO input validation
 	player.look = *look
 
-	buf := new(bytes.Buffer)
-	proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
-
-	// TODO update playerData on current chunk
-
-	player.chunkSubs.curShard.ReqMulticastPlayers(
-		player.chunkSubs.curChunkLoc,
-		player.EntityId,
-		buf.Bytes(),
-	)
+	// Update playerData on current chunk.
+	if shard, ok := player.chunkSubs.CurrentShardClient(); ok {
+		shard.ReqSetPlayerLook(player.chunkSubs.curChunkLoc, *look.ToLookBytes())
+	}
 }
 
 func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, face Face) {
