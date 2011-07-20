@@ -1244,7 +1244,7 @@
       "Name": "snow",
       "Opacity": 0,
       "Destructable": true,
-      "Solid": true,
+      "Solid": false,
       "Replaceable": true,
       "Attachable": false
     },
