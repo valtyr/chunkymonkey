@@ -205,15 +205,13 @@ type DigStatus byte
 const (
 	DigStarted    = DigStatus(0)
 	DigBlockBroke = DigStatus(2)
-	// TODO Investigate what this value means:
-	DigDropItem = DigStatus(4)
+	DigDropItem   = DigStatus(4)
 )
 
 const (
 	// MaxInteractDistance is the maximum distance at which a player can interact
 	// with something, such as dig.
-	// TODO Get a better value for this, the current value is just a guess.
-	MaxInteractDistance = AbsCoord(5)
+	MaxInteractDistance = AbsCoord(6)
 )
 
 // Window/inventory-related types and constants
