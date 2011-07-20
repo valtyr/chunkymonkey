@@ -221,7 +221,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 		var itemToThrow gamerules.Slot
 		player.inventory.TakeOneHeldItem(&itemToThrow)
 		if !itemToThrow.IsEmpty() {
-			velocity := physics.VelocityFromLook(player.look, 0.30)
+			velocity := physics.VelocityFromLook(player.look, 0.50)
 			position := player.position
 			position.Y += player.height
 			shardClient.ReqDropItem(itemToThrow, position, velocity, TicksPerSecond/2)

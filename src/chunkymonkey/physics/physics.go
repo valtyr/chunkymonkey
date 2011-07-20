@@ -11,7 +11,7 @@ import (
 
 const (
 	// Guestimated gravity value. Unknown how accurate this is.
-	gravityBlocksPerSecond2 = 3.0
+	gravityBlocksPerSecond2 = 9.8
 
 	gravityBlocksPerTick2 = gravityBlocksPerSecond2 / TicksPerSecond
 

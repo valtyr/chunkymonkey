@@ -276,11 +276,7 @@ const (
 	VelocityComponentMax = 28800
 	VelocityComponentMin = -28800
 
-	// AbsToIntVelocityComponent based on Protocol wiki statement that "Velocity
-	// is believed to be in units of 1/32000 of a block per server tick (200ms)".
-	// Although chunkymonkey has 20 ticks per second, so convert to 20 ticks per
-	// second instead of 5.
-	AbsToIntVelocityComponent = TicksPerSecond * 32000 / 5
+	AbsToIntVelocityComponent = TicksPerSecond * 32000 / 100
 )
 
 type Velocity struct {
