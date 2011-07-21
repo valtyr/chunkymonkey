@@ -102,7 +102,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityId EntityId, look *Lo
 	return
 }
 
-func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
+func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftChunk bool) {
 	// TODO this algorithm can probably be sped up a bit, but initially trying
 	// to keep things simple and more or less correct
 	// TODO flowing water movement of items
@@ -186,7 +186,7 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 					applyCollision(&p.Z, &v.Z)
 				}
 
-				// Move the object up to the block boundary
+				// Move the object up to the block boundary.
 				p.ApplyVelocity(dt, v)
 			} else {
 				// No collision, continue as normal
@@ -196,7 +196,8 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 				// block boundary.
 				p.ApplyVelocity(dt+1e-4, v)
 				if !isWithinChunk {
-					// Object has left the chunk, finish early
+					// Object has left the chunk, finish early.
+					leftChunk = true
 					break
 				}
 			}
@@ -204,7 +205,7 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 	}
 
 	if p.Y < 0 {
-		leftBlock = true
+		leftChunk = true
 	}
 	obj.remainder = t1 - t
 	return

@@ -340,7 +340,7 @@ func (chunk *Chunk) reqInventoryUnsubscribed(player gamerules.IShardPlayerClient
 }
 
 // Used to read the BlockId of a block that's either in the chunk, or
-// immediately adjoining it in a neighbouring chunk via the side caches.
+// immediately adjoining it in a neighbouring chunk.
 func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockType, isWithinChunk bool, blockUnknownId bool) {
 	chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
