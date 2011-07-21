@@ -340,8 +340,10 @@ func (chunk *Chunk) reqInventoryUnsubscribed(player gamerules.IShardPlayerClient
 }
 
 // Used to read the BlockId of a block that's either in the chunk, or
-// immediately adjoining it in a neighbouring chunk.
-func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockType, isWithinChunk bool, blockUnknownId bool) {
+// immediately adjoining it in a neighbouring chunk. In cases where the block
+// type can't be determined we assume that the block asked about is solid
+// (this way objects don't fly off the side of the map needlessly).
+func (chunk *Chunk) PhysicsBlockQuery(blockLoc *BlockXyz) (isSolid bool, isWithinChunk bool) {
 	chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
 	var blockTypeId BlockId
@@ -351,6 +353,8 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockTy
 		// The item is asking about this chunk.
 		index, ok := subLoc.BlockIndex()
 		if !ok {
+			log.Printf("%s.PhysicsBlockQuery(%#v) got bad block index", chunk, blockLoc)
+			isSolid = true
 			return
 		}
 
@@ -363,18 +367,20 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockTy
 		blockTypeId, ok = chunk.shard.blockQuery(*chunkLoc, subLoc)
 
 		if !ok {
-			// The chunk side isn't known.
-			blockUnknownId = true
+			// The block isn't known.
+			isSolid = true
 			return
 		}
 	}
 
-	blockType, ok = gamerules.Blocks.Get(blockTypeId)
-	if !ok {
+	if blockType, ok := gamerules.Blocks.Get(blockTypeId); ok {
+		isSolid = blockType.Solid
+	} else {
 		log.Printf(
-			"%v.blockQuery found unknown block type Id %d at %+v",
+			"%s.PhysicsBlockQuery found unknown block type Id %d at %+v",
 			chunk, blockTypeId, blockLoc)
-		blockUnknownId = true
+		// The block type isn't known.
+		isSolid = true
 	}
 
 	return
