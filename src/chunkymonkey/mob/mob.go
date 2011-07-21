@@ -54,9 +54,9 @@ func (mob *Mob) SetBurning(burn bool) {
 	}
 }
 
-func (mob *Mob) Tick(blockQuery physics.BlockQueryFn) (leftBlock bool) {
+func (mob *Mob) Tick(blockQuerier physics.IBlockQuerier) (leftBlock bool) {
 	// TODO: Spontaneous mob movement.
-	return mob.PointObject.Tick(blockQuery)
+	return mob.PointObject.Tick(blockQuerier)
 }
 
 func (mob *Mob) FormatMetadata() []proto.EntityMetadata {

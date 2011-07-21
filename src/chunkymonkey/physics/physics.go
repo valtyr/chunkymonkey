@@ -32,7 +32,9 @@ const (
 	blockAxisMoveZ = blockAxisMove(iota)
 )
 
-type BlockQueryFn func(*BlockXyz) (isSolid bool, isWithinChunk bool)
+type IBlockQuerier interface {
+	BlockQuery(blockLoc BlockXyz) (isSolid bool, isWithinChunk bool)
+}
 
 type PointObject struct {
 	// Used in knowing what to send as client updates
@@ -102,7 +104,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityId EntityId, look *Lo
 	return
 }
 
-func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftChunk bool) {
+func (obj *PointObject) Tick(blockQuerier IBlockQuerier) (leftChunk bool) {
 	// TODO this algorithm can probably be sped up a bit, but initially trying
 	// to keep things simple and more or less correct
 	// TODO flowing water movement of items
@@ -173,7 +175,7 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftChunk bool) {
 			}
 
 			// Is it solid?
-			isSolid, isWithinChunk := blockQuery(blockLoc)
+			isSolid, isWithinChunk := blockQuerier.BlockQuery(*blockLoc)
 			if isSolid {
 				// Collision - cancel axis movement
 				switch move {

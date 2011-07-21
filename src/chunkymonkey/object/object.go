@@ -24,7 +24,7 @@ type IEntity interface {
 type INonPlayerEntity interface {
 	IEntity
 	SetEntityId(EntityId)
-	Tick(physics.BlockQueryFn) (leftBlock bool)
+	Tick(physics.IBlockQuerier) (leftBlock bool)
 }
 
 type Object struct {

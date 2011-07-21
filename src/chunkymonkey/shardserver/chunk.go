@@ -343,7 +343,7 @@ func (chunk *Chunk) reqInventoryUnsubscribed(player gamerules.IShardPlayerClient
 // immediately adjoining it in a neighbouring chunk. In cases where the block
 // type can't be determined we assume that the block asked about is solid
 // (this way objects don't fly off the side of the map needlessly).
-func (chunk *Chunk) PhysicsBlockQuery(blockLoc *BlockXyz) (isSolid bool, isWithinChunk bool) {
+func (chunk *Chunk) BlockQuery(blockLoc BlockXyz) (isSolid bool, isWithinChunk bool) {
 	chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
 	var blockTypeId BlockId
@@ -399,22 +399,10 @@ func (chunk *Chunk) spawnTick() {
 		return
 	}
 
-	blockQuery := func(blockLoc *BlockXyz) (isSolid bool, isWithinChunk bool) {
-		blockType, isWithinChunk, blockUnknownId := chunk.blockQuery(blockLoc)
-		if blockUnknownId {
-			// If we are in doubt, we assume that the block asked about is
-			// solid (this way objects don't fly off the side of the map
-			// needlessly).
-			isSolid = true
-		} else {
-			isSolid = blockType.Solid
-		}
-		return
-	}
 	outgoingEntities := []object.INonPlayerEntity{}
 
 	for _, e := range chunk.entities {
-		if e.Tick(blockQuery) {
+		if e.Tick(chunk) {
 			if e.Position().Y <= 0 {
 				// Item or mob fell out of the world.
 				chunk.removeEntity(e)
