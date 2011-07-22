@@ -642,6 +642,10 @@ const (
 	MinZCoord = math.MinInt32
 )
 
+func (b *BlockXyz) Equals(rhs BlockXyz) bool {
+	return b.X == rhs.X && b.Y == rhs.Y && b.Z == rhs.Z
+}
+
 // Test if a block location is not appropriate to the situation, but block
 // location data passed (such as using an item not on a block).
 func (b *BlockXyz) IsNull() bool {

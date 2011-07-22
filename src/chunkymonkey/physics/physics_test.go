@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	gomock "gomock.googlecode.com/hg/gomock"
+
 	. "chunkymonkey/types"
 )
 
@@ -133,5 +135,30 @@ func Test_VelocityFromLook(t *testing.T) {
 		if v.X != test.want.X || v.Y != test.want.Y || v.Z != test.want.Z {
 			t.Errorf("VelocityFromLook, wanted %+v, got %+v", test.want, v)
 		}
+	}
+}
+
+func tickFixtures(t *testing.T) (mockCtrl *gomock.Controller, mockBlockQuerier *MockIBlockQuerier, pointObj *PointObject) {
+	mockCtrl = gomock.NewController(t)
+	mockBlockQuerier = NewMockIBlockQuerier(mockCtrl)
+	pointObj = new(PointObject)
+	return
+}
+
+func Test_PointObject_Tick_FallsToImmediateSurface(t *testing.T) {
+	mockCtrl, mockBlockQuerier, pointObj := tickFixtures(t)
+	defer mockCtrl.Finish()
+
+	pointObj.Init(
+		&AbsXyz{0.5, 100.1, 0.5},
+		&AbsVelocity{},
+	)
+
+	mockBlockQuerier.EXPECT().BlockQuery(BlockXyz{0, 99, 0}).Return(true, true)
+	pointObj.Tick(mockBlockQuerier)
+
+	expectedBlockPos := BlockXyz{0, 100, 0}
+	if !pointObj.position.ToBlockXyz().Equals(expectedBlockPos) {
+		t.Errorf("Expected object to end at %#v but was at %#v", expectedBlockPos, pointObj.position)
 	}
 }
