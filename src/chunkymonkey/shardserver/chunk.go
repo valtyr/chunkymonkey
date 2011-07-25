@@ -308,13 +308,14 @@ func (chunk *Chunk) reqTakeItem(player gamerules.IPlayerClient, entityId EntityI
 	}
 }
 
-func (chunk *Chunk) reqDropItem(player gamerules.IPlayerClient, content *gamerules.Slot, position *AbsXyz, velocity *AbsVelocity) {
+func (chunk *Chunk) reqDropItem(player gamerules.IPlayerClient, content *gamerules.Slot, position *AbsXyz, velocity *AbsVelocity, pickupImmunity Ticks) {
 	spawnedItem := gamerules.NewItem(
 		content.ItemTypeId,
 		content.Count,
 		content.Data,
 		position,
 		velocity,
+		pickupImmunity,
 	)
 
 	chunk.AddEntity(spawnedItem)
@@ -339,8 +340,10 @@ func (chunk *Chunk) reqInventoryUnsubscribed(player gamerules.IPlayerClient, blo
 }
 
 // Used to read the BlockId of a block that's either in the chunk, or
-// immediately adjoining it in a neighbouring chunk via the side caches.
-func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockType, isWithinChunk bool, blockUnknownId bool) {
+// immediately adjoining it in a neighbouring chunk. In cases where the block
+// type can't be determined we assume that the block asked about is solid
+// (this way objects don't fly off the side of the map needlessly).
+func (chunk *Chunk) BlockQuery(blockLoc BlockXyz) (isSolid bool, isWithinChunk bool) {
 	chunkLoc, subLoc := blockLoc.ToChunkLocal()
 
 	var blockTypeId BlockId
@@ -350,6 +353,8 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockTy
 		// The item is asking about this chunk.
 		index, ok := subLoc.BlockIndex()
 		if !ok {
+			log.Printf("%s.PhysicsBlockQuery(%#v) got bad block index", chunk, blockLoc)
+			isSolid = true
 			return
 		}
 
@@ -362,18 +367,20 @@ func (chunk *Chunk) blockQuery(blockLoc *BlockXyz) (blockType *gamerules.BlockTy
 		blockTypeId, ok = chunk.shard.blockQuery(*chunkLoc, subLoc)
 
 		if !ok {
-			// The chunk side isn't known.
-			blockUnknownId = true
+			// The block isn't known.
+			isSolid = true
 			return
 		}
 	}
 
-	blockType, ok = gamerules.Blocks.Get(blockTypeId)
-	if !ok {
+	if blockType, ok := gamerules.Blocks.Get(blockTypeId); ok {
+		isSolid = blockType.Solid
+	} else {
 		log.Printf(
-			"%v.blockQuery found unknown block type Id %d at %+v",
+			"%s.PhysicsBlockQuery found unknown block type Id %d at %+v",
 			chunk, blockTypeId, blockLoc)
-		blockUnknownId = true
+		// The block type isn't known.
+		isSolid = true
 	}
 
 	return
@@ -392,22 +399,10 @@ func (chunk *Chunk) spawnTick() {
 		return
 	}
 
-	blockQuery := func(blockLoc *BlockXyz) (isSolid bool, isWithinChunk bool) {
-		blockType, isWithinChunk, blockUnknownId := chunk.blockQuery(blockLoc)
-		if blockUnknownId {
-			// If we are in doubt, we assume that the block asked about is
-			// solid (this way objects don't fly off the side of the map
-			// needlessly).
-			isSolid = true
-		} else {
-			isSolid = blockType.Solid
-		}
-		return
-	}
 	outgoingEntities := []object.INonPlayerEntity{}
 
 	for _, e := range chunk.entities {
-		if e.Tick(blockQuery) {
+		if e.Tick(chunk) {
 			if e.Position().Y <= 0 {
 				// Item or mob fell out of the world.
 				chunk.removeEntity(e)
@@ -646,39 +641,59 @@ func (chunk *Chunk) reqRemovePlayerData(entityId EntityId, isDisconnect bool) {
 	}
 }
 
-func (chunk *Chunk) reqSetPlayerPositionLook(entityId EntityId, pos AbsXyz, look LookBytes, moved bool) {
+func (chunk *Chunk) reqSetPlayerPosition(entityId EntityId, pos AbsXyz) {
 	data, ok := chunk.playersData[entityId]
 
 	if !ok {
 		log.Printf(
-			"%v.setPlayerPosition: called for EntityId (%d) not present as playerData.",
+			"%v.reqSetPlayerPosition: called for EntityId (%d) not present as playerData.",
 			chunk, entityId,
 		)
 		return
 	}
 
 	data.position = pos
-	data.look = look
 
 	// Update subscribers.
 	buf := new(bytes.Buffer)
 	data.sendPositionLook(buf)
 	chunk.reqMulticastPlayers(entityId, buf.Bytes())
 
-	if moved {
-		player, ok := chunk.subscribers[entityId]
+	player, ok := chunk.subscribers[entityId]
 
-		if ok {
-			// Does the player overlap with any items?
-			for _, item := range chunk.items() {
-				// TODO This check should be performed when items move as well.
-				if data.OverlapsItem(item) {
-					slot := item.GetSlot()
-					player.ReqOfferItem(chunk.loc, item.EntityId, *slot)
-				}
+	if ok {
+		// Does the player overlap with any items?
+		for _, item := range chunk.items() {
+			if item.PickupImmunity > 0 {
+				item.PickupImmunity--
+				continue
+			}
+			// TODO This check should be performed when items move as well.
+			if data.OverlapsItem(item) {
+				slot := item.GetSlot()
+				player.ReqOfferItem(chunk.loc, item.EntityId, *slot)
 			}
 		}
 	}
+}
+
+func (chunk *Chunk) reqSetPlayerLook(entityId EntityId, look LookBytes) {
+	data, ok := chunk.playersData[entityId]
+
+	if !ok {
+		log.Printf(
+			"%v.reqSetPlayerLook: called for EntityId (%d) not present as playerData.",
+			chunk, entityId,
+		)
+		return
+	}
+
+	data.look = look
+
+	// Update subscribers.
+	buf := new(bytes.Buffer)
+	data.sendPositionLook(buf)
+	chunk.reqMulticastPlayers(entityId, buf.Bytes())
 }
 
 func (chunk *Chunk) chunkPacket() []byte {
@@ -739,7 +754,7 @@ func (chunk *Chunk) addEntities(entities []nbt.ITag) {
 			id := ItemTypeId(itemInfo.Lookup("id").(*nbt.Short).Value)
 			count := ItemCount(itemInfo.Lookup("Count").(*nbt.Byte).Value)
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
-			newEntity = gamerules.NewItem(id, count, data, &pos, &velocity)
+			newEntity = gamerules.NewItem(id, count, data, &pos, &velocity, 0)
 		case "Chicken":
 			newEntity = mob.NewHen(&pos, &velocity, &look)
 		case "Cow":

@@ -11,7 +11,7 @@ import (
 
 const (
 	// Guestimated gravity value. Unknown how accurate this is.
-	gravityBlocksPerSecond2 = 3.0
+	gravityBlocksPerSecond2 = 9.8
 
 	gravityBlocksPerTick2 = gravityBlocksPerSecond2 / TicksPerSecond
 
@@ -32,7 +32,9 @@ const (
 	blockAxisMoveZ = blockAxisMove(iota)
 )
 
-type BlockQueryFn func(*BlockXyz) (isSolid bool, isWithinChunk bool)
+type IBlockQuerier interface {
+	BlockQuery(blockLoc BlockXyz) (isSolid bool, isWithinChunk bool)
+}
 
 type PointObject struct {
 	// Used in knowing what to send as client updates
@@ -102,7 +104,7 @@ func (obj *PointObject) SendUpdate(writer io.Writer, entityId EntityId, look *Lo
 	return
 }
 
-func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
+func (obj *PointObject) Tick(blockQuerier IBlockQuerier) (leftChunk bool) {
 	// TODO this algorithm can probably be sped up a bit, but initially trying
 	// to keep things simple and more or less correct
 	// TODO flowing water movement of items
@@ -123,11 +125,6 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 		obj.remainder = 0.0
 		return
 	}
-
-	// Enforce max absolute velocity per dimension
-	v.X.Constrain()
-	v.Y.Constrain()
-	v.Z.Constrain()
 
 	// t0 = time at start of tick,
 	// t1 = time at end of tick,
@@ -178,7 +175,7 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 			}
 
 			// Is it solid?
-			isSolid, isWithinChunk := blockQuery(blockLoc)
+			isSolid, isWithinChunk := blockQuerier.BlockQuery(*blockLoc)
 			if isSolid {
 				// Collision - cancel axis movement
 				switch move {
@@ -191,7 +188,7 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 					applyCollision(&p.Z, &v.Z)
 				}
 
-				// Move the object up to the block boundary
+				// Move the object up to the block boundary.
 				p.ApplyVelocity(dt, v)
 			} else {
 				// No collision, continue as normal
@@ -201,7 +198,8 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 				// block boundary.
 				p.ApplyVelocity(dt+1e-4, v)
 				if !isWithinChunk {
-					// Object has left the chunk, finish early
+					// Object has left the chunk, finish early.
+					leftChunk = true
 					break
 				}
 			}
@@ -209,7 +207,7 @@ func (obj *PointObject) Tick(blockQuery BlockQueryFn) (leftBlock bool) {
 	}
 
 	if p.Y < 0 {
-		leftBlock = true
+		leftChunk = true
 	}
 	obj.remainder = t1 - t
 	return

@@ -1,6 +1,9 @@
 package gamerules
 
 import (
+	"fmt"
+	"os"
+
 	. "chunkymonkey/types"
 )
 
@@ -24,6 +27,15 @@ func (aspect *StandardAspect) setAttrs(blockAttrs *BlockAttrs) {
 
 func (aspect *StandardAspect) Name() string {
 	return "Standard"
+}
+
+func (aspect *StandardAspect) Check() os.Error {
+	for i := range aspect.DroppedItems {
+		if err := aspect.DroppedItems[i].check(); err != nil {
+			return fmt.Errorf("block %q: %v", aspect.blockAttrs.Name, err)
+		}
+	}
+	return nil
 }
 
 func (aspect *StandardAspect) Hit(instance *BlockInstance, player IPlayerClient, digStatus DigStatus) (destroyed bool) {

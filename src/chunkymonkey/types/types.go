@@ -205,8 +205,13 @@ type DigStatus byte
 const (
 	DigStarted    = DigStatus(0)
 	DigBlockBroke = DigStatus(2)
-	// TODO Investigate what this value means:
-	DigDropItem = DigStatus(4)
+	DigDropItem   = DigStatus(4)
+)
+
+const (
+	// MaxInteractDistance is the maximum distance at which a player can interact
+	// with something, such as dig.
+	MaxInteractDistance = AbsCoord(6)
 )
 
 // Window/inventory-related types and constants
@@ -264,25 +269,31 @@ const (
 
 // Movement-related types and constants
 
-// VelocityComponent in millipixels / tick
+// VelocityComponent in VelocityComponentBlocksPerTick
 type VelocityComponent int16
 
 const (
 	VelocityComponentMax = 28800
 	VelocityComponentMin = -28800
 
-	MaxVelocityBlocksPerTick = VelocityComponentMax / AbsVelocityCoord(MilliPixelsPerBlock)
-	MinVelocityBlocksPerTick = VelocityComponentMin / AbsVelocityCoord(MilliPixelsPerBlock)
+	AbsToIntVelocityComponent = TicksPerSecond * 32000 / 100
 )
 
 type Velocity struct {
 	X, Y, Z VelocityComponent
 }
 
+// AbsVelocityCoord is measured in blocks per tick.
 type AbsVelocityCoord AbsCoord
 
 func (v AbsVelocityCoord) ToVelocityComponent() VelocityComponent {
-	return VelocityComponent(v * MilliPixelsPerBlock)
+	scaledV := v * AbsToIntVelocityComponent
+	if scaledV > VelocityComponentMax {
+		return VelocityComponentMax
+	} else if scaledV < VelocityComponentMin {
+		return VelocityComponentMin
+	}
+	return VelocityComponent(scaledV)
 }
 
 type AbsVelocity struct {
@@ -294,14 +305,6 @@ func (v *AbsVelocity) ToVelocity() *Velocity {
 		v.X.ToVelocityComponent(),
 		v.Y.ToVelocityComponent(),
 		v.Z.ToVelocityComponent(),
-	}
-}
-
-func (v *AbsVelocityCoord) Constrain() {
-	if *v > MaxVelocityBlocksPerTick {
-		*v = MaxVelocityBlocksPerTick
-	} else if *v < MinVelocityBlocksPerTick {
-		*v = MinVelocityBlocksPerTick
 	}
 }
 
@@ -428,6 +431,13 @@ func (p *AbsXyz) ToShardXz() ShardXz {
 		X: ShardCoord(math.Floor(float64(p.X / (ChunkSizeH * ShardSize)))),
 		Z: ShardCoord(math.Floor(float64(p.Z / (ChunkSizeH * ShardSize)))),
 	}
+}
+
+func (p *AbsXyz) IsWithinDistanceOf(other *AbsXyz, maxDistance AbsCoord) bool {
+	dx := p.X - other.X
+	dy := p.Y - other.Y
+	dz := p.Z - other.Z
+	return (dx*dx + dy*dy + dz*dz) <= maxDistance*maxDistance
 }
 
 // Specifies approximate world distance in pixels (absolute / PixelsPerBlock)
@@ -632,6 +642,10 @@ const (
 	MinZCoord = math.MinInt32
 )
 
+func (b *BlockXyz) Equals(rhs BlockXyz) bool {
+	return b.X == rhs.X && b.Y == rhs.Y && b.Z == rhs.Z
+}
+
 // Test if a block location is not appropriate to the situation, but block
 // location data passed (such as using an item not on a block).
 func (b *BlockXyz) IsNull() bool {
@@ -718,6 +732,14 @@ func (blockLoc *BlockXyz) ToAbsXyz() *AbsXyz {
 		AbsCoord(blockLoc.X),
 		AbsCoord(blockLoc.Y),
 		AbsCoord(blockLoc.Z),
+	}
+}
+
+func (blockLoc *BlockXyz) MidPointToAbsXyz() AbsXyz {
+	return AbsXyz{
+		AbsCoord(blockLoc.X) + 0.5,
+		AbsCoord(blockLoc.Y) + 0.5,
+		AbsCoord(blockLoc.Z) + 0.5,
 	}
 }
 

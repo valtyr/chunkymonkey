@@ -87,7 +87,9 @@ type IPlayerShardClient interface {
 
 	ReqRemovePlayerData(chunkLoc ChunkXz, isDisconnect bool)
 
-	ReqSetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool)
+	ReqSetPlayerPosition(chunkLoc ChunkXz, position AbsXyz)
+
+	ReqSetPlayerLook(chunkLoc ChunkXz, look LookBytes)
 
 	// ReqHitBlock requests that the targetted block be hit.
 	ReqHitBlock(held Slot, target BlockXyz, digStatus DigStatus, face Face)
@@ -107,7 +109,7 @@ type IPlayerShardClient interface {
 	ReqTakeItem(chunkLoc ChunkXz, entityId EntityId)
 
 	// ReqDropItem requests that an item be created.
-	ReqDropItem(content Slot, position AbsXyz, velocity AbsVelocity)
+	ReqDropItem(content Slot, position AbsXyz, velocity AbsVelocity, pickupImmunity Ticks)
 
 	// ReqInventoryClick requests that the given cursor be "clicked" onto the
 	// inventory. The chunk should send a replying ReqInventoryCursorUpdate to

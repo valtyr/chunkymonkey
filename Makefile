@@ -9,7 +9,8 @@ BINARIES=\
 
 MOCK_FILES=\
 	src/chunkymonkey/command/mock_icommandhandler_test.go \
-	src/chunkymonkey/gamerules/mock_stub_test.go
+	src/chunkymonkey/gamerules/mock_stub_test.go \
+	src/chunkymonkey/physics/mock_physics_test.go
 
 GD_OPTS=-quiet
 
@@ -63,6 +64,9 @@ src/chunkymonkey/command/mock_icommandhandler_test.go: src/chunkymonkey/command/
 
 src/chunkymonkey/gamerules/mock_stub_test.go: src/chunkymonkey/gamerules/stub.go
 	mockgen -package gamerules -destination $@ -source $< -imports .=chunkymonkey/types
+
+src/chunkymonkey/physics/mock_physics_test.go: src/chunkymonkey/physics/physics.go
+	mockgen -package physics -destination $@ -source $< -imports .=chunkymonkey/types
 
 
 .PHONY: all bench check clean docs fmt mocks test test_data

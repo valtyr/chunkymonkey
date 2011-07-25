@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 
+	gomock "gomock.googlecode.com/hg/gomock"
+
 	. "chunkymonkey/types"
 )
 
@@ -133,5 +135,125 @@ func Test_VelocityFromLook(t *testing.T) {
 		if v.X != test.want.X || v.Y != test.want.Y || v.Z != test.want.Z {
 			t.Errorf("VelocityFromLook, wanted %+v, got %+v", test.want, v)
 		}
+	}
+}
+
+func testTickFixtures(t *testing.T) (mockCtrl *gomock.Controller, mockBlockQuerier *MockIBlockQuerier, pointObj *PointObject) {
+	mockCtrl = gomock.NewController(t)
+	mockBlockQuerier = NewMockIBlockQuerier(mockCtrl)
+	pointObj = new(PointObject)
+	return
+}
+
+type test_PointObject_TickOnce struct {
+	desc             string
+	expectedEndBlock BlockXyz
+	startPos         AbsXyz
+	startVel         AbsVelocity
+	queryBlock       BlockXyz
+	isSolid          bool
+}
+
+func (test *test_PointObject_TickOnce) test(t *testing.T) {
+	mockCtrl, mockBlockQuerier, pointObj := testTickFixtures(t)
+	defer mockCtrl.Finish()
+
+	t.Log(test.desc)
+
+	pointObj.Init(&test.startPos, &test.startVel)
+
+	mockBlockQuerier.EXPECT().BlockQuery(test.queryBlock).Return(test.isSolid, true)
+	pointObj.Tick(mockBlockQuerier)
+
+	if !pointObj.position.ToBlockXyz().Equals(test.expectedEndBlock) {
+		t.Errorf("  Expected object to end at %#v but was at %#v", test.expectedEndBlock, pointObj.position)
+	}
+	t.Logf("  End position: %#v", pointObj.position)
+	t.Logf("  End velocity: %#v", pointObj.velocity)
+}
+
+func Test_PointObject_TickOnce(t *testing.T) {
+	tests := []test_PointObject_TickOnce{
+		// Falling from rest:
+		{
+			desc:             "Fall to bottom of current block onto solid surface",
+			expectedEndBlock: BlockXyz{0, 100, 0},
+			startPos:         AbsXyz{0.5, 100.1, 0.5},
+			startVel:         AbsVelocity{},
+			queryBlock:       BlockXyz{0, 99, 0},
+			isSolid:          true,
+		},
+		// Moving with initial speed of 2 along an axis (from the middle of the
+		// initial block this must hit or pass each side of the first block).
+		{
+			desc:             "Down to solid",
+			expectedEndBlock: BlockXyz{0, 100, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{0, -2, 0},
+			queryBlock:       BlockXyz{0, 99, 0},
+			isSolid:          true,
+		},
+		{
+			desc:             "Up to solid",
+			expectedEndBlock: BlockXyz{0, 100, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{0, 2, 0},
+			queryBlock:       BlockXyz{0, 101, 0},
+			isSolid:          true,
+		},
+		{
+			desc:             "North to solid",
+			expectedEndBlock: BlockXyz{0, 100, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{-2, 0, 0},
+			queryBlock:       BlockXyz{-1, 100, 0},
+			isSolid:          true,
+		},
+		{
+			desc:             "South to solid",
+			expectedEndBlock: BlockXyz{0, 100, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{2, 0, 0},
+			queryBlock:       BlockXyz{1, 100, 0},
+			isSolid:          true,
+		},
+		{
+			desc:             "East to solid",
+			expectedEndBlock: BlockXyz{0, 100, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{0, 0, -2},
+			queryBlock:       BlockXyz{0, 100, -1},
+			isSolid:          true,
+		},
+		{
+			desc:             "West to solid",
+			expectedEndBlock: BlockXyz{0, 100, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{0, 0, 2},
+			queryBlock:       BlockXyz{0, 100, 1},
+			isSolid:          true,
+		},
+		// Move with enough speed to move into another non-solid block but make no other transitions.
+		{
+			desc:             "Down to non-solid",
+			expectedEndBlock: BlockXyz{0, 99, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{0, -1, 0},
+			queryBlock:       BlockXyz{0, 99, 0},
+			isSolid:          false,
+		},
+		{
+			desc:             "North to non-solid",
+			expectedEndBlock: BlockXyz{-1, 100, 0},
+			startPos:         AbsXyz{0.5, 100.5, 0.5},
+			startVel:         AbsVelocity{-1, 0, 0},
+			queryBlock:       BlockXyz{-1, 100, 0},
+			isSolid:          false,
+		},
+	}
+
+	for i := range tests {
+		test := &tests[i]
+		test.test(t)
 	}
 }

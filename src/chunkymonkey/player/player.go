@@ -6,7 +6,6 @@ import (
 	"expvar"
 	"fmt"
 	"log"
-	"math"
 	"net"
 	"os"
 	"sync"
@@ -45,6 +44,7 @@ type Player struct {
 	name           string
 	spawnBlock     BlockXyz
 	position       AbsXyz
+	height         AbsCoord
 	look           LookDegrees
 	chunkSubs      chunkSubscriptions
 	loginComplete  bool
@@ -81,7 +81,8 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 			Y: AbsCoord(spawnBlock.Y),
 			Z: AbsCoord(spawnBlock.Z),
 		},
-		look: LookDegrees{0, 0},
+		height: StanceNormal,
+		look:   LookDegrees{0, 0},
 
 		health: MaxHealth,
 
@@ -200,16 +201,13 @@ func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, on
 	player.lock.Lock()
 	defer player.lock.Unlock()
 
-	var delta = AbsXyz{position.X - player.position.X,
-		position.Y - player.position.Y,
-		position.Z - player.position.Z}
-	distance := math.Sqrt(float64(delta.X*delta.X + delta.Y*delta.Y + delta.Z*delta.Z))
-	if distance > 10 {
+	if !player.position.IsWithinDistanceOf(position, 10) {
 		log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
 			position.X, position.Y, position.Z)
 		return
 	}
 	player.position = *position
+	player.height = stance - position.Y
 	player.chunkSubs.Move(position)
 
 	// TODO: Should keep track of when players enter/leave their mutual radius
@@ -226,16 +224,10 @@ func (player *Player) PacketPlayerLook(look *LookDegrees, onGround bool) {
 	// TODO input validation
 	player.look = *look
 
-	buf := new(bytes.Buffer)
-	proto.WriteEntityLook(buf, player.EntityId, look.ToLookBytes())
-
-	// TODO update playerData on current chunk
-
-	player.chunkSubs.curShard.ReqMulticastPlayers(
-		player.chunkSubs.curChunkLoc,
-		player.EntityId,
-		buf.Bytes(),
-	)
+	// Update playerData on current chunk.
+	if shard, ok := player.chunkSubs.CurrentShardClient(); ok {
+		shard.ReqSetPlayerLook(player.chunkSubs.curChunkLoc, *look.ToLookBytes())
+	}
 }
 
 func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, face Face) {
@@ -244,7 +236,7 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 
 	// This packet handles 'throwing' an item as well, with status = 4, and
 	// the zero values for target and face, so check for that.
-	if status == 4 && target.IsZero() && face == 0 {
+	if status == DigDropItem && target.IsZero() && face == 0 {
 		blockLoc := player.position.ToBlockXyz()
 		shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(blockLoc)
 		if !ok {
@@ -254,13 +246,20 @@ func (player *Player) PacketPlayerBlockHit(status DigStatus, target *BlockXyz, f
 		var itemToThrow gamerules.Slot
 		player.inventory.TakeOneHeldItem(&itemToThrow)
 		if !itemToThrow.IsEmpty() {
-			velocity := physics.VelocityFromLook(player.look, 0.30)
-			shardClient.ReqDropItem(itemToThrow, player.position, velocity)
+			velocity := physics.VelocityFromLook(player.look, 0.50)
+			position := player.position
+			position.Y += player.height
+			shardClient.ReqDropItem(itemToThrow, position, velocity, TicksPerSecond/2)
 		}
 		return
 	}
 
-	// TODO validate that the player is actually somewhere near the block
+	// Validate that the player is actually somewhere near the block.
+	targetAbsPos := target.MidPointToAbsXyz()
+	if !targetAbsPos.IsWithinDistanceOf(&player.position, MaxInteractDistance) {
+		log.Printf("Player/PacketPlayerBlockHit: ignoring player dig at %v (too far away)", target)
+		return
+	}
 
 	// TODO measure the dig time on the target block and relay to the shard to
 	// stop speed hacking (based on block type and tool used - non-trivial).
@@ -281,6 +280,13 @@ func (player *Player) PacketPlayerBlockInteract(itemId ItemTypeId, target *Block
 
 	player.lock.Lock()
 	defer player.lock.Unlock()
+
+	// Validate that the player is actually somewhere near the block.
+	targetAbsPos := target.MidPointToAbsXyz()
+	if !targetAbsPos.IsWithinDistanceOf(&player.position, MaxInteractDistance) {
+		log.Printf("Player/PacketPlayerBlockInteract: ignoring player interact at %v (too far away)", target)
+		return
+	}
 
 	shardClient, _, ok := player.chunkSubs.ShardClientForBlockXyz(target)
 	if ok {
@@ -472,7 +478,7 @@ func (player *Player) reqNotifyChunkLoad() {
 		buf := new(bytes.Buffer)
 		proto.ServerWritePlayerPositionLook(
 			buf,
-			&player.position, player.position.Y+StanceNormal,
+			&player.position, player.position.Y+player.height,
 			&player.look, false)
 		player.inventory.WriteWindowItems(buf)
 		proto.WriteUpdateHealth(buf, player.health)
@@ -595,7 +601,7 @@ func (player *Player) reqGiveItem(atPosition *AbsXyz, item *gamerules.Slot) {
 			chunkLoc := atPosition.ToChunkXz()
 			shardClient, ok := player.chunkSubs.ShardClientForChunkXz(&chunkLoc)
 			if ok {
-				shardClient.ReqDropItem(*item, *atPosition, AbsVelocity{})
+				shardClient.ReqDropItem(*item, *atPosition, AbsVelocity{}, TicksPerSecond)
 			}
 		}
 	}()

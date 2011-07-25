@@ -161,7 +161,7 @@ func LoadRecipes(reader io.Reader, itemTypes ItemTypeMap) (recipes *RecipeSet, e
 		}
 	}
 
-	recipes.init()
+	err = recipes.init()
 
 	return
 }

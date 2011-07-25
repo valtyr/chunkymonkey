@@ -13,17 +13,19 @@ type Item struct {
 	EntityId
 	Slot
 	physics.PointObject
-	orientation OrientationBytes
+	orientation    OrientationBytes
+	PickupImmunity Ticks
 }
 
-func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *AbsXyz, velocity *AbsVelocity) (item *Item) {
+func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *AbsXyz, velocity *AbsVelocity, pickupImmunity Ticks) (item *Item) {
 	item = &Item{
-		// TODO proper orientation
-		orientation: OrientationBytes{0, 0, 0},
+		Slot: Slot{
+			ItemTypeId: itemTypeId,
+			Count:      count,
+			Data:       data,
+		},
+		PickupImmunity: pickupImmunity,
 	}
-	item.Slot.ItemTypeId = itemTypeId
-	item.Slot.Count = count
-	item.Slot.Data = data
 	item.PointObject.Init(position, velocity)
 	return
 }
@@ -33,9 +35,8 @@ func (item *Item) GetSlot() *Slot {
 }
 
 func (item *Item) SendSpawn(writer io.Writer) (err os.Error) {
-	// TODO pass uses value instead of 0
 	err = proto.WriteItemSpawn(
-		writer, item.EntityId, item.ItemTypeId, item.Slot.Count, 0,
+		writer, item.EntityId, item.ItemTypeId, item.Slot.Count, item.Slot.Data,
 		&item.PointObject.LastSentPosition, &item.orientation)
 	if err != nil {
 		return

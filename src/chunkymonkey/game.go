@@ -178,7 +178,7 @@ func (game *Game) Serve(addr string) {
 		conn, e2 := listener.Accept()
 		if e2 != nil {
 			log.Print("Accept: ", e2.String())
-			continue
+			break
 		}
 
 		go game.login(conn)

@@ -1,6 +1,8 @@
 package gamerules
 
 import (
+	"os"
+
 	. "chunkymonkey/types"
 )
 
@@ -16,6 +18,10 @@ func (aspect *VoidAspect) setAttrs(blockAttrs *BlockAttrs) {
 
 func (aspect *VoidAspect) Name() string {
 	return "Void"
+}
+
+func (aspect *VoidAspect) Check() os.Error {
+	return nil
 }
 
 func (aspect *VoidAspect) Hit(instance *BlockInstance, player IPlayerClient, digStatus DigStatus) (destroyed bool) {

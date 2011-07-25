@@ -1,6 +1,7 @@
 package gamerules
 
 import (
+	"os"
 	"rand"
 
 	"chunkymonkey/object"
@@ -57,6 +58,10 @@ type IBlockAspect interface {
 	// Name is currently used purely for the serialization of aspect
 	// configuration data.
 	Name() string
+
+	// Check tests that the block aspect has been configured correctly,
+	// returning nil if it is correct.
+	Check() os.Error
 
 	// Hit is called when the player hits a block.
 	Hit(instance *BlockInstance, player IPlayerClient, digStatus DigStatus) (destroyed bool)

@@ -58,9 +58,15 @@ func (conn *localPlayerShardClient) ReqRemovePlayerData(chunkLoc ChunkXz, isDisc
 	})
 }
 
-func (conn *localPlayerShardClient) ReqSetPlayerPositionLook(chunkLoc ChunkXz, position AbsXyz, look LookBytes, moved bool) {
+func (conn *localPlayerShardClient) ReqSetPlayerPosition(chunkLoc ChunkXz, position AbsXyz) {
 	conn.shard.enqueueOnChunk(chunkLoc, func(chunk *Chunk) {
-		chunk.reqSetPlayerPositionLook(conn.entityId, position, look, moved)
+		chunk.reqSetPlayerPosition(conn.entityId, position)
+	})
+}
+
+func (conn *localPlayerShardClient) ReqSetPlayerLook(chunkLoc ChunkXz, look LookBytes) {
+	conn.shard.enqueueOnChunk(chunkLoc, func(chunk *Chunk) {
+		chunk.reqSetPlayerLook(conn.entityId, look)
 	})
 }
 
@@ -94,10 +100,10 @@ func (conn *localPlayerShardClient) ReqTakeItem(chunkLoc ChunkXz, entityId Entit
 	})
 }
 
-func (conn *localPlayerShardClient) ReqDropItem(content gamerules.Slot, position AbsXyz, velocity AbsVelocity) {
+func (conn *localPlayerShardClient) ReqDropItem(content gamerules.Slot, position AbsXyz, velocity AbsVelocity, pickupImmunity Ticks) {
 	chunkLoc := position.ToChunkXz()
 	conn.shard.enqueueOnChunk(chunkLoc, func(chunk *Chunk) {
-		chunk.reqDropItem(conn.player, &content, &position, &velocity)
+		chunk.reqDropItem(conn.player, &content, &position, &velocity, pickupImmunity)
 	})
 }
 

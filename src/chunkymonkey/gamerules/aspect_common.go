@@ -1,6 +1,9 @@
 package gamerules
 
 import (
+	"fmt"
+	"os"
+
 	. "chunkymonkey/types"
 )
 
@@ -17,6 +20,7 @@ func spawnItemInBlock(instance *BlockInstance, itemTypeId ItemTypeId, count Item
 			itemTypeId, count, data,
 			position,
 			&AbsVelocity{0, 0, 0},
+			0,
 		),
 	)
 }
@@ -39,4 +43,16 @@ func (bdi *blockDropItem) drop(instance *BlockInstance) {
 	for i := bdi.Count; i > 0; i-- {
 		spawnItemInBlock(instance, bdi.DroppedItem, 1, itemData)
 	}
+}
+
+func (bdi *blockDropItem) check() os.Error {
+	if _, ok := Items[bdi.DroppedItem]; !ok {
+		return fmt.Errorf("dropped item type %d does not exist", bdi.DroppedItem)
+	}
+
+	if bdi.Count <= 0 {
+		return fmt.Errorf("dropped item has Count %d", bdi.Count)
+	}
+
+	return nil
 }

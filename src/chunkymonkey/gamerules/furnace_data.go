@@ -1,6 +1,7 @@
 package gamerules
 
 import (
+	"fmt"
 	"io"
 	"json"
 	"os"
@@ -52,11 +53,27 @@ func LoadFurnaceData(reader io.Reader) (furnaceData FurnaceData, err os.Error) {
 
 	furnaceData.Fuels = make(map[ItemTypeId]Ticks)
 	for _, fuelDef := range dataDef.Fuels {
+		if _, ok := Items[fuelDef.Id]; !ok {
+			err = fmt.Errorf("Furnace fuel type %d is unknown item type ID", fuelDef.Id)
+			return
+		}
 		furnaceData.Fuels[fuelDef.Id] = fuelDef.FuelTicks
 	}
 
 	furnaceData.Reactions = make(map[ItemTypeId]Reaction)
 	for _, reactionDef := range dataDef.Reactions {
+		if _, ok := Items[reactionDef.Input]; !ok {
+			err = fmt.Errorf(
+				"Furnace reaction %q has unknown input item type ID %d",
+				reactionDef.Comment, reactionDef.Input)
+			return
+		}
+		if _, ok := Items[reactionDef.Output]; !ok {
+			err = fmt.Errorf(
+				"Furnace reaction %q has unknown output item type ID %d",
+				reactionDef.Comment, reactionDef.Output)
+			return
+		}
 		furnaceData.Reactions[reactionDef.Input] = Reaction{
 			Output:     reactionDef.Output,
 			OutputData: reactionDef.OutputData,

@@ -26,32 +26,19 @@ var furnaceDefs = flag.String(
 	"furnace", "furnace.json",
 	"The JSON file containing furnace fuel and reaction definitions.")
 
+var userDefs = flag.String(
+	"users", "users.json",
+	"The JSON file container user permissions.")
+
+var groupDefs = flag.String(
+	"groups", "groups.json",
+	"The JSON file containing group permissions.")
+
 func main() {
-	var err os.Error
+	err := gamerules.LoadGameRules(*blockDefs, *itemDefs, *recipeDefs, *furnaceDefs, *userDefs, *groupDefs)
 
-	blockTypes, err := gamerules.LoadBlocksFromFile(*blockDefs)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "Error loading block definitions: %v\n", err)
-		os.Exit(1)
-	}
-
-	itemTypes, err := gamerules.LoadItemTypesFromFile(*itemDefs)
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "Error loading item definitions: %v\n", err)
-		os.Exit(1)
-	}
-
-	blockTypes.CreateBlockItemTypes(itemTypes)
-
-	_, err = gamerules.LoadRecipesFromFile(*recipeDefs, itemTypes)
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "Error loading recipe definitions: %v\n", err)
-		os.Exit(1)
-	}
-
-	_, err = gamerules.LoadFurnaceDataFromFile(*furnaceDefs)
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "Error loading furnace data definitions: %v\n", err)
+		fmt.Fprintf(os.Stdout, "Error loading definitions: %v\n", err)
 		os.Exit(1)
 	}
 
