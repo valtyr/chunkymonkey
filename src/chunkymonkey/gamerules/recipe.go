@@ -85,7 +85,6 @@ func (r *RecipeSet) init() {
 	}
 }
 
-
 // RecipeSetMatcher looks up recipes within a RecipeSet, an instance must be
 // used from a single goroutine.
 type RecipeSetMatcher struct {

@@ -4,7 +4,6 @@ import (
 	. "chunkymonkey/types"
 )
 
-
 // blockInventory is the data stored in Chunk.SetBlockExtra by some block
 // aspects that contain inventories. It also implements IInventorySubscriber to
 // relay events to player(s) subscribed to the inventories.

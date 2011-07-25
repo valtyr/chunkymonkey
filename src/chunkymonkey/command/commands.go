@@ -45,10 +45,22 @@ func cmdTp(player, message string, cmdHandler ICommandHandler) {
 		cmdHandler.SendMessageToPlayer(player, tpUsage)
 		return
 	}
-	cmdHandler.SendMessageToPlayer(player, msgNotImplemented)
-	// TODO implement teleporting
-}
 
+	teleportee := args[1]
+	destination := args[2]
+	if !cmdHandler.IsValidPlayerName(teleportee) {
+		msg := fmt.Sprintf("'%s' is not logged in", teleportee)
+		cmdHandler.SendMessageToPlayer(player, msg)
+		return
+	}
+	if !cmdHandler.IsValidPlayerName(destination) {
+		msg := fmt.Sprintf("'%s' is not logged in", destination)
+		cmdHandler.SendMessageToPlayer(player, msg)
+		return
+	}
+
+	cmdHandler.TeleportToPlayer(teleportee, destination)
+}
 
 // /kill
 const killCmd = "kill"

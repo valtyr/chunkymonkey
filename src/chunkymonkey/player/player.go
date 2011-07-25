@@ -110,8 +110,16 @@ func (player *Player) Position() AbsXyz {
 	return player.position
 }
 
+func (player *Player) SetPosition(pos AbsXyz) {
+	player.position = pos
+}
+
 func (player *Player) Client() gamerules.IPlayerClient {
 	return &player.shardReceiver
+}
+
+func (player *Player) Look() LookDegrees {
+	return player.look
 }
 
 // ReadNbt reads the player data from their persistently stored NBT data. It

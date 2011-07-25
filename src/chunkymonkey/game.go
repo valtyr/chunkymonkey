@@ -25,7 +25,6 @@ import (
 // That is: characters that might be abused in filename components, etc.
 var validPlayerUsername = regexp.MustCompile(`^[\-a-zA-Z0-9_]+$`)
 
-
 type Game struct {
 	chunkManager     *shardserver.LocalShardManager
 	mainQueue        chan func(*Game)
@@ -306,6 +305,37 @@ func (game *Game) BroadcastMessage(msg string) {
 	game.enqueue(func(_ *Game) {
 		game.multicastPacket(buf.Bytes(), nil)
 	})
+}
+
+func (game *Game) TeleportToPlayer(target, dest string) {
+	targetp := game.getPlayerFromName(target)
+	destp := game.getPlayerFromName(dest)
+	if targetp == nil || destp == nil {
+		return
+	}
+	targetc := targetp.Client()
+	destc := destp.Client()
+
+	pos := destp.Position()
+	log.Printf("Had %v", pos)
+	pos.Y = pos.Y + player.StanceNormal
+	log.Printf("Teleporting to %v", pos)
+
+	game.BroadcastMessage(fmt.Sprintf("Teleporting %s to %s.", target, dest))
+
+	// Tell the teleported player their new position
+	buf := new(bytes.Buffer)
+	proto.WritePlayerPosition(buf, &pos, player.StanceNormal, true)
+	targetc.TransmitPacket(buf.Bytes())
+
+	// Tell the server that the player being teleported has moved
+	targetp.SetPosition(pos)
+
+	// TODO: Tell all players at the target location/old location?
+	buf = new(bytes.Buffer)
+	look := targetp.Look()
+	proto.WriteEntityTeleport(buf, targetp.GetEntityId(), pos.ToAbsIntXyz(), look.ToLookBytes())
+	destc.TransmitPacket(buf.Bytes())
 }
 
 func (game *Game) IsValidPlayerName(name string) bool {

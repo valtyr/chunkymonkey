@@ -11,6 +11,8 @@ type ICommandHandler interface {
 	SendMessageToPlayer(player, msg string)
 	// Send a message to all users connected to the game
 	BroadcastMessage(msg string)
+	// Teleport one player to another
+	TeleportToPlayer(teleportee, destination string)
 
 	// Return whether or not a player name is valid (i.e. player is logged in)
 	IsValidPlayerName(name string) bool
