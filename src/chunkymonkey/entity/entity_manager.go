@@ -6,10 +6,6 @@ import (
 	. "chunkymonkey/types"
 )
 
-// TODO EntityManager should be a service in its own right, able to hand out
-// blocks of IDs and running its own goroutine (potentially shardable by
-// entityId if necessary). Right now taking the easy option of using a simple
-// lock.
 type EntityManager struct {
 	nextEntityId EntityId
 	entities     map[EntityId]bool
