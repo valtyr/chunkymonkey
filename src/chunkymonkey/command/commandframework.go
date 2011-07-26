@@ -20,7 +20,7 @@ type CommandFramework struct {
 func NewCommandFramework(prefix string) *CommandFramework {
 	cf := &CommandFramework{prefix: prefix}
 	cmds := getCommands()
-	commandHelp := NewCommand(helpCmd, helpDesc, helpUsage, func(player, msg string, game gamerules.IGame) {
+	commandHelp := NewCommand(helpCmd, helpDesc, helpUsage, func(player gamerules.IPlayerClient, msg string, game gamerules.IGame) {
 		cmdHelp(player, msg, cf, game)
 	})
 	cmds[helpCmd] = commandHelp
@@ -37,7 +37,7 @@ func (cf *CommandFramework) Commands() map[string]*Command {
 	return cf.cmds
 }
 
-func (cf *CommandFramework) Process(player, message string, game gamerules.IGame) {
+func (cf *CommandFramework) Process(player gamerules.IPlayerClient, message string, game gamerules.IGame) {
 	if len(message) < 2 || message[0:len(cf.prefix)] != cf.prefix {
 		return
 	}

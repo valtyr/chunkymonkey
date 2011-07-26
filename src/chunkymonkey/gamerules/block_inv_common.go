@@ -24,8 +24,8 @@ func (aspect *InventoryAspect) InventoryClick(instance *BlockInstance, player IP
 		blkInv.Click(player, click)
 	} else {
 		// No inventory to act on (shouldn't happen, normally).
-		player.ReqInventoryTxState(blkInv.instance.BlockLoc, click.TxId, false)
-		player.ReqInventoryCursorUpdate(instance.BlockLoc, click.Cursor)
+		player.InventoryTxState(blkInv.instance.BlockLoc, click.TxId, false)
+		player.InventoryCursorUpdate(instance.BlockLoc, click.Cursor)
 		return
 	}
 }

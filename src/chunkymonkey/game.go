@@ -250,58 +250,6 @@ func (game *Game) tick() {
 	}
 }
 
-func (game *Game) getPlayerFromName(name string) *player.Player {
-	result := make(chan *player.Player)
-	game.enqueue(func(_ *Game) {
-		player, ok := game.playerNames[name]
-		if ok {
-			result <- player
-		} else {
-			result <- nil
-		}
-		close(result)
-	})
-	return <-result
-}
-
-// ICommandHandler implementations
-
-func (game *Game) GiveItem(name string, id, quantity, data int) {
-	player := game.getPlayerFromName(name)
-
-	itemId := ItemTypeId(id)
-	itemInfo := gamerules.Items[itemId]
-	maxStack := int(itemInfo.MaxStack)
-
-	for quantity > 0 {
-		count := quantity
-		if count > maxStack {
-			count = maxStack
-		}
-
-		item := gamerules.Slot{
-			ItemTypeId: ItemTypeId(id),
-			Count:      ItemCount(count),
-			Data:       ItemData(data),
-		}
-		client := player.Client()
-		client.ReqGiveItem(player.Position(), item)
-		quantity -= count
-	}
-}
-
-func (game *Game) SendMessageToPlayer(name, msg string) {
-	player := game.getPlayerFromName(name)
-	if player == nil {
-		return
-	}
-
-	buf := new(bytes.Buffer)
-	proto.WriteChatMessage(buf, msg)
-	packet := buf.Bytes()
-	player.TransmitPacket(packet)
-}
-
 func (game *Game) BroadcastMessage(msg string) {
 	buf := new(bytes.Buffer)
 	proto.WriteChatMessage(buf, msg)
@@ -311,43 +259,35 @@ func (game *Game) BroadcastMessage(msg string) {
 	})
 }
 
-func (game *Game) TeleportToPlayer(target, dest string) {
-	targetp := game.getPlayerFromName(target)
-	destp := game.getPlayerFromName(dest)
-	if targetp == nil || destp == nil {
-		return
-	}
-	targetc := targetp.Client()
-	destc := destp.Client()
-
-	pos := destp.Position()
-	log.Printf("Had %v", pos)
-	pos.Y = pos.Y + player.StanceNormal
-	log.Printf("Teleporting to %v", pos)
-
-	game.BroadcastMessage(fmt.Sprintf("Teleporting %s to %s.", target, dest))
-
-	// Tell the teleported player their new position
-	buf := new(bytes.Buffer)
-	proto.WritePlayerPosition(buf, &pos, player.StanceNormal, true)
-	targetc.TransmitPacket(buf.Bytes())
-
-	// Tell the server that the player being teleported has moved
-	targetp.SetPosition(pos)
-
-	// TODO: Tell all players at the target location/old location?
-	buf = new(bytes.Buffer)
-	look := targetp.Look()
-	proto.WriteEntityTeleport(buf, targetp.GetEntityId(), pos.ToAbsIntXyz(), look.ToLookBytes())
-	destc.TransmitPacket(buf.Bytes())
+func (game *Game) ItemTypeById(id int) (gamerules.ItemType, bool) {
+	itemType, ok := gamerules.Items[ItemTypeId(id)]
+	return *itemType, ok
 }
 
-func (game *Game) IsValidPlayerName(name string) bool {
-	return game.getPlayerFromName(name) != nil
+func (game *Game) PlayerByEntityId(id EntityId) gamerules.IPlayerClient {
+	result := make(chan gamerules.IPlayerClient)
+	game.enqueue(func(_ *Game) {
+		player, ok := game.players[id]
+		if ok {
+			result <- player.Client()
+		} else {
+			result <- nil
+		}
+		close(result)
+	})
+	return <-result
 }
 
-func (game *Game) IsValidItemId(id int) bool {
-	itemTypeId := ItemTypeId(id)
-	itemType, ok := gamerules.Items[itemTypeId]
-	return ok && itemType != nil
+func (game *Game) PlayerByName(name string) gamerules.IPlayerClient {
+	result := make(chan gamerules.IPlayerClient)
+	game.enqueue(func(_ *Game) {
+		player, ok := game.playerNames[name]
+		if ok {
+			result <- player.Client()
+		} else {
+			result <- nil
+		}
+		close(result)
+	})
+	return <-result
 }

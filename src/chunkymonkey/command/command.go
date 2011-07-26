@@ -7,7 +7,7 @@ import (
 // A CommandCallback takes the name of the player invoking the command, any
 // text supplied after the trigger for the command, and an interface via which
 // game-wide 'actions' can be taken.
-type CommandCallback func(playerName string, args string, game gamerules.IGame)
+type CommandCallback func(player gamerules.IPlayerClient, args string, game gamerules.IGame)
 
 type Command struct {
 	Trigger     string          // The initial text eg. "give".

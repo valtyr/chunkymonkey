@@ -249,7 +249,7 @@ func (chunk *Chunk) reqInteractBlock(player gamerules.IPlayerClient, held gameru
 			return
 		}
 
-		player.ReqPlaceHeldItem(*destLoc, held)
+		player.PlaceHeldItem(*destLoc, held)
 	} else {
 		// Player is otherwise interacting with the block.
 		blockType.Aspect.Interact(blockInstance, player)
@@ -296,7 +296,7 @@ func (chunk *Chunk) reqPlaceItem(player gamerules.IPlayerClient, target *BlockXy
 func (chunk *Chunk) reqTakeItem(player gamerules.IPlayerClient, entityId EntityId) {
 	if entity, ok := chunk.entities[entityId]; ok {
 		if item, ok := entity.(*gamerules.Item); ok {
-			player.ReqGiveItem(*item.Position(), *item.GetSlot())
+			player.GiveItemAtPosition(*item.Position(), *item.GetSlot())
 
 			// Tell all subscribers to animate the item flying at the
 			// player.
@@ -530,7 +530,7 @@ func (chunk *Chunk) reqSubscribeChunk(entityId EntityId, player gamerules.IPlaye
 
 	player.TransmitPacket(chunk.chunkPacket())
 	if notify {
-		player.ReqNotifyChunkLoad()
+		player.NotifyChunkLoad()
 	}
 
 	// Send spawns packets for all entities in the chunk.
@@ -671,7 +671,7 @@ func (chunk *Chunk) reqSetPlayerPosition(entityId EntityId, pos AbsXyz) {
 			// TODO This check should be performed when items move as well.
 			if data.OverlapsItem(item) {
 				slot := item.GetSlot()
-				player.ReqOfferItem(chunk.loc, item.EntityId, *slot)
+				player.OfferItem(chunk.loc, item.EntityId, *slot)
 			}
 		}
 	}
