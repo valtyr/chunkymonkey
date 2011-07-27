@@ -13,6 +13,8 @@ func TestCommandFramework(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	itemType1 := gamerules.ItemType{1, "1", 64, 0, 0}
+
 	mockGame := gamerules.NewMockIGame(mockCtrl)
 	mockPlayer := gamerules.NewMockIPlayerClient(mockCtrl)
 	mockOther := gamerules.NewMockIPlayerClient(mockCtrl)
@@ -23,9 +25,9 @@ func TestCommandFramework(t *testing.T) {
 	cf.Process(mockPlayer, "/say this is a broadcast", mockGame)
 
 	mockGame.EXPECT().PlayerByName("thePlayer").Return(mockPlayer)
-	mockGame.EXPECT().ItemTypeById(1)
-	mockPlayer.EXPECT().EchoMessage("Giving 64 of 1 to thePlayer")
-	mockPlayer.EXPECT().GiveItemAtPosition("thePlayer", gamerules.Slot{1, 64, 0})
+	mockGame.EXPECT().ItemTypeById(1).Return(itemType1, true)
+	mockPlayer.EXPECT().EchoMessage("Giving 64 of '1' to thePlayer")
+	mockPlayer.EXPECT().GiveItem(gamerules.Slot{1, 64, 0})
 	cf.Process(mockPlayer, "/give thePlayer 1 64", mockGame)
 
 	mockGame.EXPECT().PlayerByName("otherPlayer")
@@ -38,7 +40,7 @@ func TestCommandFramework(t *testing.T) {
 	cf.Process(mockPlayer, "/give otherPlayer 1 64", mockGame)
 
 	mockGame.EXPECT().PlayerByName("otherPlayer").Return(mockOther)
-	mockGame.EXPECT().ItemTypeById(1)
+	mockGame.EXPECT().ItemTypeById(1).Return(itemType1, true)
 	mockPlayer.EXPECT().EchoMessage("Cannot give more than 512 items at once")
 	cf.Process(mockPlayer, "/give otherPlayer 1 513", mockGame)
 
