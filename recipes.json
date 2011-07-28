@@ -37,10 +37,10 @@
       "S"
     ],
     "InputTypes": {
-      "C": [{"Id": 263}],
-      "S": [{"Id": 280}]
+      "C": [{"Id": 263, "Data": 0}, {"Id": 263, "Data": 1}],
+      "S": [{"Id": 280}, {"Id": 280}]
     },
-    "OutputTypes": [{"Id": 50}],
+    "OutputTypes": [{"Id": 50}, {"Id": 50}],
     "OutputCount": 4
   },
   {
