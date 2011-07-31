@@ -1,7 +1,6 @@
 package gamerules
 
 import (
-	"chunkymonkey/object"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
 )
@@ -79,7 +78,7 @@ type IShardShardClient interface {
 
 	ReqSetActiveBlocks(blocks []BlockXyz)
 
-	ReqTransferEntity(loc ChunkXz, entity object.INonPlayerEntity)
+	ReqTransferEntity(loc ChunkXz, entity INonPlayerEntity)
 }
 
 // IGame provide an interface for interacting with and taking action on the

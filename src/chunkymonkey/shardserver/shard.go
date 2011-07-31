@@ -8,7 +8,6 @@ import (
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/entity"
 	"chunkymonkey/gamerules"
-	"chunkymonkey/object"
 	. "chunkymonkey/types"
 )
 
@@ -304,7 +303,7 @@ func (client *shardSelfClient) ReqSetActiveBlocks(blocks []BlockXyz) {
 	client.shard.reqSetBlocksActive(blocks)
 }
 
-func (client *shardSelfClient) ReqTransferEntity(loc ChunkXz, entity object.INonPlayerEntity) {
+func (client *shardSelfClient) ReqTransferEntity(loc ChunkXz, entity gamerules.INonPlayerEntity) {
 	chunk := client.shard.chunkAt(loc)
 	if chunk != nil {
 		chunk.transferEntity(entity)

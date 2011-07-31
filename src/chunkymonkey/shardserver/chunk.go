@@ -10,8 +10,6 @@ import (
 
 	"chunkymonkey/chunkstore"
 	"chunkymonkey/gamerules"
-	"chunkymonkey/mob"
-	"chunkymonkey/object"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
 )
@@ -28,7 +26,7 @@ type Chunk struct {
 	blockLight   []byte
 	skyLight     []byte
 	heightMap    []byte
-	entities     map[EntityId]object.INonPlayerEntity // Entities (mobs, items, etc)
+	entities     map[EntityId]gamerules.INonPlayerEntity // Entities (mobs, items, etc)
 	blockExtra   map[BlockIndex]interface{}           // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	cachedPacket []byte                                 // Cached packet data for this chunk.
@@ -49,7 +47,7 @@ func newChunkFromReader(reader chunkstore.IChunkReader, shard *ChunkShard) (chun
 		skyLight:    reader.SkyLight(),
 		blockLight:  reader.BlockLight(),
 		heightMap:   reader.HeightMap(),
-		entities:    make(map[EntityId]object.INonPlayerEntity),
+		entities:    make(map[EntityId]gamerules.INonPlayerEntity),
 		blockExtra:  make(map[BlockIndex]interface{}),
 		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
 		subscribers: make(map[EntityId]gamerules.IPlayerClient),
@@ -114,13 +112,13 @@ func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *gamerules.ItemTyp
 }
 
 // Tells the chunk to take posession of the item/mob from another chunk.
-func (chunk *Chunk) transferEntity(s object.INonPlayerEntity) {
+func (chunk *Chunk) transferEntity(s gamerules.INonPlayerEntity) {
 	chunk.entities[s.GetEntityId()] = s
 }
 
 // AddEntity creates a mob or item in this chunk and notifies all chunk
 // subscribers of the new entity
-func (chunk *Chunk) AddEntity(s object.INonPlayerEntity) {
+func (chunk *Chunk) AddEntity(s gamerules.INonPlayerEntity) {
 	newEntityId := chunk.shard.entityMgr.NewEntity()
 	s.SetEntityId(newEntityId)
 	chunk.entities[newEntityId] = s
@@ -131,7 +129,7 @@ func (chunk *Chunk) AddEntity(s object.INonPlayerEntity) {
 	chunk.reqMulticastPlayers(-1, buf.Bytes())
 }
 
-func (chunk *Chunk) removeEntity(s object.INonPlayerEntity) {
+func (chunk *Chunk) removeEntity(s gamerules.INonPlayerEntity) {
 	e := s.GetEntityId()
 	chunk.shard.entityMgr.RemoveEntityById(e)
 	chunk.entities[e] = nil, false
@@ -398,7 +396,7 @@ func (chunk *Chunk) spawnTick() {
 		return
 	}
 
-	outgoingEntities := []object.INonPlayerEntity{}
+	outgoingEntities := []gamerules.INonPlayerEntity{}
 
 	for _, e := range chunk.entities {
 		if e.Tick(chunk) {
@@ -438,7 +436,7 @@ func (chunk *Chunk) spawnTick() {
 				ms := chunk.mobs()
 				if len(ms) == 0 {
 					log.Printf("%v.Tick: spawning a mob at %v", chunk, playerData.position)
-					m := mob.NewPig(&playerData.position, &AbsVelocity{5, 5, 5}, &LookDegrees{0, 0})
+					m := gamerules.NewPig(&playerData.position, &AbsVelocity{5, 5, 5}, &LookDegrees{0, 0})
 					chunk.AddEntity(&m.Mob)
 				}
 				break
@@ -493,12 +491,12 @@ func (chunk *Chunk) AddActiveBlockIndex(blockIndex BlockIndex) {
 	chunk.newActiveBlocks[blockIndex] = true
 }
 
-func (chunk *Chunk) mobs() (s []*mob.Mob) {
-	s = make([]*mob.Mob, 0, 3)
+func (chunk *Chunk) mobs() (s []*gamerules.Mob) {
+	s = make([]*gamerules.Mob, 0, 3)
 	for _, e := range chunk.entities {
 		switch e.(type) {
-		case *mob.Mob:
-			s = append(s, e.(*mob.Mob))
+		case *gamerules.Mob:
+			s = append(s, e.(*gamerules.Mob))
 		}
 	}
 	return
@@ -717,7 +715,7 @@ func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
 	return otherChunkLoc.X == chunk.loc.X && otherChunkLoc.Z == chunk.loc.Z
 }
 
-func (chunk *Chunk) addEntities(entities []object.INonPlayerEntity) {
+func (chunk *Chunk) addEntities(entities []gamerules.INonPlayerEntity) {
 	for _, entity := range entities {
 		entityId := chunk.shard.entityMgr.NewEntity()
 		entity.SetEntityId(entityId)

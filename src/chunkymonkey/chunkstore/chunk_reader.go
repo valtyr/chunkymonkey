@@ -6,9 +6,7 @@ import (
 	"os"
 
 	"chunkymonkey/gamerules"
-	"chunkymonkey/mob"
 	"chunkymonkey/nbtutil"
-	"chunkymonkey/object"
 	. "chunkymonkey/types"
 	"nbt"
 )
@@ -59,13 +57,13 @@ func (r *chunkReader) HeightMap() []byte {
 	return r.chunkTag.Lookup("Level/HeightMap").(*nbt.ByteArray).Value
 }
 
-func (r *chunkReader) Entities() (entities []object.INonPlayerEntity) {
+func (r *chunkReader) Entities() (entities []gamerules.INonPlayerEntity) {
 	entityListTag, ok := r.chunkTag.Lookup("Level/Entities").(*nbt.List)
 	if !ok {
 		return
 	}
 
-	entities = make([]object.INonPlayerEntity, 0, len(entities))
+	entities = make([]gamerules.INonPlayerEntity, 0, len(entities))
 
 	for _, entity := range entityListTag.Value {
 		// Position within the chunk
@@ -91,7 +89,7 @@ func (r *chunkReader) Entities() (entities []object.INonPlayerEntity) {
 		_ = entity.Lookup("Air").(*nbt.Short).Value
 		_ = entity.Lookup("Fire").(*nbt.Short).Value
 
-		var newEntity object.INonPlayerEntity
+		var newEntity gamerules.INonPlayerEntity
 		entityObjectId := entity.Lookup("id").(*nbt.String).Value
 
 		switch entityObjectId {
@@ -104,30 +102,30 @@ func (r *chunkReader) Entities() (entities []object.INonPlayerEntity) {
 			data := ItemData(itemInfo.Lookup("Damage").(*nbt.Short).Value)
 			newEntity = gamerules.NewItem(id, count, data, &pos, &velocity, 0)
 		case "Chicken":
-			newEntity = mob.NewHen(&pos, &velocity, &look)
+			newEntity = gamerules.NewHen(&pos, &velocity, &look)
 		case "Cow":
-			newEntity = mob.NewCow(&pos, &velocity, &look)
+			newEntity = gamerules.NewCow(&pos, &velocity, &look)
 		case "Creeper":
-			newEntity = mob.NewCreeper(&pos, &velocity, &look)
+			newEntity = gamerules.NewCreeper(&pos, &velocity, &look)
 		case "Pig":
-			newEntity = mob.NewPig(&pos, &velocity, &look)
+			newEntity = gamerules.NewPig(&pos, &velocity, &look)
 		case "Sheep":
-			newEntity = mob.NewSheep(&pos, &velocity, &look)
+			newEntity = gamerules.NewSheep(&pos, &velocity, &look)
 		case "Skeleton":
-			newEntity = mob.NewSkeleton(&pos, &velocity, &look)
+			newEntity = gamerules.NewSkeleton(&pos, &velocity, &look)
 		case "Squid":
-			newEntity = mob.NewSquid(&pos, &velocity, &look)
+			newEntity = gamerules.NewSquid(&pos, &velocity, &look)
 		case "Spider":
-			newEntity = mob.NewSpider(&pos, &velocity, &look)
+			newEntity = gamerules.NewSpider(&pos, &velocity, &look)
 		case "Wolf":
-			newEntity = mob.NewWolf(&pos, &velocity, &look)
+			newEntity = gamerules.NewWolf(&pos, &velocity, &look)
 		case "Zombie":
-			newEntity = mob.NewZombie(&pos, &velocity, &look)
+			newEntity = gamerules.NewZombie(&pos, &velocity, &look)
 		default:
 			// Handle all other objects
 			objType, ok := ObjTypeMap[entityObjectId]
 			if ok {
-				newEntity = object.NewObject(objType, &pos, &velocity)
+				newEntity = gamerules.NewObject(objType, &pos, &velocity)
 			} else {
 				log.Printf("Found unhandled entity type: %s", entityObjectId)
 			}

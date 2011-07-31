@@ -4,7 +4,6 @@ import (
 	"os"
 	"rand"
 
-	"chunkymonkey/object"
 	. "chunkymonkey/types"
 )
 
@@ -16,7 +15,7 @@ const blockItemSpawnFromEdge = 4.0 / PixelsPerBlock
 type IChunkBlock interface {
 	Rand() *rand.Rand
 	ItemType(itemTypeId ItemTypeId) (itemType *ItemType, ok bool)
-	AddEntity(s object.INonPlayerEntity)
+	AddEntity(s INonPlayerEntity)
 	SetBlockByIndex(blockIndex BlockIndex, blockId BlockId, blockData byte)
 	BlockExtra(blockIndex BlockIndex) interface{}
 	SetBlockExtra(blockIndex BlockIndex, extra interface{})
