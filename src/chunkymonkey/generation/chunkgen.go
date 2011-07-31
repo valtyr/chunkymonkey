@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"chunkymonkey/chunkstore"
+	"chunkymonkey/object"
 	. "chunkymonkey/types"
 	"nbt"
 	"perlin"
@@ -56,7 +57,7 @@ func (data *ChunkData) HeightMap() []byte {
 	return data.heightMap
 }
 
-func (data *ChunkData) Entities() []nbt.ITag {
+func (data *ChunkData) Entities() []object.INonPlayerEntity {
 	return nil
 }
 

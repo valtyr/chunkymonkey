@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"chunkymonkey/object"
 	. "chunkymonkey/types"
 	"nbt"
 )
@@ -40,7 +41,7 @@ type IChunkReader interface {
 	HeightMap() []byte
 
 	// Return a list of the entities (items, mobs) within the chunk.
-	Entities() []nbt.ITag
+	Entities() []object.INonPlayerEntity
 
 	// For low-level NBT access. Not for regular use. It's possible that this
 	// might return nil if the underlying system doesn't use NBT.
