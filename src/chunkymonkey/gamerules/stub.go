@@ -160,7 +160,7 @@ type IPlayerClient interface {
 	SetPositionLook(AbsXyz, LookDegrees)
 
 	// EchoMessage displays a message to the player
-	EchoMessage(string)
+	EchoMessage(msg string)
 }
 
 type ICommandFramework interface {
