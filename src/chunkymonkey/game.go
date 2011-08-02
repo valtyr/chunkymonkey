@@ -106,6 +106,12 @@ func (game *Game) onPlayerDisconnect(entityId EntityId) {
 	game.players[entityId] = nil, false
 	game.playerNames[oldPlayer.Name()] = nil, false
 	game.entityManager.RemoveEntityById(entityId)
+
+	playerData := oldPlayer.WriteNbt()
+
+	if err := game.worldStore.WritePlayerData(oldPlayer.Name(), playerData); err != nil {
+		log.Printf("Failed when writing player data: %s", err)
+	}
 }
 
 func (game *Game) onTick() {

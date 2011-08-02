@@ -437,6 +437,10 @@ func writeTagAndName(writer io.Writer, tag ITag, name string) (err os.Error) {
 }
 
 func (c *Compound) Write(writer io.Writer) (err os.Error) {
+	if err = c.Type().write(writer); err != nil {
+		return
+	}
+
 	for name, tag := range c.Tags {
 		if err = writeTagAndName(writer, tag, name); err != nil {
 			return
