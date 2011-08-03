@@ -43,6 +43,7 @@ type Player struct {
 	conn           net.Conn
 	name           string
 	loginComplete  bool
+	spawnComplete  bool
 
 	// Data entries that may change
 	spawnBlock BlockXyz
@@ -301,6 +302,12 @@ func (player *Player) PacketPlayer(onGround bool) {
 func (player *Player) PacketPlayerPosition(position *AbsXyz, stance AbsCoord, onGround bool) {
 	player.lock.Lock()
 	defer player.lock.Unlock()
+
+	if !player.spawnComplete {
+		// Ignore position packets from player until spawned at initial position
+		// with chunk loaded.
+		return
+	}
 
 	if !player.position.IsWithinDistanceOf(position, 10) {
 		log.Printf("Discarding player position that is too far removed (%.2f, %.2f, %.2f)",
@@ -569,11 +576,11 @@ func (player *Player) mainLoop() {
 }
 
 func (player *Player) notifyChunkLoad() {
-	// Player seems to fall through block unless elevated very slightly.
-	player.position.Y += 0.01
+	if !player.spawnComplete {
+		player.spawnComplete = true
 
-	if !player.loginComplete {
-		player.loginComplete = true
+		// Player seems to fall through block unless elevated very slightly.
+		player.position.Y += 0.01
 
 		// Send player start position etc.
 		buf := new(bytes.Buffer)
@@ -758,11 +765,15 @@ func (player *Player) setPositionLook(pos AbsXyz, look LookDegrees) {
 	player.position = pos
 	player.look = look
 	player.height = StanceNormal - pos.Y
-	player.chunkSubs.Move(&player.position)
 
-	// Notify the player about their new position
-	// Tell the player's client about their new position
-	buf := new(bytes.Buffer)
-	proto.WritePlayerPosition(buf, &pos, StanceNormal, true)
-	player.TransmitPacket(buf.Bytes())
+	if player.chunkSubs.Move(&player.position) {
+		// The destination chunk isn't loaded. Wait for it.
+		player.spawnComplete = false
+	} else {
+		// Notify the player about their new position
+		// Tell the player's client about their new position
+		buf := new(bytes.Buffer)
+		proto.WritePlayerPosition(buf, &pos, StanceNormal, true)
+		player.TransmitPacket(buf.Bytes())
+	}
 }

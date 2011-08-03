@@ -1,7 +1,7 @@
 package shardserver
 
 import (
-	"chunkymonkey/object"
+	"chunkymonkey/gamerules"
 	. "chunkymonkey/types"
 )
 
@@ -25,7 +25,7 @@ func (client *localShardShardClient) ReqSetActiveBlocks(blocks []BlockXyz) {
 	})
 }
 
-func (client *localShardShardClient) ReqTransferEntity(loc ChunkXz, entity object.INonPlayerEntity) {
+func (client *localShardShardClient) ReqTransferEntity(loc ChunkXz, entity gamerules.INonPlayerEntity) {
 	client.serverShard.enqueue(func() {
 		chunk := client.serverShard.chunkAt(loc)
 		if chunk != nil {

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"chunkymonkey/chunkstore"
+	"chunkymonkey/gamerules"
 	. "chunkymonkey/types"
 	"nbt"
 	"perlin"
@@ -56,7 +57,7 @@ func (data *ChunkData) HeightMap() []byte {
 	return data.heightMap
 }
 
-func (data *ChunkData) Entities() []nbt.ITag {
+func (data *ChunkData) Entities() []gamerules.INonPlayerEntity {
 	return nil
 }
 

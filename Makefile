@@ -53,8 +53,9 @@ docs: $(DIAGRAMS)
 
 diagrams/deps.dot:
 	@gd -dot $@ src
-	# Omit dependencies upon packages not in the project for clarity.
-	@sed -ri '/->/{/"[^"]+" -> "(cmd|chunkymonkey|nbt|perlin|testencoding|testmatcher)[/"]/b ok ; d ; : ok}' $@
+	@# Omit dependencies upon packages not in the project for clarity, and
+	@# omit chunkymonkey/types which essentially everything depends on.
+	@sed -ri '/->/{/"[^"]+" -> "(cmd|chunkymonkey|nbt|perlin|testencoding|testmatcher)[/"]/b ok ; d ; : ok} ; /chunkymonkey\/types/d' $@
 
 mocks: $(MOCK_FILES)
 

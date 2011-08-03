@@ -17,7 +17,7 @@ type shardRef struct {
 // chunkSubscriptions is part of the player frontend code, and maintains:
 // * the shards to be connected to,
 // * the chunks that to be subscribed to (via their shardClients),
-// * and moving the player from one shard to another.
+// * moving the player from one shard to another.
 type chunkSubscriptions struct {
 	player         *Player
 	shardConnecter gamerules.IShardConnecter
@@ -39,7 +39,7 @@ func (sub *chunkSubscriptions) Init(player *Player) {
 	sub.shardClients = make(map[uint64]*shardRef)
 
 	initialChunkLocs := orderedChunkSquare(sub.curChunkLoc, ChunkRadius)
-	sub.subscribeToChunks(initialChunkLocs, true)
+	sub.subscribeToChunks(sub.curChunkLoc, initialChunkLocs)
 
 	sub.curShard = sub.shardClients[sub.curShardLoc.Key()].shard
 	sub.curShard.ReqAddPlayerData(
@@ -51,10 +51,15 @@ func (sub *chunkSubscriptions) Init(player *Player) {
 	)
 }
 
-func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
+// Move should be called as the player moves around the world. It replicates
+// the player's position to the chunk they are in, and adjusts chunk
+// subscriptions as necessary. Returns true if the new location is not yet
+// subscribed to by a chunk, indicating that the player will receive a
+// notifyChunkLoad when that chunk has been sent to the client.
+func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) (notify bool) {
 	newChunkLoc := newLoc.ToChunkXz()
 	if newChunkLoc.X != sub.curChunkLoc.X || newChunkLoc.Z != sub.curChunkLoc.Z {
-		sub.moveToChunk(newChunkLoc, newLoc)
+		notify = sub.moveToChunk(newChunkLoc, newLoc)
 
 		newShardLoc := newLoc.ToShardXz()
 		if newShardLoc.X != sub.curShardLoc.X || newShardLoc.Z != sub.curShardLoc.Z {
@@ -63,6 +68,8 @@ func (sub *chunkSubscriptions) Move(newLoc *AbsXyz) {
 	} else {
 		sub.curShard.ReqSetPlayerPosition(sub.curChunkLoc, *newLoc)
 	}
+
+	return
 }
 
 // Close closes down all shard connections. Use when the player is
@@ -128,8 +135,8 @@ func (sub *chunkSubscriptions) ShardClientForChunkXz(chunkLoc *ChunkXz) (conn ga
 
 // subscribeToChunks connects to shards and subscribes to chunks for the chunk
 // locations given.
-func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz, notify bool) {
-	for i, chunkLoc := range chunkLocs {
+func (sub *chunkSubscriptions) subscribeToChunks(destLoc ChunkXz, chunkLocs []ChunkXz) (notify bool) {
+	for _, chunkLoc := range chunkLocs {
 		shardLoc := chunkLoc.ToShardXz()
 		shardKey := shardLoc.Key()
 		ref, ok := sub.shardClients[shardKey]
@@ -140,9 +147,14 @@ func (sub *chunkSubscriptions) subscribeToChunks(chunkLocs []ChunkXz, notify boo
 			}
 			sub.shardClients[shardKey] = ref
 		}
-		ref.shard.ReqSubscribeChunk(chunkLoc, notify && i == 0)
+
+		isDestChunk := chunkLoc.X == destLoc.X && chunkLoc.Z == destLoc.Z
+		notify = notify || isDestChunk
+		ref.shard.ReqSubscribeChunk(chunkLoc, isDestChunk)
 		ref.count++
 	}
+
+	return
 }
 
 // unsubscribeFromChunks unsubscribes from chunks for the chunk locations
@@ -168,9 +180,9 @@ func (sub *chunkSubscriptions) unsubscribeFromChunks(chunkLocs []ChunkXz) {
 
 // moveToChunk subscribes to chunks that are newly in range, and unsubscribes
 // to those that have just left.
-func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) {
+func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) (notify bool) {
 	addChunkLocs := squareDifference(newChunkLoc, sub.curChunkLoc, ChunkRadius)
-	sub.subscribeToChunks(addChunkLocs, false)
+	notify = sub.subscribeToChunks(newChunkLoc, addChunkLocs)
 
 	newShardLoc := newChunkLoc.ToShardXz()
 	if ref, ok := sub.shardClients[newShardLoc.Key()]; ok {
@@ -192,6 +204,8 @@ func (sub *chunkSubscriptions) moveToChunk(newChunkLoc ChunkXz, newLoc *AbsXyz) 
 	sub.unsubscribeFromChunks(delChunkLocs)
 
 	sub.curChunkLoc = newChunkLoc
+
+	return
 }
 
 func (sub *chunkSubscriptions) moveToShard(newShardLoc ShardXz) {

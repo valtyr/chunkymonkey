@@ -1,7 +1,8 @@
 // Defines interfaces for entities in the world (including pick up items,
 // mobs, players, and non-block objecs such as arrows in flight, boats and
 // minecarts.
-package object
+
+package gamerules
 
 import (
 	"io"
