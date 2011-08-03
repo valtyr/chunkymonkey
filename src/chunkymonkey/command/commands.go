@@ -29,7 +29,7 @@ const sayUsage = "say <message>"
 const sayDesc = "Broadcasts a message to all players without showing a player name. The message is colored pink."
 
 func cmdSay(player gamerules.IPlayerClient, message string, cmdHandler gamerules.IGame) {
-	args := strings.Split(message, " ", -1)
+	args := strings.Split(message, " ")
 	if len(args) < 2 {
 		player.EchoMessage(sayUsage)
 		return
@@ -45,7 +45,7 @@ const tpUsage = "tp <player1> <player2>"
 const tpDesc = "Teleports player1 to player2."
 
 func cmdTp(player gamerules.IPlayerClient, message string, cmdHandler gamerules.IGame) {
-	args := strings.Split(message, " ", -1)
+	args := strings.Split(message, " ")
 	if len(args) < 3 {
 		player.EchoMessage(tpUsage)
 		return
@@ -93,7 +93,7 @@ const tellUsage = "tell <player> <message>"
 const tellDesc = "Tells a player a message."
 
 func cmdTell(player gamerules.IPlayerClient, message string, cmdHandler gamerules.IGame) {
-	args := strings.Split(message, " ", -1)
+	args := strings.Split(message, " ")
 	if len(args) < 3 {
 		player.EchoMessage(tellUsage)
 		return
@@ -112,7 +112,7 @@ const helpDesc = "Shows a list of all commands."
 const msgUnknownCommand = "Command not available."
 
 func cmdHelp(player gamerules.IPlayerClient, message string, cmdFramework *CommandFramework, cmdHandler gamerules.IGame) {
-	args := strings.Split(message, " ", -1)
+	args := strings.Split(message, " ")
 	if len(args) > 2 {
 		player.EchoMessage(helpUsage)
 		return
@@ -147,7 +147,7 @@ const giveUsage = "give <player> <item ID> [<quantity> [<data>]]"
 const giveDesc = "Gives x amount of y items to player."
 
 func cmdGive(player gamerules.IPlayerClient, message string, cmdHandler gamerules.IGame) {
-	args := strings.Split(message, " ", -1)
+	args := strings.Split(message, " ")
 	if len(args) < 3 || len(args) > 5 {
 		player.EchoMessage(giveUsage)
 		return

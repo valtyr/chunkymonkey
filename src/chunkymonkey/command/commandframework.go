@@ -41,7 +41,7 @@ func (cf *CommandFramework) Process(player gamerules.IPlayerClient, message stri
 	if len(message) < 2 || message[0:len(cf.prefix)] != cf.prefix {
 		return
 	}
-	attr := strings.Split(message, " ", -1)
+	attr := strings.Split(message, " ")
 	trigger := attr[0][1:]
 	if cmd, ok := cf.cmds[trigger]; ok {
 		cmd.Callback(player, message, game)

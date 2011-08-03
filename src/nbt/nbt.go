@@ -449,7 +449,7 @@ func (c *Compound) Write(writer io.Writer) (err os.Error) {
 }
 
 func (c *Compound) Lookup(path string) (tag ITag) {
-	components := strings.Split(path, "/", 2)
+	components := strings.SplitN(path, "/", 2)
 	tag, ok := c.Tags[components[0]]
 	if !ok {
 		return nil
