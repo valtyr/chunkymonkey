@@ -157,7 +157,7 @@ func (world *WorldStore) WritePlayerData(user string, data *nbt.Compound) (err o
 		return
 	}
 
-	err = data.Write(gzipWriter)
+	err = nbt.Write(gzipWriter, data)
 	gzipWriter.Close()
 
 	return

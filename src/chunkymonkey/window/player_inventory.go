@@ -188,10 +188,10 @@ func (w *PlayerInventory) WriteNbt() nbt.ITag {
 		if !slot.IsEmpty() {
 			slots = append(slots, &nbt.Compound{
 				map[string]nbt.ITag{
-					"Slot":  &nbt.Byte{int8(i)},
-					"id":    &nbt.Short{int16(slot.ItemTypeId)},
-					"Count": &nbt.Byte{int8(slot.Count)},
-					"Data":  &nbt.Short{int16(slot.Data)},
+					"Slot":   &nbt.Byte{int8(i)},
+					"id":     &nbt.Short{int16(slot.ItemTypeId)},
+					"Count":  &nbt.Byte{int8(slot.Count)},
+					"Damage": &nbt.Short{int16(slot.Data)},
 				},
 			})
 		}
@@ -203,10 +203,10 @@ func (w *PlayerInventory) WriteNbt() nbt.ITag {
 		if !slot.IsEmpty() {
 			slots = append(slots, &nbt.Compound{
 				map[string]nbt.ITag{
-					"Slot":  &nbt.Byte{int8(i + playerInvHoldingNum)},
-					"id":    &nbt.Short{int16(slot.ItemTypeId)},
-					"Count": &nbt.Byte{int8(slot.Count)},
-					"Data":  &nbt.Short{int16(slot.Data)},
+					"Slot":   &nbt.Byte{int8(i + playerInvHoldingNum)},
+					"id":     &nbt.Short{int16(slot.ItemTypeId)},
+					"Count":  &nbt.Byte{int8(slot.Count)},
+					"Damage": &nbt.Short{int16(slot.Data)},
 				},
 			})
 		}
@@ -218,10 +218,10 @@ func (w *PlayerInventory) WriteNbt() nbt.ITag {
 		if !slot.IsEmpty() {
 			slots = append(slots, &nbt.Compound{
 				map[string]nbt.ITag{
-					"Slot":  &nbt.Byte{int8(i + 100)},
-					"id":    &nbt.Short{int16(slot.ItemTypeId)},
-					"Count": &nbt.Byte{int8(slot.Count)},
-					"Data":  &nbt.Short{int16(slot.Data)},
+					"Slot":   &nbt.Byte{int8(i + 100)},
+					"id":     &nbt.Short{int16(slot.ItemTypeId)},
+					"Count":  &nbt.Byte{int8(slot.Count)},
+					"Damage": &nbt.Short{int16(slot.Data)},
 				},
 			})
 		}
