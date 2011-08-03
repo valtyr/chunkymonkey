@@ -1,5 +1,4 @@
-// Defines interfaces for entities in the world (including pick up items,
-// mobs, players, and non-block objecs such as arrows in flight, boats and
+// Defines non-block movable objecs such as arrows in flight, boats and
 // minecarts.
 
 package gamerules
@@ -11,22 +10,10 @@ import (
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
-// ISpawn represents common elements to all types of entities that can be
-// present in a chunk.
-type IEntity interface {
-	GetEntityId() EntityId
-	SendSpawn(io.Writer) os.Error
-	SendUpdate(io.Writer) os.Error
-	Position() *AbsXyz
-}
-
-type INonPlayerEntity interface {
-	IEntity
-	SetEntityId(EntityId)
-	Tick(physics.IBlockQuerier) (leftBlock bool)
-}
+// TODO Object sub-types?
 
 type Object struct {
 	EntityId
@@ -35,13 +22,34 @@ type Object struct {
 	orientation OrientationBytes
 }
 
-func NewObject(objType ObjTypeId, position *AbsXyz, velocity *AbsVelocity) (object *Object) {
+func NewObject(objType ObjTypeId) (object *Object) {
 	object = &Object{
 		// TODO: proper orientation
 		orientation: OrientationBytes{0, 0, 0},
 	}
 	object.ObjTypeId = objType
-	object.PointObject.Init(position, velocity)
+	return
+}
+
+func (object *Object) ReadNbt(tag nbt.ITag) (err os.Error) {
+	if err = object.PointObject.ReadNbt(tag); err != nil {
+		return
+	}
+
+	var typeName string
+	if entityObjectId, ok := tag.Lookup("id").(*nbt.String); !ok {
+		return os.NewError("missing object type id")
+	} else {
+		typeName = entityObjectId.Value
+	}
+
+	var ok bool
+	if object.ObjTypeId, ok = ObjTypeMap[typeName]; !ok {
+		return os.NewError("unknown object type id")
+	}
+
+	// TODO load orientation
+
 	return
 }
 

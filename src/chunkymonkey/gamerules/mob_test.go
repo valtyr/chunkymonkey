@@ -20,7 +20,8 @@ func TestMobSpawn(t *testing.T) {
 		{
 			"pig",
 			func(writer *bytes.Buffer) os.Error {
-				m := NewPig(&types.AbsXyz{11, 70, -172}, &types.AbsVelocity{0, 0, 0}, &types.LookDegrees{})
+				m := NewPig()
+				m.PointObject.Init(&types.AbsXyz{11, 70, -172}, &types.AbsVelocity{0, 0, 0})
 				m.Mob.EntityId = 0x1234
 				m.SetBurning(true)
 				m.SetBurning(false)
@@ -48,7 +49,8 @@ func TestMobSpawn(t *testing.T) {
 			"creeper",
 			func(writer *bytes.Buffer) os.Error {
 				// Bogus position, changing below.
-				m := NewCreeper(&types.AbsXyz{11, 70, -172}, &types.AbsVelocity{}, &types.LookDegrees{})
+				m := NewCreeper()
+				m.PointObject.Init(&types.AbsXyz{11, 70, -172}, &types.AbsVelocity{})
 				m.Mob.EntityId = 0x5678
 				m.CreeperSetBlueAura()
 				m.SetBurning(true)

@@ -2,7 +2,6 @@ package shardserver
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"log"
 	"rand"
@@ -13,9 +12,6 @@ import (
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
 )
-
-var enableMobs = flag.Bool(
-	"enableMobs", false, "EXPERIMENTAL: spawn mobs.")
 
 // A chunk is slice of the world map.
 type Chunk struct {
@@ -424,22 +420,6 @@ func (chunk *Chunk) spawnTick() {
 			shardClient := chunk.shard.clientForShard(shardLoc)
 			if shardClient != nil {
 				shardClient.ReqTransferEntity(chunkLoc, e)
-			}
-		}
-	}
-
-	// XXX: Testing hack. If player is in a chunk with no mobs, spawn a pig.
-	if *enableMobs {
-		for _, playerData := range chunk.playersData {
-			loc := playerData.position.ToChunkXz()
-			if chunk.isSameChunk(&loc) {
-				ms := chunk.mobs()
-				if len(ms) == 0 {
-					log.Printf("%v.Tick: spawning a mob at %v", chunk, playerData.position)
-					m := gamerules.NewPig(&playerData.position, &AbsVelocity{5, 5, 5}, &LookDegrees{0, 0})
-					chunk.AddEntity(&m.Mob)
-				}
-				break
 			}
 		}
 	}

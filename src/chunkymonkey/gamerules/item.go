@@ -7,6 +7,7 @@ import (
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
 type Item struct {
@@ -28,6 +29,33 @@ func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *Ab
 	}
 	item.PointObject.Init(position, velocity)
 	return
+}
+
+func (item *Item) ReadNbt(tag nbt.ITag) (err os.Error) {
+	if err = item.PointObject.ReadNbt(tag); err != nil {
+		return
+	}
+
+	itemInfo, ok := tag.Lookup("Item").(*nbt.Compound)
+	if !ok {
+		return os.NewError("bad item data")
+	}
+
+	// Grab the basic item data
+	id, idOk := itemInfo.Lookup("id").(*nbt.Short)
+	count, countOk := itemInfo.Lookup("Count").(*nbt.Byte)
+	data, dataOk := itemInfo.Lookup("Damage").(*nbt.Short)
+	if !idOk || !countOk || !dataOk {
+		return os.NewError("bad item data")
+	}
+
+	item.Slot = Slot{
+		ItemTypeId: ItemTypeId(id.Value),
+		Count:      ItemCount(count.Value),
+		Data:       ItemData(data.Value),
+	}
+
+	return nil
 }
 
 func (item *Item) GetSlot() *Slot {

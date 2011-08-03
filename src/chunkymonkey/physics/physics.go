@@ -5,8 +5,10 @@ import (
 	"math"
 	"os"
 
+	"chunkymonkey/nbtutil"
 	"chunkymonkey/proto"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
 const (
@@ -58,6 +60,26 @@ func (obj *PointObject) Init(position *AbsXyz, velocity *AbsVelocity) {
 	obj.position = *position
 	obj.velocity = *velocity
 	obj.onGround = false
+}
+
+func (obj *PointObject) ReadNbt(tag nbt.ITag) (err os.Error) {
+	// Position within the chunk
+	if obj.position, err = nbtutil.ReadAbsXyz(tag, "Pos"); err != nil {
+		return
+	}
+	obj.LastSentPosition = *obj.position.ToAbsIntXyz()
+
+	// Motion
+	if obj.velocity, err = nbtutil.ReadAbsVelocity(tag, "Motion"); err != nil {
+		return
+	}
+	obj.LastSentVelocity = *obj.velocity.ToVelocity()
+
+	if onGround, ok := tag.Lookup("OnGround").(*nbt.Byte); ok {
+		obj.onGround = onGround.Value != 0
+	}
+
+	return nil
 }
 
 // Generates any packets needed to update clients as to the position and
