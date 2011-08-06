@@ -48,7 +48,7 @@ func (s *chunkStoreAlpha) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err 
 		return
 	}
 	defer gzipReader.Close()
-	reader, err = newChunkReader(gzipReader)
+	reader, err = newNbtChunkReader(gzipReader)
 	if err != nil {
 		return
 	}

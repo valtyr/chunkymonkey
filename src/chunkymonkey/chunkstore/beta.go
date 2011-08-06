@@ -147,7 +147,7 @@ func (cfr *regionFileReader) Close() {
 	cfr.file.Close()
 }
 
-func (cfr *regionFileReader) ReadChunkData(chunkLoc ChunkXz) (r *chunkReader, err os.Error) {
+func (cfr *regionFileReader) ReadChunkData(chunkLoc ChunkXz) (r *nbtChunkReader, err os.Error) {
 	offset := cfr.offsets.Offset(chunkLoc)
 
 	if !offset.IsPresent() {
@@ -181,7 +181,7 @@ func (cfr *regionFileReader) ReadChunkData(chunkLoc ChunkXz) (r *chunkReader, er
 	}
 	defer dataReader.Close()
 
-	r, err = newChunkReader(dataReader)
+	r, err = newNbtChunkReader(dataReader)
 
 	return
 }

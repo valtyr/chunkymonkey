@@ -11,52 +11,52 @@ import (
 )
 
 // Returned to chunks to pull their data from.
-type chunkReader struct {
+type nbtChunkReader struct {
 	chunkTag nbt.ITag
 }
 
 // Load a chunk from its NBT representation
-func newChunkReader(reader io.Reader) (r *chunkReader, err os.Error) {
+func newNbtChunkReader(reader io.Reader) (r *nbtChunkReader, err os.Error) {
 	chunkTag, err := nbt.Read(reader)
 	if err != nil {
 		return
 	}
 
-	r = &chunkReader{
+	r = &nbtChunkReader{
 		chunkTag: chunkTag,
 	}
 
 	return
 }
 
-func (r *chunkReader) ChunkLoc() ChunkXz {
+func (r *nbtChunkReader) ChunkLoc() ChunkXz {
 	return ChunkXz{
 		X: ChunkCoord(r.chunkTag.Lookup("Level/xPos").(*nbt.Int).Value),
 		Z: ChunkCoord(r.chunkTag.Lookup("Level/zPos").(*nbt.Int).Value),
 	}
 }
 
-func (r *chunkReader) Blocks() []byte {
+func (r *nbtChunkReader) Blocks() []byte {
 	return r.chunkTag.Lookup("Level/Blocks").(*nbt.ByteArray).Value
 }
 
-func (r *chunkReader) BlockData() []byte {
+func (r *nbtChunkReader) BlockData() []byte {
 	return r.chunkTag.Lookup("Level/Data").(*nbt.ByteArray).Value
 }
 
-func (r *chunkReader) BlockLight() []byte {
+func (r *nbtChunkReader) BlockLight() []byte {
 	return r.chunkTag.Lookup("Level/BlockLight").(*nbt.ByteArray).Value
 }
 
-func (r *chunkReader) SkyLight() []byte {
+func (r *nbtChunkReader) SkyLight() []byte {
 	return r.chunkTag.Lookup("Level/SkyLight").(*nbt.ByteArray).Value
 }
 
-func (r *chunkReader) HeightMap() []byte {
+func (r *nbtChunkReader) HeightMap() []byte {
 	return r.chunkTag.Lookup("Level/HeightMap").(*nbt.ByteArray).Value
 }
 
-func (r *chunkReader) Entities() (entities []gamerules.INonPlayerEntity) {
+func (r *nbtChunkReader) Entities() (entities []gamerules.INonPlayerEntity) {
 	entityListTag, ok := r.chunkTag.Lookup("Level/Entities").(*nbt.List)
 	if !ok {
 		return
@@ -85,6 +85,6 @@ func (r *chunkReader) Entities() (entities []gamerules.INonPlayerEntity) {
 	return
 }
 
-func (r *chunkReader) RootTag() nbt.ITag {
+func (r *nbtChunkReader) RootTag() nbt.ITag {
 	return r.chunkTag
 }
