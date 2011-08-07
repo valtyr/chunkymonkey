@@ -14,11 +14,6 @@ type ChunkReadResult struct {
 	Err    os.Error
 }
 
-type ChunkWriteResult struct {
-	Writer IChunkWriter
-	Err    os.Error
-}
-
 type IChunkStore interface {
 	// Serve() serves LoadChunk() requests in the foreground.
 	Serve()
@@ -59,6 +54,11 @@ type IChunkReader interface {
 	RootTag() nbt.ITag
 }
 
+// IChunkWriter is the interface for objects that accept chunk data and write
+// it. These are created by IChunkWriteableStore for use by a chunk to store a
+// snapshot of its current state into. The Set* functions make copies of the
+// data passed in, so that the original data structures passed in can be
+// modified upon return.
 type IChunkWriter interface {
 	// Sets the chunk location.
 	SetChunkLoc(loc ChunkXz)
@@ -81,8 +81,10 @@ type IChunkWriter interface {
 	// Sets a list of the entities (items, mobs) within the chunk.
 	Entities(entities []gamerules.INonPlayerEntity)
 
-	// Submits the set chunk data for writing.
-	Commit(result chan<- ChunkWriteResult)
+	// Submits the set chunk data for writing. The chunk writer must not be
+	// altered any further after calling this (i.e it is passed to another
+	// goroutine for processing).
+	Commit()
 }
 
 // Given the NamedTag for a level.dat, returns an appropriate
