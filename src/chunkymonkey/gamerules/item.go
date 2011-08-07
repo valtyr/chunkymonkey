@@ -18,6 +18,10 @@ type Item struct {
 	PickupImmunity Ticks
 }
 
+func NewBlankItem() INonPlayerEntity {
+	return new(Item)
+}
+
 func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *AbsXyz, velocity *AbsVelocity, pickupImmunity Ticks) (item *Item) {
 	item = &Item{
 		Slot: Slot{
@@ -56,6 +60,19 @@ func (item *Item) ReadNbt(tag nbt.ITag) (err os.Error) {
 	}
 
 	return nil
+}
+
+func (item *Item) WriteNbt() nbt.ITag {
+	tag := &nbt.Compound{map[string]nbt.ITag{
+		"id": &nbt.String{"Item"},
+		"Item": &nbt.Compound{map[string]nbt.ITag{
+			"id":     &nbt.Short{int16(item.ItemTypeId)},
+			"Count":  &nbt.Byte{int8(item.Count)},
+			"Damage": &nbt.Short{int16(item.Data)},
+		}},
+	}}
+	item.PointObject.WriteIntoNbt(tag)
+	return tag
 }
 
 func (item *Item) GetSlot() *Slot {

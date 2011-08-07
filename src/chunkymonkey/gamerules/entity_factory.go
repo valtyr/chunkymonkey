@@ -1,47 +1,41 @@
 package gamerules
 
-import (
-	. "chunkymonkey/types"
-)
+var EntityCreateByName = map[string]func() INonPlayerEntity{
+	// Pick-up items.
+	"Item": NewBlankItem,
+
+	// Mobs.
+	"Chicken":  NewHen,
+	"Cow":      NewCow,
+	"Creeper":  NewCreeper,
+	"Pig":      NewPig,
+	"Sheep":    NewSheep,
+	"Skeleton": NewSkeleton,
+	"Squid":    NewSquid,
+	"Spider":   NewSpider,
+	"Wolf":     NewWolf,
+	"Zombie":   NewZombie,
+
+	// "Objects".
+	"Boat":           NewBoat,
+	"Minecart":       NewMinecart,
+	"StorageCart":    NewStorageCart,
+	"PoweredCart":    NewPoweredCart,
+	"ActivatedTnt":   NewActivatedTnt,
+	"Arrow":          NewArrow,
+	"ThrownSnowball": NewThrownSnowball,
+	"ThrownEgg":      NewThrownEgg,
+	"FallingSand":    NewFallingSand,
+	"FallingGravel":  NewFallingGravel,
+	"FishingFloat":   NewFishingFloat,
+}
 
 // NewEntityByTypeName creates the appropriate entity type based on the input
 // string, e.g "Item" or "Zombie". Returns nil if typeName is unknown.
-func NewEntityByTypeName(typeName string) (entity INonPlayerEntity) {
-	switch typeName {
-	case "Item":
-		entity = new(Item)
-
-		// Mobs
-	case "Chicken":
-		entity = NewHen()
-	case "Cow":
-		entity = NewCow()
-	case "Creeper":
-		entity = NewCreeper()
-	case "Pig":
-		entity = NewPig()
-	case "Sheep":
-		entity = NewSheep()
-	case "Skeleton":
-		entity = NewSkeleton()
-	case "Squid":
-		entity = NewSquid()
-	case "Spider":
-		entity = NewSpider()
-	case "Wolf":
-		entity = NewWolf()
-	case "Zombie":
-		entity = NewZombie()
-
-		// Objects
-	default:
-		// Handle all other objects
-		if objType, ok := ObjTypeMap[typeName]; ok {
-			entity = NewObject(objType)
-		} else {
-			entity = nil
-		}
+func NewEntityByTypeName(typeName string) INonPlayerEntity {
+	if fn, ok := EntityCreateByName[typeName]; ok {
+		return fn()
 	}
 
-	return
+	return nil
 }

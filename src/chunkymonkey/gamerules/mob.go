@@ -52,11 +52,39 @@ func (mob *Mob) ReadNbt(tag nbt.ITag) (err os.Error) {
 	}
 
 	// TODO
-	_ = tag.Lookup("FallDistance").(*nbt.Float).Value
 	_ = tag.Lookup("Air").(*nbt.Short).Value
+	_ = tag.Lookup("AttackTime").(*nbt.Short).Value
+	_ = tag.Lookup("DeathTime").(*nbt.Short).Value
+	_ = tag.Lookup("FallDistance").(*nbt.Float).Value
 	_ = tag.Lookup("Fire").(*nbt.Short).Value
+	_ = tag.Lookup("Health").(*nbt.Short).Value
+	_ = tag.Lookup("HurtTime").(*nbt.Short).Value
 
 	return nil
+}
+
+func (mob *Mob) WriteNbt() nbt.ITag {
+	mobTypeName, ok := MobNameByType[mob.mobType]
+	if !ok {
+		return nil
+	}
+	tag := &nbt.Compound{map[string]nbt.ITag{
+		"id": &nbt.String{mobTypeName},
+		"Rotation": &nbt.List{nbt.TagFloat, []nbt.ITag{
+			&nbt.Float{float32(mob.look.Yaw)},
+			&nbt.Float{float32(mob.look.Pitch)},
+		}},
+		// TODO
+		"Air":          &nbt.Short{0},
+		"AttackTime":   &nbt.Short{0},
+		"DeathTime":    &nbt.Short{0},
+		"FallDistance": &nbt.Float{0},
+		"Fire":         &nbt.Short{0},
+		"Health":       &nbt.Short{0},
+		"HurtTime":     &nbt.Short{0},
+	}}
+	mob.PointObject.WriteIntoNbt(tag)
+	return tag
 }
 
 func (mob *Mob) SetLook(look LookDegrees) {
@@ -129,8 +157,8 @@ var (
 	creeperBlueAura = byte(1)
 )
 
-func NewCreeper() (c *Creeper) {
-	c = new(Creeper)
+func NewCreeper() INonPlayerEntity {
+	c := new(Creeper)
 	c.Mob.Init(CreeperType.Id)
 	c.Mob.metadata[17] = creeperNormal
 	c.Mob.metadata[16] = byte(255)
@@ -149,30 +177,30 @@ type Skeleton struct {
 	Mob
 }
 
-func NewSkeleton() (s *Skeleton) {
-	s = new(Skeleton)
+func NewSkeleton() INonPlayerEntity {
+	s := new(Skeleton)
 	s.Mob.Init(SkeletonType.Id)
-	return
+	return s
 }
 
 type Spider struct {
 	Mob
 }
 
-func NewSpider() (s *Spider) {
-	s = new(Spider)
+func NewSpider() INonPlayerEntity {
+	s := new(Spider)
 	s.Mob.Init(SpiderType.Id)
-	return
+	return s
 }
 
 type Zombie struct {
 	Mob
 }
 
-func NewZombie() (s *Zombie) {
-	s = new(Zombie)
-	s.Mob.Init(ZombieType.Id)
-	return
+func NewZombie() INonPlayerEntity {
+	z := new(Zombie)
+	z.Mob.Init(ZombieType.Id)
+	return z
 }
 
 // Passive mobs.
@@ -181,58 +209,58 @@ type Pig struct {
 	Mob
 }
 
-func NewPig() (p *Pig) {
-	p = new(Pig)
+func NewPig() INonPlayerEntity {
+	p := new(Pig)
 	p.Mob.Init(PigType.Id)
-	return
+	return p
 }
 
 type Sheep struct {
 	Mob
 }
 
-func NewSheep() (s *Sheep) {
-	s = new(Sheep)
+func NewSheep() INonPlayerEntity {
+	s := new(Sheep)
 	s.Mob.Init(SheepType.Id)
-	return
+	return s
 }
 
 type Cow struct {
 	Mob
 }
 
-func NewCow() (c *Cow) {
-	c = new(Cow)
+func NewCow() INonPlayerEntity {
+	c := new(Cow)
 	c.Mob.Init(CowType.Id)
-	return
+	return c
 }
 
 type Hen struct {
 	Mob
 }
 
-func NewHen() (h *Hen) {
-	h = new(Hen)
+func NewHen() INonPlayerEntity {
+	h := new(Hen)
 	h.Mob.Init(HenType.Id)
-	return
+	return h
 }
 
 type Squid struct {
 	Mob
 }
 
-func NewSquid() (s *Squid) {
-	s = new(Squid)
+func NewSquid() INonPlayerEntity {
+	s := new(Squid)
 	s.Mob.Init(SquidType.Id)
-	return
+	return s
 }
 
 type Wolf struct {
 	Mob
 }
 
-func NewWolf() (w *Wolf) {
-	w = new(Wolf)
+func NewWolf() INonPlayerEntity {
+	w := new(Wolf)
 	w.Mob.Init(WolfType.Id)
 	// TODO(nictuku): String with an optional owner's username.
 	w.Mob.metadata[17] = 0

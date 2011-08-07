@@ -1,4 +1,4 @@
-// Defines non-block movable objecs such as arrows in flight, boats and
+// Defines non-block movable objects such as arrows in flight, boats and
 // minecarts.
 
 package gamerules
@@ -44,13 +44,26 @@ func (object *Object) ReadNbt(tag nbt.ITag) (err os.Error) {
 	}
 
 	var ok bool
-	if object.ObjTypeId, ok = ObjTypeMap[typeName]; !ok {
+	if object.ObjTypeId, ok = ObjTypeByName[typeName]; !ok {
 		return os.NewError("unknown object type id")
 	}
 
 	// TODO load orientation
 
 	return
+}
+
+func (object *Object) WriteNbt() nbt.ITag {
+	objTypeName, ok := ObjNameByType[object.ObjTypeId]
+	if !ok {
+		return nil
+	}
+	tag := &nbt.Compound{map[string]nbt.ITag{
+		"id": &nbt.String{objTypeName},
+		// TODO unknown fields
+	}}
+	object.PointObject.WriteIntoNbt(tag)
+	return tag
 }
 
 func (object *Object) SendSpawn(writer io.Writer) (err os.Error) {
@@ -73,4 +86,49 @@ func (object *Object) SendUpdate(writer io.Writer) (err os.Error) {
 	err = object.PointObject.SendUpdate(writer, object.EntityId, &LookBytes{0, 0})
 
 	return
+}
+
+
+func NewBoat() INonPlayerEntity {
+	return NewObject(ObjTypeIdBoat)
+}
+
+func NewMinecart() INonPlayerEntity {
+	return NewObject(ObjTypeIdMinecart)
+}
+
+func NewStorageCart() INonPlayerEntity {
+	return NewObject(ObjTypeIdStorageCart)
+}
+
+func NewPoweredCart() INonPlayerEntity {
+	return NewObject(ObjTypeIdPoweredCart)
+}
+
+func NewActivatedTnt() INonPlayerEntity {
+	return NewObject(ObjTypeIdActivatedTnt)
+}
+
+func NewArrow() INonPlayerEntity {
+	return NewObject(ObjTypeIdArrow)
+}
+
+func NewThrownSnowball() INonPlayerEntity {
+	return NewObject(ObjTypeIdThrownSnowball)
+}
+
+func NewThrownEgg() INonPlayerEntity {
+	return NewObject(ObjTypeIdThrownEgg)
+}
+
+func NewFallingSand() INonPlayerEntity {
+	return NewObject(ObjTypeIdFallingSand)
+}
+
+func NewFallingGravel() INonPlayerEntity {
+	return NewObject(ObjTypeIdFallingGravel)
+}
+
+func NewFishingFloat() INonPlayerEntity {
+	return NewObject(ObjTypeIdFishingFloat)
 }

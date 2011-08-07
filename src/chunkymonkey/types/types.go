@@ -84,6 +84,26 @@ const (
 	MobTypeIdWolf         = EntityMobType(95)
 )
 
+var MobTypeByName = map[string]EntityMobType{
+	"Creeper":      MobTypeIdCreeper,
+	"Skeleton":     MobTypeIdSkeleton,
+	"Spider":       MobTypeIdSpider,
+	"GiantZombie":  MobTypeIdGiantZombie,
+	"Zombie":       MobTypeIdZombie,
+	"Slime":        MobTypeIdSlime,
+	"Ghast":        MobTypeIdGhast,
+	"ZombiePigman": MobTypeIdZombiePigman,
+	"Pig":          MobTypeIdPig,
+	"Sheep":        MobTypeIdSheep,
+	"Cow":          MobTypeIdCow,
+	"Hen":          MobTypeIdHen,
+	"Squid":        MobTypeIdSquid,
+	"Wolf":         MobTypeIdWolf,
+}
+
+// MobNameByType reverses the MobTypeByName mapping, initialized in init().
+var MobNameByType = map[EntityMobType]string{}
+
 type EntityStatus byte
 
 type EntityAnimation byte
@@ -120,7 +140,7 @@ const (
 	ObjTypeIdFishingFloat   = ObjTypeId(90)
 )
 
-var ObjTypeMap = map[string]ObjTypeId{
+var ObjTypeByName = map[string]ObjTypeId{
 	"Boat":           ObjTypeIdBoat,
 	"Minecart":       ObjTypeIdMinecart,
 	"StorageCart":    ObjTypeIdStorageCart,
@@ -133,6 +153,9 @@ var ObjTypeMap = map[string]ObjTypeId{
 	"FallingGravel":  ObjTypeIdFallingGravel,
 	"FishingFloat":   ObjTypeIdFishingFloat,
 }
+
+// ObjNameByType reverses ObjTypeByName (initialized in init()).
+var ObjNameByType = map[ObjTypeId]string{}
 
 type PaintingTypeId int32
 
@@ -754,3 +777,13 @@ const (
 	// Client should initialise the chunk
 	ChunkInit = ChunkLoadMode(1)
 )
+
+func init() {
+	// Create reverse mappings.
+	for name, type_ := range ObjTypeByName {
+		ObjNameByType[type_] = name
+	}
+	for name, type_ := range MobTypeByName {
+		MobNameByType[type_] = name
+	}
+}

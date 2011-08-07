@@ -82,6 +82,27 @@ func (obj *PointObject) ReadNbt(tag nbt.ITag) (err os.Error) {
 	return nil
 }
 
+func (obj *PointObject) WriteIntoNbt(tag *nbt.Compound) {
+	var onGround int8
+	if obj.onGround {
+		onGround = 1
+	}
+
+	tag.Tags["Pos"] = &nbt.List{nbt.TagDouble, []nbt.ITag{
+		&nbt.Double{float64(obj.position.X)},
+		&nbt.Double{float64(obj.position.Y)},
+		&nbt.Double{float64(obj.position.Z)},
+	}}
+
+	tag.Tags["Motion"] = &nbt.List{nbt.TagDouble, []nbt.ITag{
+		&nbt.Double{float64(obj.velocity.X)},
+		&nbt.Double{float64(obj.velocity.Y)},
+		&nbt.Double{float64(obj.velocity.Z)},
+	}}
+
+	tag.Tags["OnGround"] = &nbt.Byte{onGround}
+}
+
 // Generates any packets needed to update clients as to the position and
 // velocity of the object.
 // It assumes that the clients have either been sent packets via this method

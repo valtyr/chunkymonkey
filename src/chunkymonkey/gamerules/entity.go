@@ -24,6 +24,9 @@ type IEntity interface {
 type INonPlayerEntity interface {
 	IEntity
 	ReadNbt(nbt.ITag) os.Error
+	// WriteNbt creates an NBT tag representing the entity. This can be nil if
+	// the entity cannot be serialized.
+	WriteNbt() nbt.ITag
 	SetEntityId(EntityId)
 	Tick(physics.IBlockQuerier) (leftBlock bool)
 }
