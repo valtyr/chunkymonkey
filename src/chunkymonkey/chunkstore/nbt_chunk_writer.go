@@ -15,7 +15,7 @@ func cloneByteArray(in []byte) []byte {
 type nbtChunkWriter struct {
 	// commitChan is used to submit the chunk writer when the Commit method is
 	// called.
-	commitChan chan<-*nbtChunkWriter
+	commitChan chan<- IChunkWriter
 
 	loc ChunkXz
 
@@ -23,22 +23,22 @@ type nbtChunkWriter struct {
 	chunkTag *nbt.Compound
 }
 
-func newNbtChunkWriter(commitChan chan<- *nbtChunkWriter) *nbtChunkWriter {
+func newNbtChunkWriter(commitChan chan<- IChunkWriter) *nbtChunkWriter {
 	chunkWriter := &nbtChunkWriter{
 		commitChan: commitChan,
-		chunkTag:   &nbt.Compound{map[string]nbt.ITag{
+		chunkTag: &nbt.Compound{map[string]nbt.ITag{
 			"Level": &nbt.Compound{map[string]nbt.ITag{
-				"Entities": &nbt.List{nbt.TagCompound, nil},
-				"TileEntities": &nbt.List{nbt.TagCompound, nil}, // TODO
-				"Blocks": &nbt.ByteArray{},
-				"Data": &nbt.ByteArray{},
-				"HeightMap": &nbt.ByteArray{},
-				"SkyLight": &nbt.ByteArray{},
-				"BlockLight": &nbt.ByteArray{},
-				"LastUpdate": &nbt.Long{0}, // TODO
+				"Entities":         &nbt.List{nbt.TagCompound, nil},
+				"TileEntities":     &nbt.List{nbt.TagCompound, nil}, // TODO
+				"Blocks":           &nbt.ByteArray{},
+				"Data":             &nbt.ByteArray{},
+				"HeightMap":        &nbt.ByteArray{},
+				"SkyLight":         &nbt.ByteArray{},
+				"BlockLight":       &nbt.ByteArray{},
+				"LastUpdate":       &nbt.Long{0}, // TODO
 				"TerrainPopulated": &nbt.Byte{1}, // TODO
-				"xPos": &nbt.Int{0},
-				"zPos": &nbt.Int{0},
+				"xPos":             &nbt.Int{0},
+				"zPos":             &nbt.Int{0},
 			}},
 		}},
 	}
@@ -87,5 +87,5 @@ func (w *nbtChunkWriter) Entities(entities []gamerules.INonPlayerEntity) {
 }
 
 func (w *nbtChunkWriter) Commit() {
-	w.commitChan<- w
+	w.commitChan <- w
 }

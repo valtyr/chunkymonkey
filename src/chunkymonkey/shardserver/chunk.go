@@ -29,6 +29,7 @@ type Chunk struct {
 	subscribers  map[EntityId]gamerules.IPlayerClient   // Players getting updates from the chunk.
 	playersData  map[EntityId]*playerData               // Some player data for player(s) in the chunk.
 	onUnsub      map[EntityId][]gamerules.IUnsubscribed // Functions to be called when unsubscribed.
+	storeDirty   bool                                   // Is the chunk store copy of this chunk dirty?
 
 	activeBlocks    map[BlockIndex]bool // Blocks that need to "tick".
 	newActiveBlocks map[BlockIndex]bool // Blocks added as active for next "tick".
@@ -50,15 +51,30 @@ func newChunkFromReader(reader chunkstore.IChunkReader, shard *ChunkShard) (chun
 		subscribers: make(map[EntityId]gamerules.IPlayerClient),
 		playersData: make(map[EntityId]*playerData),
 		onUnsub:     make(map[EntityId][]gamerules.IUnsubscribed),
+		storeDirty:  false,
 
 		activeBlocks:    make(map[BlockIndex]bool),
 		newActiveBlocks: make(map[BlockIndex]bool),
 		tickAll:         true,
 	}
 
-	chunk.addEntities(reader.Entities())
+	entities := reader.Entities()
+	for _, entity := range entities {
+		entityId := chunk.shard.entityMgr.NewEntity()
+		entity.SetEntityId(entityId)
+		chunk.entities[entityId] = entity
+	}
+
+	// TODO Load tile entities. Should rename
+	// Chunk.blockExtra->Chunk.TileEntities.
 
 	return
+}
+
+func (chunk *Chunk) save() {
+	if chunk.storeDirty {
+		// TODO
+	}
 }
 
 func (chunk *Chunk) String() string {
@@ -70,6 +86,9 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 
 	// Invalidate cached packet.
 	chunk.cachedPacket = nil
+
+	// Invalidate currently stored chunk data.
+	chunk.storeDirty = true
 
 	index.SetBlockId(chunk.blocks, blockType)
 	index.SetBlockData(chunk.blockData, blockData)
@@ -112,6 +131,7 @@ func (chunk *Chunk) ItemType(itemTypeId ItemTypeId) (itemType *gamerules.ItemTyp
 // Tells the chunk to take posession of the item/mob from another chunk.
 func (chunk *Chunk) transferEntity(s gamerules.INonPlayerEntity) {
 	chunk.entities[s.GetEntityId()] = s
+	chunk.storeDirty = true
 }
 
 // AddEntity creates a mob or item in this chunk and notifies all chunk
@@ -125,6 +145,8 @@ func (chunk *Chunk) AddEntity(s gamerules.INonPlayerEntity) {
 	buf := &bytes.Buffer{}
 	s.SendSpawn(buf)
 	chunk.reqMulticastPlayers(-1, buf.Bytes())
+
+	chunk.storeDirty = true
 }
 
 func (chunk *Chunk) removeEntity(s gamerules.INonPlayerEntity) {
@@ -135,6 +157,8 @@ func (chunk *Chunk) removeEntity(s gamerules.INonPlayerEntity) {
 	buf := new(bytes.Buffer)
 	proto.WriteEntityDestroy(buf, e)
 	chunk.reqMulticastPlayers(-1, buf.Bytes())
+
+	chunk.storeDirty = true
 }
 
 func (chunk *Chunk) BlockExtra(index BlockIndex) interface{} {
@@ -146,6 +170,7 @@ func (chunk *Chunk) BlockExtra(index BlockIndex) interface{} {
 
 func (chunk *Chunk) SetBlockExtra(index BlockIndex, extra interface{}) {
 	chunk.blockExtra[index] = extra, extra != nil
+	chunk.storeDirty = true
 }
 
 func (chunk *Chunk) getBlockIndexByBlockXyz(blockLoc *BlockXyz) (index BlockIndex, subLoc *SubChunkXyz, ok bool) {
@@ -431,6 +456,8 @@ func (chunk *Chunk) spawnTick() {
 			}
 		}
 	}
+
+	chunk.storeDirty = true
 }
 
 // blockTick runs any blocks that need to do something each tick.
@@ -464,6 +491,8 @@ func (chunk *Chunk) blockTick() {
 			chunk.activeBlocks[blockIndex] = false, false
 		}
 	}
+
+	chunk.storeDirty = true
 }
 
 // blockTickAll runs a "Tick" for all blocks within the chunk
@@ -728,12 +757,4 @@ func (chunk *Chunk) sendUpdate() {
 
 func (chunk *Chunk) isSameChunk(otherChunkLoc *ChunkXz) bool {
 	return otherChunkLoc.X == chunk.loc.X && otherChunkLoc.Z == chunk.loc.Z
-}
-
-func (chunk *Chunk) addEntities(entities []gamerules.INonPlayerEntity) {
-	for _, entity := range entities {
-		entityId := chunk.shard.entityMgr.NewEntity()
-		entity.SetEntityId(entityId)
-		chunk.entities[entityId] = entity
-	}
 }

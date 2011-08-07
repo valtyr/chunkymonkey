@@ -39,7 +39,22 @@ func newChunkStoreBeta(worldPath string, dimension DimensionId) *chunkStoreBeta 
 	return s
 }
 
-func (s *chunkStoreBeta) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
+func (s *chunkStoreBeta) SupportsWrite() bool {
+	// TODO Add support.
+	return false
+}
+
+func (s *chunkStoreBeta) Writer() IChunkWriter {
+	// TODO Add support.
+	return nil
+}
+
+func (s *chunkStoreBeta) WriteChunk(writer IChunkWriter) os.Error {
+	// TODO Add support.
+	return os.NewError("writes not supported")
+}
+
+func (s *chunkStoreBeta) ReadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
 	regionLoc := regionLocForChunkXz(chunkLoc)
 
 	var cfr *regionFileReader

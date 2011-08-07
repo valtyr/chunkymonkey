@@ -11,20 +11,22 @@ import (
 // persistant store first, then fall back to generating a chunk if the
 // persistant store does not have it. MultiStore implements IChunkStore.
 type MultiStore struct {
-	stores []IChunkStore
+	readStores []IChunkStore
+	writeStore IChunkStore
 }
 
-func NewMultiStore(stores []IChunkStore) *MultiStore {
+func NewMultiStore(readStores []IChunkStore, writeStore IChunkStore) *MultiStore {
 	s := &MultiStore{
-		stores: stores,
+		readStores: readStores,
+		writeStore: writeStore,
 	}
 
 	return s
 }
 
-func (s *MultiStore) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
-	for _, store := range s.stores {
-		result := <-store.LoadChunk(chunkLoc)
+func (s *MultiStore) ReadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
+	for _, store := range s.readStores {
+		result := <-store.ReadChunk(chunkLoc)
 
 		if result.Err == nil {
 			return result.Reader, result.Err
@@ -38,4 +40,23 @@ func (s *MultiStore) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Er
 	}
 
 	return nil, NoSuchChunkError(false)
+}
+
+func (s *MultiStore) SupportsWrite() bool {
+	return s.writeStore != nil && s.writeStore.SupportsWrite()
+}
+
+func (s *MultiStore) Writer() IChunkWriter {
+	if s.writeStore != nil {
+		return s.writeStore.Writer()
+	}
+	return nil
+}
+
+func (s *MultiStore) WriteChunk(writer IChunkWriter) os.Error {
+	if s.writeStore == nil {
+		return os.NewError("writes not supported")
+	}
+	s.writeStore.WriteChunk(writer)
+	return nil
 }

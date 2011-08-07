@@ -15,16 +15,13 @@ type ChunkReadResult struct {
 }
 
 type IChunkStore interface {
-	// Serve() serves LoadChunk() requests in the foreground.
+	// Serve() serves requests in the foreground.
 	Serve()
 
-	LoadChunk(chunkLoc ChunkXz) (result <-chan ChunkReadResult)
-}
-
-type IChunkWriteableStore interface {
-	IChunkStore
-
+	ReadChunk(chunkLoc ChunkXz) (result <-chan ChunkReadResult)
+	SupportsWrite() bool
 	Writer() IChunkWriter
+	WriteChunk(writer IChunkWriter)
 }
 
 type IChunkReader interface {
@@ -60,6 +57,9 @@ type IChunkReader interface {
 // data passed in, so that the original data structures passed in can be
 // modified upon return.
 type IChunkWriter interface {
+	// Returns the chunk location.
+	ChunkLoc() ChunkXz
+
 	// Sets the chunk location.
 	SetChunkLoc(loc ChunkXz)
 

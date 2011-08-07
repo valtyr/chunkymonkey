@@ -57,11 +57,13 @@ func LoadWorldStore(worldPath string) (world *WorldStore, err os.Error) {
 	}
 
 	var chunkStores []chunkstore.IChunkStore
-	persistantChunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, levelData, DimensionNormal)
-	if err != nil {
-		return
+
+	if persistantChunkStore, err := chunkstore.ChunkStoreForLevel(worldPath, levelData, DimensionNormal); err != nil {
+		return nil, err
+	} else {
+		service := chunkstore.NewChunkService(persistantChunkStore)
+		chunkStores = append(chunkStores, service)
 	}
-	chunkStores = append(chunkStores, chunkstore.NewChunkService(persistantChunkStore))
 
 	var seed int64
 	if seedNbt, ok := levelData.Lookup("Data/RandomSeed").(*nbt.Long); ok {

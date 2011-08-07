@@ -27,7 +27,7 @@ import (
 var validPlayerUsername = regexp.MustCompile(`^[\-a-zA-Z0-9_]+$`)
 
 type Game struct {
-	chunkManager  *shardserver.LocalShardManager
+	shardManager  *shardserver.LocalShardManager
 	entityManager EntityManager
 	worldStore    *worldstore.WorldStore
 
@@ -67,7 +67,7 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 	game.serverId = fmt.Sprintf("%016x", rand.NewSource(worldStore.Seed).Int63())
 	//game.serverId = "-"
 
-	game.chunkManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, &game.entityManager)
+	game.shardManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, worldStore.ChunkWriteableStore, &game.entityManager)
 
 	// TODO: Load the prefix from a config file
 	gamerules.CommandFramework = command.NewCommandFramework("/")
@@ -203,7 +203,7 @@ func (game *Game) login(conn net.Conn) {
 		return
 	}
 
-	player := player.NewPlayer(entityId, game.chunkManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect, game)
+	player := player.NewPlayer(entityId, game.shardManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect, game)
 	if playerData != nil {
 		if err = player.ReadNbt(playerData); err != nil {
 			// Don't let the player log in, as they will only have default inventory

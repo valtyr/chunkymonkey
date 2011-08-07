@@ -13,6 +13,8 @@ import (
 
 const chunksPerShard = ShardSize * ShardSize
 
+const ticksBetweenSaves = TicksPerSecond * 60 * 5
+
 // chunkXzToChunkIndex assumes that locDelta is offset relative to the shard
 // origin.
 func chunkXzToChunkIndex(locDelta *ChunkXz) int {
@@ -29,7 +31,9 @@ type ChunkShard struct {
 	originChunkLoc   ChunkXz // The lowest X and Z located chunk in the shard.
 	chunks           [chunksPerShard]*Chunk
 	requests         chan iShardRequest
-	ticksSinceUpdate int
+	ticksSinceUpdate Ticks
+	ticksSinceSave   Ticks
+	saveChunks       bool
 
 	newActiveBlocks []BlockXyz
 	newActiveShards map[uint64]*destActiveShard
@@ -47,6 +51,10 @@ func NewChunkShard(shardConnecter gamerules.IShardConnecter, chunkStore chunksto
 		originChunkLoc:   loc.ToChunkXz(),
 		requests:         make(chan iShardRequest, 256),
 		ticksSinceUpdate: 0,
+		saveChunks:       chunkStore.SupportsWrite(),
+
+		// Offset shard saves.
+		ticksSinceSave: (31 * Ticks(loc.Key())) % ticksBetweenSaves,
 
 		newActiveShards: make(map[uint64]*destActiveShard),
 
@@ -90,6 +98,18 @@ func (shard *ChunkShard) tick() {
 			}
 		}
 		shard.ticksSinceUpdate = 0
+	}
+
+	if shard.saveChunks && shard.chunkStore.SupportsWrite() {
+		shard.ticksSinceSave++
+		if shard.ticksSinceSave > ticksBetweenSaves {
+			// TODO Stagger the per-chunk saves over multiple ticks.
+			for _, chunk := range shard.chunks {
+				if chunk != nil {
+					chunk.save()
+				}
+			}
+		}
 	}
 
 	shard.transferActiveBlocks()
@@ -249,7 +269,7 @@ func (shard *ChunkShard) chunkAt(loc ChunkXz) *Chunk {
 // loc - The absolute world position of the chunk.
 // locDelta - The relative position of the chunk within the shard.
 func (shard *ChunkShard) loadChunk(loc ChunkXz, locDelta ChunkXz) *Chunk {
-	chunkResult := <-shard.chunkStore.LoadChunk(loc)
+	chunkResult := <-shard.chunkStore.ReadChunk(loc)
 	chunkReader, err := chunkResult.Reader, chunkResult.Err
 	if err != nil {
 		if _, ok := err.(chunkstore.NoSuchChunkError); !ok {

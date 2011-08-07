@@ -33,7 +33,22 @@ func (s *chunkStoreAlpha) chunkPath(chunkLoc ChunkXz) string {
 		"c."+base36Encode(int32(chunkLoc.X))+"."+base36Encode(int32(chunkLoc.Z))+".dat")
 }
 
-func (s *chunkStoreAlpha) LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
+func (s *chunkStoreAlpha) SupportsWrite() bool {
+	// TODO Add support.
+	return false
+}
+
+func (s *chunkStoreAlpha) Writer() IChunkWriter {
+	// TODO Add support.
+	return nil
+}
+
+func (s *chunkStoreAlpha) WriteChunk(writer IChunkWriter) os.Error {
+	// TODO Add support.
+	return os.NewError("writes not supported")
+}
+
+func (s *chunkStoreAlpha) ReadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
 	file, err := os.Open(s.chunkPath(chunkLoc))
 	if err != nil {
 		if errno, ok := util.Errno(err); ok && errno == os.ENOENT {

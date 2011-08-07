@@ -123,7 +123,19 @@ func NewTestGenerator(seed int64) *TestGenerator {
 	}
 }
 
-func (gen *TestGenerator) LoadChunk(chunkLoc ChunkXz) (reader chunkstore.IChunkReader, err os.Error) {
+func (s *TestGenerator) SupportsWrite() bool {
+	return false
+}
+
+func (s *TestGenerator) Writer() chunkstore.IChunkWriter {
+	return nil
+}
+
+func (s *TestGenerator) WriteChunk(writer chunkstore.IChunkWriter) os.Error {
+	return os.NewError("writes not supported by TestGenerator")
+}
+
+func (gen *TestGenerator) ReadChunk(chunkLoc ChunkXz) (reader chunkstore.IChunkReader, err os.Error) {
 	baseBlockXyz := chunkLoc.ChunkCornerBlockXY()
 
 	baseX, baseZ := baseBlockXyz.X, baseBlockXyz.Z

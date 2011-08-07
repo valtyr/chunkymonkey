@@ -1,49 +1,72 @@
 package chunkstore
 
 import (
+	"log"
 	"os"
 
 	. "chunkymonkey/types"
 )
 
-type request struct {
+type readRequest struct {
 	chunkLoc     ChunkXz
 	responseChan chan<- ChunkReadResult
 }
 
 type IChunkStoreForeground interface {
-	LoadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error)
+	ReadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error)
+	SupportsWrite() bool
+	Writer() IChunkWriter
+	WriteChunk(writer IChunkWriter) os.Error
 }
 
 // ChunkService adapts an IChunkStoreForeground (which can only be accessed
 // from one goroutine) to an IChunkStore.
 type ChunkService struct {
-	store    IChunkStoreForeground
-	requests chan request
+	store  IChunkStoreForeground
+	reads  chan readRequest
+	writes chan IChunkWriter
 }
 
 func NewChunkService(store IChunkStoreForeground) (s *ChunkService) {
 	return &ChunkService{
-		store:    store,
-		requests: make(chan request),
+		store:  store,
+		reads:  make(chan readRequest),
+		writes: make(chan IChunkWriter),
 	}
 }
 
 func (s *ChunkService) Serve() {
 	for {
-		request := <-s.requests
-		reader, err := s.store.LoadChunk(request.chunkLoc)
-		request.responseChan <- ChunkReadResult{reader, err}
+		select {
+		case request := <-s.reads:
+			reader, err := s.store.ReadChunk(request.chunkLoc)
+			request.responseChan <- ChunkReadResult{reader, err}
+		case writer := <-s.writes:
+			err := s.store.WriteChunk(writer)
+			log.Printf("Could not write chunk at %#v: %v", writer.ChunkLoc(), err)
+		}
 	}
 }
 
-func (s *ChunkService) LoadChunk(chunkLoc ChunkXz) <-chan ChunkReadResult {
+func (s *ChunkService) ReadChunk(chunkLoc ChunkXz) <-chan ChunkReadResult {
 	responseChan := make(chan ChunkReadResult)
 
-	s.requests <- request{
+	s.reads <- readRequest{
 		chunkLoc:     chunkLoc,
 		responseChan: responseChan,
 	}
 
 	return responseChan
+}
+
+func (s *ChunkService) SupportsWrite() bool {
+	return s.store.SupportsWrite()
+}
+
+func (s *ChunkService) Writer() IChunkWriter {
+	return s.store.Writer()
+}
+
+func (s *ChunkService) WriteChunk(writer IChunkWriter) {
+	s.writes <- writer
 }
