@@ -152,11 +152,10 @@ func (world *WorldStore) WritePlayerData(user string, data *nbt.Compound) (err o
 
 	filename := path.Join(world.WorldPath, "players", user+".dat")
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
-	defer file.Close()
-
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	gzipWriter, err := gzip.NewWriter(file)
 	if err != nil {
