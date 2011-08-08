@@ -16,6 +16,6 @@ func Benchmark_TestGenerator_generate(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Generate a good sweep of different chunks, but don't go off forever.
 		loc.X = ChunkCoord(i & 0xffff)
-		gen.LoadChunk(loc)
+		gen.ReadChunk(loc)
 	}
 }

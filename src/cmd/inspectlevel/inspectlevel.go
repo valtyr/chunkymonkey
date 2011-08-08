@@ -108,7 +108,7 @@ func cmdChunk(args []string) (err os.Error) {
 		return
 	}
 
-	chunkResult := <-store.LoadChunk(chunkLoc)
+	chunkResult := <-store.ReadChunk(chunkLoc)
 	if chunkResult.Err != nil {
 		return chunkResult.Err
 	}

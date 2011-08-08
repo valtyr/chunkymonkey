@@ -21,6 +21,9 @@ type IChunkStore interface {
 	ReadChunk(chunkLoc ChunkXz) (result <-chan ChunkReadResult)
 	SupportsWrite() bool
 	Writer() IChunkWriter
+
+	// Submits the set chunk data for writing. The chunk writer must not be
+	// altered any further after calling this.
 	WriteChunk(writer IChunkWriter)
 }
 
@@ -80,11 +83,6 @@ type IChunkWriter interface {
 
 	// Sets a list of the entities (items, mobs) within the chunk.
 	Entities(entities []gamerules.INonPlayerEntity)
-
-	// Submits the set chunk data for writing. The chunk writer must not be
-	// altered any further after calling this (i.e it is passed to another
-	// goroutine for processing).
-	Commit()
 }
 
 // Given the NamedTag for a level.dat, returns an appropriate

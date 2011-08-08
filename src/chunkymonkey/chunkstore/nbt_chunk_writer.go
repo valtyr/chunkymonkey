@@ -85,7 +85,3 @@ func (w *nbtChunkWriter) Entities(entities []gamerules.INonPlayerEntity) {
 	}
 	w.chunkTag.Lookup("Level/Entities").(*nbt.List).Value = entitiesNbt
 }
-
-func (w *nbtChunkWriter) Commit() {
-	w.commitChan <- w
-}

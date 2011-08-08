@@ -67,7 +67,7 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 	game.serverId = fmt.Sprintf("%016x", rand.NewSource(worldStore.Seed).Int63())
 	//game.serverId = "-"
 
-	game.shardManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, worldStore.ChunkWriteableStore, &game.entityManager)
+	game.shardManager = shardserver.NewLocalShardManager(worldStore.ChunkStore, &game.entityManager)
 
 	// TODO: Load the prefix from a config file
 	gamerules.CommandFramework = command.NewCommandFramework("/")
