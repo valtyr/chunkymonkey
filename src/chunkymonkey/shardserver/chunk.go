@@ -71,9 +71,17 @@ func newChunkFromReader(reader chunkstore.IChunkReader, shard *ChunkShard) (chun
 	return
 }
 
-func (chunk *Chunk) save() {
+func (chunk *Chunk) save(chunkStore chunkstore.IChunkStore) {
 	if chunk.storeDirty {
-		// TODO
+		writer := chunkStore.Writer()
+		writer.SetChunkLoc(chunk.loc)
+		writer.SetBlocks(chunk.blocks)
+		writer.SetBlockData(chunk.blockData)
+		writer.SetBlockLight(chunk.blockLight)
+		writer.SetSkyLight(chunk.skyLight)
+		writer.SetHeightMap(chunk.heightMap)
+		writer.SetEntities(chunk.entities)
+		chunkStore.WriteChunk(writer)
 	}
 }
 

@@ -73,16 +73,16 @@ type IChunkWriter interface {
 	SetBlockData(blockData []byte)
 
 	// Sets the block light data in the chunk.
-	BlockLight(blockLight []byte)
+	SetBlockLight(blockLight []byte)
 
 	// Sets the sky light data in the chunk.
-	SkyLight(skyLight []byte)
+	SetSkyLight(skyLight []byte)
 
 	// Sets the height map data in the chunk.
-	HeightMap(heightMap []byte)
+	SetHeightMap(heightMap []byte)
 
 	// Sets a list of the entities (items, mobs) within the chunk.
-	Entities(entities []gamerules.INonPlayerEntity)
+	SetEntities(entities map[EntityId]gamerules.INonPlayerEntity)
 }
 
 // Given the NamedTag for a level.dat, returns an appropriate

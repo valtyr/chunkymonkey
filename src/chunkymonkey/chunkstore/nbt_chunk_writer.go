@@ -13,19 +13,14 @@ func cloneByteArray(in []byte) []byte {
 }
 
 type nbtChunkWriter struct {
-	// commitChan is used to submit the chunk writer when the Commit method is
-	// called.
-	commitChan chan<- IChunkWriter
-
 	loc ChunkXz
 
 	// The NBT structure created.
 	chunkTag *nbt.Compound
 }
 
-func newNbtChunkWriter(commitChan chan<- IChunkWriter) *nbtChunkWriter {
-	chunkWriter := &nbtChunkWriter{
-		commitChan: commitChan,
+func newNbtChunkWriter() *nbtChunkWriter {
+	return &nbtChunkWriter{
 		chunkTag: &nbt.Compound{map[string]nbt.ITag{
 			"Level": &nbt.Compound{map[string]nbt.ITag{
 				"Entities":         &nbt.List{nbt.TagCompound, nil},
@@ -42,7 +37,6 @@ func newNbtChunkWriter(commitChan chan<- IChunkWriter) *nbtChunkWriter {
 			}},
 		}},
 	}
-	return chunkWriter
 }
 
 func (w *nbtChunkWriter) ChunkLoc() ChunkXz {
@@ -63,22 +57,22 @@ func (w *nbtChunkWriter) SetBlockData(blockData []byte) {
 	w.chunkTag.Lookup("Level/Data").(*nbt.ByteArray).Value = cloneByteArray(blockData)
 }
 
-func (w *nbtChunkWriter) BlockLight(blockLight []byte) {
+func (w *nbtChunkWriter) SetBlockLight(blockLight []byte) {
 	w.chunkTag.Lookup("Level/BlockLight").(*nbt.ByteArray).Value = cloneByteArray(blockLight)
 }
 
-func (w *nbtChunkWriter) SkyLight(skyLight []byte) {
+func (w *nbtChunkWriter) SetSkyLight(skyLight []byte) {
 	w.chunkTag.Lookup("Level/SkyLight").(*nbt.ByteArray).Value = cloneByteArray(skyLight)
 }
 
-func (w *nbtChunkWriter) HeightMap(heightMap []byte) {
+func (w *nbtChunkWriter) SetHeightMap(heightMap []byte) {
 	w.chunkTag.Lookup("Level/HeightMap").(*nbt.ByteArray).Value = cloneByteArray(heightMap)
 }
 
-func (w *nbtChunkWriter) Entities(entities []gamerules.INonPlayerEntity) {
+func (w *nbtChunkWriter) SetEntities(entities map[EntityId]gamerules.INonPlayerEntity) {
 	entitiesNbt := make([]nbt.ITag, 0, len(entities))
-	for i := range entities {
-		nbtData := entities[i].WriteNbt()
+	for _, entity := range entities {
+		nbtData := entity.WriteNbt()
 		if nbtData != nil {
 			entitiesNbt = append(entitiesNbt, nbtData)
 		}

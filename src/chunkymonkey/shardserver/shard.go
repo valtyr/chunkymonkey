@@ -13,6 +13,7 @@ import (
 
 const chunksPerShard = ShardSize * ShardSize
 
+// TODO Allow configuration of this.
 const ticksBetweenSaves = TicksPerSecond * 60 * 5
 
 // chunkXzToChunkIndex assumes that locDelta is offset relative to the shard
@@ -106,7 +107,7 @@ func (shard *ChunkShard) tick() {
 			// TODO Stagger the per-chunk saves over multiple ticks.
 			for _, chunk := range shard.chunks {
 				if chunk != nil {
-					chunk.save()
+					chunk.save(shard.chunkStore)
 				}
 			}
 		}
