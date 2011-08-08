@@ -8,6 +8,7 @@ import (
 
 	. "chunkymonkey/types"
 	"chunkymonkey/util"
+	"nbt"
 )
 
 type chunkStoreAlpha struct {
@@ -31,21 +32,6 @@ func (s *chunkStoreAlpha) chunkPath(chunkLoc ChunkXz) string {
 		base36Encode(int32(chunkLoc.X&63)),
 		base36Encode(int32(chunkLoc.Z&63)),
 		"c."+base36Encode(int32(chunkLoc.X))+"."+base36Encode(int32(chunkLoc.Z))+".dat")
-}
-
-func (s *chunkStoreAlpha) SupportsWrite() bool {
-	// TODO Add support.
-	return false
-}
-
-func (s *chunkStoreAlpha) Writer() IChunkWriter {
-	// TODO Add support.
-	return nil
-}
-
-func (s *chunkStoreAlpha) WriteChunk(writer IChunkWriter) os.Error {
-	// TODO Add support.
-	return os.NewError("writes not supported")
 }
 
 func (s *chunkStoreAlpha) ReadChunk(chunkLoc ChunkXz) (reader IChunkReader, err os.Error) {
@@ -78,6 +64,37 @@ func (s *chunkStoreAlpha) ReadChunk(chunkLoc ChunkXz) (reader IChunkReader, err 
 	}
 
 	return
+}
+
+func (s *chunkStoreAlpha) SupportsWrite() bool {
+	return true
+}
+
+func (s *chunkStoreAlpha) Writer() IChunkWriter {
+	return newNbtChunkWriter()
+}
+
+func (s *chunkStoreAlpha) WriteChunk(writer IChunkWriter) (err os.Error) {
+	// TODO Write to temp file on same fs as destination file, and atomically
+	// move to the new name.
+	nbtWriter, ok := writer.(*nbtChunkWriter)
+	if !ok {
+		return fmt.Errorf("%T is incorrect IChunkWriter implementation for %T", writer, s)
+	}
+
+	file, err := os.Create(s.chunkPath(writer.ChunkLoc()))
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	gzipWriter, err := gzip.NewWriter(file)
+	if err != nil {
+		return
+	}
+	defer gzipWriter.Close()
+
+	return nbt.Write(gzipWriter, nbtWriter.RootTag())
 }
 
 // Utility functions:

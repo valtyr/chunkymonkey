@@ -79,3 +79,7 @@ func (w *nbtChunkWriter) SetEntities(entities map[EntityId]gamerules.INonPlayerE
 	}
 	w.chunkTag.Lookup("Level/Entities").(*nbt.List).Value = entitiesNbt
 }
+
+func (w *nbtChunkWriter) RootTag() nbt.ITag {
+	return w.chunkTag
+}
