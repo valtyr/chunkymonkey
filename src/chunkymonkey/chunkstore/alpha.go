@@ -75,14 +75,14 @@ func (s *chunkStoreAlpha) Writer() IChunkWriter {
 }
 
 func (s *chunkStoreAlpha) WriteChunk(writer IChunkWriter) (err os.Error) {
-	// TODO Write to temp file on same fs as destination file, and atomically
-	// move to the new name.
 	nbtWriter, ok := writer.(*nbtChunkWriter)
 	if !ok {
 		return fmt.Errorf("%T is incorrect IChunkWriter implementation for %T", writer, s)
 	}
 
-	file, err := os.Create(s.chunkPath(writer.ChunkLoc()))
+	destName := s.chunkPath(writer.ChunkLoc())
+
+	file, err := util.OpenFileUniqueName(destName, os.O_WRONLY, 0666)
 	if err != nil {
 		return
 	}
@@ -94,7 +94,12 @@ func (s *chunkStoreAlpha) WriteChunk(writer IChunkWriter) (err os.Error) {
 	}
 	defer gzipWriter.Close()
 
-	return nbt.Write(gzipWriter, nbtWriter.RootTag())
+	if err = nbt.Write(gzipWriter, nbtWriter.RootTag()); err != nil {
+		return
+	}
+
+	// Atomically move the newly written file into place.
+	return os.Rename(file.Name(), destName)
 }
 
 // Utility functions:
