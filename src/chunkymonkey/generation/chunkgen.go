@@ -8,6 +8,8 @@ import (
 	. "chunkymonkey/types"
 	"nbt"
 	"perlin"
+	"rand"
+	"time"
 )
 
 const SeaLevel = 63
@@ -138,19 +140,16 @@ func (gen *TestGenerator) LoadChunk(chunkLoc ChunkXz) (reader chunkstore.IChunkR
 				height,
 				data.blocks[baseIndex:baseIndex+ChunkSizeY])
 
-			lightBase := baseIndex >> 1
-
-			gen.setSkyLightStack(
-				skyLightHeight,
-				data.blocks[baseIndex:baseIndex+ChunkSizeY],
-				data.skyLight[lightBase:lightBase+ChunkSizeY/2])
-
 			data.heightMap[heightMapIndex] = byte(skyLightHeight)
 
 			heightMapIndex++
 			baseIndex += ChunkSizeY
 		}
 	}
+
+	// The chunk has been generated, now add some trees if appropriate
+	gen.addSaplings(data)
+	gen.setSkylight(data)
 
 	return data, nil
 }
@@ -166,7 +165,7 @@ func (gen *TestGenerator) setBlockStack(height int, blocks []byte) (skyLightHeig
 		blocks[height] = 12 // sand
 		topBlockType = 12
 	} else {
-
+		skyLightHeight = height + 1
 		if height <= SeaLevel+1 {
 			blocks[height] = 12 // sand
 			topBlockType = 12
@@ -195,21 +194,91 @@ func (gen *TestGenerator) setSkyLightStack(skyLightHeight int, blocks []byte, sk
 		BlockIndex(y).SetBlockData(skyLight, 15)
 	}
 
-	lightLevel := 15
+	var lightLevel int8 = 15
 
 	for y := skyLightHeight; y >= 0 && lightLevel > 0; y-- {
-		// TODO Use real block data in here.
-		if blocks[y] == 9 {
-			lightLevel -= 3
-		} else if blocks[y] == 0 {
-			// air
-		} else {
-			lightLevel -= 15
-		}
-		if lightLevel < 0 {
-			lightLevel = 0
+		blockType, ok := gamerules.Blocks.Get(BlockId(blocks[y]))
+		if lightLevel > 0 && ok && blockType.Opacity > 0 {
+			lightLevel -= blockType.Opacity
 		}
 
 		BlockIndex(y).SetBlockData(skyLight, byte(lightLevel))
 	}
+}
+
+func (gen *TestGenerator) setSkylight(data *ChunkData) {
+	baseIndex := 0
+	heightMapIndex := 0
+
+	for x := 0; x < ChunkSizeH; x++ {
+		for z := 0; z < ChunkSizeH; z++ {
+			lightBase := baseIndex >> 1
+
+			gen.setSkyLightStack(
+				int(data.heightMap[heightMapIndex]),
+				data.blocks[baseIndex:baseIndex+ChunkSizeY],
+				data.skyLight[lightBase:lightBase+ChunkSizeY/2])
+			heightMapIndex++
+			baseIndex += ChunkSizeY
+		}
+	}
+
+}
+
+var treeChance = rand.New(rand.NewSource(time.Nanoseconds()))
+
+func (gen *TestGenerator) addSaplings(data *ChunkData) {
+	baseIndex := 0
+	heightMapIndex := 0
+
+	// Move throughout the chunk, but refuse to create trees on chunk
+	// boundaries.
+	for x := 0; x < ChunkSizeH; x++ {
+		for z := 0; z < ChunkSizeH; z++ {
+			topBlock := int(data.heightMap[heightMapIndex] - 1)
+			blockIndex := baseIndex + int(topBlock)
+
+			if data.blocks[blockIndex] == 2 {
+				// We could add a tree, check to see if we want to
+				addTree := treeChance.Intn(100) > 95
+				if addTree && x > 0 && x < ChunkSizeH-1 && z > 0 && z < ChunkSizeH-1 {
+					if !adjacentBlockIs(data, x, topBlock, z, 2, 2, 2, 6) {
+						// Check if an adjacent block has a sapling already
+						data.blocks[blockIndex+1] = 6
+					}
+				}
+			}
+
+			heightMapIndex++
+			baseIndex += ChunkSizeY
+		}
+	}
+}
+
+// adjacentBlockIs returns whether or not the blocks that are adjacent to
+// the block at (bx,by,bz) are of type 'blockType'. The area which this
+// function checks is specified by dx, dy, dz. So to check 1 block in all
+// directions, you can specify 1,1,1.
+func adjacentBlockIs(data *ChunkData, bx, by, bz, dx, dy, dz int, blockType byte) bool {
+	subChunk := new(SubChunkXyz)
+
+	for x := bx - dx; x <= bx+dx; x++ {
+		for z := bz - dz; z <= bz+dz; z++ {
+			for y := by - dy; y <= by+dy; y++ {
+				if x != bx || y != by || z != bz {
+					subChunk.X = SubChunkCoord(x)
+					subChunk.Y = SubChunkCoord(y)
+					subChunk.Z = SubChunkCoord(z)
+					index, ok := subChunk.BlockIndex()
+					if ok {
+						if data.blocks[index] == blockType {
+							return true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false
 }
