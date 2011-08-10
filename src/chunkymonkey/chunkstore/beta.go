@@ -27,8 +27,8 @@ type chunkStoreBeta struct {
 }
 
 // Creates a chunkStoreBeta that reads the Minecraft Beta world format.
-func newChunkStoreBeta(worldPath string, dimension DimensionId) *chunkStoreBeta {
-	s := &chunkStoreBeta{
+func newChunkStoreBeta(worldPath string, dimension DimensionId) (s *chunkStoreBeta, err os.Error) {
+	s = &chunkStoreBeta{
 		regionFiles: make(map[uint64]*regionFile),
 	}
 
@@ -38,7 +38,11 @@ func newChunkStoreBeta(worldPath string, dimension DimensionId) *chunkStoreBeta 
 		s.regionPath = path.Join(worldPath, fmt.Sprintf("DIM%d", dimension), "region")
 	}
 
-	return s
+	if err = os.MkdirAll(s.regionPath, 0777); err != nil {
+		return nil, err
+	}
+
+	return
 }
 
 func (s *chunkStoreBeta) regionFile(chunkLoc ChunkXz) (rf *regionFile, err os.Error) {

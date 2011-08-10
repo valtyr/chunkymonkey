@@ -16,14 +16,14 @@ type chunkStoreAlpha struct {
 }
 
 // Creates an IChunkStore that reads the Minecraft Alpha world format.
-func newChunkStoreAlpha(worldPath string, dimension DimensionId) *chunkStoreAlpha {
+func newChunkStoreAlpha(worldPath string, dimension DimensionId) (s *chunkStoreAlpha, err os.Error) {
 	// Don't know the dimension directory structure for alpha, but it's likely
 	// not worth writing support for.
 
-	s := &chunkStoreAlpha{
+	s = &chunkStoreAlpha{
 		worldPath: worldPath,
 	}
-	return s
+	return s, nil
 }
 
 func (s *chunkStoreAlpha) chunkPath(chunkLoc ChunkXz) string {
@@ -81,6 +81,11 @@ func (s *chunkStoreAlpha) WriteChunk(writer IChunkWriter) (err os.Error) {
 	}
 
 	destName := s.chunkPath(writer.ChunkLoc())
+	dirName, _ := path.Split(destName)
+
+	if err = os.MkdirAll(dirName, 0777); err != nil {
+		return
+	}
 
 	file, err := util.OpenFileUniqueName(destName, os.O_WRONLY, 0666)
 	if err != nil {

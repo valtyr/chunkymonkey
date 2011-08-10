@@ -91,11 +91,11 @@ func ChunkStoreForLevel(worldPath string, levelData nbt.ITag, dimension Dimensio
 	versionTag, ok := levelData.Lookup("Data/version").(*nbt.Int)
 
 	if !ok {
-		store = newChunkStoreAlpha(worldPath, dimension)
+		store, err = newChunkStoreAlpha(worldPath, dimension)
 	} else {
 		switch version := versionTag.Value; version {
 		case 19132:
-			store = newChunkStoreBeta(worldPath, dimension)
+			store, err = newChunkStoreBeta(worldPath, dimension)
 		default:
 			err = UnknownLevelVersion(version)
 		}
