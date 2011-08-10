@@ -82,7 +82,7 @@ func (chunk *Chunk) save(chunkStore chunkstore.IChunkStore) {
 		writer.SetHeightMap(chunk.heightMap)
 		writer.SetEntities(chunk.entities)
 		chunkStore.WriteChunk(writer)
-		storeDirty = false
+		chunk.storeDirty = false
 	}
 }
 
