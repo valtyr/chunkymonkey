@@ -5,6 +5,7 @@ var EntityCreateByName = map[string]func() INonPlayerEntity{
 	"Item": NewBlankItem,
 
 	// Mobs.
+	"Hen":      NewHen,
 	"Chicken":  NewHen,
 	"Cow":      NewCow,
 	"Creeper":  NewCreeper,
