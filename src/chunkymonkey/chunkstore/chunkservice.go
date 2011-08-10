@@ -42,8 +42,9 @@ func (s *ChunkService) Serve() {
 			reader, err := s.store.ReadChunk(request.chunkLoc)
 			request.responseChan <- ChunkReadResult{reader, err}
 		case writer := <-s.writes:
-			err := s.store.WriteChunk(writer)
-			log.Printf("Could not write chunk at %#v: %v", writer.ChunkLoc(), err)
+			if err := s.store.WriteChunk(writer); err != nil {
+				log.Printf("Could not write chunk at %#v: %v", writer.ChunkLoc(), err)
+			}
 		}
 	}
 }
