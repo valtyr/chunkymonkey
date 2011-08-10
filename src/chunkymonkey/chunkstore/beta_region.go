@@ -41,16 +41,14 @@ func newRegionFile(filePath string) (rf *regionFile, err os.Error) {
 
 	if fi.Size == 0 {
 		// Newly created region file. Create new header index if so.
-		if err = binary.Write(file, binary.BigEndian, &rf.offsets); err != nil {
+		if err = rf.offsets.Write(rf.file); err != nil {
 			return
 		}
 
 		rf.endSector = 1
 	} else {
 		// Existing region file, read header index.
-		err = binary.Read(file, binary.BigEndian, &rf.offsets)
-		if err != nil {
-			rf = nil
+		if err = rf.offsets.Read(rf.file); err != nil {
 			return
 		}
 
@@ -200,6 +198,16 @@ func (o chunkOffset) Set(sectorCount, sectorIndex uint32) {
 
 // Represents a chunk file header containing chunk data offsets.
 type regionFileHeader [regionFileEdge * regionFileEdge]chunkOffset
+
+func (h regionFileHeader) Read(file *os.File) os.Error {
+	file.Seek(0, os.SEEK_SET)
+	return binary.Read(file, binary.BigEndian, h)
+}
+
+func (h regionFileHeader) Write(file *os.File) os.Error {
+	file.Seek(0, os.SEEK_SET)
+	return binary.Write(file, binary.BigEndian, h)
+}
 
 // Returns the chunk offset data for the given chunk. It assumes that chunkLoc
 // is within the chunk file - discarding upper bits of the X and Z coords.
