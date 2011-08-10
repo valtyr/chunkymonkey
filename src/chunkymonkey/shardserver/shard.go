@@ -110,6 +110,7 @@ func (shard *ChunkShard) tick() {
 					chunk.save(shard.chunkStore)
 				}
 			}
+			shard.ticksSinceSave = 0
 		}
 	}
 
