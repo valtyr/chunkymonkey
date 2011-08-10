@@ -199,14 +199,18 @@ func (o chunkOffset) Set(sectorCount, sectorIndex uint32) {
 // Represents a chunk file header containing chunk data offsets.
 type regionFileHeader [regionFileEdge * regionFileEdge]chunkOffset
 
-func (h regionFileHeader) Read(file *os.File) os.Error {
-	file.Seek(0, os.SEEK_SET)
-	return binary.Read(file, binary.BigEndian, h)
+func (h *regionFileHeader) Read(file *os.File) (err os.Error) {
+	if _, err = file.Seek(0, os.SEEK_SET); err != nil {
+		return
+	}
+	return binary.Read(file, binary.BigEndian, h[:])
 }
 
-func (h regionFileHeader) Write(file *os.File) os.Error {
-	file.Seek(0, os.SEEK_SET)
-	return binary.Write(file, binary.BigEndian, h)
+func (h *regionFileHeader) Write(file *os.File) (err os.Error) {
+	if _, err = file.Seek(0, os.SEEK_SET); err != nil {
+		return
+	}
+	return binary.Write(file, binary.BigEndian, h[:])
 }
 
 // Returns the chunk offset data for the given chunk. It assumes that chunkLoc
