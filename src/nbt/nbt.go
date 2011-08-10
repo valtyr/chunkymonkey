@@ -472,6 +472,8 @@ func Read(reader io.Reader) (tag ITag, err os.Error) {
 
 	if name != "" {
 		return nil, os.NewError("Root name should be empty")
+	} else if tag == nil {
+		return nil, os.NewError("End tag found at top level")
 	}
 
 	if tag.Type() != TagCompound {
