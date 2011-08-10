@@ -23,10 +23,10 @@ func Errno(err os.Error) (errno os.Errno, ok bool) {
 // flag at minimum. It is the caller's responsibility to close (and maybe
 // delete) the file when they have finished using it.
 func OpenFileUniqueName(prefix string, flag int, perm uint32) (file *os.File, err os.Error) {
-	useFlag := flag|os.O_CREATE|os.O_EXCL
+	useFlag := flag | os.O_CREATE | os.O_EXCL
 	for i := 0; i < 1000; i++ {
 		rnd := <-rdRand
-		if file, err := os.OpenFile(prefix + strconv.Itob64(rnd, 16), useFlag, perm); err == nil {
+		if file, err := os.OpenFile(prefix+strconv.Itob64(rnd, 16), useFlag, perm); err == nil {
 			return file, err
 		} else {
 			if errno, ok := Errno(err); ok && errno == os.EEXIST {
@@ -44,7 +44,7 @@ func init() {
 	go func() {
 		source := rand.NewSource(time.Nanoseconds())
 		for {
-			randChan<- source.Int63()
+			randChan <- source.Int63()
 		}
 	}()
 }

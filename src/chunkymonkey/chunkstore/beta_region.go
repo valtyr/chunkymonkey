@@ -22,7 +22,7 @@ type regionFile struct {
 }
 
 func newRegionFile(filePath string) (rf *regionFile, err os.Error) {
-	file, err := os.OpenFile(filePath, os.O_RDWR|O_CREATE, 0666)
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		if sysErr, ok := err.(*os.SyscallError); ok && sysErr.Errno == os.ENOENT {
 			err = NoSuchChunkError(false)
@@ -115,32 +115,44 @@ func (rf *regionFile) WriteChunkData(w *nbtChunkWriter) (err os.Error) {
 		return
 	}
 
-	header := chunkDataHeader{
-		DataSize: uint32(len(chunkData)),
-		Version:  chunkCompressionZlib,
-	}
-
-	requiredSize := chunkDataHeaderSize + len(chunkData)
+	requiredSize := uint32(len(chunkData))
 
 	offset := rf.offsets.Offset(w.ChunkLoc())
+	sectorCount, sectorIndex := offset.Get()
 
-	if !offset.IsPresent() {
-		// Chunk doesn't yet exist in the region file. Write it at the end of the
-		// file.
-		// TODO
+	if offset.IsPresent() && requiredSize <= sectorCount*regionFileSectorSize {
+		// Chunk already exists in the region file and the data will fit in its
+		// present location.
+		if _, err = rf.file.WriteAt(chunkData, int64(sectorIndex)*regionFileSectorSize); err != nil {
+			return
+		}
+	} else {
+		// Chunk doesn't yet exist in the region file or won't fit in its present
+		// location. Write it at the end of the file.
+		sectorIndex = rf.endSector
+
+		if _, err = rf.file.WriteAt(chunkData, int64(sectorIndex)*regionFileSectorSize); err != nil {
+			return
+		}
+
+		sectorCount = requiredSize / regionFileSectorSize
+		if requiredSize%regionFileSectorSize != 0 {
+			sectorCount++
+		}
+		rf.endSector += sectorCount
+
+		offset.Set(sectorCount, sectorIndex)
+		rf.offsets.SetOffset(w.ChunkLoc(), offset, rf.file)
 	}
-
-	// TODO Chunk already exists in the region file.
-
-	// TODO Will the chunk fit in the sectors it was in previously?
 
 	return
 }
 
 // serializeChunkData produces the compressed chunk NBT data.
 func serializeChunkData(w *nbtChunkWriter) (chunkData []byte, err os.Error) {
-	// Serialize and compress the NBT data.
-	buffer := bytes.NewBuffer(make([]byte, 0, chunkDataGuessSize))
+	// Reserve room for the chunk data header at the start.
+	buffer := bytes.NewBuffer(make([]byte, chunkDataHeaderSize, chunkDataGuessSize))
+
 	if zlibWriter, err := zlib.NewWriter(buffer); err != nil {
 		return nil, err
 	} else {
@@ -153,6 +165,17 @@ func serializeChunkData(w *nbtChunkWriter) (chunkData []byte, err os.Error) {
 		}
 	}
 	chunkData = buffer.Bytes()
+
+	// Write chunk data header
+	header := chunkDataHeader{
+		DataSize: uint32(len(chunkData)),
+		Version:  chunkCompressionZlib,
+	}
+	buffer = bytes.NewBuffer(chunkData[:0])
+	if err = binary.Write(buffer, binary.BigEndian, header); err != nil {
+		return nil, err
+	}
+
 	return chunkData, nil
 }
 
@@ -171,15 +194,35 @@ func (o chunkOffset) Get() (sectorCount, sectorIndex uint32) {
 	return
 }
 
+func (o chunkOffset) Set(sectorCount, sectorIndex uint32) {
+	o = chunkOffset(sectorIndex<<8 | sectorCount&0xff)
+}
+
 // Represents a chunk file header containing chunk data offsets.
 type regionFileHeader [regionFileEdge * regionFileEdge]chunkOffset
 
 // Returns the chunk offset data for the given chunk. It assumes that chunkLoc
 // is within the chunk file - discarding upper bits of the X and Z coords.
 func (h regionFileHeader) Offset(chunkLoc ChunkXz) chunkOffset {
+	return h[indexForChunkLoc(chunkLoc)]
+}
+
+func (h regionFileHeader) SetOffset(chunkLoc ChunkXz, offset chunkOffset, file *os.File) os.Error {
+	index := indexForChunkLoc(chunkLoc)
+	h[index] = offset
+
+	// Write that part of the index.
+	var offsetBytes [4]byte
+	binary.BigEndian.PutUint32(offsetBytes[:], uint32(offset))
+	_, err := file.WriteAt(offsetBytes[:], int64(index)*4)
+
+	return err
+}
+
+func indexForChunkLoc(chunkLoc ChunkXz) int {
 	x := chunkLoc.X & (regionFileEdge - 1)
 	z := chunkLoc.Z & (regionFileEdge - 1)
-	return h[x+(z<<regionFileEdgeShift)]
+	return int(x + (z << regionFileEdgeShift))
 }
 
 // Represents the header of a single chunk of data within a chunkfile.
