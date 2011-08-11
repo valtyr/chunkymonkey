@@ -192,8 +192,8 @@ func (o chunkOffset) Get() (sectorCount, sectorIndex uint32) {
 	return
 }
 
-func (o chunkOffset) Set(sectorCount, sectorIndex uint32) {
-	o = chunkOffset(sectorIndex<<8 | sectorCount&0xff)
+func (o *chunkOffset) Set(sectorCount, sectorIndex uint32) {
+	*o = chunkOffset(sectorIndex<<8 | sectorCount&0xff)
 }
 
 // Represents a chunk file header containing chunk data offsets.
@@ -215,11 +215,11 @@ func (h *regionFileHeader) Write(file *os.File) (err os.Error) {
 
 // Returns the chunk offset data for the given chunk. It assumes that chunkLoc
 // is within the chunk file - discarding upper bits of the X and Z coords.
-func (h regionFileHeader) Offset(chunkLoc ChunkXz) chunkOffset {
+func (h *regionFileHeader) Offset(chunkLoc ChunkXz) chunkOffset {
 	return h[indexForChunkLoc(chunkLoc)]
 }
 
-func (h regionFileHeader) SetOffset(chunkLoc ChunkXz, offset chunkOffset, file *os.File) os.Error {
+func (h *regionFileHeader) SetOffset(chunkLoc ChunkXz, offset chunkOffset, file *os.File) os.Error {
 	index := indexForChunkLoc(chunkLoc)
 	h[index] = offset
 
