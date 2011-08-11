@@ -70,12 +70,19 @@ func (data *ChunkData) RootTag() nbt.ITag {
 // TestGenerator implements chunkstore.IChunkStore.
 type TestGenerator struct {
 	heightSource ISource
+	randSource   rand.Source
+	randGen      *rand.Rand
 }
 
 func NewTestGenerator(seed int64) *TestGenerator {
 	perlin := perlin.NewPerlinNoise(seed)
 
+	randSource := rand.NewSource(time.Nanoseconds())
+	randGen := rand.New(randSource)
+
 	return &TestGenerator{
+		randSource: randSource,
+		randGen:    randGen,
 		heightSource: &Sum{
 			Inputs: []ISource{
 				&Turbulence{
@@ -225,8 +232,6 @@ func (gen *TestGenerator) setSkylight(data *ChunkData) {
 
 }
 
-var treeChance = rand.New(rand.NewSource(time.Nanoseconds()))
-
 func (gen *TestGenerator) addSaplings(data *ChunkData) {
 	baseIndex := 0
 	heightMapIndex := 0
@@ -240,7 +245,7 @@ func (gen *TestGenerator) addSaplings(data *ChunkData) {
 
 			if data.blocks[blockIndex] == 2 {
 				// We could add a tree, check to see if we want to
-				addTree := treeChance.Intn(100) > 95
+				addTree := gen.randGen.Intn(100) > 95
 				if addTree && x > 0 && x < ChunkSizeH-1 && z > 0 && z < ChunkSizeH-1 {
 					if !adjacentBlockIs(data, x, topBlock, z, 2, 2, 2, 6) {
 						// Check if an adjacent block has a sapling already
