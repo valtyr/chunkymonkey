@@ -1,7 +1,6 @@
 package gamerules
 
 import (
-	"os"
 	"rand"
 	"time"
 	. "chunkymonkey/types"
@@ -22,10 +21,6 @@ type SaplingAspect struct {
 
 func (aspect *SaplingAspect) Name() string {
 	return "Sapling"
-}
-
-func (aspect *SaplingAspect) Check() os.Error {
-	return nil
 }
 
 var rnd = rand.New(rand.NewSource(time.Nanoseconds()))
