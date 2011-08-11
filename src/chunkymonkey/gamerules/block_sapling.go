@@ -10,13 +10,11 @@ import (
 // Behaviour of a sapling block, takes care of growing or dying depending on
 // world conditions.
 func makeSaplingAspect() (aspect IBlockAspect) {
-	return &SaplingAspect{
-		&StandardAspect{},
-	}
+	return &SaplingAspect{}
 }
 
 type SaplingAspect struct {
-	*StandardAspect
+	StandardAspect
 }
 
 func (aspect *SaplingAspect) Name() string {
