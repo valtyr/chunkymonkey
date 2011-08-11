@@ -260,10 +260,9 @@ func (gen *TestGenerator) addSaplings(data *ChunkData) {
 	}
 }
 
-// adjacentBlockIs returns whether or not the blocks that are adjacent to
-// the block at (bx,by,bz) are of type 'blockType'. The area which this
-// function checks is specified by dx, dy, dz. So to check 1 block in all
-// directions, you can specify 1,1,1.
+// adjacentBlockIs return whether or not at least one block adjacent to
+// (bx,by,bz) is of type 'blockType'. The area which this function checks is
+// specified by dx,dy,dz. Blocks outside the given chunk are not checked.
 func adjacentBlockIs(data *ChunkData, bx, by, bz, dx, dy, dz int, blockType byte) bool {
 	subChunk := new(SubChunkXyz)
 
