@@ -12,21 +12,43 @@ import (
 	"nbt"
 )
 
-// ISpawn represents common elements to all types of entities that can be
-// present in a chunk.
-type IEntity interface {
-	GetEntityId() EntityId
-	SendSpawn(io.Writer) os.Error
-	SendUpdate(io.Writer) os.Error
-	Position() *AbsXyz
-}
-
-type INonPlayerEntity interface {
-	IEntity
+// INbtSerializable is the interface for all objects that can be serialized to
+// NBT data structures for persistency.
+type INbtSerializable interface {
 	ReadNbt(nbt.ITag) os.Error
+
 	// WriteNbt creates an NBT tag representing the entity. This can be nil if
 	// the entity cannot be serialized.
 	WriteNbt() nbt.ITag
+}
+
+// IEntity represents common elements to all types of non-block entities that
+// can be present in a chunk.
+type IEntity interface {
+	// Returns the entity's ID.
+	GetEntityId() EntityId
+
+	// SendSpawn writes the packets required to tell a client about the existance
+	// and current state of the entity.
+	SendSpawn(io.Writer) os.Error
+
+	// SendUpdate writes the packets required to tell a client about the new
+	// state of the entity since the last SendUpdate or SendSpawn.
+	SendUpdate(io.Writer) os.Error
+
+	// Returns the entity's current position.
+	Position() *AbsXyz
+}
+
+// INonPlayerEntity is the interface for entities other than players which are
+// controlled server-side.
+type INonPlayerEntity interface {
+	IEntity
+	INbtSerializable
+
+	// Sets the entity's ID.
 	SetEntityId(EntityId)
+
+	// Runs the physics for the entity for a single server tick.
 	Tick(physics.IBlockQuerier) (leftBlock bool)
 }
