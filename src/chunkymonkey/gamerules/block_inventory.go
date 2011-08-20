@@ -12,17 +12,12 @@ import (
 // aspects that contain inventories. It also implements IInventorySubscriber to
 // relay events to player(s) subscribed to the inventories.
 type blockInventory struct {
-	// TODO Think about only keeping a reference to the parent chunk and the
-	// block position and removing use of BlockInstance (some values inside it
-	// will change within the chunk independently of this instance, which is
-	// misleading).
-	instance           BlockInstance
-
+	chunk              IChunkBlock
 	inv                IInventory
 	subscribers        map[EntityId]IPlayerClient
 	ejectOnUnsubscribe bool
 	invTypeId          InvTypeId
-	block              BlockXyz
+	blockLoc           BlockXyz
 }
 
 // newBlockInventory creates a new blockInventory.
@@ -35,7 +30,8 @@ func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscri
 	}
 
 	if instance != nil {
-		blkInv.instance = *instance
+		blkInv.chunk = instance.Chunk
+		blkInv.blockLoc = instance.BlockLoc
 	}
 
 	blkInv.inv.SetSubscriber(blkInv)
@@ -48,7 +44,7 @@ func (blkInv *blockInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 		return
 	}
 
-	if blkInv.instance.BlockLoc, err = nbtutil.ReadBlockXyzCompound(tag); err != nil {
+	if blkInv.blockLoc, err = nbtutil.ReadBlockXyzCompound(tag); err != nil {
 		return
 	}
 
@@ -61,31 +57,31 @@ func (blkInv *blockInventory) WriteNbt() nbt.ITag {
 }
 
 func (blkInv *blockInventory) SetChunk(chunk IChunkBlock) {
-	blkInv.instance.Chunk = chunk
+	blkInv.chunk = chunk
 }
 
 func (blkInv *blockInventory) Block() BlockXyz {
-	return blkInv.instance.BlockLoc
+	return blkInv.blockLoc
 }
 
 func (blkInv *blockInventory) Click(player IPlayerClient, click *Click) {
 	txState := blkInv.inv.Click(click)
 
-	player.InventoryCursorUpdate(blkInv.instance.BlockLoc, click.Cursor)
+	player.InventoryCursorUpdate(blkInv.blockLoc, click.Cursor)
 
 	// Inform client of operation status.
-	player.InventoryTxState(blkInv.instance.BlockLoc, click.TxId, txState == TxStateAccepted)
+	player.InventoryTxState(blkInv.blockLoc, click.TxId, txState == TxStateAccepted)
 }
 
 func (blkInv *blockInventory) SlotUpdate(slot *Slot, slotId SlotId) {
 	for _, subscriber := range blkInv.subscribers {
-		subscriber.InventorySlotUpdate(blkInv.instance.BlockLoc, *slot, slotId)
+		subscriber.InventorySlotUpdate(blkInv.blockLoc, *slot, slotId)
 	}
 }
 
 func (blkInv *blockInventory) ProgressUpdate(prgBarId PrgBarId, value PrgBarValue) {
 	for _, subscriber := range blkInv.subscribers {
-		subscriber.InventoryProgressUpdate(blkInv.instance.BlockLoc, prgBarId, value)
+		subscriber.InventoryProgressUpdate(blkInv.blockLoc, prgBarId, value)
 	}
 }
 
@@ -95,16 +91,16 @@ func (blkInv *blockInventory) AddSubscriber(player IPlayerClient) {
 
 	// Register self for automatic removal when IPlayerClient unsubscribes
 	// from the chunk.
-	blkInv.instance.Chunk.AddOnUnsubscribe(entityId, blkInv)
+	blkInv.chunk.AddOnUnsubscribe(entityId, blkInv)
 
 	slots := blkInv.inv.MakeProtoSlots()
 
-	player.InventorySubscribed(blkInv.instance.BlockLoc, blkInv.invTypeId, slots)
+	player.InventorySubscribed(blkInv.blockLoc, blkInv.invTypeId, slots)
 }
 
 func (blkInv *blockInventory) RemoveSubscriber(entityId EntityId) {
 	blkInv.subscribers[entityId] = nil, false
-	blkInv.instance.Chunk.RemoveOnUnsubscribe(entityId, blkInv)
+	blkInv.chunk.RemoveOnUnsubscribe(entityId, blkInv)
 	if blkInv.ejectOnUnsubscribe && len(blkInv.subscribers) == 0 {
 		blkInv.EjectItems()
 	}
@@ -112,8 +108,8 @@ func (blkInv *blockInventory) RemoveSubscriber(entityId EntityId) {
 
 func (blkInv *blockInventory) Destroyed() {
 	for _, subscriber := range blkInv.subscribers {
-		subscriber.InventoryUnsubscribed(blkInv.instance.BlockLoc)
-		blkInv.instance.Chunk.RemoveOnUnsubscribe(subscriber.GetEntityId(), blkInv)
+		subscriber.InventoryUnsubscribed(blkInv.blockLoc)
+		blkInv.chunk.RemoveOnUnsubscribe(subscriber.GetEntityId(), blkInv)
 	}
 	blkInv.subscribers = nil
 }
@@ -130,6 +126,6 @@ func (blkInv *blockInventory) EjectItems() {
 	items := blkInv.inv.TakeAllItems()
 
 	for _, slot := range items {
-		spawnItemInBlock(&blkInv.instance, slot.ItemTypeId, slot.Count, slot.Data)
+		spawnItemInBlock(blkInv.chunk, blkInv.blockLoc, slot.ItemTypeId, slot.Count, slot.Data)
 	}
 }

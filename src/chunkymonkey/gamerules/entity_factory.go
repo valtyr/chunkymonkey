@@ -43,7 +43,7 @@ func NewEntityByTypeName(typeName string) INonPlayerEntity {
 
 
 var TileEntityCreateByName = map[string]func() ITileEntity{
-	"Chest": NewChestTileEntity,
+	"Chest":   NewChestTileEntity,
 	"Furnace": NewFurnaceTileEntity,
 	// TODO Other tile entities.
 }

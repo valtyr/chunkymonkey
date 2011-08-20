@@ -64,7 +64,7 @@ func (aspect *StandardAspect) Destroy(instance *BlockInstance) {
 		r := byte(rand.Intn(100))
 		for _, dropItem := range aspect.DroppedItems {
 			if dropItem.Probability > r {
-				dropItem.drop(instance)
+				dropItem.drop(instance.Chunk, instance.BlockLoc, instance.Data)
 				break
 			}
 			r -= dropItem.Probability

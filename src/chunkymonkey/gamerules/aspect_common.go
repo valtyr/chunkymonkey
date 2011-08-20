@@ -9,13 +9,13 @@ import (
 
 // spawnItemInBlock creates an item in a block. It must be run within
 // instance.Chunk's goroutine.
-func spawnItemInBlock(instance *BlockInstance, itemTypeId ItemTypeId, count ItemCount, data ItemData) {
-	rand := instance.Chunk.Rand()
-	position := instance.BlockLoc.ToAbsXyz()
+func spawnItemInBlock(chunk IChunkBlock, blockLoc BlockXyz, itemTypeId ItemTypeId, count ItemCount, data ItemData) {
+	rand := chunk.Rand()
+	position := blockLoc.ToAbsXyz()
 	position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
 	position.Y += AbsCoord(blockItemSpawnFromEdge)
 	position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
-	instance.Chunk.AddEntity(
+	chunk.AddEntity(
 		NewItem(
 			itemTypeId, count, data,
 			position,
@@ -32,17 +32,15 @@ type blockDropItem struct {
 	CopyData    bool
 }
 
-func (bdi *blockDropItem) drop(instance *BlockInstance) {
+func (bdi *blockDropItem) drop(chunk IChunkBlock, blockLoc BlockXyz, blockData byte) {
 	var itemData ItemData
-	if bdi.CopyData {
-		itemData = ItemData(instance.Data)
-	} else {
+	if !bdi.CopyData {
 		itemData = 0
+	} else {
+		itemData = ItemData(blockData)
 	}
 
-	for i := bdi.Count; i > 0; i-- {
-		spawnItemInBlock(instance, bdi.DroppedItem, 1, itemData)
-	}
+	spawnItemInBlock(chunk, blockLoc, bdi.DroppedItem, bdi.Count, itemData)
 }
 
 func (bdi *blockDropItem) check() os.Error {
