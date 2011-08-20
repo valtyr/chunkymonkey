@@ -25,6 +25,7 @@ type IInventory interface {
 	MakeProtoSlots() []proto.WindowSlot
 	WriteProtoSlots(slots []proto.WindowSlot)
 	TakeAllItems() (items []Slot)
+	ReadNbt(nbt.ITag) os.Error
 	ReadNbtSlot(tag nbt.ITag, slotId SlotId) (err os.Error)
 }
 
@@ -214,6 +215,31 @@ func (inv *Inventory) slotUpdate(slot *Slot, slotId SlotId) {
 	if inv.subscriber != nil {
 		inv.subscriber.SlotUpdate(slot, slotId)
 	}
+}
+
+func (inv *Inventory) ReadNbt(tag nbt.ITag) (err os.Error) {
+	if tag == nil {
+		return
+	}
+
+	itemList, ok := tag.Lookup("Items").(*nbt.List)
+	if !ok {
+		return os.NewError("Bad inventory - not a list")
+	}
+
+	for _, slotTag := range itemList.Value {
+		var slotIdTag *nbt.Byte
+		if slotIdTag, ok = slotTag.Lookup("Slot").(*nbt.Byte); !ok {
+			return os.NewError("Slot ID not a byte")
+		}
+		slotId := SlotId(slotIdTag.Value)
+
+		if err = inv.ReadNbtSlot(slotTag, slotId); err != nil {
+			return
+		}
+	}
+
+	return nil
 }
 
 func (inv *Inventory) ReadNbtSlot(tag nbt.ITag, slotId SlotId) (err os.Error) {

@@ -23,7 +23,7 @@ type Chunk struct {
 	skyLight     []byte
 	heightMap    []byte
 	entities     map[EntityId]gamerules.INonPlayerEntity // Entities (mobs, items, etc)
-	blockExtra   map[BlockIndex]interface{}              // Used by IBlockAspect to store private specific data.
+	tileEntities map[BlockIndex]gamerules.ITileEntity    // Used by IBlockAspect to store private specific data.
 	rand         *rand.Rand
 	cachedPacket []byte                                 // Cached packet data for this chunk.
 	subscribers  map[EntityId]gamerules.IPlayerClient   // Players getting updates from the chunk.
@@ -38,20 +38,20 @@ type Chunk struct {
 
 func newChunkFromReader(reader chunkstore.IChunkReader, shard *ChunkShard) (chunk *Chunk) {
 	chunk = &Chunk{
-		shard:       shard,
-		loc:         reader.ChunkLoc(),
-		blocks:      reader.Blocks(),
-		blockData:   reader.BlockData(),
-		skyLight:    reader.SkyLight(),
-		blockLight:  reader.BlockLight(),
-		heightMap:   reader.HeightMap(),
-		entities:    make(map[EntityId]gamerules.INonPlayerEntity),
-		blockExtra:  make(map[BlockIndex]interface{}),
-		rand:        rand.New(rand.NewSource(time.UTC().Seconds())),
-		subscribers: make(map[EntityId]gamerules.IPlayerClient),
-		playersData: make(map[EntityId]*playerData),
-		onUnsub:     make(map[EntityId][]gamerules.IUnsubscribed),
-		storeDirty:  false,
+		shard:        shard,
+		loc:          reader.ChunkLoc(),
+		blocks:       reader.Blocks(),
+		blockData:    reader.BlockData(),
+		skyLight:     reader.SkyLight(),
+		blockLight:   reader.BlockLight(),
+		heightMap:    reader.HeightMap(),
+		entities:     make(map[EntityId]gamerules.INonPlayerEntity),
+		tileEntities: make(map[BlockIndex]gamerules.ITileEntity),
+		rand:         rand.New(rand.NewSource(time.UTC().Seconds())),
+		subscribers:  make(map[EntityId]gamerules.IPlayerClient),
+		playersData:  make(map[EntityId]*playerData),
+		onUnsub:      make(map[EntityId][]gamerules.IUnsubscribed),
+		storeDirty:   false,
 
 		activeBlocks:    make(map[BlockIndex]bool),
 		newActiveBlocks: make(map[BlockIndex]bool),
@@ -65,8 +65,20 @@ func newChunkFromReader(reader chunkstore.IChunkReader, shard *ChunkShard) (chun
 		chunk.entities[entityId] = entity
 	}
 
-	// TODO Load tile entities. Should rename
-	// Chunk.blockExtra->Chunk.TileEntities.
+	// Load tile entities.
+	tileEntities := reader.TileEntities()
+	for _, tileEntity := range tileEntities {
+		blockLoc := tileEntity.Block()
+		chunkLoc, subChunk := blockLoc.ToChunkLocal()
+		if !chunk.loc.Equals(*chunkLoc) {
+			log.Printf("%v: loaded tile entity not in this chunk, but at location %#v", chunk, blockLoc)
+		} else if index, ok := subChunk.BlockIndex(); !ok {
+			log.Printf("%v: loaded tile entity at bad location %#v", chunk, blockLoc)
+		} else {
+			tileEntity.SetChunk(chunk)
+			chunk.tileEntities[index] = tileEntity
+		}
+	}
 
 	return
 }
@@ -102,7 +114,7 @@ func (chunk *Chunk) setBlock(blockLoc *BlockXyz, subLoc *SubChunkXyz, index Bloc
 	index.SetBlockId(chunk.blocks, blockType)
 	index.SetBlockData(chunk.blockData, blockData)
 
-	chunk.blockExtra[index] = nil, false
+	chunk.tileEntities[index] = nil, false
 
 	// Tell players that the block changed.
 	packet := new(bytes.Buffer)
@@ -170,15 +182,15 @@ func (chunk *Chunk) removeEntity(s gamerules.INonPlayerEntity) {
 	chunk.storeDirty = true
 }
 
-func (chunk *Chunk) BlockExtra(index BlockIndex) interface{} {
-	if extra, ok := chunk.blockExtra[index]; ok {
-		return extra
+func (chunk *Chunk) TileEntity(index BlockIndex) gamerules.ITileEntity {
+	if tileEntity, ok := chunk.tileEntities[index]; ok {
+		return tileEntity
 	}
 	return nil
 }
 
-func (chunk *Chunk) SetBlockExtra(index BlockIndex, extra interface{}) {
-	chunk.blockExtra[index] = extra, extra != nil
+func (chunk *Chunk) SetTileEntity(index BlockIndex, tileEntity gamerules.ITileEntity) {
+	chunk.tileEntities[index] = tileEntity, tileEntity != nil
 	chunk.storeDirty = true
 }
 
@@ -529,6 +541,8 @@ func (chunk *Chunk) blockTickAll() {
 			}
 		}
 	}
+
+	chunk.storeDirty = true
 }
 
 func (chunk *Chunk) AddActiveBlock(blockXyz *BlockXyz) {

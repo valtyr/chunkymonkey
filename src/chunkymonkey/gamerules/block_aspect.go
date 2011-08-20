@@ -17,8 +17,8 @@ type IChunkBlock interface {
 	ItemType(itemTypeId ItemTypeId) (itemType *ItemType, ok bool)
 	AddEntity(s INonPlayerEntity)
 	SetBlockByIndex(blockIndex BlockIndex, blockId BlockId, blockData byte)
-	BlockExtra(blockIndex BlockIndex) interface{}
-	SetBlockExtra(blockIndex BlockIndex, extra interface{})
+	TileEntity(blockIndex BlockIndex) ITileEntity
+	SetTileEntity(blockIndex BlockIndex, extra ITileEntity)
 	AddOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
 	RemoveOnUnsubscribe(entityId EntityId, observer IUnsubscribed)
 

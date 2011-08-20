@@ -63,6 +63,10 @@ func (data *ChunkData) Entities() []gamerules.INonPlayerEntity {
 	return nil
 }
 
+func (data *ChunkData) TileEntities() []gamerules.ITileEntity {
+	return nil
+}
+
 func (data *ChunkData) RootTag() nbt.ITag {
 	return nil
 }

@@ -1,33 +1,71 @@
 package gamerules
 
 import (
+	"os"
+
+	"chunkymonkey/nbtutil"
 	. "chunkymonkey/types"
+	"nbt"
 )
 
-// blockInventory is the data stored in Chunk.SetBlockExtra by some block
+// blockInventory is the data stored in Chunk.SetTileEntity by some block
 // aspects that contain inventories. It also implements IInventorySubscriber to
 // relay events to player(s) subscribed to the inventories.
 type blockInventory struct {
+	// TODO Think about only keeping a reference to the parent chunk and the
+	// block position and removing use of BlockInstance (some values inside it
+	// will change within the chunk independently of this instance, which is
+	// misleading).
 	instance           BlockInstance
+
 	inv                IInventory
 	subscribers        map[EntityId]IPlayerClient
 	ejectOnUnsubscribe bool
 	invTypeId          InvTypeId
+	block              BlockXyz
 }
 
 // newBlockInventory creates a new blockInventory.
 func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscribe bool, invTypeId InvTypeId) *blockInventory {
 	blkInv := &blockInventory{
-		instance:           *instance,
 		inv:                inv,
 		subscribers:        make(map[EntityId]IPlayerClient),
 		ejectOnUnsubscribe: ejectOnUnsubscribe,
 		invTypeId:          invTypeId,
 	}
 
+	if instance != nil {
+		blkInv.instance = *instance
+	}
+
 	blkInv.inv.SetSubscriber(blkInv)
 
 	return blkInv
+}
+
+func (blkInv *blockInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
+	if err = blkInv.inv.ReadNbt(tag); err != nil {
+		return
+	}
+
+	if blkInv.instance.BlockLoc, err = nbtutil.ReadBlockXyzCompound(tag); err != nil {
+		return
+	}
+
+	return nil
+}
+
+func (blkInv *blockInventory) WriteNbt() nbt.ITag {
+	// TODO
+	return nil
+}
+
+func (blkInv *blockInventory) SetChunk(chunk IChunkBlock) {
+	blkInv.instance.Chunk = chunk
+}
+
+func (blkInv *blockInventory) Block() BlockXyz {
+	return blkInv.instance.BlockLoc
 }
 
 func (blkInv *blockInventory) Click(player IPlayerClient, click *Click) {

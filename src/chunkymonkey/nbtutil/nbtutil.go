@@ -116,3 +116,16 @@ func ReadLookDegrees(tag nbt.ITag, path string) (pos LookDegrees, err os.Error) 
 
 	return LookDegrees{AngleDegrees(x), AngleDegrees(y)}, nil
 }
+
+func ReadBlockXyzCompound(tag nbt.ITag) (loc BlockXyz, err os.Error) {
+	x, xOk := tag.Lookup("x").(*nbt.Int)
+	y, yOk := tag.Lookup("y").(*nbt.Int)
+	z, zOk := tag.Lookup("z").(*nbt.Int)
+
+	if !xOk || !yOk || !zOk {
+		err = fmt.Errorf("ReadBlockXyzCompound: x, y or z was not present or not an Int in %#v", tag)
+		return
+	}
+
+	return BlockXyz{BlockCoord(x.Value), BlockYCoord(y.Value), BlockCoord(z.Value)}, nil
+}

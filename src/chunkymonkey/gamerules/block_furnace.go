@@ -19,6 +19,12 @@ type FurnaceAspect struct {
 	Active   BlockId
 }
 
+// Creates a new tile entity for a furnace. ReadNbt and SetChunk must be called
+// before any other methods.
+func NewFurnaceTileEntity() ITileEntity {
+	return createFurnaceInventory(nil)
+}
+
 func createFurnaceInventory(instance *BlockInstance) *blockInventory {
 	return newBlockInventory(
 		instance,
@@ -86,6 +92,6 @@ func (aspect *FurnaceAspect) updateBlock(instance *BlockInstance, blockInv *bloc
 			newBlockId = aspect.Inactive
 		}
 		instance.Chunk.SetBlockByIndex(instance.Index, newBlockId, instance.Data)
-		instance.Chunk.SetBlockExtra(instance.Index, blockInv)
+		instance.Chunk.SetTileEntity(instance.Index, blockInv)
 	}
 }

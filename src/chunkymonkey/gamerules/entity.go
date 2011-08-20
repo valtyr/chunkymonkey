@@ -15,6 +15,7 @@ import (
 // INbtSerializable is the interface for all objects that can be serialized to
 // NBT data structures for persistency.
 type INbtSerializable interface {
+	// ReadNbt reads the NBT tag to set the state of the object.
 	ReadNbt(nbt.ITag) os.Error
 
 	// WriteNbt creates an NBT tag representing the entity. This can be nil if
@@ -51,4 +52,17 @@ type INonPlayerEntity interface {
 
 	// Runs the physics for the entity for a single server tick.
 	Tick(physics.IBlockQuerier) (leftBlock bool)
+}
+
+// ITileEntity is the interface common to entities that are tile-based.
+type ITileEntity interface {
+	INbtSerializable
+
+	// SetChunk sets the parent chunk of the tile entity. This must be called
+	// after the tile entity is deserialized and before any game event methods
+	// are called.
+	SetChunk(chunk IChunkBlock)
+
+	// Block returns the position of the tile entity.
+	Block() BlockXyz
 }

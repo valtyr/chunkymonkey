@@ -544,6 +544,10 @@ type ChunkXz struct {
 	X, Z ChunkCoord
 }
 
+func (chunkLoc ChunkXz) Equals(rhs ChunkXz) bool {
+	return chunkLoc.X == rhs.X && chunkLoc.Z == rhs.Z
+}
+
 // Returns the world BlockXyz position of the (0, 0, 0) block in the chunk
 func (chunkLoc *ChunkXz) ChunkCornerBlockXY() *BlockXyz {
 	return &BlockXyz{

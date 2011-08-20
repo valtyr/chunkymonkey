@@ -46,8 +46,12 @@ type IChunkReader interface {
 	// Returns the height map data in the chunk.
 	HeightMap() []byte
 
-	// Return a list of the entities (items, mobs) within the chunk.
+	// Return a slice of the entities (items, mobs) within the chunk.
 	Entities() []gamerules.INonPlayerEntity
+
+	// Return a slice of the tile entities (chests, furnaces, etc.) within the
+	// chunk.
+	TileEntities() []gamerules.ITileEntity
 
 	// For low-level NBT access. Not for regular use. It's possible that this
 	// might return nil if the underlying system doesn't use NBT.
