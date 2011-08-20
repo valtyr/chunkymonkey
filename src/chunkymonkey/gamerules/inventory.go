@@ -218,10 +218,6 @@ func (inv *Inventory) slotUpdate(slot *Slot, slotId SlotId) {
 }
 
 func (inv *Inventory) ReadNbt(tag nbt.ITag) (err os.Error) {
-	if tag == nil {
-		return
-	}
-
 	itemList, ok := tag.Lookup("Items").(*nbt.List)
 	if !ok {
 		return os.NewError("Bad inventory - not a list")

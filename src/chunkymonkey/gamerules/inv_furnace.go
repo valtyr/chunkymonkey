@@ -1,7 +1,10 @@
 package gamerules
 
 import (
+	"os"
+
 	. "chunkymonkey/types"
+	"nbt"
 )
 
 const (
@@ -16,9 +19,9 @@ const (
 
 type FurnaceInventory struct {
 	Inventory
-	maxFuel           Ticks
-	curFuel           Ticks
-	reactionRemaining Ticks
+	burnTimeMax Ticks
+	burnTime    Ticks
+	cookTime    Ticks
 
 	lastCurFuel           PrgBarValue
 	lastReactionRemaining PrgBarValue
@@ -28,13 +31,39 @@ type FurnaceInventory struct {
 // NewFurnaceInventory creates a furnace inventory.
 func NewFurnaceInventory() (inv *FurnaceInventory) {
 	inv = &FurnaceInventory{
-		maxFuel:           0,
-		curFuel:           0,
-		reactionRemaining: reactionDuration,
+		burnTimeMax: 0,
+		burnTime:    0,
+		cookTime:    reactionDuration,
 	}
 	inv.Inventory.Init(furnaceNumSlots)
 	return
 }
+
+func (inv *FurnaceInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
+	if err = inv.Inventory.ReadNbt(tag); err != nil {
+		return
+	}
+
+	if burnTimeTag, ok := tag.Lookup("BurnTime").(*nbt.Short); !ok {
+		return os.NewError("Bad or missing BurnTime tag in Furnace NBT")
+	} else {
+		inv.burnTime = Ticks(burnTimeTag.Value)
+
+		// We don't know what the burnTimeMax was, as it is not stored, so taking
+		// BurnTime for this value as well.
+		inv.burnTimeMax = inv.burnTime
+	}
+
+	if cookTimeTag, ok := tag.Lookup("CookTime").(*nbt.Short); !ok {
+		return os.NewError("Bad or missing CookTime tag in Furnace NBT")
+	} else {
+		inv.cookTime = Ticks(cookTimeTag.Value)
+	}
+
+	return nil
+}
+
+// TODO FurnaceInventory.WriteNbt
 
 func (inv *FurnaceInventory) Click(click *Click) (txState TxState) {
 
@@ -48,7 +77,7 @@ func (inv *FurnaceInventory) Click(click *Click) (txState TxState) {
 
 		// If the reagent type changes, the reaction restarts.
 		if slotBefore.ItemTypeId != slotAfter.ItemTypeId || slotBefore.Data != slotAfter.Data {
-			inv.reactionRemaining = reactionDuration
+			inv.cookTime = reactionDuration
 		}
 	case furnaceSlotFuel:
 		cursorItemId := click.Cursor.ItemTypeId
@@ -103,33 +132,33 @@ func (inv *FurnaceInventory) stateCheck() {
 		outputReady = true
 	}
 
-	if inv.curFuel <= 0 {
+	if inv.burnTime <= 0 {
 		if haveReagent && haveFuel && outputReady {
 			// Everything is in place, light the furnace by consuming one unit of
 			// fuel.
 			fuelSlot.Decrement()
-			inv.maxFuel = fuelTicks
-			inv.curFuel = fuelTicks
+			inv.burnTimeMax = fuelTicks
+			inv.burnTime = fuelTicks
 			inv.slotUpdate(fuelSlot, furnaceSlotFuel)
 		} else {
-			inv.reactionRemaining = reactionDuration
-			inv.maxFuel = 0
-			inv.curFuel = 0
+			inv.cookTime = reactionDuration
+			inv.burnTimeMax = 0
+			inv.burnTime = 0
 		}
 	}
 
-	if inv.curFuel > 0 {
+	if inv.burnTime > 0 {
 		// Furnace is lit.
 		if !outputReady {
-			inv.reactionRemaining = reactionDuration
-		} else if haveReagent && inv.reactionRemaining == 0 {
+			inv.cookTime = reactionDuration
+		} else if haveReagent && inv.cookTime == 0 {
 			// One reaction complete.
 			itemCreated := Slot{
 				ItemTypeId: reaction.Output,
 				Count:      1,
 				Data:       reaction.OutputData,
 			}
-			inv.reactionRemaining = reactionDuration
+			inv.cookTime = reactionDuration
 
 			outputSlot.AddOne(&itemCreated)
 			inv.slotUpdate(outputSlot, furnaceSlotOutput)
@@ -151,15 +180,15 @@ func (inv *FurnaceInventory) sendProgressUpdates() {
 		inv.ticksSinceUpdate = 0
 
 		curFuelPrg := PrgBarValue(0)
-		if inv.maxFuel != 0 {
-			curFuelPrg = PrgBarValue((maxFuelPrg * inv.curFuel) / inv.maxFuel)
+		if inv.burnTimeMax != 0 {
+			curFuelPrg = PrgBarValue((maxFuelPrg * inv.burnTime) / inv.burnTimeMax)
 		}
 		if inv.lastCurFuel != curFuelPrg {
 			inv.lastCurFuel = curFuelPrg
 			inv.subscriber.ProgressUpdate(PrgBarIdFurnaceFire, curFuelPrg)
 		}
 
-		curReactionRemaining := PrgBarValue(reactionDuration - inv.reactionRemaining)
+		curReactionRemaining := PrgBarValue(reactionDuration - inv.cookTime)
 		if inv.lastReactionRemaining != curReactionRemaining {
 			inv.lastReactionRemaining = curReactionRemaining
 			inv.subscriber.ProgressUpdate(PrgBarIdFurnaceProgress, curReactionRemaining)
@@ -168,16 +197,16 @@ func (inv *FurnaceInventory) sendProgressUpdates() {
 }
 
 func (inv *FurnaceInventory) IsLit() bool {
-	return inv.curFuel > 0
+	return inv.burnTime > 0
 }
 
 // Tick runs the furnace for a single tick.
 func (inv *FurnaceInventory) Tick() {
-	if inv.curFuel > 0 {
-		inv.curFuel--
+	if inv.burnTime > 0 {
+		inv.burnTime--
 
-		if inv.reactionRemaining > 0 {
-			inv.reactionRemaining--
+		if inv.cookTime > 0 {
+			inv.cookTime--
 		}
 
 		inv.stateCheck()
