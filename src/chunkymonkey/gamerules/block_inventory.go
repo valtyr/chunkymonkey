@@ -3,7 +3,6 @@ package gamerules
 import (
 	"os"
 
-	"chunkymonkey/nbtutil"
 	. "chunkymonkey/types"
 	"nbt"
 )
@@ -12,12 +11,11 @@ import (
 // aspects that contain inventories. It also implements IInventorySubscriber to
 // relay events to player(s) subscribed to the inventories.
 type blockInventory struct {
-	chunk              IChunkBlock
+	tileEntity
 	inv                IInventory
 	subscribers        map[EntityId]IPlayerClient
 	ejectOnUnsubscribe bool
 	invTypeId          InvTypeId
-	blockLoc           BlockXyz
 }
 
 // newBlockInventory creates a new blockInventory.
@@ -40,11 +38,11 @@ func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscri
 }
 
 func (blkInv *blockInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
-	if err = blkInv.inv.ReadNbt(tag); err != nil {
+	if err = blkInv.tileEntity.ReadNbt(tag); err != nil {
 		return
 	}
 
-	if blkInv.blockLoc, err = nbtutil.ReadBlockXyzCompound(tag); err != nil {
+	if err = blkInv.inv.ReadNbt(tag); err != nil {
 		return
 	}
 
@@ -54,10 +52,6 @@ func (blkInv *blockInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 func (blkInv *blockInventory) WriteNbt() nbt.ITag {
 	// TODO
 	return nil
-}
-
-func (blkInv *blockInventory) SetChunk(chunk IChunkBlock) {
-	blkInv.chunk = chunk
 }
 
 func (blkInv *blockInventory) Block() BlockXyz {
