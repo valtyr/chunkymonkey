@@ -265,6 +265,8 @@ func (inv *Inventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 		}
 	}
 
+	tag.Set("Items", itemList)
+
 	return nil
 }
 

@@ -53,7 +53,11 @@ func (blkInv *blockInventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	if err = blkInv.tileEntity.MarshalNbt(tag); err != nil {
 		return
 	}
-	// TODO
+
+	if err = blkInv.inv.MarshalNbt(tag); err != nil {
+		return
+	}
+
 	return nil
 }
 
