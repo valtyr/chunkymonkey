@@ -39,8 +39,8 @@ func NewFurnaceInventory() (inv *FurnaceInventory) {
 	return
 }
 
-func (inv *FurnaceInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
-	if err = inv.Inventory.ReadNbt(tag); err != nil {
+func (inv *FurnaceInventory) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = inv.Inventory.UnmarshalNbt(tag); err != nil {
 		return
 	}
 
@@ -63,7 +63,12 @@ func (inv *FurnaceInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 	return nil
 }
 
-// TODO FurnaceInventory.WriteNbt
+func (inv *FurnaceInventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
+	tag.Set("id", &nbt.String{"Furnace"})
+	tag.Set("BurnTime", &nbt.Short{int16(inv.burnTime)})
+	tag.Set("CookTime", &nbt.Short{int16(inv.cookTime)})
+	return inv.Inventory.MarshalNbt(tag)
+}
 
 func (inv *FurnaceInventory) Click(click *Click) (txState TxState) {
 

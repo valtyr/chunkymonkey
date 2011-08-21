@@ -64,29 +64,33 @@ type IChunkReader interface {
 // data passed in, so that the original data structures passed in can be
 // modified upon return.
 type IChunkWriter interface {
-	// Returns the chunk location.
+	// ChunkLoc returns the chunk location.
 	ChunkLoc() ChunkXz
 
-	// Sets the chunk location.
+	// SetChunkLoc sets the chunk location.
 	SetChunkLoc(loc ChunkXz)
 
-	// Sets the block IDs in the chunk.
+	// SetBlocks sets the block IDs in the chunk.
 	SetBlocks(blocks []byte)
 
-	// Sets the block data in the chunk.
+	// SetBlockData sets the block data in the chunk.
 	SetBlockData(blockData []byte)
 
-	// Sets the block light data in the chunk.
+	// SetBlockLight sets the block light data in the chunk.
 	SetBlockLight(blockLight []byte)
 
-	// Sets the sky light data in the chunk.
+	// SetSkyLight sets the sky light data in the chunk.
 	SetSkyLight(skyLight []byte)
 
-	// Sets the height map data in the chunk.
+	// SetHeightMap sets the height map data in the chunk.
 	SetHeightMap(heightMap []byte)
 
-	// Sets a list of the entities (items, mobs) within the chunk.
+	// SetEntities sets a list of the entities (items, mobs) within the chunk.
 	SetEntities(entities map[EntityId]gamerules.INonPlayerEntity)
+
+	// SetTileEntities sets a list of the tile entities (chests, furnaces, etc.)
+	// within the chunk.
+	SetTileEntities(tileEntities map[BlockIndex]gamerules.ITileEntity)
 }
 
 // Given the NamedTag for a level.dat, returns an appropriate

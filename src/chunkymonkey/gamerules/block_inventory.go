@@ -37,19 +37,22 @@ func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscri
 	return blkInv
 }
 
-func (blkInv *blockInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
-	if err = blkInv.tileEntity.ReadNbt(tag); err != nil {
+func (blkInv *blockInventory) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = blkInv.tileEntity.UnmarshalNbt(tag); err != nil {
 		return
 	}
 
-	if err = blkInv.inv.ReadNbt(tag); err != nil {
+	if err = blkInv.inv.UnmarshalNbt(tag); err != nil {
 		return
 	}
 
 	return nil
 }
 
-func (blkInv *blockInventory) WriteNbt() nbt.ITag {
+func (blkInv *blockInventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = blkInv.tileEntity.MarshalNbt(tag); err != nil {
+		return
+	}
 	// TODO
 	return nil
 }

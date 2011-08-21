@@ -11,18 +11,16 @@ func makeChestAspect() (aspect IBlockAspect) {
 	}
 }
 
-// Creates a new tile entity for a chest. ReadNbt and SetChunk must be called
-// before any other methods.
+// Creates a new tile entity for a chest. UnmarshalNbt and SetChunk must be
+// called before any other methods.
 func NewChestTileEntity() ITileEntity {
 	return createChestInventory(nil)
 }
 
 func createChestInventory(instance *BlockInstance) *blockInventory {
-	inv := new(Inventory)
-	inv.InitChestInventory()
 	return newBlockInventory(
 		instance,
-		inv,
+		NewChestInventory(),
 		false,
 		InvTypeIdChest,
 	)

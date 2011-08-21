@@ -371,6 +371,12 @@ type Compound struct {
 	Tags map[string]ITag
 }
 
+func NewCompound() *Compound {
+	return &Compound{
+		Tags: make(map[string]ITag),
+	}
+}
+
 func (*Compound) Type() TagType {
 	return TagCompound
 }
@@ -462,29 +468,33 @@ func (c *Compound) Lookup(path string) (tag ITag) {
 	return tag
 }
 
-// Read reads an NBT structure from the given reader. It expects it to contain
-// a Compound at the root.
-func Read(reader io.Reader) (tag ITag, err os.Error) {
+func (c *Compound) Set(key string, tag ITag) {
+	c.Tags[key] = tag
+}
+
+// Read reads an NBT compound from the given reader.
+func Read(reader io.Reader) (tag *Compound, err os.Error) {
+	var itag ITag
 	var name string
-	if tag, name, err = readTagAndName(reader); err != nil {
-		return
+	if itag, name, err = readTagAndName(reader); err != nil {
+		return nil, err
 	}
 
 	if name != "" {
-		return nil, os.NewError("Root name should be empty")
-	} else if tag == nil {
-		return nil, os.NewError("End tag found at top level")
+		return nil, os.NewError("root name should be empty")
+	} else if itag == nil {
+		return nil, os.NewError("end tag found at top level")
 	}
 
-	if tag.Type() != TagCompound {
-		return nil, os.NewError("Expected named compound tag")
+	tag, ok := itag.(*Compound)
+	if !ok {
+		return nil, os.NewError("expected compound at top level")
 	}
 
-	return
+	return tag, nil
 }
 
-// Write writes an NBT structure to the given writer. It should be passed a
-// *Compound, but doesn't require it.
-func Write(writer io.Writer, tag ITag) (err os.Error) {
+// Write writes an NBT compound to the given writer.
+func Write(writer io.Writer, tag *Compound) (err os.Error) {
 	return writeTagAndName(writer, tag, "")
 }

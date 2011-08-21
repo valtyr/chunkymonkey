@@ -31,8 +31,8 @@ func NewObject(objType ObjTypeId) (object *Object) {
 	return
 }
 
-func (object *Object) ReadNbt(tag nbt.ITag) (err os.Error) {
-	if err = object.PointObject.ReadNbt(tag); err != nil {
+func (object *Object) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = object.PointObject.UnmarshalNbt(tag); err != nil {
 		return
 	}
 
@@ -53,17 +53,17 @@ func (object *Object) ReadNbt(tag nbt.ITag) (err os.Error) {
 	return
 }
 
-func (object *Object) WriteNbt() nbt.ITag {
+func (object *Object) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	objTypeName, ok := ObjNameByType[object.ObjTypeId]
 	if !ok {
-		return nil
+		return os.NewError("unknown object type")
 	}
-	tag := &nbt.Compound{map[string]nbt.ITag{
-		"id": &nbt.String{objTypeName},
-		// TODO unknown fields
-	}}
-	object.PointObject.WriteIntoNbt(tag)
-	return tag
+	if err = object.PointObject.MarshalNbt(tag); err != nil {
+		return
+	}
+	tag.Set("id", &nbt.String{objTypeName})
+	// TODO unknown fields
+	return
 }
 
 func (object *Object) SendSpawn(writer io.Writer) (err os.Error) {

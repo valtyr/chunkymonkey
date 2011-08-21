@@ -15,12 +15,12 @@ import (
 // INbtSerializable is the interface for all objects that can be serialized to
 // NBT data structures for persistency.
 type INbtSerializable interface {
-	// ReadNbt reads the NBT tag to set the state of the object.
-	ReadNbt(nbt.ITag) os.Error
+	// UnmarshalNbt reads the NBT tag to set the state of the object.
+	UnmarshalNbt(*nbt.Compound) os.Error
 
-	// WriteNbt creates an NBT tag representing the entity. This can be nil if
+	// MarshalNbt creates an NBT tag representing the entity. This can be nil if
 	// the entity cannot be serialized.
-	WriteNbt() nbt.ITag
+	MarshalNbt(*nbt.Compound) os.Error
 }
 
 // IEntity represents common elements to all types of non-block entities that

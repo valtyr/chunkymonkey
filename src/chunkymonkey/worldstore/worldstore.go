@@ -123,7 +123,7 @@ func (world *WorldStore) ChunkStoreForDimension(dimension DimensionId) (store ch
 	return
 }
 
-func (world *WorldStore) PlayerData(user string) (playerData nbt.ITag, err os.Error) {
+func (world *WorldStore) PlayerData(user string) (playerData *nbt.Compound, err os.Error) {
 	file, err := os.Open(path.Join(world.WorldPath, "players", user+".dat"))
 	if err != nil {
 		if errno, ok := util.Errno(err); ok && errno == os.ENOENT {

@@ -25,8 +25,9 @@ type IInventory interface {
 	MakeProtoSlots() []proto.WindowSlot
 	WriteProtoSlots(slots []proto.WindowSlot)
 	TakeAllItems() (items []Slot)
-	ReadNbt(nbt.ITag) os.Error
-	ReadNbtSlot(tag nbt.ITag, slotId SlotId) (err os.Error)
+	UnmarshalNbt(tag *nbt.Compound) (err os.Error)
+	MarshalNbt(tag *nbt.Compound) (err os.Error)
+	SlotUnmarshalNbt(tag *nbt.Compound, slotId SlotId) (err os.Error)
 }
 
 type Click struct {
@@ -217,20 +218,25 @@ func (inv *Inventory) slotUpdate(slot *Slot, slotId SlotId) {
 	}
 }
 
-func (inv *Inventory) ReadNbt(tag nbt.ITag) (err os.Error) {
+func (inv *Inventory) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 	itemList, ok := tag.Lookup("Items").(*nbt.List)
 	if !ok {
-		return os.NewError("Bad inventory - not a list")
+		return os.NewError("bad inventory - not a list")
 	}
 
-	for _, slotTag := range itemList.Value {
+	for _, slotTagITag := range itemList.Value {
+		slotTag, ok := slotTagITag.(*nbt.Compound)
+		if !ok {
+			return os.NewError("inventory slot not a compound")
+		}
+
 		var slotIdTag *nbt.Byte
 		if slotIdTag, ok = slotTag.Lookup("Slot").(*nbt.Byte); !ok {
 			return os.NewError("Slot ID not a byte")
 		}
 		slotId := SlotId(slotIdTag.Value)
 
-		if err = inv.ReadNbtSlot(slotTag, slotId); err != nil {
+		if err = inv.SlotUnmarshalNbt(slotTag, slotId); err != nil {
 			return
 		}
 	}
@@ -238,9 +244,33 @@ func (inv *Inventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 	return nil
 }
 
-func (inv *Inventory) ReadNbtSlot(tag nbt.ITag, slotId SlotId) (err os.Error) {
+func (inv *Inventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
+	occupiedSlots := 0
+	for i := range inv.slots {
+		if inv.slots[i].Count > 0 {
+			occupiedSlots++
+		}
+	}
+
+	itemList := &nbt.List{nbt.TagCompound, make([]nbt.ITag, 0, occupiedSlots)}
+	for i := range inv.slots {
+		slot := &inv.slots[i]
+		if slot.Count > 0 {
+			slotTag := nbt.NewCompound()
+			slotTag.Set("Slot", &nbt.Byte{int8(i)})
+			if err = slot.MarshalNbt(slotTag); err != nil {
+				return
+			}
+			itemList.Value = append(itemList.Value, slotTag)
+		}
+	}
+
+	return nil
+}
+
+func (inv *Inventory) SlotUnmarshalNbt(tag *nbt.Compound, slotId SlotId) (err os.Error) {
 	if slotId < 0 || int(slotId) >= len(inv.slots) {
 		return os.NewError("Bad slot ID")
 	}
-	return inv.slots[slotId].ReadNbt(tag)
+	return inv.slots[slotId].UnmarshalNbt(tag)
 }

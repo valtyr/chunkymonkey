@@ -129,3 +129,9 @@ func ReadBlockXyzCompound(tag nbt.ITag) (loc BlockXyz, err os.Error) {
 
 	return BlockXyz{BlockCoord(x.Value), BlockYCoord(y.Value), BlockCoord(z.Value)}, nil
 }
+
+func WriteBlockXyzCompound(compound *nbt.Compound, loc BlockXyz) {
+	compound.Tags["x"] = &nbt.Int{int32(loc.X)}
+	compound.Tags["y"] = &nbt.Int{int32(loc.Y)}
+	compound.Tags["z"] = &nbt.Int{int32(loc.Z)}
+}

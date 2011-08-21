@@ -1,6 +1,8 @@
 package chunkstore
 
 import (
+	"log"
+
 	"chunkymonkey/gamerules"
 	. "chunkymonkey/types"
 	"nbt"
@@ -24,7 +26,7 @@ func newNbtChunkWriter() *nbtChunkWriter {
 		chunkTag: &nbt.Compound{map[string]nbt.ITag{
 			"Level": &nbt.Compound{map[string]nbt.ITag{
 				"Entities":         &nbt.List{nbt.TagCompound, nil},
-				"TileEntities":     &nbt.List{nbt.TagCompound, nil}, // TODO
+				"TileEntities":     &nbt.List{nbt.TagCompound, nil},
 				"Blocks":           &nbt.ByteArray{},
 				"Data":             &nbt.ByteArray{},
 				"HeightMap":        &nbt.ByteArray{},
@@ -72,14 +74,33 @@ func (w *nbtChunkWriter) SetHeightMap(heightMap []byte) {
 func (w *nbtChunkWriter) SetEntities(entities map[EntityId]gamerules.INonPlayerEntity) {
 	entitiesNbt := make([]nbt.ITag, 0, len(entities))
 	for _, entity := range entities {
-		nbtData := entity.WriteNbt()
-		if nbtData != nil {
-			entitiesNbt = append(entitiesNbt, nbtData)
+		tag := nbt.NewCompound()
+
+		if err := entity.MarshalNbt(tag); err != nil {
+			log.Printf("%T.MarshalNbt failed: %v", entity, err)
+			continue
 		}
+
+		entitiesNbt = append(entitiesNbt, tag)
 	}
 	w.chunkTag.Lookup("Level/Entities").(*nbt.List).Value = entitiesNbt
 }
 
-func (w *nbtChunkWriter) RootTag() nbt.ITag {
+func (w *nbtChunkWriter) SetTileEntities(tileEntities map[BlockIndex]gamerules.ITileEntity) {
+	tileEntitiesNbt := make([]nbt.ITag, 0, len(tileEntities))
+	for _, entity := range tileEntities {
+		tag := nbt.NewCompound()
+
+		if err := entity.MarshalNbt(tag); err != nil {
+			log.Printf("%T.MarshalNbt failed: %v", entity, err)
+			continue
+		}
+
+		tileEntitiesNbt = append(tileEntitiesNbt, tag)
+	}
+	w.chunkTag.Lookup("Level/TileEntities").(*nbt.List).Value = tileEntitiesNbt
+}
+
+func (w *nbtChunkWriter) RootTag() *nbt.Compound {
 	return w.chunkTag
 }

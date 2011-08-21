@@ -19,8 +19,8 @@ type FurnaceAspect struct {
 	Active   BlockId
 }
 
-// Creates a new tile entity for a furnace. ReadNbt and SetChunk must be called
-// before any other methods.
+// Creates a new tile entity for a furnace. UnmarshalNbt and SetChunk must be
+// called before any other methods.
 func NewFurnaceTileEntity() ITileEntity {
 	return createFurnaceInventory(nil)
 }

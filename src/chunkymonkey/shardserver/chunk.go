@@ -93,6 +93,7 @@ func (chunk *Chunk) save(chunkStore chunkstore.IChunkStore) {
 		writer.SetSkyLight(chunk.skyLight)
 		writer.SetHeightMap(chunk.heightMap)
 		writer.SetEntities(chunk.entities)
+		writer.SetTileEntities(chunk.tileEntities)
 		chunkStore.WriteChunk(writer)
 		chunk.storeDirty = false
 	}

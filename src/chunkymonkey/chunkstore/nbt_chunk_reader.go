@@ -63,23 +63,32 @@ func (r *nbtChunkReader) Entities() (entities []gamerules.INonPlayerEntity) {
 	}
 
 	entities = make([]gamerules.INonPlayerEntity, 0, len(entityListTag.Value))
-
-	for _, entityTag := range entityListTag.Value {
-		entityObjectId, ok := entityTag.Lookup("id").(*nbt.String)
-
+	for _, tag := range entityListTag.Value {
+		compound, ok := tag.(*nbt.Compound)
 		if !ok {
-			log.Printf("missing or bad entity type ID in NBT: %s", entityObjectId)
-		} else {
-			if entity := gamerules.NewEntityByTypeName(entityObjectId.Value); entity == nil {
-				log.Printf("Found unhandled entity type: %s", entityObjectId.Value)
-			} else {
-				if err := entity.ReadNbt(entityTag); err != nil {
-					log.Printf("Error reading entity NBT: %s", err)
-				} else {
-					entities = append(entities, entity)
-				}
-			}
+			log.Printf("Found non-compound in entities list: %T", tag)
+			continue
 		}
+
+		entityObjectId, ok := compound.Lookup("id").(*nbt.String)
+		if !ok {
+			log.Printf("Missing or bad entity type ID in NBT: %s", entityObjectId)
+			continue
+		}
+
+		entity := gamerules.NewEntityByTypeName(entityObjectId.Value)
+		if entity == nil {
+			log.Printf("Found unhandled entity type: %s", entityObjectId.Value)
+			continue
+		}
+
+		err := entity.UnmarshalNbt(compound)
+		if err != nil {
+			log.Printf("Error unmarshalling entity NBT: %s", err)
+			continue
+		}
+
+		entities = append(entities, entity)
 	}
 
 	return
@@ -92,23 +101,31 @@ func (r *nbtChunkReader) TileEntities() (tileEntities []gamerules.ITileEntity) {
 	}
 
 	tileEntities = make([]gamerules.ITileEntity, 0, len(entityListTag.Value))
-
-	for _, tileEntityTag := range entityListTag.Value {
-		entityObjectId, ok := tileEntityTag.Lookup("id").(*nbt.String)
-
+	for _, tag := range entityListTag.Value {
+		compound, ok := tag.(*nbt.Compound)
 		if !ok {
-			log.Printf("missing or bad tile entity type ID in NBT: %s", entityObjectId)
-		} else {
-			if entity := gamerules.NewTileEntityByTypeName(entityObjectId.Value); entity == nil {
-				log.Printf("Found unhandled tile entity type: %s", entityObjectId.Value)
-			} else {
-				if err := entity.ReadNbt(tileEntityTag); err != nil {
-					log.Printf("Error reading tile entity NBT: %s", err)
-				} else {
-					tileEntities = append(tileEntities, entity)
-				}
-			}
+			log.Printf("Found non-compound in tile entities list: %T", tag)
+			continue
 		}
+
+		entityObjectId, ok := compound.Lookup("id").(*nbt.String)
+		if !ok {
+			log.Printf("Missing or bad tile entity type ID in NBT: %s", entityObjectId)
+			continue
+		}
+
+		entity := gamerules.NewTileEntityByTypeName(entityObjectId.Value)
+		if entity == nil {
+			log.Printf("Found unhandled tile entity type: %s", entityObjectId.Value)
+			continue
+		}
+
+		if err := entity.UnmarshalNbt(compound); err != nil {
+			log.Printf("%T.UnmarshalNbt failed: %s", err)
+			continue
+		}
+
+		tileEntities = append(tileEntities, entity)
 	}
 
 	return

@@ -107,10 +107,14 @@ func (game *Game) onPlayerDisconnect(entityId EntityId) {
 	game.playerNames[oldPlayer.Name()] = nil, false
 	game.entityManager.RemoveEntityById(entityId)
 
-	playerData := oldPlayer.WriteNbt()
+	playerData := nbt.NewCompound()
+	if err := oldPlayer.MarshalNbt(playerData); err != nil {
+		log.Printf("Failed to marshal player data: %v", err)
+		return
+	}
 
 	if err := game.worldStore.WritePlayerData(oldPlayer.Name(), playerData); err != nil {
-		log.Printf("Failed when writing player data: %s", err)
+		log.Printf("Failed when writing player data: %v", err)
 	}
 }
 
@@ -197,7 +201,7 @@ func (game *Game) login(conn net.Conn) {
 
 	entityId := game.entityManager.NewEntity()
 
-	var playerData nbt.ITag
+	var playerData *nbt.Compound
 	if playerData, err = game.worldStore.PlayerData(username); err != nil {
 		clientErr = os.NewError("Error reading user data. Please contact the server administrator.")
 		return
@@ -205,7 +209,7 @@ func (game *Game) login(conn net.Conn) {
 
 	player := player.NewPlayer(entityId, game.shardManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect, game)
 	if playerData != nil {
-		if err = player.ReadNbt(playerData); err != nil {
+		if err = player.UnmarshalNbt(playerData); err != nil {
 			// Don't let the player log in, as they will only have default inventory
 			// etc., which could lose items from them. Better for an administrator to
 			// sort this out.

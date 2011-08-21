@@ -35,8 +35,8 @@ func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *Ab
 	return
 }
 
-func (item *Item) ReadNbt(tag nbt.ITag) (err os.Error) {
-	if err = item.PointObject.ReadNbt(tag); err != nil {
+func (item *Item) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = item.PointObject.UnmarshalNbt(tag); err != nil {
 		return
 	}
 
@@ -62,17 +62,17 @@ func (item *Item) ReadNbt(tag nbt.ITag) (err os.Error) {
 	return nil
 }
 
-func (item *Item) WriteNbt() nbt.ITag {
-	tag := &nbt.Compound{map[string]nbt.ITag{
-		"id": &nbt.String{"Item"},
-		"Item": &nbt.Compound{map[string]nbt.ITag{
-			"id":     &nbt.Short{int16(item.ItemTypeId)},
-			"Count":  &nbt.Byte{int8(item.Count)},
-			"Damage": &nbt.Short{int16(item.Data)},
-		}},
-	}}
-	item.PointObject.WriteIntoNbt(tag)
-	return tag
+func (item *Item) MarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = item.PointObject.MarshalNbt(tag); err != nil {
+		return
+	}
+	tag.Set("id", &nbt.String{"Item"})
+	tag.Set("Item", &nbt.Compound{map[string]nbt.ITag{
+		"id":     &nbt.Short{int16(item.ItemTypeId)},
+		"Count":  &nbt.Byte{int8(item.Count)},
+		"Damage": &nbt.Short{int16(item.Data)},
+	}})
+	return nil
 }
 
 func (item *Item) GetSlot() *Slot {

@@ -134,20 +134,24 @@ func (w *PlayerInventory) CanTakeItem(item *gamerules.Slot) bool {
 	return w.holding.CanTakeItem(item) || w.main.CanTakeItem(item)
 }
 
-func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
+func (w *PlayerInventory) UnmarshalNbt(tag nbt.ITag) (err os.Error) {
 	if tag == nil {
 		return
 	}
 
 	list, ok := tag.(*nbt.List)
 	if !ok {
-		return os.NewError("Bad inventory - not a list")
+		return os.NewError("bad inventory - not a list")
 	}
 
-	for _, slotTag := range list.Value {
+	for _, slotTagITag := range list.Value {
+		slotTag, ok := slotTagITag.(*nbt.Compound)
+		if !ok {
+			return os.NewError("non-compound found for slot in player inventory")
+		}
 		var slotIdTag *nbt.Byte
 		if slotIdTag, ok = slotTag.Lookup("Slot").(*nbt.Byte); !ok {
-			return os.NewError("Slot ID not a byte")
+			return os.NewError("slot ID not a byte")
 		}
 		slotId := SlotId(slotIdTag.Value)
 		// The mapping order in NBT differs from that used in the window protocol.
@@ -169,9 +173,9 @@ func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 			inv = &w.armor
 			invSlotId = 103 - slotId
 		default:
-			return fmt.Errorf("Inventory slot %d out of range", slotId)
+			return fmt.Errorf("inventory slot %d out of range", slotId)
 		}
-		if err = inv.ReadNbtSlot(slotTag, invSlotId); err != nil {
+		if err = inv.SlotUnmarshalNbt(slotTag, invSlotId); err != nil {
 			return
 		}
 	}
@@ -179,21 +183,19 @@ func (w *PlayerInventory) ReadNbt(tag nbt.ITag) (err os.Error) {
 	return
 }
 
-func (w *PlayerInventory) WriteNbt() nbt.ITag {
+func (w *PlayerInventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	slots := make([]nbt.ITag, 0, 0)
 
 	// Add the holding inventory
 	for i := 0; i < int(w.holding.NumSlots()); i++ {
 		slot := w.holding.Slot(SlotId(i))
 		if !slot.IsEmpty() {
-			slots = append(slots, &nbt.Compound{
-				map[string]nbt.ITag{
-					"Slot":   &nbt.Byte{int8(i)},
-					"id":     &nbt.Short{int16(slot.ItemTypeId)},
-					"Count":  &nbt.Byte{int8(slot.Count)},
-					"Damage": &nbt.Short{int16(slot.Data)},
-				},
-			})
+			slotTag := nbt.NewCompound()
+			slotTag.Set("Slot", &nbt.Byte{int8(i)})
+			if err = slot.MarshalNbt(slotTag); err != nil {
+				return
+			}
+			slots = append(slots, slotTag)
 		}
 	}
 
@@ -201,14 +203,12 @@ func (w *PlayerInventory) WriteNbt() nbt.ITag {
 	for i := 0; i < int(w.main.NumSlots()); i++ {
 		slot := w.main.Slot(SlotId(i))
 		if !slot.IsEmpty() {
-			slots = append(slots, &nbt.Compound{
-				map[string]nbt.ITag{
-					"Slot":   &nbt.Byte{int8(i + playerInvHoldingNum)},
-					"id":     &nbt.Short{int16(slot.ItemTypeId)},
-					"Count":  &nbt.Byte{int8(slot.Count)},
-					"Damage": &nbt.Short{int16(slot.Data)},
-				},
-			})
+			slotTag := nbt.NewCompound()
+			slotTag.Set("Slot", &nbt.Byte{int8(i + playerInvHoldingNum)})
+			if err = slot.MarshalNbt(slotTag); err != nil {
+				return
+			}
+			slots = append(slots, slotTag)
 		}
 	}
 
@@ -216,16 +216,16 @@ func (w *PlayerInventory) WriteNbt() nbt.ITag {
 	for i := 0; i < int(w.armor.NumSlots()); i++ {
 		slot := w.armor.Slot(SlotId(i))
 		if !slot.IsEmpty() {
-			slots = append(slots, &nbt.Compound{
-				map[string]nbt.ITag{
-					"Slot":   &nbt.Byte{int8(i + 100)},
-					"id":     &nbt.Short{int16(slot.ItemTypeId)},
-					"Count":  &nbt.Byte{int8(slot.Count)},
-					"Damage": &nbt.Short{int16(slot.Data)},
-				},
-			})
+			slotTag := nbt.NewCompound()
+			slotTag.Set("Slot", &nbt.Byte{int8(i + 100)})
+			if err = slot.MarshalNbt(slotTag); err != nil {
+				return
+			}
+			slots = append(slots, slotTag)
 		}
 	}
 
-	return &nbt.List{nbt.TagCompound, slots}
+	tag.Set("Inventory", &nbt.List{nbt.TagCompound, slots})
+
+	return nil
 }

@@ -138,108 +138,108 @@ func (player *Player) Look() LookDegrees {
 	return player.look
 }
 
-// ReadNbt reads the player data from their persistently stored NBT data. It
-// must only be called before Player.Start().
-func (player *Player) ReadNbt(playerData nbt.ITag) (err os.Error) {
-	if player.position, err = nbtutil.ReadAbsXyz(playerData, "Pos"); err != nil {
+// UnmarshalNbt unpacks the player data from their persistantly stored NBT
+// data. It must only be called before Player.Start().
+func (player *Player) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if player.position, err = nbtutil.ReadAbsXyz(tag, "Pos"); err != nil {
 		return
 	}
 
-	if player.look, err = nbtutil.ReadLookDegrees(playerData, "Rotation"); err != nil {
+	if player.look, err = nbtutil.ReadLookDegrees(tag, "Rotation"); err != nil {
 		return
 	}
 
-	health, err := nbtutil.ReadShort(playerData, "Health")
+	health, err := nbtutil.ReadShort(tag, "Health")
 	if err != nil {
 		return
 	}
 	player.health = Health(health)
 
-	if err = player.inventory.ReadNbt(playerData.Lookup("Inventory")); err != nil {
+	if err = player.inventory.UnmarshalNbt(tag.Lookup("Inventory")); err != nil {
 		return
 	}
 
-	if player.onGround, err = nbtutil.ReadByte(playerData, "OnGround"); err != nil {
+	if player.onGround, err = nbtutil.ReadByte(tag, "OnGround"); err != nil {
 		return
 	}
 
-	if player.dimension, err = nbtutil.ReadInt(playerData, "Dimension"); err != nil {
+	if player.dimension, err = nbtutil.ReadInt(tag, "Dimension"); err != nil {
 		return
 	}
 
-	if player.sleeping, err = nbtutil.ReadByte(playerData, "Sleeping"); err != nil {
+	if player.sleeping, err = nbtutil.ReadByte(tag, "Sleeping"); err != nil {
 		return
 	}
 
-	if player.fallDistance, err = nbtutil.ReadFloat(playerData, "FallDistance"); err != nil {
+	if player.fallDistance, err = nbtutil.ReadFloat(tag, "FallDistance"); err != nil {
 		return
 	}
 
-	if player.sleepTimer, err = nbtutil.ReadShort(playerData, "SleepTimer"); err != nil {
+	if player.sleepTimer, err = nbtutil.ReadShort(tag, "SleepTimer"); err != nil {
 		return
 	}
 
-	if player.attackTime, err = nbtutil.ReadShort(playerData, "AttackTime"); err != nil {
+	if player.attackTime, err = nbtutil.ReadShort(tag, "AttackTime"); err != nil {
 		return
 	}
 
-	if player.deathTime, err = nbtutil.ReadShort(playerData, "DeathTime"); err != nil {
+	if player.deathTime, err = nbtutil.ReadShort(tag, "DeathTime"); err != nil {
 		return
 	}
 
-	if player.motion, err = nbtutil.ReadAbsVelocity(playerData, "Motion"); err != nil {
+	if player.motion, err = nbtutil.ReadAbsVelocity(tag, "Motion"); err != nil {
 		return
 	}
 
-	if player.hurtTime, err = nbtutil.ReadShort(playerData, "HurtTime"); err != nil {
+	if player.hurtTime, err = nbtutil.ReadShort(tag, "HurtTime"); err != nil {
 		return
 	}
 
-	if player.air, err = nbtutil.ReadShort(playerData, "Air"); err != nil {
+	if player.air, err = nbtutil.ReadShort(tag, "Air"); err != nil {
 		return
 	}
 
-	if player.fire, err = nbtutil.ReadShort(playerData, "Fire"); err != nil {
+	if player.fire, err = nbtutil.ReadShort(tag, "Fire"); err != nil {
 		return
 	}
 
-	return
+	return nil
 }
 
-// Serialize the player data to an Nbt tag so it can be written to file
-func (player *Player) WriteNbt() *nbt.Compound {
-	data := &nbt.Compound{
-		map[string]nbt.ITag{
-			"OnGround":     &nbt.Byte{player.onGround},
-			"Dimension":    &nbt.Int{player.dimension},
-			"Sleeping":     &nbt.Byte{player.sleeping},
-			"FallDistance": &nbt.Float{player.fallDistance},
-			"SleepTimer":   &nbt.Short{player.sleepTimer},
-			"AttackTime":   &nbt.Short{player.attackTime},
-			"DeathTime":    &nbt.Short{player.deathTime},
-			"Motion": &nbt.List{nbt.TagDouble, []nbt.ITag{
-				&nbt.Double{float64(player.motion.X)},
-				&nbt.Double{float64(player.motion.Y)},
-				&nbt.Double{float64(player.motion.Z)},
-			}},
-			"HurtTime":  &nbt.Short{player.hurtTime},
-			"Inventory": player.inventory.WriteNbt(),
-			"Air":       &nbt.Short{player.air},
-			"Rotation": &nbt.List{nbt.TagFloat, []nbt.ITag{
-				&nbt.Float{float32(player.look.Yaw)},
-				&nbt.Float{float32(player.look.Pitch)},
-			}},
-			"Pos": &nbt.List{nbt.TagDouble, []nbt.ITag{
-				&nbt.Double{float64(player.position.X)},
-				&nbt.Double{float64(player.position.Y)},
-				&nbt.Double{float64(player.position.Z)},
-			}},
-			"Fire":   &nbt.Short{player.fire},
-			"Health": &nbt.Short{int16(player.health)},
-		},
+// MarshalNbt packs the player data into a nbt.Compound so it can be written to
+// persistant storage.
+func (player *Player) MarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = player.inventory.MarshalNbt(tag); err != nil {
+		return
 	}
 
-	return data
+	tag.Set("OnGround", &nbt.Byte{player.onGround})
+	tag.Set("Dimension", &nbt.Int{player.dimension})
+	tag.Set("Sleeping", &nbt.Byte{player.sleeping})
+	tag.Set("FallDistance", &nbt.Float{player.fallDistance})
+	tag.Set("SleepTimer", &nbt.Short{player.sleepTimer})
+	tag.Set("AttackTime", &nbt.Short{player.attackTime})
+	tag.Set("DeathTime", &nbt.Short{player.deathTime})
+	tag.Set("Motion", &nbt.List{nbt.TagDouble, []nbt.ITag{
+		&nbt.Double{float64(player.motion.X)},
+		&nbt.Double{float64(player.motion.Y)},
+		&nbt.Double{float64(player.motion.Z)},
+	}})
+	tag.Set("HurtTime", &nbt.Short{player.hurtTime})
+	tag.Set("Air", &nbt.Short{player.air})
+	tag.Set("Rotation", &nbt.List{nbt.TagFloat, []nbt.ITag{
+		&nbt.Float{float32(player.look.Yaw)},
+		&nbt.Float{float32(player.look.Pitch)},
+	}})
+	tag.Set("Pos", &nbt.List{nbt.TagDouble, []nbt.ITag{
+		&nbt.Double{float64(player.position.X)},
+		&nbt.Double{float64(player.position.Y)},
+		&nbt.Double{float64(player.position.Z)},
+	}})
+	tag.Set("Fire", &nbt.Short{player.fire})
+	tag.Set("Health", &nbt.Short{int16(player.health)})
+
+	return nil
 }
 
 func (player *Player) getHeldItemTypeId() ItemTypeId {

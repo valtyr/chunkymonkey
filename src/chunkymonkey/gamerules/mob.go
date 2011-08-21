@@ -42,8 +42,8 @@ func (mob *Mob) Init(id EntityMobType) {
 	expVarMobSpawnCount.Add(1)
 }
 
-func (mob *Mob) ReadNbt(tag nbt.ITag) (err os.Error) {
-	if err = mob.PointObject.ReadNbt(tag); err != nil {
+func (mob *Mob) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if err = mob.PointObject.UnmarshalNbt(tag); err != nil {
 		return
 	}
 
@@ -63,28 +63,28 @@ func (mob *Mob) ReadNbt(tag nbt.ITag) (err os.Error) {
 	return nil
 }
 
-func (mob *Mob) WriteNbt() nbt.ITag {
+func (mob *Mob) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	mobTypeName, ok := MobNameByType[mob.mobType]
 	if !ok {
-		return nil
+		return os.NewError("unknown mob type")
 	}
-	tag := &nbt.Compound{map[string]nbt.ITag{
-		"id": &nbt.String{mobTypeName},
-		"Rotation": &nbt.List{nbt.TagFloat, []nbt.ITag{
-			&nbt.Float{float32(mob.look.Yaw)},
-			&nbt.Float{float32(mob.look.Pitch)},
-		}},
-		// TODO
-		"Air":          &nbt.Short{0},
-		"AttackTime":   &nbt.Short{0},
-		"DeathTime":    &nbt.Short{0},
-		"FallDistance": &nbt.Float{0},
-		"Fire":         &nbt.Short{0},
-		"Health":       &nbt.Short{0},
-		"HurtTime":     &nbt.Short{0},
-	}}
-	mob.PointObject.WriteIntoNbt(tag)
-	return tag
+	if err = mob.PointObject.MarshalNbt(tag); err != nil {
+		return
+	}
+	tag.Set("id", &nbt.String{mobTypeName})
+	tag.Set("Rotation", &nbt.List{nbt.TagFloat, []nbt.ITag{
+		&nbt.Float{float32(mob.look.Yaw)},
+		&nbt.Float{float32(mob.look.Pitch)},
+	}})
+	// TODO
+	tag.Set("Air", &nbt.Short{0})
+	tag.Set("AttackTime", &nbt.Short{0})
+	tag.Set("DeathTime", &nbt.Short{0})
+	tag.Set("FallDistance", &nbt.Float{0})
+	tag.Set("Fire", &nbt.Short{0})
+	tag.Set("Health", &nbt.Short{0})
+	tag.Set("HurtTime", &nbt.Short{0})
+	return nil
 }
 
 func (mob *Mob) SetLook(look LookDegrees) {
