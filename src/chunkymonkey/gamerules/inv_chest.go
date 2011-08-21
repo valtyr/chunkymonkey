@@ -15,7 +15,7 @@ type ChestInventory struct {
 	Inventory
 }
 
-// InitChestInventory initializes inv as a 9x3 chest.
+// NewChestInventory creates a 9x3 chest inventory.
 func NewChestInventory() (inv *ChestInventory) {
 	inv = new(ChestInventory)
 	inv.Inventory.Init(chestInvWidth * chestInvHeight)

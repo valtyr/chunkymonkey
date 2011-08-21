@@ -45,6 +45,7 @@ func NewEntityByTypeName(typeName string) INonPlayerEntity {
 var TileEntityCreateByName = map[string]func() ITileEntity{
 	"Chest":   NewChestTileEntity,
 	"Furnace": NewFurnaceTileEntity,
+	"Trap":    NewDispenserTileEntity,
 	// TODO Other tile entities.
 }
 

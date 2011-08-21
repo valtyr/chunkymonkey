@@ -430,8 +430,17 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "Dispenser",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 23,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
   },
   "24": {
     "BlockAttrs": {
