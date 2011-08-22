@@ -48,8 +48,8 @@ var TileEntityCreateByName = map[string]func() ITileEntity{
 	"Trap":       NewDispenserTileEntity,
 	"Sign":       NewSignTileEntity,
 	"MobSpawner": NewMobSpawnerTileEntity,
+	"Music":      NewMusicTileEntity,
 	// TODO Other tile entities.
-	//"Music":
 	//"RecordPlayer":
 }
 

@@ -473,14 +473,16 @@
       "Attachable": false
     },
     "Aspect": "Music",
-    "DroppedItems": [
-      {
-        "DroppedItem": 25,
-        "Probability": 100,
-        "Count": 1
-      }
-    ]
-    "BreakOn": 2
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 25,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
   },
   "26": {
     "BlockAttrs": {

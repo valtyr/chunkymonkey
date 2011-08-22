@@ -169,7 +169,7 @@ const (
 	InstrumentIdHarp       = InstrumentId(5)
 )
 
-type NotePitch byte
+type NotePitch int8
 
 const (
 	NotePitchMin = NotePitch(0)

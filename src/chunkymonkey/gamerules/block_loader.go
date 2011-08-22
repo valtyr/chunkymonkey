@@ -50,9 +50,13 @@ func (bd *blockDef) LoadBlockType() (block *BlockType, err os.Error) {
 }
 
 func (bd *blockDef) loadAspect() (aspect IBlockAspect, err os.Error) {
+	if bd.AspectArgs == nil {
+		err = fmt.Errorf("missing AspectArgs for type %q", bd.Aspect)
+		return
+	}
 	aspectMakerFn, ok := aspectMakers[bd.Aspect]
 	if !ok {
-		err = os.NewError(fmt.Sprintf("Unknown aspect type %q", bd.Aspect))
+		err = fmt.Errorf("unknown aspect type %q", bd.Aspect)
 		return
 	}
 	aspect = aspectMakerFn()
@@ -193,6 +197,7 @@ func init() {
 		"Dispenser":  makeDispenserAspect,
 		"Furnace":    makeFurnaceAspect,
 		"MobSpawner": makeMobSpawnerAspect,
+		"Music":      makeMusicAspect,
 		"Sapling":    makeSaplingAspect,
 		"Sign":       makeSignAspect,
 		"Standard":   makeStandardAspect,
