@@ -1388,7 +1388,7 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Standard",
+    "Aspect": "RecordPlayer",
     "AspectArgs": {
       "DroppedItems": [
         {
