@@ -472,8 +472,15 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "Music",
+    "DroppedItems": [
+      {
+        "DroppedItem": 25,
+        "Probability": 100,
+        "Count": 1
+      }
+    ]
+    "BreakOn": 2
   },
   "26": {
     "BlockAttrs": {
@@ -858,8 +865,11 @@
       "Replaceable": false,
       "Attachable": true
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "MobSpawner",
+    "AspectArgs": {
+      "DroppedItems": [],
+      "BreakOn": 2
+    }
   },
   "53": {
     "BlockAttrs": {

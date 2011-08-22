@@ -189,14 +189,15 @@ func LoadBlocksFromFile(filename string) (blockTypes BlockTypeList, err os.Error
 
 func init() {
 	aspectMakers = map[string]aspectMakerFn{
-		"Chest":     makeChestAspect,
-		"Dispenser": makeDispenserAspect,
-		"Furnace":   makeFurnaceAspect,
-		"Sapling":   makeSaplingAspect,
-		"Sign":      makeSignAspect,
-		"Standard":  makeStandardAspect,
-		"Todo":      makeTodoAspect,
-		"Void":      makeVoidAspect,
-		"Workbench": makeWorkbenchAspect,
+		"Chest":      makeChestAspect,
+		"Dispenser":  makeDispenserAspect,
+		"Furnace":    makeFurnaceAspect,
+		"MobSpawner": makeMobSpawnerAspect,
+		"Sapling":    makeSaplingAspect,
+		"Sign":       makeSignAspect,
+		"Standard":   makeStandardAspect,
+		"Todo":       makeTodoAspect,
+		"Void":       makeVoidAspect,
+		"Workbench":  makeWorkbenchAspect,
 	}
 }
