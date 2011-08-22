@@ -193,6 +193,7 @@ func init() {
 		"Dispenser": makeDispenserAspect,
 		"Furnace":   makeFurnaceAspect,
 		"Sapling":   makeSaplingAspect,
+		"Sign":      makeSignAspect,
 		"Standard":  makeStandardAspect,
 		"Todo":      makeTodoAspect,
 		"Void":      makeVoidAspect,

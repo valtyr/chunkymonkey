@@ -1052,8 +1052,17 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "Sign",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 323,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
   },
   "64": {
     "BlockAttrs": {
@@ -1116,8 +1125,17 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "Sign",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 323,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
   },
   "69": {
     "BlockAttrs": {

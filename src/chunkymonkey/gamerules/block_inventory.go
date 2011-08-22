@@ -61,10 +61,6 @@ func (blkInv *blockInventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	return nil
 }
 
-func (blkInv *blockInventory) Block() BlockXyz {
-	return blkInv.blockLoc
-}
-
 func (blkInv *blockInventory) Click(player IPlayerClient, click *Click) {
 	txState := blkInv.inv.Click(click)
 

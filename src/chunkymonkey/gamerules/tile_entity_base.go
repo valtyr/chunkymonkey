@@ -13,19 +13,23 @@ type tileEntity struct {
 	blockLoc BlockXyz
 }
 
-func (blkInv *tileEntity) UnmarshalNbt(tag nbt.ITag) (err os.Error) {
-	if blkInv.blockLoc, err = nbtutil.ReadBlockXyzCompound(tag); err != nil {
+func (tileEntity *tileEntity) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
+	if tileEntity.blockLoc, err = nbtutil.ReadBlockXyzCompound(tag); err != nil {
 		return
 	}
 
 	return nil
 }
 
-func (blkInv *tileEntity) MarshalNbt(tag *nbt.Compound) (err os.Error) {
-	nbtutil.WriteBlockXyzCompound(tag, blkInv.blockLoc)
+func (tileEntity *tileEntity) MarshalNbt(tag *nbt.Compound) (err os.Error) {
+	nbtutil.WriteBlockXyzCompound(tag, tileEntity.blockLoc)
 	return nil
 }
 
-func (blkInv *tileEntity) SetChunk(chunk IChunkBlock) {
-	blkInv.chunk = chunk
+func (tileEntity *tileEntity) SetChunk(chunk IChunkBlock) {
+	tileEntity.chunk = chunk
+}
+
+func (tileEntity *tileEntity) Block() BlockXyz {
+	return tileEntity.blockLoc
 }
