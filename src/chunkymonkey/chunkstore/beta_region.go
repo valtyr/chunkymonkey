@@ -14,6 +14,9 @@ import (
 	"nbt"
 )
 
+// TODO Handle timestamps of chunks.
+// TODO Keep track of used/unused sectors for more efficient packing.
+
 // Handle on a chunk file - used to read chunk data from the file.
 type regionFile struct {
 	offsets   regionFileHeader
@@ -45,7 +48,7 @@ func newRegionFile(filePath string) (rf *regionFile, err os.Error) {
 			return
 		}
 
-		rf.endSector = 1
+		rf.endSector = 2
 	} else {
 		// Existing region file, read header index.
 		if err = rf.offsets.Read(rf.file); err != nil {
@@ -59,6 +62,10 @@ func newRegionFile(filePath string) (rf *regionFile, err os.Error) {
 			if lastUsedSector >= rf.endSector {
 				rf.endSector = lastUsedSector + 1
 			}
+		}
+
+		if rf.endSector < 2 {
+			rf.endSector = 2
 		}
 	}
 
