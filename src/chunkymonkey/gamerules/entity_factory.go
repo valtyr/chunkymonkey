@@ -47,6 +47,10 @@ var TileEntityCreateByName = map[string]func() ITileEntity{
 	"Furnace": NewFurnaceTileEntity,
 	"Trap":    NewDispenserTileEntity,
 	// TODO Other tile entities.
+	//"Sign":
+	//"MobSpawner":
+	//"Music":
+	//"RecordPlayer":
 }
 
 func NewTileEntityByTypeName(typeName string) ITileEntity {
