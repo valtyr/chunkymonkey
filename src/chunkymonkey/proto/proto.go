@@ -76,6 +76,7 @@ const (
 	packetIdWindowItems          = 0x68
 	packetIdWindowProgressBar    = 0x69
 	packetIdWindowTransaction    = 0x6a
+	packetIdQuickbarSlotUpdate   = 0x6b
 	packetIdSignUpdate           = 0x82
 	packetIdUnknown0x83          = 0x83
 	packetIdIncrementStatistic   = 0xc8
@@ -161,6 +162,7 @@ type IClientPacketHandler interface {
 	PacketWindowSetSlot(windowId WindowId, slot SlotId, itemTypeId ItemTypeId, amount ItemCount, data ItemData)
 	PacketWindowItems(windowId WindowId, items []WindowSlot)
 	PacketWindowProgressBar(windowId WindowId, prgBarId PrgBarId, value PrgBarValue)
+	PacketQuickbarSlotUpdate(slot SlotId, itemId ItemTypeId, count ItemCount, data ItemData)
 	PacketUnknown0x83(field1, field2 int16, field3 string)
 	PacketIncrementStatistic(statisticId StatisticId, delta int8)
 }
@@ -2866,6 +2868,43 @@ func readWindowTransaction(reader io.Reader, handler IPacketHandler) (err os.Err
 	return
 }
 
+// packetIdQuickbarSlotUpdate
+
+func WriteQuickbarSlotUpdate(writer io.Writer, slot SlotId, itemId ItemTypeId, count ItemCount, data ItemData) (err os.Error) {
+	var packet = struct {
+		PacketId byte
+		Slot     SlotId
+		ItemId   ItemTypeId
+		Count    ItemCount
+		Data     ItemData
+	}{
+		packetIdQuickbarSlotUpdate,
+		slot,
+		itemId,
+		count,
+		data,
+	}
+
+	return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readQuickbarSlotUpdate(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	var packet struct {
+		Slot   SlotId
+		ItemId ItemTypeId
+		Count  ItemCount
+		Data   ItemData
+	}
+
+	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+		return
+	}
+
+	handler.PacketQuickbarSlotUpdate(packet.Slot, packet.ItemId, packet.Count, packet.Data)
+
+	return
+}
+
 // packetIdSignUpdate
 
 func WriteSignUpdate(writer io.Writer, position *BlockXyz, lines [4]string) (err os.Error) {
@@ -3085,6 +3124,7 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdWindowSetSlot:        readWindowSetSlot,
 	packetIdWindowItems:          readWindowItems,
 	packetIdWindowProgressBar:    readWindowProgressBar,
+	packetIdQuickbarSlotUpdate:   readQuickbarSlotUpdate,
 	packetIdUnknown0x83:          readUnknown0x83,
 	packetIdIncrementStatistic:   readIncrementStatistic,
 }

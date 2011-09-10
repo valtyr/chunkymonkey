@@ -291,6 +291,11 @@ func (p *MessageParser) PacketWindowTransaction(windowId WindowId, txId TxId, ac
 		windowId, txId, accepted)
 }
 
+func (p *MessageParser) PacketQuickbarSlotUpdate(slot SlotId, itemId ItemTypeId, count ItemCount, data ItemData) {
+	p.printf("PacketQuickbarSlotUpdate(slot=%d, itemId=%d, count=%d, data=%d)",
+		slot, itemId, count, data)
+}
+
 func (p *MessageParser) PacketIncrementStatistic(statisticId StatisticId, delta int8) {
 	p.printf("PacketIncrementStatistic(statisticId=%d, delta=%d)",
 		statisticId, delta)
