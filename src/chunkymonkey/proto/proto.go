@@ -89,7 +89,7 @@ var colorTagEndErr = os.NewError("Found a color tag at the end of a message. Thi
 
 // Packets commonly received by both client and server
 type IPacketHandler interface {
-	PacketKeepAlive()
+	PacketKeepAlive(id int32)
 	PacketChatMessage(message string)
 	PacketEntityAction(entityId EntityId, action EntityAction)
 	PacketUseEntity(user EntityId, target EntityId, leftClick bool)
@@ -388,12 +388,23 @@ type ObjectData struct {
 
 // packetIdKeepAlive
 
-func WriteKeepAlive(writer io.Writer) os.Error {
-	return binary.Write(writer, binary.BigEndian, byte(packetIdKeepAlive))
+func WriteKeepAlive(writer io.Writer, id int32) os.Error {
+	var packet = struct {
+		packetId byte
+		id       int32
+	}{
+		packetIdKeepAlive,
+		id,
+	}
+	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
 func readKeepAlive(reader io.Reader, handler IPacketHandler) (err os.Error) {
-	handler.PacketKeepAlive()
+	var id int32
+	if err = binary.Read(reader, binary.BigEndian, &id); err != nil {
+		return
+	}
+	handler.PacketKeepAlive(id)
 	return
 }
 

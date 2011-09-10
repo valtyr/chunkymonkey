@@ -271,7 +271,9 @@ func (player *Player) Start() {
 // Note: any packet handlers that could change the player state or read a
 // changeable state must use player.lock
 
-func (player *Player) PacketKeepAlive() {
+func (player *Player) PacketKeepAlive(id int32) {
+	// TODO Proper checking of sent versus received IDs. Kick player if they
+	// don't reply in time (within 1200 ticks/1 minute) or ID doesn't match.
 }
 
 func (player *Player) PacketChatMessage(message string) {

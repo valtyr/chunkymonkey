@@ -44,7 +44,7 @@ func (p *MessageParser) printf(format string, v ...interface{}) {
 	p.logger.Printf(format, v...)
 }
 
-func (p *MessageParser) PacketKeepAlive() {
+func (p *MessageParser) PacketKeepAlive(id int32) {
 	// Not logging this packet as it's a bit spammy
 }
 

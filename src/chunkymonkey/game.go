@@ -257,7 +257,9 @@ func (game *Game) sendTimeUpdate() {
 	// The "keep-alive" packet to client(s) sent here as well, as there
 	// seems no particular reason to send time and keep-alive separately
 	// for now.
-	proto.WriteKeepAlive(buf)
+	// TODO Move keepalive packets to player so that sent versus received values
+	// can be compared and timed.
+	proto.WriteKeepAlive(buf, 0)
 
 	game.multicastPacket(buf.Bytes(), nil)
 }
