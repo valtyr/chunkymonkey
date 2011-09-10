@@ -80,6 +80,7 @@ const (
 	packetIdSignUpdate           = 0x82
 	packetIdUnknown0x83          = 0x83
 	packetIdIncrementStatistic   = 0xc8
+	packetIdUserListItem         = 0xc9
 	packetIdDisconnect           = 0xff
 )
 
@@ -165,6 +166,7 @@ type IClientPacketHandler interface {
 	PacketQuickbarSlotUpdate(slot SlotId, itemId ItemTypeId, count ItemCount, data ItemData)
 	PacketUnknown0x83(field1, field2 int16, field3 string)
 	PacketIncrementStatistic(statisticId StatisticId, delta int8)
+	PacketUserListItem(username string, unknown bool, ping int16)
 }
 
 // Common protocol helper functions
@@ -3023,6 +3025,47 @@ func readIncrementStatistic(reader io.Reader, handler IClientPacketHandler) (err
 	}
 
 	handler.PacketIncrementStatistic(packet.StatisticId, packet.Delta)
+
+	return
+}
+
+// packetIdUserListItem
+
+func WriteUserListItem(writer io.Writer, username string, unknown bool, ping int16) (err os.Error) {
+	if err = binary.Write(writer, binary.BigEndian, byte(packetIdUserListItem)); err != nil {
+		return
+	}
+
+	if err = writeString16(writer, username); err != nil {
+		return
+	}
+
+	var packetEnd = struct {
+		Unknown byte
+		Ping    int16
+	}{
+		boolToByte(unknown),
+		ping,
+	}
+
+	return binary.Write(writer, binary.BigEndian, &packetEnd)
+}
+
+func readUserListItem(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	username, err := readString16(reader)
+	if err != nil {
+		return
+	}
+
+	var packetEnd struct {
+		Unknown byte
+		Ping    int16
+	}
+	if err = binary.Read(reader, binary.BigEndian, &packetEnd); err != nil {
+		return
+	}
+
+	handler.PacketUserListItem(username, byteToBool(packetEnd.Unknown), packetEnd.Ping)
 
 	return
 }
