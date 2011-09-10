@@ -59,6 +59,7 @@ const (
 	packetIdEntityMetadata       = 0x28
 	packetIdUnknown0x29          = 0x29
 	packetIdUnknown0x2a          = 0x2a
+	packetIdPlayerExperience     = 0x2b
 	packetIdPreChunk             = 0x32
 	packetIdMapChunk             = 0x33
 	packetIdBlockChangeMulti     = 0x34
@@ -142,6 +143,7 @@ type IClientPacketHandler interface {
 	PacketEntityMetadata(entityId EntityId, metadata []EntityMetadata)
 	PacketUnknown0x29(entityId EntityId, unknown1, unknown2 int8, unknown3 int16)
 	PacketUnknown0x2a(entityId EntityId, unknown int8)
+	PacketPlayerExperience(experience, level int8, totalExperience int16)
 
 	PacketPreChunk(position *ChunkXz, mode ChunkLoadMode)
 	PacketMapChunk(position *BlockXyz, size *SubChunkSize, data []byte)
@@ -2008,6 +2010,40 @@ func readUnknown0x2a(reader io.Reader, handler IClientPacketHandler) (err os.Err
 	return
 }
 
+// packetIdPlayerExperience
+
+func WritePlayerExperience(writer io.Writer, experience, level int8, totalExperience int16) (err os.Error) {
+	var packet = struct {
+		PacketId        byte
+		Experience      int8
+		Level           int8
+		TotalExperience int16
+	}{
+		packetIdPlayerExperience,
+		experience,
+		level,
+		totalExperience,
+	}
+
+	return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readPlayerExperience(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	var packet struct {
+		Experience      int8
+		Level           int8
+		TotalExperience int16
+	}
+
+	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+		return
+	}
+
+	handler.PacketPlayerExperience(packet.Experience, packet.Level, packet.TotalExperience)
+
+	return
+}
+
 // packetIdPreChunk
 
 func WritePreChunk(writer io.Writer, chunkLoc *ChunkXz, mode ChunkLoadMode) os.Error {
@@ -3036,6 +3072,7 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdEntityMetadata:       readEntityMetadata,
 	packetIdUnknown0x29:          readUnknown0x29,
 	packetIdUnknown0x2a:          readUnknown0x2a,
+	packetIdPlayerExperience:     readPlayerExperience,
 	packetIdPreChunk:             readPreChunk,
 	packetIdMapChunk:             readMapChunk,
 	packetIdBlockChangeMulti:     readBlockChangeMulti,

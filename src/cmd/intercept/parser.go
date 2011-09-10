@@ -208,6 +208,11 @@ func (p *MessageParser) PacketUnknown0x2a(entityId EntityId, unknown int8) {
 	p.printf("PacketUnknown0x2a(entityId=%d, unknown=%d)", entityId, unknown)
 }
 
+func (p *MessageParser) PacketPlayerExperience(experience, level int8, totalExperience int16) {
+	p.printf("PacketPlayerExperience(experience=%d, level=%d, totalExperience=%d)",
+		experience, level, totalExperience)
+}
+
 func (p *MessageParser) PacketPreChunk(position *ChunkXz, mode ChunkLoadMode) {
 	p.printf("PacketPreChunk(position=%v, mode=%d)", position, mode)
 }
