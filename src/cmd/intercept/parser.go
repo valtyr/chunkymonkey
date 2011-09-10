@@ -234,8 +234,8 @@ func (p *MessageParser) PacketUnknown0x3d(field1, field2 int32, field3 int8, fie
 		field1, field2, field3, field4, field5)
 }
 
-func (p *MessageParser) PacketBedInvalid(field1 byte) {
-	p.printf("PacketBedInvalid(field1=%t)", field1)
+func (p *MessageParser) PacketState(reason, gameMode byte) {
+	p.printf("PacketState(reason=%d, gameMode=%d)", reason, gameMode)
 }
 
 func (p *MessageParser) PacketWeather(entityId EntityId, raining bool, position *AbsIntXyz) {

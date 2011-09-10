@@ -64,7 +64,7 @@ const (
 	packetIdNoteBlockPlay        = 0x36
 	packetIdExplosion            = 0x3c
 	packetIdUnknown0x3d          = 0x3d
-	packetIdBedInvalid           = 0x46
+	packetIdState                = 0x46
 	packetIdWeather              = 0x47
 	packetIdWindowOpen           = 0x64
 	packetIdWindowClose          = 0x65
@@ -148,7 +148,7 @@ type IClientPacketHandler interface {
 	// NOTE method signature likely to change
 	PacketExplosion(position *AbsXyz, power float32, blockOffsets []ExplosionOffsetXyz)
 
-	PacketBedInvalid(field1 byte)
+	PacketState(reason, gameMode byte)
 	PacketWeather(entityId EntityId, raining bool, position *AbsIntXyz)
 
 	PacketWindowOpen(windowId WindowId, invTypeId InvTypeId, windowTitle string, numSlots byte)
@@ -2299,28 +2299,32 @@ func readUnknown0x3d(reader io.Reader, handler IPacketHandler) (err os.Error) {
 	return
 }
 
-// packetIdBedInvalid
+// packetIdState
 
-// TODO Revise this when packet better understood.
-func WriteBedInvalid(writer io.Writer, field1 byte) (err os.Error) {
+func WriteState(writer io.Writer, reason, gameMode byte) (err os.Error) {
 	var packet = struct {
 		PacketId byte
-		Field1   byte
+		Reason   byte
+		GameMode byte
 	}{
-		packetIdBedInvalid,
-		field1,
+		packetIdState,
+		reason,
+		gameMode,
 	}
 
 	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readBedInvalid(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
-	var field1 byte
-	if err = binary.Read(reader, binary.BigEndian, &field1); err != nil {
+func readState(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	var packet struct {
+		Reason   byte
+		GameMode byte
+	}
+	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
 		return
 	}
 
-	handler.PacketBedInvalid(field1)
+	handler.PacketState(packet.Reason, packet.GameMode)
 	return
 }
 
@@ -2961,7 +2965,7 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdBlockChange:          readBlockChange,
 	packetIdNoteBlockPlay:        readNoteBlockPlay,
 	packetIdExplosion:            readExplosion,
-	packetIdBedInvalid:           readBedInvalid,
+	packetIdState:                readState,
 	packetIdWeather:              readWeather,
 	packetIdWindowOpen:           readWindowOpen,
 	packetIdWindowSetSlot:        readWindowSetSlot,
