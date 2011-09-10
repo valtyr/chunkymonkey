@@ -57,6 +57,8 @@ const (
 	packetIdEntityTeleport       = 0x22
 	packetIdEntityStatus         = 0x26
 	packetIdEntityMetadata       = 0x28
+	packetIdUnknown0x29          = 0x29
+	packetIdUnknown0x2a          = 0x2a
 	packetIdPreChunk             = 0x32
 	packetIdMapChunk             = 0x33
 	packetIdBlockChangeMulti     = 0x34
@@ -138,6 +140,8 @@ type IClientPacketHandler interface {
 	PacketEntityTeleport(entityId EntityId, position *AbsIntXyz, look *LookBytes)
 	PacketEntityStatus(entityId EntityId, status EntityStatus)
 	PacketEntityMetadata(entityId EntityId, metadata []EntityMetadata)
+	PacketUnknown0x29(entityId EntityId, unknown1, unknown2 int8, unknown3 int16)
+	PacketUnknown0x2a(entityId EntityId, unknown int8)
 
 	PacketPreChunk(position *ChunkXz, mode ChunkLoadMode)
 	PacketMapChunk(position *BlockXyz, size *SubChunkSize, data []byte)
@@ -1933,6 +1937,77 @@ func readEntityMetadata(reader io.Reader, handler IClientPacketHandler) (err os.
 	return
 }
 
+// packetIdUnknown0x29
+// TODO Revisit when packet better understood.
+// TODO Find out if it really is server->client only.
+
+func WriteUnknown0x29(writer io.Writer, entityId EntityId, unknown1, unknown2 int8, unknown3 int16) (err os.Error) {
+	var packet = struct {
+		PacketId byte
+		EntityId EntityId
+		Unknown1 int8
+		Unknown2 int8
+		Unknown3 int16
+	}{
+		packetIdUnknown0x29,
+		entityId,
+		unknown1,
+		unknown2,
+		unknown3,
+	}
+
+	return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readUnknown0x29(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	var packet struct {
+		EntityId EntityId
+		Unknown1 int8
+		Unknown2 int8
+		Unknown3 int16
+	}
+
+	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+		return
+	}
+
+	handler.PacketUnknown0x29(packet.EntityId, packet.Unknown1, packet.Unknown2, packet.Unknown3)
+
+	return
+}
+
+// packetIdUnknown0x2a
+// TODO Revisit when packet better understood.
+
+func WriteUnknown0x2a(writer io.Writer, entityId EntityId, unknown int8) (err os.Error) {
+	var packet = struct {
+		PacketId byte
+		EntityId EntityId
+		Unknown  int8
+	}{
+		packetIdUnknown0x2a,
+		entityId,
+		unknown,
+	}
+
+	return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readUnknown0x2a(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	var packet struct {
+		EntityId EntityId
+		Unknown  int8
+	}
+
+	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+		return
+	}
+
+	handler.PacketUnknown0x2a(packet.EntityId, packet.Unknown)
+
+	return
+}
+
 // packetIdPreChunk
 
 func WritePreChunk(writer io.Writer, chunkLoc *ChunkXz, mode ChunkLoadMode) os.Error {
@@ -2959,6 +3034,8 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdEntityTeleport:       readEntityTeleport,
 	packetIdEntityStatus:         readEntityStatus,
 	packetIdEntityMetadata:       readEntityMetadata,
+	packetIdUnknown0x29:          readUnknown0x29,
+	packetIdUnknown0x2a:          readUnknown0x2a,
 	packetIdPreChunk:             readPreChunk,
 	packetIdMapChunk:             readMapChunk,
 	packetIdBlockChangeMulti:     readBlockChangeMulti,

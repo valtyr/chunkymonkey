@@ -199,6 +199,15 @@ func (p *MessageParser) PacketEntityMetadata(entityId EntityId, metadata []proto
 	p.printf("PacketEntityMetadata(entityId=%d, metadata=%v)", entityId, metadata)
 }
 
+func (p *MessageParser) PacketUnknown0x29(entityId EntityId, unknown1, unknown2 int8, unknown3 int16) {
+	p.printf("PacketUnknown0x29(entityId=%d, unknown1=%d, unknown2=%d, unknown3=%d)",
+		entityId, unknown1, unknown2, unknown3)
+}
+
+func (p *MessageParser) PacketUnknown0x2a(entityId EntityId, unknown int8) {
+	p.printf("PacketUnknown0x2a(entityId=%d, unknown=%d)", entityId, unknown)
+}
+
 func (p *MessageParser) PacketPreChunk(position *ChunkXz, mode ChunkLoadMode) {
 	p.printf("PacketPreChunk(position=%v, mode=%d)", position, mode)
 }
