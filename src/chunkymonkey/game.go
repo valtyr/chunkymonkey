@@ -136,7 +136,8 @@ func (game *Game) onTick() {
 // for each player connection and therefore should not attempt to alter the
 // game structure without enqueue().
 func (game *Game) login(conn net.Conn) {
-	// TODO: This function should access game in a thread-safe way for reading
+	// TODO: This function should access game in a thread-safe way for reading.
+	// TODO: Handle 0xfe being first packet with well-formed disconnect packet.
 	var err, clientErr os.Error
 
 	defer func() {

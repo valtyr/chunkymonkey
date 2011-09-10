@@ -100,9 +100,9 @@ func (p *MessageParser) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 		lines[0], lines[1], lines[2], lines[3])
 }
 
-func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, dimension DimensionId) {
-	p.printf("PacketLogin(entityId=%d, mapSeed=%d, dimension=%d)",
-		entityId, mapSeed, dimension)
+func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte) {
+	p.printf("PacketLogin(entityId=%d, mapSeed=%d, serverMode=%d, dimension=%d, unknown1=%d, unknown2=%d)",
+		entityId, mapSeed, serverMode, dimension, unknown1, unknown2)
 }
 
 func (p *MessageParser) PacketTimeUpdate(time Ticks) {

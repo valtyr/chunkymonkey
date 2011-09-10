@@ -102,7 +102,7 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 		look:   LookDegrees{0, 0},
 
 		health: MaxHealth,
-		food:   MaxFoodUnits,  // TODO: Check what initial level should be.
+		food:   MaxFoodUnits, // TODO: Check what initial level should be.
 
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
@@ -258,7 +258,9 @@ func (player *Player) Start() {
 	buf := &bytes.Buffer{}
 	// TODO pass proper dimension. This is low priority, because we don't yet
 	// support multiple dimensions.
-	proto.ServerWriteLogin(buf, player.EntityId, 0, DimensionNormal)
+	// TODO pass proper map seed.
+	// TODO pass proper values for the unknowns - when their meaning is known.
+	proto.ServerWriteLogin(buf, player.EntityId, 0, 0, DimensionNormal, 128, 8)
 	proto.WriteSpawnPosition(buf, &player.spawnBlock)
 	player.TransmitPacket(buf.Bytes())
 

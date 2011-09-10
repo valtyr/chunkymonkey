@@ -15,7 +15,7 @@ import (
 
 const (
 	// Currently only this protocol version is supported.
-	protocolVersion = 14
+	protocolVersion = 15
 
 	maxUcs2Char  = 0xffff
 	ucs2ReplChar = 0xfffd
@@ -118,7 +118,7 @@ type IServerPacketHandler interface {
 // Clients to the protocol must implement this interface to receive packets
 type IClientPacketHandler interface {
 	IPacketHandler
-	ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, dimension DimensionId)
+	ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte)
 	PacketTimeUpdate(time Ticks)
 	PacketBedUse(flag bool, bedLoc *BlockXyz)
 	PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemTypeId)
@@ -390,8 +390,8 @@ type ObjectData struct {
 
 func WriteKeepAlive(writer io.Writer, id int32) os.Error {
 	var packet = struct {
-		packetId byte
-		id       int32
+		PacketId byte
+		Id       int32
 	}{
 		packetIdKeepAlive,
 		id,
@@ -410,7 +410,7 @@ func readKeepAlive(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 // packetIdLogin
 
-func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, mapSeed RandomSeed, dimension DimensionId, err os.Error) {
+func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte, err os.Error) {
 	if err = binary.Read(reader, binary.BigEndian, &versionOrEntityId); err != nil {
 		return
 	}
@@ -419,15 +419,21 @@ func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, map
 	}
 
 	var packetEnd struct {
-		MapSeed   RandomSeed
-		Dimension DimensionId
+		MapSeed    RandomSeed
+		ServerMode int32
+		Dimension  DimensionId
+		Unknown1   byte
+		Unknown2   byte
 	}
 	if err = binary.Read(reader, binary.BigEndian, &packetEnd); err != nil {
 		return
 	}
 
 	mapSeed = packetEnd.MapSeed
+	serverMode = packetEnd.ServerMode
 	dimension = packetEnd.Dimension
+	unknown1 = packetEnd.Unknown1
+	unknown2 = packetEnd.Unknown2
 
 	return
 }
@@ -442,7 +448,7 @@ func ServerReadLogin(reader io.Reader) (username string, err os.Error) {
 		return
 	}
 
-	version, username, _, _, err := commonReadLogin(reader)
+	version, username, _, _, _, _, _, err := commonReadLogin(reader)
 	if err != nil {
 		return
 	}
@@ -455,45 +461,47 @@ func ServerReadLogin(reader io.Reader) (username string, err os.Error) {
 }
 
 func clientReadLogin(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
-	entityId, _, mapSeed, dimension, err := commonReadLogin(reader)
+	entityId, _, mapSeed, serverMode, dimension, unknown1, unknown2, err := commonReadLogin(reader)
 	if err != nil {
 		return
 	}
 
-	handler.ClientPacketLogin(EntityId(entityId), mapSeed, dimension)
+	handler.ClientPacketLogin(EntityId(entityId), mapSeed, serverMode, dimension, unknown1, unknown2)
 
 	return
 }
 
-func commonWriteLogin(writer io.Writer, str1, str2 string, entityId EntityId, mapSeed RandomSeed, dimension DimensionId) (err os.Error) {
-	if err = binary.Write(writer, binary.BigEndian, entityId); err != nil {
+func commonWriteLogin(writer io.Writer, versionOrEntityId int32, str string, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte) (err os.Error) {
+	if err = binary.Write(writer, binary.BigEndian, versionOrEntityId); err != nil {
 		return
 	}
 
-	// These strings are currently unused
-	if err = writeString16(writer, str1); err != nil {
-		return
-	}
-	if err = writeString16(writer, str2); err != nil {
+	if err = writeString16(writer, str); err != nil {
 		return
 	}
 
 	var packetEnd = struct {
-		MapSeed   RandomSeed
-		Dimension DimensionId
+		MapSeed    RandomSeed
+		ServerMode int32
+		Dimension  DimensionId
+		Unknown1   byte
+		Unknown2   byte
 	}{
 		mapSeed,
+		serverMode,
 		dimension,
+		unknown1,
+		unknown2,
 	}
 	return binary.Write(writer, binary.BigEndian, &packetEnd)
 }
 
-func ServerWriteLogin(writer io.Writer, entityId EntityId, mapSeed RandomSeed, dimension DimensionId) (err os.Error) {
+func ServerWriteLogin(writer io.Writer, entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte) (err os.Error) {
 	if err = binary.Write(writer, binary.BigEndian, byte(packetIdLogin)); err != nil {
 		return
 	}
 
-	return commonWriteLogin(writer, "", "", entityId, mapSeed, dimension)
+	return commonWriteLogin(writer, int32(entityId), "", mapSeed, serverMode, dimension, unknown1, unknown2)
 }
 
 func ClientWriteLogin(writer io.Writer, username, password string) (err os.Error) {
@@ -501,7 +509,7 @@ func ClientWriteLogin(writer io.Writer, username, password string) (err os.Error
 		return
 	}
 
-	return commonWriteLogin(writer, username, password, protocolVersion, 0, 0)
+	return commonWriteLogin(writer, protocolVersion, username, 0, 0, 0, 0, 0)
 }
 
 // packetIdHandshake
@@ -723,9 +731,9 @@ func readUseEntity(reader io.Reader, handler IPacketHandler) (err os.Error) {
 func WriteUpdateHealth(writer io.Writer, health Health, food FoodUnits, unknown float32) (err os.Error) {
 	var packet = struct {
 		PacketId byte
-		health   Health
-		food     FoodUnits
-		unknown  float32
+		Health   Health
+		Food     FoodUnits
+		Unknown  float32
 	}{
 		packetIdUpdateHealth,
 		health,
@@ -738,9 +746,9 @@ func WriteUpdateHealth(writer io.Writer, health Health, food FoodUnits, unknown 
 
 func readUpdateHealth(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
 	var packet struct {
-		health   Health
-		food     FoodUnits
-		unknown  float32
+		Health  Health
+		Food    FoodUnits
+		Unknown float32
 	}
 
 	err = binary.Read(reader, binary.BigEndian, &packet)
@@ -748,7 +756,7 @@ func readUpdateHealth(reader io.Reader, handler IClientPacketHandler) (err os.Er
 		return
 	}
 
-	handler.PacketUpdateHealth(packet.health, packet.food, packet.unknown)
+	handler.PacketUpdateHealth(packet.Health, packet.Food, packet.Unknown)
 	return
 }
 
