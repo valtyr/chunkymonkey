@@ -504,6 +504,10 @@ func (player *Player) PacketWindowTransaction(windowId WindowId, txId TxId, acce
 func (player *Player) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 }
 
+func (player *Player) PacketServerListPing() {
+	// Shouldn't receive this packet once logged in.
+}
+
 func (player *Player) PacketDisconnect(reason string) {
 	log.Printf("Player %s disconnected reason=%s", player.name, reason)
 

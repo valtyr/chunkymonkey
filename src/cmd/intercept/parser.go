@@ -311,6 +311,10 @@ func (p *MessageParser) PacketUserListItem(username string, unknown bool, ping i
 		username, unknown, ping)
 }
 
+func (p *MessageParser) PacketServerListPing() {
+	p.printf("PacketServerListPing()")
+}
+
 func (p *MessageParser) PacketDisconnect(reason string) {
 	p.printf("PacketDisconnect(%q)", reason)
 }

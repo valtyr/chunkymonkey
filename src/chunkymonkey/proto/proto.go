@@ -81,6 +81,7 @@ const (
 	packetIdUnknown0x83          = 0x83
 	packetIdIncrementStatistic   = 0xc8
 	packetIdUserListItem         = 0xc9
+	packetIdServerListPing       = 0xfe
 	packetIdDisconnect           = 0xff
 )
 
@@ -118,6 +119,7 @@ type IServerPacketHandler interface {
 	PacketHoldingChange(slotId SlotId)
 	PacketWindowClose(windowId WindowId)
 	PacketWindowClick(windowId WindowId, slot SlotId, rightClick bool, txId TxId, shiftClick bool, expectedSlot *WindowSlot)
+	PacketServerListPing()
 }
 
 // Clients to the protocol must implement this interface to receive packets
@@ -3067,6 +3069,17 @@ func readUserListItem(reader io.Reader, handler IClientPacketHandler) (err os.Er
 
 	handler.PacketUserListItem(username, byteToBool(packetEnd.Unknown), packetEnd.Ping)
 
+	return
+}
+
+// packetIdServerListPing
+
+func WriteServerListPing(writer io.Writer) (err os.Error) {
+	return binary.Write(writer, binary.BigEndian, byte(packetIdServerListPing))
+}
+
+func readServerListPing(reader io.Reader, handler IServerPacketHandler) (err os.Error) {
+	handler.PacketServerListPing()
 	return
 }
 
