@@ -122,8 +122,8 @@ func (p *MessageParser) PacketUseEntity(user EntityId, target EntityId, leftClic
 	p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%t)", user, target, leftClick)
 }
 
-func (p *MessageParser) PacketUpdateHealth(health Health) {
-	p.printf("PacketUpdateHealth(health=%d)", health)
+func (p *MessageParser) PacketUpdateHealth(health Health, food FoodUnits, unknown float32) {
+	p.printf("PacketUpdateHealth(health=%d, food=%d, unknown=%f)", health, food, unknown)
 }
 
 func (p *MessageParser) PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemTypeId) {

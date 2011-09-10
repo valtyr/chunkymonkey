@@ -31,6 +31,9 @@ const (
 // Player/mob health.
 type Health int16
 
+// Player food level.
+type FoodUnits int16
+
 // Item-related types
 
 // Item type ID

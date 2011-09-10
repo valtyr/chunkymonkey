@@ -124,7 +124,7 @@ type IClientPacketHandler interface {
 	PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemTypeId)
 	PacketEntityEquipment(entityId EntityId, slot SlotId, itemTypeId ItemTypeId, data ItemData)
 	PacketSpawnPosition(position *BlockXyz)
-	PacketUpdateHealth(health Health)
+	PacketUpdateHealth(health Health, food FoodUnits, unknown float32)
 	PacketItemSpawn(entityId EntityId, itemTypeId ItemTypeId, count ItemCount, data ItemData, location *AbsIntXyz, orientation *OrientationBytes)
 	PacketItemCollect(collectedItem EntityId, collector EntityId)
 	PacketObjectSpawn(entityId EntityId, objType ObjTypeId, position *AbsIntXyz, objectData *ObjectData)
@@ -709,27 +709,35 @@ func readUseEntity(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 // packetIdUpdateHealth
 
-func WriteUpdateHealth(writer io.Writer, health Health) (err os.Error) {
+func WriteUpdateHealth(writer io.Writer, health Health, food FoodUnits, unknown float32) (err os.Error) {
 	var packet = struct {
 		PacketId byte
 		health   Health
+		food     FoodUnits
+		unknown  float32
 	}{
 		packetIdUpdateHealth,
 		health,
+		food,
+		unknown,
 	}
 
 	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
 func readUpdateHealth(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
-	var health Health
+	var packet struct {
+		health   Health
+		food     FoodUnits
+		unknown  float32
+	}
 
-	err = binary.Read(reader, binary.BigEndian, &health)
+	err = binary.Read(reader, binary.BigEndian, &packet)
 	if err != nil {
 		return
 	}
 
-	handler.PacketUpdateHealth(health)
+	handler.PacketUpdateHealth(packet.health, packet.food, packet.unknown)
 	return
 }
 

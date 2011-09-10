@@ -25,8 +25,9 @@ var (
 )
 
 const (
-	StanceNormal = 1.62
-	MaxHealth    = 20
+	StanceNormal = AbsCoord(1.62)
+	MaxHealth    = Health(20)
+	MaxFoodUnits = FoodUnits(20)
 )
 
 func init() {
@@ -52,6 +53,7 @@ type Player struct {
 	look       LookDegrees
 	chunkSubs  chunkSubscriptions
 	health     Health
+	food       FoodUnits
 
 	// The following data fields are loaded, but not used yet
 	dimension    int32
@@ -100,6 +102,7 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 		look:   LookDegrees{0, 0},
 
 		health: MaxHealth,
+		food:   MaxFoodUnits,  // TODO: Check what initial level should be.
 
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
@@ -584,7 +587,7 @@ func (player *Player) notifyChunkLoad() {
 			&player.position, player.position.Y+player.height,
 			&player.look, false)
 		player.inventory.WriteWindowItems(buf)
-		proto.WriteUpdateHealth(buf, player.health)
+		proto.WriteUpdateHealth(buf, player.health, player.food, 0)
 
 		player.TransmitPacket(buf.Bytes())
 	}
