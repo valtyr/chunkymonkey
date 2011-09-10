@@ -30,6 +30,7 @@ type Game struct {
 	shardManager  *shardserver.LocalShardManager
 	entityManager EntityManager
 	worldStore    *worldstore.WorldStore
+	authserver    server_auth.IAuthenticator
 
 	// Mapping between entityId/name and player object
 	players     map[EntityId]*player.Player
@@ -52,6 +53,11 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 		return nil, err
 	}
 
+	authserver, err := server_auth.NewServerAuth("http://www.minecraft.net/game/checkserver.jsp")
+	if err != nil {
+		return
+	}
+
 	game = &Game{
 		players:          make(map[EntityId]*player.Player),
 		playerNames:      make(map[string]*player.Player),
@@ -60,6 +66,7 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 		playerDisconnect: make(chan EntityId),
 		time:             worldStore.Time,
 		worldStore:       worldStore,
+		authserver:       authserver,
 	}
 
 	game.entityManager.Init()
@@ -178,8 +185,7 @@ func (game *Game) login(conn net.Conn) {
 
 	if game.serverId != "-" {
 		var authenticated bool
-		authserver := &server_auth.ServerAuth{"http://www.minecraft.net/game/checkserver.jsp"}
-		authenticated, err = authserver.Authenticate(game.serverId, username)
+		authenticated, err = game.authserver.Authenticate(game.serverId, username)
 		if !authenticated || err != nil {
 			var reason string
 			if err != nil {

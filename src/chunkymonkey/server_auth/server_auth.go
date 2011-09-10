@@ -5,6 +5,7 @@ import (
 	"http"
 	"os"
 	"time"
+	"url"
 )
 
 var (
@@ -32,24 +33,40 @@ type DummyAuth struct {
 	Result bool
 }
 
-// ServerAuth represents authentication against a server, particularly the
-// main minecraft server at http://www.minecraft.net/game/checkserver.jsp.
-type ServerAuth struct {
-	Url string
-}
-
 // Authenticate implements the IAuthenticator.Authenticate method
 func (d *DummyAuth) Authenticate(serverId, user string) (authenticated bool, err os.Error) {
 	return d.Result, nil
 }
 
+// ServerAuth represents authentication against a server, particularly the
+// main minecraft server at http://www.minecraft.net/game/checkserver.jsp.
+type ServerAuth struct {
+	baseUrl url.URL
+}
+
+func NewServerAuth(baseUrlStr string) (s *ServerAuth, err os.Error) {
+	baseUrl, err := url.Parse(baseUrlStr)
+	if err != nil {
+		return
+	}
+	s = &ServerAuth{
+		baseUrl: *baseUrl,
+	}
+	return
+}
+
 // Build a URL+query string based on a given server URL, serverId and user
 // input
 func (s *ServerAuth) BuildQuery(serverId, user string) (query string) {
-	return s.Url + "?" + http.Values{
+	queryValues := url.Values{
 		"serverId": {serverId},
 		"user":     {user},
-	}.Encode()
+	}
+
+	queryUrl := s.baseUrl
+	queryUrl.RawQuery = queryValues.Encode()
+
+	return queryUrl.String()
 }
 
 // Authenticate implements the IAuthenticator.Authenticate method
@@ -67,9 +84,9 @@ func (s *ServerAuth) Authenticate(serverId, user string) (authenticated bool, er
 
 	authenticated = false
 
-	url := s.BuildQuery(serverId, user)
+	url_ := s.BuildQuery(serverId, user)
 
-	response, err := http.Get(url)
+	response, err := http.Get(url_)
 	if err != nil {
 		return
 	}
