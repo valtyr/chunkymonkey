@@ -4,10 +4,7 @@ import (
 	"os"
 	"rand"
 	"strconv"
-	"time"
 )
-
-var rdRand <-chan int64
 
 func Errno(err os.Error) (errno os.Errno, ok bool) {
 	if e, ok := err.(*os.PathError); ok {
@@ -25,7 +22,7 @@ func Errno(err os.Error) (errno os.Errno, ok bool) {
 func OpenFileUniqueName(prefix string, flag int, perm uint32) (file *os.File, err os.Error) {
 	useFlag := flag | os.O_CREATE | os.O_EXCL
 	for i := 0; i < 1000; i++ {
-		rnd := <-rdRand
+		rnd := rand.Int63()
 		if file, err := os.OpenFile(prefix+strconv.Itob64(rnd, 16), useFlag, perm); err == nil {
 			return file, err
 		} else {
@@ -36,15 +33,4 @@ func OpenFileUniqueName(prefix string, flag int, perm uint32) (file *os.File, er
 		}
 	}
 	return nil, os.NewError("gave up trying to create unique filename")
-}
-
-func init() {
-	randChan := make(chan int64, 10)
-	rdRand = randChan
-	go func() {
-		source := rand.NewSource(time.Nanoseconds())
-		for {
-			randChan <- source.Int63()
-		}
-	}()
 }
