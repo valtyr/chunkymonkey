@@ -227,7 +227,7 @@ func (game *Game) login(conn net.Conn) {
 	}
 
 	game.playerConnect <- player
-	player.Start()
+	player.Run()
 }
 
 func (game *Game) Serve(addr string) {
@@ -255,13 +255,6 @@ func (game *Game) sendTimeUpdate() {
 	buf := new(bytes.Buffer)
 	proto.ServerWriteTimeUpdate(buf, game.time)
 
-	// The "keep-alive" packet to client(s) sent here as well, as there
-	// seems no particular reason to send time and keep-alive separately
-	// for now.
-	// TODO Move keepalive packets to player so that sent versus received values
-	// can be compared and timed.
-	proto.WriteKeepAlive(buf, 0)
-
 	game.multicastPacket(buf.Bytes(), nil)
 }
 
@@ -283,13 +276,16 @@ func (game *Game) enqueue(f func(*Game)) {
 
 // The following functions implement the IGame interface
 
+func (game *Game) BroadcastPacket(packet []byte) {
+	game.enqueue(func(_ *Game) {
+		game.multicastPacket(packet, nil)
+	})
+}
+
 func (game *Game) BroadcastMessage(msg string) {
 	buf := new(bytes.Buffer)
 	proto.WriteChatMessage(buf, msg)
-
-	game.enqueue(func(_ *Game) {
-		game.multicastPacket(buf.Bytes(), nil)
-	})
+	game.BroadcastPacket(buf.Bytes())
 }
 
 func (game *Game) ItemTypeById(id int) (gamerules.ItemType, bool) {

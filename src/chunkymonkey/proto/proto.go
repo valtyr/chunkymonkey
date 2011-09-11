@@ -3033,7 +3033,7 @@ func readIncrementStatistic(reader io.Reader, handler IClientPacketHandler) (err
 
 // packetIdUserListItem
 
-func WriteUserListItem(writer io.Writer, username string, unknown bool, ping int16) (err os.Error) {
+func WriteUserListItem(writer io.Writer, username string, online bool, pingMs int16) (err os.Error) {
 	if err = binary.Write(writer, binary.BigEndian, byte(packetIdUserListItem)); err != nil {
 		return
 	}
@@ -3043,11 +3043,11 @@ func WriteUserListItem(writer io.Writer, username string, unknown bool, ping int
 	}
 
 	var packetEnd = struct {
-		Unknown byte
-		Ping    int16
+		Online byte
+		PingMs int16
 	}{
-		boolToByte(unknown),
-		ping,
+		boolToByte(online),
+		pingMs,
 	}
 
 	return binary.Write(writer, binary.BigEndian, &packetEnd)
@@ -3060,14 +3060,14 @@ func readUserListItem(reader io.Reader, handler IClientPacketHandler) (err os.Er
 	}
 
 	var packetEnd struct {
-		Unknown byte
-		Ping    int16
+		Online byte
+		PingMs int16
 	}
 	if err = binary.Read(reader, binary.BigEndian, &packetEnd); err != nil {
 		return
 	}
 
-	handler.PacketUserListItem(username, byteToBool(packetEnd.Unknown), packetEnd.Ping)
+	handler.PacketUserListItem(username, byteToBool(packetEnd.Online), packetEnd.PingMs)
 
 	return
 }

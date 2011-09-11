@@ -84,13 +84,16 @@ type IShardShardClient interface {
 // IGame provide an interface for interacting with and taking action on the
 // game, including getting information about the game state, etc.
 type IGame interface {
-	// Broadcast a message to all players on the server
+	// Broadcast a packet to all players on the server.
+	BroadcastPacket(packet []byte)
+
+	// Broadcast a message to all players on the server.
 	BroadcastMessage(msg string)
 
-	// Return a player from their name
+	// Return a player from their name.
 	PlayerByName(name string) IPlayerClient
 
-	// Return a player from an EntityId
+	// Return a player from an EntityId.
 	PlayerByEntityId(id EntityId) IPlayerClient
 
 	// Return an ItemType from a numeric item. The boolean flag indicates

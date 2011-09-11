@@ -3,11 +3,14 @@ package player
 import (
 	"bytes"
 	"expvar"
+	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"rand"
 	"sync"
+	"time"
 
 	"chunkymonkey/gamerules"
 	"chunkymonkey/nbtutil"
@@ -22,12 +25,20 @@ var (
 	expVarPlayerConnectionCount    *expvar.Int
 	expVarPlayerDisconnectionCount *expvar.Int
 	errUnknownItemID               os.Error
+
+	playerPingNoCheck = flag.Bool(
+		"player_ping_no_check", false,
+		"Relax checks on player keep-alive packets. This can be useful for " +
+		"recorded/replayed sessions.")
 )
 
 const (
 	StanceNormal = AbsCoord(1.62)
 	MaxHealth    = Health(20)
 	MaxFoodUnits = FoodUnits(20)
+
+	PingTimeoutNs  = 1e9 * 60 // Player connection times out after 60 seconds.
+	PingIntervalNs = 1e9 * 20 // Time between receiving keep alive response from client and sending new request.
 )
 
 func init() {
@@ -49,6 +60,15 @@ type Player struct {
 
 	game gamerules.IGame
 
+	// ping is used to determine the player's current roundtrip latency, and to
+	// determine if the player should be disconnected for not responding.
+	ping struct {
+		running     bool
+		id          int32       // Last ID sent in keep-alive, or 0 if no current ping.
+		timestampNs int64       // Nanoseconds since epoch since last keep-alive sent.
+		timer       *time.Timer // Time until next ping, or timeout of current.
+	}
+
 	// TODO remove this lock, packet handling shouldn't use a lock, it should use
 	// a channel instead (ideally).
 	lock sync.Mutex
@@ -56,6 +76,10 @@ type Player struct {
 	onDisconnect chan<- EntityId
 	mainQueue    chan func(*Player)
 	txQueue      chan []byte
+	txErrChan    chan os.Error
+	rxErrChan    chan os.Error
+	rxRunning    bool // Only used by the receiveLoop.
+	stopPlayer   chan bool
 
 	// The following attributes are game-logic related.
 
@@ -109,8 +133,11 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 		curWindow:    nil,
 		nextWindowId: WindowIdFreeMin,
 
-		mainQueue: make(chan func(*Player), 128),
-		txQueue:   make(chan []byte, 128),
+		mainQueue:  make(chan func(*Player), 128),
+		txQueue:    make(chan []byte, 128),
+		txErrChan:  make(chan os.Error, 1),
+		rxErrChan:  make(chan os.Error, 1),
+		stopPlayer: make(chan bool, 1),
 
 		game: game,
 
@@ -125,6 +152,10 @@ func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn
 
 func (player *Player) Name() string {
 	return player.name
+}
+
+func (player *Player) String() string {
+	return fmt.Sprintf("Player(%q)", player.name)
 }
 
 func (player *Player) Position() AbsXyz {
@@ -144,7 +175,7 @@ func (player *Player) Look() LookDegrees {
 }
 
 // UnmarshalNbt unpacks the player data from their persistantly stored NBT
-// data. It must only be called before Player.Start().
+// data. It must only be called before Player.Run().
 func (player *Player) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 	if player.position, err = nbtutil.ReadAbsXyz(tag, "Pos"); err != nil {
 		return
@@ -256,7 +287,7 @@ func (player *Player) getHeldItemTypeId() ItemTypeId {
 	return heldItemId
 }
 
-func (player *Player) Start() {
+func (player *Player) Run() {
 	buf := &bytes.Buffer{}
 	// TODO pass proper dimension. This is low priority, because we don't yet
 	// support multiple dimensions.
@@ -271,13 +302,21 @@ func (player *Player) Start() {
 	go player.mainLoop()
 }
 
+func (player *Player) Stop() {
+	// Don't block. If the channel has a message in already, then that's good
+	// enough.
+	select {
+	case player.stopPlayer <- true:
+	default:
+	}
+}
+
 // Start of packet handling code
 // Note: any packet handlers that could change the player state or read a
 // changeable state must use player.lock
 
 func (player *Player) PacketKeepAlive(id int32) {
-	// TODO Proper checking of sent versus received IDs. Kick player if they
-	// don't reply in time (within 1200 ticks/1 minute) or ID doesn't match.
+	player.pingReceived(id)
 }
 
 func (player *Player) PacketChatMessage(message string) {
@@ -515,19 +554,15 @@ func (player *Player) PacketDisconnect(reason string) {
 
 	player.sendChatMessage(fmt.Sprintf("%s has left", player.name), false)
 
-	player.onDisconnect <- player.EntityId
-	player.txQueue <- nil
-	player.mainQueue <- nil
-	player.conn.Close()
+	player.Stop()
 }
 
 func (player *Player) receiveLoop() {
-	for {
+	player.rxRunning = true
+	for player.rxRunning {
 		err := proto.ServerReadPacket(player.conn, player)
 		if err != nil {
-			if err != os.EOF {
-				log.Print("ReceiveLoop failed: ", err.String())
-			}
+			player.rxErrChan <- err
 			return
 		}
 	}
@@ -537,16 +572,15 @@ func (player *Player) receiveLoop() {
 
 func (player *Player) transmitLoop() {
 	for {
-		bs, ok := <-player.txQueue
+		bs := <-player.txQueue
 
-		if !ok || bs == nil {
+		if bs == nil {
+			player.txErrChan <- nil
 			return // txQueue closed
 		}
 		_, err := player.conn.Write(bs)
 		if err != nil {
-			if err != os.EOF {
-				log.Print("TransmitLoop failed: ", err.String())
-			}
+			player.txErrChan <- err
 			return
 		}
 	}
@@ -565,21 +599,138 @@ func (player *Player) runQueuedCall(f func(*Player)) {
 	f(player)
 }
 
+// pingNew starts a new "keep-alive" ping.
+func (player *Player) pingNew() {
+	if player.ping.running {
+		log.Printf("%v: Attempted to start a ping while another is running.", player)
+	} else {
+		if player.ping.timer != nil {
+			player.ping.timer.Stop()
+		}
+
+		player.ping.running = true
+		player.ping.id = rand.Int31()
+		if player.ping.id == 0 {
+			// Ping ID 0 is used by the client on occasion. Don't use this ID to
+			// avoid misreading keep alive IDs.
+			player.ping.id = 1
+		}
+		player.ping.timestampNs = time.Nanoseconds()
+
+		buf := new(bytes.Buffer)
+		proto.WriteKeepAlive(buf, player.ping.id)
+		player.TransmitPacket(buf.Bytes())
+
+		player.ping.timer = time.NewTimer(PingTimeoutNs)
+	}
+}
+
+// pingTimeout handles pinging the client, or timing out the connection.
+func (player *Player) pingTimeout() {
+	if player.ping.running {
+		// Current ping timed out. Disconnect the player.
+		player.Stop()
+	} else {
+		// No ping in progress. Send a new one.
+		player.pingNew()
+	}
+}
+
+// pingReceived is called when a keep alive packet is received.
+func (player *Player) pingReceived(id int32) {
+	if id == 0 {
+		// Client-initiated keep-alive.
+		return
+	}
+
+	if *playerPingNoCheck {
+		if !player.ping.running {
+			return
+		}
+	} else {
+		if !player.ping.running {
+			log.Printf("%v: Received keep-alive id=%d when none was running", player, id)
+			player.Stop()
+			return
+		} else if id != player.ping.id {
+			log.Printf("%v: Bad keep alive ID received", player)
+			player.Stop()
+			return
+		}
+	}
+
+	// Received valid keep-alive.
+	now := time.Nanoseconds()
+
+	if player.ping.timer != nil {
+		player.ping.timer.Stop()
+	}
+
+	latencyNs := now - player.ping.timestampNs
+	// Check that there wasn't an apparent time-shift on this before broadcasting
+	// this latency value.
+	if latencyNs >= 0 && latencyNs < PingTimeoutNs {
+		buf := new(bytes.Buffer)
+		proto.WriteUserListItem(buf, player.name, true, int16(latencyNs/1e6))
+		player.game.BroadcastPacket(buf.Bytes())
+	}
+
+	player.ping.running = false
+	player.ping.id = 0
+	player.ping.timer = time.NewTimer(PingIntervalNs)
+}
+
 func (player *Player) mainLoop() {
+	defer func() {
+		// Close the transmitLoop and receiveLoop cleanly.
+		player.txQueue <- nil
+		player.conn.Close()
+
+		player.onDisconnect <- player.EntityId
+
+		if player.ping.timer != nil {
+			player.ping.timer.Stop()
+		}
+
+		buf := new(bytes.Buffer)
+		proto.WriteUserListItem(buf, player.name, false, 0)
+		player.game.BroadcastPacket(buf.Bytes())
+	}()
+
 	expVarPlayerConnectionCount.Add(1)
 	defer expVarPlayerDisconnectionCount.Add(1)
 
 	player.chunkSubs.Init(player)
 	defer player.chunkSubs.Close()
 
+	// Start the keep-alive/latency pings.
+	player.pingNew()
+
 	player.sendChatMessage(fmt.Sprintf("%s has joined", player.name), false)
 
+MAINLOOP:
 	for {
-		f, ok := <-player.mainQueue
-		if !ok || f == nil {
-			return
+		select {
+		case _ = <-player.stopPlayer:
+			break MAINLOOP
+
+		case f, ok := <-player.mainQueue:
+			if !ok {
+				return
+			}
+			player.runQueuedCall(f)
+
+		case _ = <-player.ping.timer.C:
+			player.pingTimeout()
+
+		case err := <-player.rxErrChan:
+			log.Printf("%v: receive loop failed: %v", player, err)
+			player.Stop()
+
+		case err := <-player.txErrChan:
+			log.Printf("%v: send loop failed: %v", player, err)
+			player.Stop()
 		}
-		player.runQueuedCall(f)
 	}
 }
 

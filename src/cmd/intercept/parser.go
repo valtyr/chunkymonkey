@@ -306,9 +306,9 @@ func (p *MessageParser) PacketUnknown0x83(field1, field2 int16, field3 string) {
 		field1, field2, field3)
 }
 
-func (p *MessageParser) PacketUserListItem(username string, unknown bool, ping int16) {
-	p.printf("PacketUserListItem(username=%q, unknown=%t, ping=%d)",
-		username, unknown, ping)
+func (p *MessageParser) PacketUserListItem(username string, online bool, pingMs int16) {
+	p.printf("PacketUserListItem(username=%q, online=%t, pingMs=%d)",
+		username, online, pingMs)
 }
 
 func (p *MessageParser) PacketServerListPing() {
