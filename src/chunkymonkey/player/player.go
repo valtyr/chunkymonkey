@@ -37,7 +37,8 @@ func init() {
 }
 
 type Player struct {
-	// These entities should be unchanged through a single login
+	// First attributes are for housekeeping etc.
+
 	EntityId
 	playerClient   playerClient
 	shardConnecter gamerules.IShardConnecter
@@ -45,6 +46,18 @@ type Player struct {
 	name           string
 	loginComplete  bool
 	spawnComplete  bool
+
+	game gamerules.IGame
+
+	// TODO remove this lock, packet handling shouldn't use a lock, it should use
+	// a channel instead (ideally).
+	lock sync.Mutex
+
+	onDisconnect chan<- EntityId
+	mainQueue    chan func(*Player)
+	txQueue      chan []byte
+
+	// The following attributes are game-logic related.
 
 	// Data entries that may change
 	spawnBlock BlockXyz
@@ -73,17 +86,6 @@ type Player struct {
 	curWindow    window.IWindow
 	nextWindowId WindowId
 	remoteInv    *RemoteInventory
-
-	mainQueue chan func(*Player)
-	txQueue   chan []byte
-
-	game gamerules.IGame
-
-	// TODO remove this lock, packet handling shouldn't use a lock, it should use
-	// a channel instead (ideally).
-	lock sync.Mutex
-
-	onDisconnect chan<- EntityId
 }
 
 func NewPlayer(entityId EntityId, shardConnecter gamerules.IShardConnecter, conn net.Conn, name string, spawnBlock BlockXyz, onDisconnect chan<- EntityId, game gamerules.IGame) *Player {
