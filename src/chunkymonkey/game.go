@@ -278,7 +278,6 @@ func (game *Game) enqueue(f func(*Game)) {
 	game.workQueue <- f
 }
 
-
 // The following functions implement the IGame interface
 
 func (game *Game) BroadcastMessage(msg string) {

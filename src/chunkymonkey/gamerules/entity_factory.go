@@ -41,7 +41,6 @@ func NewEntityByTypeName(typeName string) INonPlayerEntity {
 	return nil
 }
 
-
 var TileEntityCreateByName = map[string]func() ITileEntity{
 	"Chest":        NewChestTileEntity,
 	"Furnace":      NewFurnaceTileEntity,

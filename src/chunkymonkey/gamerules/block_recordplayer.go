@@ -44,7 +44,6 @@ func (recordPlayer *recordPlayerTileEntity) MarshalNbt(tag *nbt.Compound) (err o
 	return nil
 }
 
-
 type RecordPlayerAspect struct {
 	StandardAspect
 }

@@ -53,7 +53,6 @@ func (mobSpawner *mobSpawnerTileEntity) MarshalNbt(tag *nbt.Compound) (err os.Er
 	return nil
 }
 
-
 type MobSpawnerAspect struct {
 	StandardAspect
 }

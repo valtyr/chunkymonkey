@@ -88,7 +88,6 @@ func (object *Object) SendUpdate(writer io.Writer) (err os.Error) {
 	return
 }
 
-
 func NewBoat() INonPlayerEntity {
 	return NewObject(ObjTypeIdBoat)
 }

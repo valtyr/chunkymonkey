@@ -45,7 +45,6 @@ func (music *musicTileEntity) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	return nil
 }
 
-
 type MusicAspect struct {
 	StandardAspect
 }

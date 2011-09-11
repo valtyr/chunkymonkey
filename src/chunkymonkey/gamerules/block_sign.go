@@ -61,7 +61,6 @@ func (sign *signTileEntity) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	return nil
 }
 
-
 type SignAspect struct {
 	StandardAspect
 }

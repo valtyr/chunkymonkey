@@ -219,7 +219,6 @@ func CreateWorld(worldPath string) (err os.Error) {
 	return nil
 }
 
-
 func absXyzFromNbt(tag nbt.ITag, path string) (pos AbsXyz, err os.Error) {
 	posList, posOk := tag.Lookup(path).(*nbt.List)
 	if !posOk {
