@@ -85,6 +85,18 @@ const (
 	packetIdDisconnect           = 0xff
 )
 
+type UnexpectedPacketIdError byte
+
+func (err UnexpectedPacketIdError) String() string {
+	return fmt.Sprintf("unexpected packet ID: 0x%02x", byte(err))
+}
+
+type UnknownPacketIdError byte
+
+func (err UnknownPacketIdError) String() string {
+	return fmt.Sprintf("unknown packet ID: 0x%02x", byte(err))
+}
+
 // Regexp for ChatMessages
 var checkChatMessageRegexp = regexp.MustCompile("[ !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×ƒáíóúñÑªº¿®¬½¼¡«»]*")
 var checkColorsRegexp = regexp.MustCompile("§.$")
@@ -3201,15 +3213,12 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdIncrementStatistic:   readIncrementStatistic,
 }
 
-// A server should call this to receive a single packet from a client. It will
-// block until a packet was successfully handled, or there was an error.
-func ServerReadPacket(reader io.Reader, handler IServerPacketHandler) os.Error {
-	var packetId byte
+func readPacketId(reader io.Reader) (packetId byte, err os.Error) {
+	err = binary.Read(reader, binary.BigEndian, &packetId)
+	return
+}
 
-	if err := binary.Read(reader, binary.BigEndian, &packetId); err != nil {
-		return err
-	}
-
+func serverHandlePacket(reader io.Reader, handler IServerPacketHandler, packetId byte) os.Error {
 	if commonFn, ok := commonReadFns[packetId]; ok {
 		return commonFn(reader, handler)
 	}
@@ -3218,18 +3227,36 @@ func ServerReadPacket(reader io.Reader, handler IServerPacketHandler) os.Error {
 		return serverFn(reader, handler)
 	}
 
-	return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetId))
+	return UnknownPacketIdError(packetId)
 }
 
-// A client should call this to receive a single packet from a client. It will
-// block until a packet was successfully handled, or there was an error.
-func ClientReadPacket(reader io.Reader, handler IClientPacketHandler) os.Error {
+func ServerReadPacketExpect(reader io.Reader, handler IServerPacketHandler, expectedIds []byte) (err os.Error) {
 	var packetId byte
-
-	if err := binary.Read(reader, binary.BigEndian, &packetId); err != nil {
-		return err
+	if packetId, err = readPacketId(reader); err != nil {
+		return
 	}
 
+	for _, expectedId := range expectedIds {
+		if expectedId == packetId {
+			return serverHandlePacket(reader, handler, packetId)
+		}
+	}
+
+	return UnexpectedPacketIdError(packetId)
+}
+
+// A server should call this to receive a single packet from a client. It will
+// block until a packet was successfully handled, or there was an error.
+func ServerReadPacket(reader io.Reader, handler IServerPacketHandler) (err os.Error) {
+	var packetId byte
+	if packetId, err = readPacketId(reader); err != nil {
+		return
+	}
+
+	return serverHandlePacket(reader, handler, packetId)
+}
+
+func clientHandlePacket(reader io.Reader, handler IClientPacketHandler, packetId byte) os.Error {
 	if commonFn, ok := commonReadFns[packetId]; ok {
 		return commonFn(reader, handler)
 	}
@@ -3238,5 +3265,31 @@ func ClientReadPacket(reader io.Reader, handler IClientPacketHandler) os.Error {
 		return clientFn(reader, handler)
 	}
 
-	return os.NewError(fmt.Sprintf("unhandled packet type %#x", packetId))
+	return UnknownPacketIdError(packetId)
+}
+
+// A client should call this to receive a single packet from a client. It will
+// block until a packet was successfully handled, or there was an error.
+func ClientReadPacket(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	var packetId byte
+	if packetId, err = readPacketId(reader); err != nil {
+		return
+	}
+
+	return clientHandlePacket(reader, handler, packetId)
+}
+
+func ClientReadPacketExpect(reader io.Reader, handler IClientPacketHandler, expectedIds []byte) (err os.Error) {
+	var packetId byte
+	if packetId, err = readPacketId(reader); err != nil {
+		return
+	}
+
+	for _, expectedId := range expectedIds {
+		if expectedId == packetId {
+			return clientHandlePacket(reader, handler, packetId)
+		}
+	}
+
+	return UnexpectedPacketIdError(packetId)
 }
