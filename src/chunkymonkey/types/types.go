@@ -132,25 +132,25 @@ const (
 type EntityEffect byte
 
 const (
-	EntityEffectMoveFaster = EntityEffect(1)
-	EntityEffectMoveSlower = EntityEffect(2)
-	EntityEffectDigFaster = EntityEffect(3)
-	EntityEffectDigSlower = EntityEffect(4)
-	EntityEffectDamageBoost = EntityEffect(5)
-	EntityEffectHeal = EntityEffect(6)
-	EntityEffectHarm = EntityEffect(7)
-	EntityEffectJump = EntityEffect(8)
-	EntityEffectConfusion = EntityEffect(9)
-	EntityEffectRegeneration = EntityEffect(10)
-	EntityEffectResistance = EntityEffect(11)
+	EntityEffectMoveFaster     = EntityEffect(1)
+	EntityEffectMoveSlower     = EntityEffect(2)
+	EntityEffectDigFaster      = EntityEffect(3)
+	EntityEffectDigSlower      = EntityEffect(4)
+	EntityEffectDamageBoost    = EntityEffect(5)
+	EntityEffectHeal           = EntityEffect(6)
+	EntityEffectHarm           = EntityEffect(7)
+	EntityEffectJump           = EntityEffect(8)
+	EntityEffectConfusion      = EntityEffect(9)
+	EntityEffectRegeneration   = EntityEffect(10)
+	EntityEffectResistance     = EntityEffect(11)
 	EntityEffectFireResistance = EntityEffect(12)
 	EntityEffectWaterBreathing = EntityEffect(13)
-	EntityEffectInvisibility = EntityEffect(14)
-	EntityEffectBlindness = EntityEffect(15)
-	EntityEffectNightVision = EntityEffect(16)
-	EntityEffectSick = EntityEffect(17)
-	EntityEffectWeakness = EntityEffect(18)
-	EntityEffectPoison = EntityEffect(19)
+	EntityEffectInvisibility   = EntityEffect(14)
+	EntityEffectBlindness      = EntityEffect(15)
+	EntityEffectNightVision    = EntityEffect(16)
+	EntityEffectSick           = EntityEffect(17)
+	EntityEffectWeakness       = EntityEffect(18)
+	EntityEffectPoison         = EntityEffect(19)
 )
 
 type EntityAction byte
@@ -210,6 +210,20 @@ type NotePitch int8
 const (
 	NotePitchMin = NotePitch(0)
 	NotePitchMax = NotePitch(24)
+)
+
+// SoundEffect is an enumeration of sound effects.
+type SoundEffect int32
+
+const (
+	SoundEffectClick2     = SoundEffect(1000)
+	SoundEffectClick1     = SoundEffect(1001)
+	SoundEffectBowFire    = SoundEffect(1002)
+	SoundEffectDoor       = SoundEffect(1003)
+	SoundEffectExtinguish = SoundEffect(1004)
+	SoundEffectRecordPlay = SoundEffect(1005)
+	SoundEffectSmoke      = SoundEffect(2000)
+	SoundEffectBlockBreak = SoundEffect(2001)
 )
 
 // Block-related types

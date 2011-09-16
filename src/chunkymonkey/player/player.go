@@ -456,13 +456,6 @@ func (player *Player) PacketHoldingChange(slotId SlotId) {
 func (player *Player) PacketEntityAnimation(entityId EntityId, animation EntityAnimation) {
 }
 
-func (player *Player) PacketUnknown0x3d(field1, field2 int32, field3 int8, field4, field5 int32) {
-	// TODO Remove this method if it's S->C only.
-	log.Printf(
-		"PacketUnknown0x3d(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
-		field1, field2, field3, field4, field5)
-}
-
 func (player *Player) PacketWindowClose(windowId WindowId) {
 	player.lock.Lock()
 	defer player.lock.Unlock()

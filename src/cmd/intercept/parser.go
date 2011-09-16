@@ -123,8 +123,8 @@ func (p *MessageParser) PacketUseEntity(user EntityId, target EntityId, leftClic
 	p.printf("PacketUseEntity(user=%d, target=%d, leftClick=%t)", user, target, leftClick)
 }
 
-func (p *MessageParser) PacketUpdateHealth(health Health, food FoodUnits, unknown float32) {
-	p.printf("PacketUpdateHealth(health=%d, food=%d, unknown=%f)", health, food, unknown)
+func (p *MessageParser) PacketUpdateHealth(health Health, food FoodUnits, foodSaturation float32) {
+	p.printf("PacketUpdateHealth(health=%d, food=%d, foodSaturation=%f)", health, food, foodSaturation)
 }
 
 func (p *MessageParser) PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemTypeId) {
@@ -204,8 +204,8 @@ func (p *MessageParser) PacketEntityEffect(entityId EntityId, effect EntityEffec
 		entityId, effect, value, duration)
 }
 
-func (p *MessageParser) PacketUnknown0x2a(entityId EntityId, unknown int8) {
-	p.printf("PacketUnknown0x2a(entityId=%d, unknown=%d)", entityId, unknown)
+func (p *MessageParser) PacketEntityRemoveEffect(entityId EntityId, effect EntityEffect) {
+	p.printf("PacketEntityRemoveEffect(entityId=%d, effect=%d)", entityId, effect)
 }
 
 func (p *MessageParser) PacketPlayerExperience(experience, level int8, totalExperience int16) {
@@ -242,10 +242,9 @@ func (p *MessageParser) PacketExplosion(position *AbsXyz, power float32, blockOf
 		position, power, len(blockOffsets), blockOffsets)
 }
 
-func (p *MessageParser) PacketUnknown0x3d(field1, field2 int32, field3 int8, field4, field5 int32) {
-	p.printf(
-		"PacketUnknown0x3d(field1=%d, field2=%d, field3=%d, field4=%d, field5=%d)",
-		field1, field2, field3, field4, field5)
+func (p *MessageParser) PacketSoundEffect(sound SoundEffect, position BlockXyz, data int32) {
+	p.printf("PacketSoundEffect(sound=%d, position=%v, data=%d)",
+		sound, position, data)
 }
 
 func (p *MessageParser) PacketState(reason, gameMode byte) {
@@ -301,9 +300,9 @@ func (p *MessageParser) PacketIncrementStatistic(statisticId StatisticId, delta 
 		statisticId, delta)
 }
 
-func (p *MessageParser) PacketUnknown0x83(field1, field2 int16, field3 string) {
-	p.printf("PacketUnknown0x83(field1=%d, field2=%d, field3=%q)",
-		field1, field2, field3)
+func (p *MessageParser) PacketItemData(itemTypeId ItemTypeId, itemDataId ItemData, data []byte) {
+	p.printf("PacketItemData(itemTypeId=%d, itemDataId=%d, [%d]data=%x)",
+		itemTypeId, itemDataId, len(data), data)
 }
 
 func (p *MessageParser) PacketUserListItem(username string, online bool, pingMs int16) {
