@@ -28,8 +28,8 @@ var (
 
 	playerPingNoCheck = flag.Bool(
 		"player_ping_no_check", false,
-		"Relax checks on player keep-alive packets. This can be useful for " +
-		"recorded/replayed sessions.")
+		"Relax checks on player keep-alive packets. This can be useful for "+
+			"recorded/replayed sessions.")
 )
 
 const (
@@ -292,8 +292,9 @@ func (player *Player) Run() {
 	// TODO pass proper dimension. This is low priority, because we don't yet
 	// support multiple dimensions.
 	// TODO pass proper map seed.
-	// TODO pass proper values for the unknowns - when their meaning is known.
-	proto.ServerWriteLogin(buf, player.EntityId, 0, 0, DimensionNormal, 128, 8)
+	// TODO pass proper values for the unknown - when its meaning is known.
+	// TODO proper max number of players.
+	proto.ServerWriteLogin(buf, player.EntityId, 0, 0, DimensionNormal, 1, MaxYCoord+1, 8)
 	proto.WriteSpawnPosition(buf, &player.spawnBlock)
 	player.TransmitPacket(buf.Bytes())
 
@@ -336,7 +337,7 @@ func (player *Player) PacketEntityAction(entityId EntityId, action EntityAction)
 func (player *Player) PacketUseEntity(user EntityId, target EntityId, leftClick bool) {
 }
 
-func (player *Player) PacketRespawn(dimension DimensionId) {
+func (player *Player) PacketRespawn(dimension DimensionId, unknown int8, gameType GameType, worldHeight int16, mapSeed RandomSeed) {
 }
 
 func (player *Player) PacketPlayer(onGround bool) {

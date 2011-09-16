@@ -52,8 +52,9 @@ func (p *MessageParser) PacketChatMessage(message string) {
 	p.printf("PacketChatMessage(%q)", message)
 }
 
-func (p *MessageParser) PacketRespawn(dimension DimensionId) {
-	p.printf("PacketRespawn(dimension=%d)")
+func (p *MessageParser) PacketRespawn(dimension DimensionId, unknown int8, gameType GameType, worldHeight int16, mapSeed RandomSeed) {
+	p.printf("PacketRespawn(dimension=%d, unknown=%d, gameType=%d, worldHeight=%d, mapSeed=%d)",
+		dimension, unknown, gameType, worldHeight, mapSeed)
 }
 
 func (p *MessageParser) PacketPlayer(onGround bool) {
@@ -100,9 +101,9 @@ func (p *MessageParser) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 		lines[0], lines[1], lines[2], lines[3])
 }
 
-func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte) {
-	p.printf("PacketLogin(entityId=%d, mapSeed=%d, serverMode=%d, dimension=%d, unknown1=%d, unknown2=%d)",
-		entityId, mapSeed, serverMode, dimension, unknown1, unknown2)
+func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown int8, worldHeight, maxPlayers byte) {
+	p.printf("PacketLogin(entityId=%d, mapSeed=%d, serverMode=%d, dimension=%d, unknown=%d, worldHeight=%d, maxPlayers=%d)",
+		entityId, mapSeed, serverMode, dimension, unknown, worldHeight, maxPlayers)
 }
 
 func (p *MessageParser) PacketTimeUpdate(time Ticks) {
@@ -160,6 +161,11 @@ func (p *MessageParser) PacketUnknown0x1b(field1, field2 float32, field3, field4
 	p.printf(
 		"PacketUnknown0x1b(field1=%v, field2=%v, field3=%t, field4=%t, field5=%v, field6=%v)",
 		field1, field2, field3, field4, field5, field6)
+}
+
+func (p *MessageParser) PacketExperienceOrb(entityId EntityId, position AbsIntXyz, count int16) {
+	p.printf("PacketExperienceOrb(entityId=%d, position=%v, count=%d)",
+		entityId, position, count)
 }
 
 func (p *MessageParser) PacketEntityVelocity(entityId EntityId, velocity *Velocity) {

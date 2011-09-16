@@ -15,7 +15,7 @@ import (
 
 const (
 	// Currently only this protocol version is supported.
-	protocolVersion = 15
+	protocolVersion = 17
 
 	maxUcs2Char  = 0xffff
 	ucs2ReplChar = 0xfffd
@@ -47,6 +47,7 @@ const (
 	packetIdObjectSpawn          = 0x17
 	packetIdEntitySpawn          = 0x18
 	packetIdPaintingSpawn        = 0x19
+	packetIdExperienceOrb        = 0x1a
 	packetIdUnknown0x1b          = 0x1b
 	packetIdEntityVelocity       = 0x1c
 	packetIdEntityDestroy        = 0x1d
@@ -99,7 +100,7 @@ type IPacketHandler interface {
 	PacketChatMessage(message string)
 	PacketEntityAction(entityId EntityId, action EntityAction)
 	PacketUseEntity(user EntityId, target EntityId, leftClick bool)
-	PacketRespawn(dimension DimensionId)
+	PacketRespawn(dimension DimensionId, unknown int8, gameType GameType, worldHeight int16, mapSeed RandomSeed)
 	PacketPlayerPosition(position *AbsXyz, stance AbsCoord, onGround bool)
 	PacketPlayerLook(look *LookDegrees, onGround bool)
 	PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face)
@@ -125,7 +126,7 @@ type IServerPacketHandler interface {
 // Clients to the protocol must implement this interface to receive packets
 type IClientPacketHandler interface {
 	IPacketHandler
-	ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte)
+	ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown int8, worldHeight, maxPlayers byte)
 	PacketTimeUpdate(time Ticks)
 	PacketBedUse(flag bool, bedLoc *BlockXyz)
 	PacketNamedEntitySpawn(entityId EntityId, name string, position *AbsIntXyz, look *LookBytes, currentItem ItemTypeId)
@@ -137,6 +138,7 @@ type IClientPacketHandler interface {
 	PacketObjectSpawn(entityId EntityId, objType ObjTypeId, position *AbsIntXyz, objectData *ObjectData)
 	PacketEntitySpawn(entityId EntityId, mobType EntityMobType, position *AbsIntXyz, look *LookBytes, data []EntityMetadata)
 	PacketPaintingSpawn(entityId EntityId, title string, position *BlockXyz, paintingType PaintingTypeId)
+	PacketExperienceOrb(entityId EntityId, position AbsIntXyz, count int16)
 	PacketEntityVelocity(entityId EntityId, velocity *Velocity)
 	PacketEntityDestroy(entityId EntityId)
 	PacketEntity(entityId EntityId)
@@ -214,32 +216,6 @@ func decodeUtf8(s string) []uint16 {
 	}
 
 	return codepoints
-}
-
-// 8-bit encoded strings. (Modified UTF-8).
-
-func readString8(reader io.Reader) (s string, err os.Error) {
-	var length int16
-	err = binary.Read(reader, binary.BigEndian, &length)
-	if err != nil {
-		return
-	}
-
-	bs := make([]byte, uint16(length))
-	_, err = io.ReadFull(reader, bs)
-	return string(bs), err
-}
-
-func writeString8(writer io.Writer, s string) (err os.Error) {
-	bs := []byte(s)
-
-	err = binary.Write(writer, binary.BigEndian, int16(len(bs)))
-	if err != nil {
-		return
-	}
-
-	_, err = writer.Write(bs)
-	return
 }
 
 // 16-bit encoded strings. (UCS-2)
@@ -422,7 +398,7 @@ func readKeepAlive(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 // packetIdLogin
 
-func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte, err os.Error) {
+func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown int8, worldHeight, maxPlayers byte, err os.Error) {
 	if err = binary.Read(reader, binary.BigEndian, &versionOrEntityId); err != nil {
 		return
 	}
@@ -431,11 +407,12 @@ func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, map
 	}
 
 	var packetEnd struct {
-		MapSeed    RandomSeed
-		ServerMode int32
-		Dimension  DimensionId
-		Unknown1   byte
-		Unknown2   byte
+		MapSeed     RandomSeed
+		ServerMode  int32
+		Dimension   DimensionId
+		Unknown     int8
+		WorldHeight byte
+		MaxPlayers  byte
 	}
 	if err = binary.Read(reader, binary.BigEndian, &packetEnd); err != nil {
 		return
@@ -444,8 +421,9 @@ func commonReadLogin(reader io.Reader) (versionOrEntityId int32, str string, map
 	mapSeed = packetEnd.MapSeed
 	serverMode = packetEnd.ServerMode
 	dimension = packetEnd.Dimension
-	unknown1 = packetEnd.Unknown1
-	unknown2 = packetEnd.Unknown2
+	unknown = packetEnd.Unknown
+	worldHeight = packetEnd.WorldHeight
+	maxPlayers = packetEnd.MaxPlayers
 
 	return
 }
@@ -460,7 +438,7 @@ func ServerReadLogin(reader io.Reader) (username string, err os.Error) {
 		return
 	}
 
-	version, username, _, _, _, _, _, err := commonReadLogin(reader)
+	version, username, _, _, _, _, _, _, err := commonReadLogin(reader)
 	if err != nil {
 		return
 	}
@@ -473,17 +451,17 @@ func ServerReadLogin(reader io.Reader) (username string, err os.Error) {
 }
 
 func clientReadLogin(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
-	entityId, _, mapSeed, serverMode, dimension, unknown1, unknown2, err := commonReadLogin(reader)
+	entityId, _, mapSeed, serverMode, dimension, unknown, worldHeight, maxPlayers, err := commonReadLogin(reader)
 	if err != nil {
 		return
 	}
 
-	handler.ClientPacketLogin(EntityId(entityId), mapSeed, serverMode, dimension, unknown1, unknown2)
+	handler.ClientPacketLogin(EntityId(entityId), mapSeed, serverMode, dimension, unknown, worldHeight, maxPlayers)
 
 	return
 }
 
-func commonWriteLogin(writer io.Writer, versionOrEntityId int32, str string, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte) (err os.Error) {
+func commonWriteLogin(writer io.Writer, versionOrEntityId int32, str string, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown int8, worldHeight, maxPlayers byte) (err os.Error) {
 	if err = binary.Write(writer, binary.BigEndian, versionOrEntityId); err != nil {
 		return
 	}
@@ -493,27 +471,29 @@ func commonWriteLogin(writer io.Writer, versionOrEntityId int32, str string, map
 	}
 
 	var packetEnd = struct {
-		MapSeed    RandomSeed
-		ServerMode int32
-		Dimension  DimensionId
-		Unknown1   byte
-		Unknown2   byte
+		MapSeed     RandomSeed
+		ServerMode  int32
+		Dimension   DimensionId
+		Unknown     int8
+		WorldHeight byte
+		MaxPlayers  byte
 	}{
 		mapSeed,
 		serverMode,
 		dimension,
-		unknown1,
-		unknown2,
+		unknown,
+		worldHeight,
+		maxPlayers,
 	}
 	return binary.Write(writer, binary.BigEndian, &packetEnd)
 }
 
-func ServerWriteLogin(writer io.Writer, entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown1, unknown2 byte) (err os.Error) {
+func ServerWriteLogin(writer io.Writer, entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown int8, worldHeight, maxPlayers byte) (err os.Error) {
 	if err = binary.Write(writer, binary.BigEndian, byte(packetIdLogin)); err != nil {
 		return
 	}
 
-	return commonWriteLogin(writer, int32(entityId), "", mapSeed, serverMode, dimension, unknown1, unknown2)
+	return commonWriteLogin(writer, int32(entityId), "", mapSeed, serverMode, dimension, unknown, worldHeight, maxPlayers)
 }
 
 func ClientWriteLogin(writer io.Writer, username, password string) (err os.Error) {
@@ -521,7 +501,7 @@ func ClientWriteLogin(writer io.Writer, username, password string) (err os.Error
 		return
 	}
 
-	return commonWriteLogin(writer, protocolVersion, username, 0, 0, 0, 0, 0)
+	return commonWriteLogin(writer, protocolVersion, username, 0, 0, 0, 0, 0, 0)
 }
 
 // packetIdHandshake
@@ -774,27 +754,41 @@ func readUpdateHealth(reader io.Reader, handler IClientPacketHandler) (err os.Er
 
 // packetIdRespawn
 
-func WriteRespawn(writer io.Writer, dimension DimensionId) os.Error {
+func WriteRespawn(writer io.Writer, dimension DimensionId, unknown int8, gameType GameType, worldHeight int16, mapSeed RandomSeed) os.Error {
 	var packet = struct {
-		packetId  byte
-		dimension DimensionId
+		PacketId    byte
+		Dimension   DimensionId
+		Unknown     int8
+		GameType    GameType
+		WorldHeight int16
+		MapSeed     RandomSeed
 	}{
 		packetIdRespawn,
 		dimension,
+		unknown,
+		gameType,
+		worldHeight,
+		mapSeed,
 	}
 
 	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
 func readRespawn(reader io.Reader, handler IPacketHandler) (err os.Error) {
-	var dimension DimensionId
+	var packet struct {
+		Dimension   DimensionId
+		Unknown     int8
+		GameType    GameType
+		WorldHeight int16
+		MapSeed     RandomSeed
+	}
 
-	err = binary.Read(reader, binary.BigEndian, &dimension)
+	err = binary.Read(reader, binary.BigEndian, &packet)
 	if err != nil {
 		return
 	}
 
-	handler.PacketRespawn(dimension)
+	handler.PacketRespawn(packet.Dimension, packet.Unknown, packet.GameType, packet.WorldHeight, packet.MapSeed)
 
 	return
 }
@@ -1593,6 +1587,43 @@ func readPaintingSpawn(reader io.Reader, handler IClientPacketHandler) (err os.E
 		title,
 		&BlockXyz{packetEnd.X, BlockYCoord(packetEnd.Y), packetEnd.Z},
 		packetEnd.PaintingType)
+
+	return
+}
+
+// packetIdExperienceOrb
+
+func WriteExperienceOrb(writer io.Writer, entityId EntityId, position AbsIntXyz, count int16) (err os.Error) {
+	var packet = struct {
+		PacketId byte
+		EntityId EntityId
+		X, Y, Z  AbsIntCoord
+		Count    int16
+	}{
+		packetIdExperienceOrb,
+		entityId,
+		position.X, position.Y, position.Z,
+		count,
+	}
+
+	return binary.Write(writer, binary.BigEndian, &packet)
+}
+
+func readExperienceOrb(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	var packet struct {
+		EntityId EntityId
+		X, Y, Z  AbsIntCoord
+		Count    int16
+	}
+
+	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+		return
+	}
+
+	handler.PacketExperienceOrb(
+		packet.EntityId,
+		AbsIntXyz{packet.X, packet.Y, packet.Z},
+		packet.Count)
 
 	return
 }
@@ -2501,7 +2532,7 @@ func WriteWindowOpen(writer io.Writer, windowId WindowId, invTypeId InvTypeId, w
 		return
 	}
 
-	if err = writeString8(writer, windowTitle); err != nil {
+	if err = writeString16(writer, windowTitle); err != nil {
 		return
 	}
 
@@ -2518,7 +2549,7 @@ func readWindowOpen(reader io.Reader, handler IClientPacketHandler) (err os.Erro
 		return
 	}
 
-	windowTitle, err := readString8(reader)
+	windowTitle, err := readString16(reader)
 	if err != nil {
 		return
 	}
@@ -3156,6 +3187,7 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdObjectSpawn:          readObjectSpawn,
 	packetIdEntitySpawn:          readEntitySpawn,
 	packetIdPaintingSpawn:        readPaintingSpawn,
+	packetIdExperienceOrb:        readExperienceOrb,
 	packetIdEntityVelocity:       readEntityVelocity,
 	packetIdEntityDestroy:        readEntityDestroy,
 	packetIdEntity:               readEntity,

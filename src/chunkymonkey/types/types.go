@@ -28,6 +28,14 @@ const (
 	DimensionNormal = DimensionId(0)
 )
 
+// GameType indicates the server play mode.
+type GameType byte
+
+const (
+	GameTypeSurvival = GameType(0)
+	GameTypeCreative = GameType(1)
+)
+
 // Player/mob health.
 type Health int16
 
