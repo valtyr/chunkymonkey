@@ -48,7 +48,6 @@ const (
 	packetIdEntitySpawn          = 0x18
 	packetIdPaintingSpawn        = 0x19
 	packetIdExperienceOrb        = 0x1a
-	packetIdUnknown0x1b          = 0x1b
 	packetIdEntityVelocity       = 0x1c
 	packetIdEntityDestroy        = 0x1d
 	packetIdEntity               = 0x1e
@@ -106,7 +105,6 @@ type IPacketHandler interface {
 	PacketPlayerBlockHit(status DigStatus, blockLoc *BlockXyz, face Face)
 	PacketPlayerBlockInteract(itemTypeId ItemTypeId, blockLoc *BlockXyz, face Face, amount ItemCount, data ItemData)
 	PacketEntityAnimation(entityId EntityId, animation EntityAnimation)
-	PacketUnknown0x1b(field1, field2 float32, field3, field4 bool, field5, field6 float32)
 	PacketUnknown0x3d(field1, field2 int32, field3 int8, field4, field5 int32)
 	PacketWindowTransaction(windowId WindowId, txId TxId, accepted bool)
 	PacketSignUpdate(position *BlockXyz, lines [4]string)
@@ -1624,27 +1622,6 @@ func readExperienceOrb(reader io.Reader, handler IClientPacketHandler) (err os.E
 		packet.EntityId,
 		AbsIntXyz{packet.X, packet.Y, packet.Z},
 		packet.Count)
-
-	return
-}
-
-// packetIdUnknown0x1b
-
-func readUnknown0x1b(reader io.Reader, handler IPacketHandler) (err os.Error) {
-	var packet struct {
-		field1, field2 float32
-		field3, field4 byte
-		field5, field6 float32
-	}
-
-	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
-		return
-	}
-
-	handler.PacketUnknown0x1b(
-		packet.field1, packet.field2,
-		byteToBool(packet.field3), byteToBool(packet.field4),
-		packet.field5, packet.field6)
 
 	return
 }

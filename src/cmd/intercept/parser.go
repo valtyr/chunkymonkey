@@ -157,12 +157,6 @@ func (p *MessageParser) PacketPaintingSpawn(entityId EntityId, title string, pos
 		entityId, title, position, position, paintingType)
 }
 
-func (p *MessageParser) PacketUnknown0x1b(field1, field2 float32, field3, field4 bool, field5, field6 float32) {
-	p.printf(
-		"PacketUnknown0x1b(field1=%v, field2=%v, field3=%t, field4=%t, field5=%v, field6=%v)",
-		field1, field2, field3, field4, field5, field6)
-}
-
 func (p *MessageParser) PacketExperienceOrb(entityId EntityId, position AbsIntXyz, count int16) {
 	p.printf("PacketExperienceOrb(entityId=%d, position=%v, count=%d)",
 		entityId, position, count)
