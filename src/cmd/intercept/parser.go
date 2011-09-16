@@ -199,9 +199,9 @@ func (p *MessageParser) PacketEntityMetadata(entityId EntityId, metadata []proto
 	p.printf("PacketEntityMetadata(entityId=%d, metadata=%v)", entityId, metadata)
 }
 
-func (p *MessageParser) PacketUnknown0x29(entityId EntityId, unknown1, unknown2 int8, unknown3 int16) {
-	p.printf("PacketUnknown0x29(entityId=%d, unknown1=%d, unknown2=%d, unknown3=%d)",
-		entityId, unknown1, unknown2, unknown3)
+func (p *MessageParser) PacketEntityEffect(entityId EntityId, effect EntityEffect, value int8, duration int16) {
+	p.printf("PacketEntityEffect(entityId=%d, effect=%d, value=%d, duration=%d)",
+		entityId, effect, value, duration)
 }
 
 func (p *MessageParser) PacketUnknown0x2a(entityId EntityId, unknown int8) {

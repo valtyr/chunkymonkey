@@ -128,6 +128,31 @@ const (
 	EntityAnimationUncrouch = EntityAnimation(105)
 )
 
+// EntityEffect is an effect that can be placed on a player (and other things?).
+type EntityEffect byte
+
+const (
+	EntityEffectMoveFaster = EntityEffect(1)
+	EntityEffectMoveSlower = EntityEffect(2)
+	EntityEffectDigFaster = EntityEffect(3)
+	EntityEffectDigSlower = EntityEffect(4)
+	EntityEffectDamageBoost = EntityEffect(5)
+	EntityEffectHeal = EntityEffect(6)
+	EntityEffectHarm = EntityEffect(7)
+	EntityEffectJump = EntityEffect(8)
+	EntityEffectConfusion = EntityEffect(9)
+	EntityEffectRegeneration = EntityEffect(10)
+	EntityEffectResistance = EntityEffect(11)
+	EntityEffectFireResistance = EntityEffect(12)
+	EntityEffectWaterBreathing = EntityEffect(13)
+	EntityEffectInvisibility = EntityEffect(14)
+	EntityEffectBlindness = EntityEffect(15)
+	EntityEffectNightVision = EntityEffect(16)
+	EntityEffectSick = EntityEffect(17)
+	EntityEffectWeakness = EntityEffect(18)
+	EntityEffectPoison = EntityEffect(19)
+)
+
 type EntityAction byte
 
 const (

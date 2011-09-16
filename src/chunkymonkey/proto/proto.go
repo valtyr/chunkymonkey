@@ -57,7 +57,7 @@ const (
 	packetIdEntityTeleport       = 0x22
 	packetIdEntityStatus         = 0x26
 	packetIdEntityMetadata       = 0x28
-	packetIdUnknown0x29          = 0x29
+	packetIdEntityEffect         = 0x29
 	packetIdUnknown0x2a          = 0x2a
 	packetIdPlayerExperience     = 0x2b
 	packetIdPreChunk             = 0x32
@@ -145,7 +145,7 @@ type IClientPacketHandler interface {
 	PacketEntityTeleport(entityId EntityId, position *AbsIntXyz, look *LookBytes)
 	PacketEntityStatus(entityId EntityId, status EntityStatus)
 	PacketEntityMetadata(entityId EntityId, metadata []EntityMetadata)
-	PacketUnknown0x29(entityId EntityId, unknown1, unknown2 int8, unknown3 int16)
+	PacketEntityEffect(entityId EntityId, effect EntityEffect, value int8, duration int16)
 	PacketUnknown0x2a(entityId EntityId, unknown int8)
 	PacketPlayerExperience(experience, level int8, totalExperience int16)
 
@@ -1953,41 +1953,40 @@ func readEntityMetadata(reader io.Reader, handler IClientPacketHandler) (err os.
 	return
 }
 
-// packetIdUnknown0x29
-// TODO Revisit when packet better understood.
+// packetIdEntityEffect
 // TODO Find out if it really is server->client only.
 
-func WriteUnknown0x29(writer io.Writer, entityId EntityId, unknown1, unknown2 int8, unknown3 int16) (err os.Error) {
+func WriteEntityEffect(writer io.Writer, entityId EntityId, effect EntityEffect, value int8, duration int16) (err os.Error) {
 	var packet = struct {
 		PacketId byte
 		EntityId EntityId
-		Unknown1 int8
-		Unknown2 int8
-		Unknown3 int16
+		Effect   EntityEffect
+		Value    int8
+		Duration int16
 	}{
-		packetIdUnknown0x29,
+		packetIdEntityEffect,
 		entityId,
-		unknown1,
-		unknown2,
-		unknown3,
+		effect,
+		value,
+		duration,
 	}
 
 	return binary.Write(writer, binary.BigEndian, &packet)
 }
 
-func readUnknown0x29(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+func readEntityEffect(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
 	var packet struct {
 		EntityId EntityId
-		Unknown1 int8
-		Unknown2 int8
-		Unknown3 int16
+		Effect   EntityEffect
+		Value    int8
+		Duration int16
 	}
 
 	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
 		return
 	}
 
-	handler.PacketUnknown0x29(packet.EntityId, packet.Unknown1, packet.Unknown2, packet.Unknown3)
+	handler.PacketEntityEffect(packet.EntityId, packet.Effect, packet.Value, packet.Duration)
 
 	return
 }
@@ -3174,7 +3173,7 @@ var clientReadFns = clientPacketReaderMap{
 	packetIdEntityTeleport:       readEntityTeleport,
 	packetIdEntityStatus:         readEntityStatus,
 	packetIdEntityMetadata:       readEntityMetadata,
-	packetIdUnknown0x29:          readUnknown0x29,
+	packetIdEntityEffect:         readEntityEffect,
 	packetIdUnknown0x2a:          readUnknown0x2a,
 	packetIdPlayerExperience:     readPlayerExperience,
 	packetIdPreChunk:             readPreChunk,
