@@ -520,6 +520,18 @@
     "Aspect": "Todo",
     "AspectArgs": {}
   },
+  "29": {
+    "BlockAttrs": {
+      "Name": "piston",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
   "30": {
     "BlockAttrs": {
       "Name": "web",
@@ -529,8 +541,18 @@
       "Replaceable": false,
       "Attachable": false
     },
-    "Aspect": "Todo",
-    "AspectArgs": {}
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 287,
+          "Probability": 100,
+          "Count": 1,
+          "CopyData": false
+        }
+      ],
+      "BreakOn": 2
+    }
   },
   "31": {
     "BlockAttrs": {
@@ -552,6 +574,32 @@
       ]
     }
   },
+  "32": {
+    "BlockAttrs": {
+      "Name": "dead bush",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": []
+    }
+  },
+  "33": {
+    "BlockAttrs": {
+      "Name": "piston",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
   "35": {
     "BlockAttrs": {
       "Name": "wool",
@@ -572,6 +620,20 @@
         }
       ],
       "BreakOn": 2
+    }
+  },
+  "36": {
+    "BlockAttrs": {
+      "Name": "block 36",
+      "Opacity": 1,
+      "Destructable": false,
+      "Solid": true,
+      "Replaceable": true,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {
+      "Comment": "Used in relation to pistons."
     }
   },
   "37": {
@@ -1585,5 +1647,225 @@
     },
     "Aspect": "Todo",
     "AspectArgs": {}
+  },
+  "96": {
+    "BlockAttrs": {
+      "Name": "trapdoor",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {
+      "Comment": "similar to iron door"
+    }
+  },
+  "98": {
+    "BlockAttrs": {
+      "Name": "stone brick",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 98,
+          "Probability": 100,
+          "Count": 1,
+          "CopyData": true
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "99": {
+    "BlockAttrs": {
+      "Name": "giant brown mushroom",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 39,
+          "Probability": 33,
+          "Count": 1
+        },
+        {
+          "DroppedItem": 39,
+          "Probability": 33,
+          "Count": 2
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "100": {
+    "BlockAttrs": {
+      "Name": "giant red mushroom",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 40,
+          "Probability": 33,
+          "Count": 1
+        },
+        {
+          "DroppedItem": 40,
+          "Probability": 33,
+          "Count": 2
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "101": {
+    "BlockAttrs": {
+      "Name": "iron bars",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 101,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "102": {
+    "BlockAttrs": {
+      "Name": "glass pane",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 102,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "103": {
+    "BlockAttrs": {
+      "Name": "melon",
+      "Opacity": 15,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 360,
+          "Probability": 33,
+          "Count": 5
+        },
+        {
+          "DroppedItem": 360,
+          "Probability": 34,
+          "Count": 6
+        },
+        {
+          "DroppedItem": 360,
+          "Probability": 33,
+          "Count": 7
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "104": {
+    "BlockAttrs": {
+      "Name": "pumpkin stem",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "105": {
+    "BlockAttrs": {
+      "Name": "melon stem",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": false,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
+  "106": {
+    "BlockAttrs": {
+      "Name": "vines",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Standard",
+    "AspectArgs": {
+      "DroppedItems": [
+        {
+          "DroppedItem": 106,
+          "Probability": 100,
+          "Count": 1
+        }
+      ],
+      "BreakOn": 2
+    }
+  },
+  "107": {
+    "BlockAttrs": {
+      "Name": "fence gate",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": false
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {
+      "Comment": "similar to door"
+    }
   }
 }

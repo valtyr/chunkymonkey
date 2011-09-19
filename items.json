@@ -495,6 +495,10 @@
     "Name": "cookie",
     "MaxStack": 8
   },
+  "360": {
+    "Name": "melon slice",
+    "MaxStack": 64
+  },
   "2256": {
     "Name": "gold music disc",
     "MaxStack": 64
