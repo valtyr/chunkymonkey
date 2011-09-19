@@ -600,6 +600,18 @@
     "Aspect": "Todo",
     "AspectArgs": {}
   },
+  "34": {
+    "BlockAttrs": {
+      "Name": "piston extension",
+      "Opacity": 0,
+      "Destructable": true,
+      "Solid": true,
+      "Replaceable": false,
+      "Attachable": true
+    },
+    "Aspect": "Todo",
+    "AspectArgs": {}
+  },
   "35": {
     "BlockAttrs": {
       "Name": "wool",
