@@ -24,10 +24,13 @@ const (
 )
 
 var (
-	clientErrGeneral = os.NewError("server error")
-	clientErrUsername = os.NewError("bad username")
-	clientErrLoginDenied = os.NewError("you do not have access to this server")
-	clientErrAuthFailed = os.NewError("Minecraft authentication failed")
+	clientErrGeneral = os.NewError("Server error.")
+	clientErrUsername = os.NewError("Bad username.")
+	clientErrLoginDenied = os.NewError("You do not have access to this server.")
+	clientErrHandshake = os.NewError("Handshake error.")
+	clientErrLoginGeneral = os.NewError("Login error.")
+	clientErrAuthFailed = os.NewError("Minecraft authentication failed.")
+	clientErrUserData = os.NewError("Error reading user data. Please contact the server administrator.")
 
 	loginErrorConnType = os.NewError("unknown/bad connection type")
 	loginErrorMaintenance = os.NewError("server under maintenance")
@@ -55,8 +58,6 @@ func NewConnManager(listener net.Listener, gameInfo *GameInfo) *ConnManager {
 		listener: listener,
 		gameInfo: gameInfo,
 	}
-
-	go mgr.run()
 
 	return mgr
 }
@@ -107,7 +108,7 @@ func handleConnection(gameInfo *GameInfo, conn net.Conn) {
 		proto.PacketIdServerListPing,
 	})
 	if err != nil {
-		clientErr = os.NewError("Login error.")
+		clientErr = clientErrLoginGeneral
 		return
 	}
 
@@ -146,7 +147,7 @@ func (l *login) handleLogin(conn net.Conn) (err, clientErr os.Error) {
 	}
 
 	if err = proto.ServerWriteHandshake(conn, l.gameInfo.serverId); err != nil {
-		clientErr = os.NewError("Handshake error.")
+		clientErr = clientErrHandshake
 		return
 	}
 
@@ -171,7 +172,7 @@ func (l *login) handleLogin(conn net.Conn) (err, clientErr os.Error) {
 		proto.PacketIdLogin,
 	})
 	if err != nil {
-		clientErr = os.NewError("Login error.")
+		clientErr = clientErrLoginGeneral
 		return
 	}
 
@@ -179,7 +180,7 @@ func (l *login) handleLogin(conn net.Conn) (err, clientErr os.Error) {
 
 	var playerData *nbt.Compound
 	if playerData, err = l.gameInfo.game.worldStore.PlayerData(l.username); err != nil {
-		clientErr = os.NewError("Error reading user data. Please contact the server administrator.")
+		clientErr = clientErrUserData
 		return
 	}
 
@@ -190,7 +191,7 @@ func (l *login) handleLogin(conn net.Conn) (err, clientErr os.Error) {
 			// etc., which could lose items from them. Better for an administrator to
 			// sort this out.
 			err = fmt.Errorf("Error parsing player data for %q: %v", l.username, err)
-			clientErr = os.NewError("Error reading user data. Please contact the server administrator.")
+			clientErr = clientErrUserData
 			return
 		}
 	}
