@@ -20,6 +20,15 @@ type TickTime float64
 
 type RandomSeed int64
 
+type GameDifficulty int8
+
+const (
+	GameDifficultyPeaceful = 0
+	GameDifficultyEasy = 1
+	GameDifficultyNormal = 2
+	GameDifficultyHard = 3
+)
+
 // Which 'world'?
 type DimensionId int8
 

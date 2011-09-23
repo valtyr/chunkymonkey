@@ -48,6 +48,23 @@ func (p *MessageParser) PacketKeepAlive(id int32) {
 	// Not logging this packet as it's a bit spammy
 }
 
+func (p *MessageParser) PacketServerLogin(username string) {
+	p.printf("PacketServerLogin(username=%q)", username)
+}
+
+func (p *MessageParser) PacketClientLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown int8, worldHeight, maxPlayers byte) {
+	p.printf("PacketClientLogin(entityId=%d, mapSeed=%d, serverMode=%d, dimension=%d, unknown=%d, worldHeight=%d, maxPlayers=%d)",
+		entityId, mapSeed, serverMode, dimension, unknown, worldHeight, maxPlayers)
+}
+
+func (p *MessageParser) PacketServerHandshake(username string) {
+	p.printf("PacketClientHandshake(username=%q)", username)
+}
+
+func (p *MessageParser) PacketClientHandshake(serverId string) {
+	p.printf("PacketClientHandshake(serverId=%q)", serverId)
+}
+
 func (p *MessageParser) PacketChatMessage(message string) {
 	p.printf("PacketChatMessage(%q)", message)
 }
@@ -99,11 +116,6 @@ func (p *MessageParser) PacketSignUpdate(position *BlockXyz, lines [4]string) {
 	p.printf("PacketSignUpdate(position=%v, lines=[%q, %q, %q, %q])",
 		position,
 		lines[0], lines[1], lines[2], lines[3])
-}
-
-func (p *MessageParser) ClientPacketLogin(entityId EntityId, mapSeed RandomSeed, serverMode int32, dimension DimensionId, unknown int8, worldHeight, maxPlayers byte) {
-	p.printf("PacketLogin(entityId=%d, mapSeed=%d, serverMode=%d, dimension=%d, unknown=%d, worldHeight=%d, maxPlayers=%d)",
-		entityId, mapSeed, serverMode, dimension, unknown, worldHeight, maxPlayers)
 }
 
 func (p *MessageParser) PacketTimeUpdate(time Ticks) {
@@ -332,20 +344,6 @@ func (p *MessageParser) CsParse(reader io.Reader, logger *log.Logger) {
 		}
 	}()
 
-	username, err := proto.ServerReadHandshake(reader)
-	if err != nil {
-		p.printf("ServerReadHandshake error: %v", err)
-		return
-	}
-	p.printf("ServerReadHandshake(username=%v)", username)
-
-	loginUsername, err := proto.ServerReadLogin(reader)
-	if err != nil {
-		p.printf("ServerReadLogin error: %v", err)
-		return
-	}
-	p.printf("ServerReadLogin(username=%v)", loginUsername)
-
 	for {
 		err := proto.ServerReadPacket(reader, p)
 		if err != nil {
@@ -372,13 +370,6 @@ func (p *MessageParser) ScParse(reader io.Reader, logger *log.Logger) {
 			p.printf("Parsing failed: %v", err)
 		}
 	}()
-
-	serverId, err := proto.ClientReadHandshake(reader)
-	if err != nil {
-		p.printf("ClientReadHandshake error: %v", err)
-		return
-	}
-	p.printf("ClientReadHandshake(serverId=%v)", serverId)
 
 	for {
 		err := proto.ClientReadPacket(reader, p)

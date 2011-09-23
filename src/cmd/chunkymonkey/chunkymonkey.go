@@ -99,15 +99,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	game, err := chunkymonkey.NewGame(worldPath)
+	game, err := chunkymonkey.NewGame(worldPath, *addr, *underMaintenaceMsg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	game.UnderMaintenanceMsg = *underMaintenaceMsg
+
 	err = startHttpServer(*httpAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	game.Serve(*addr)
+	game.Serve()
 }

@@ -30,7 +30,7 @@ type Game struct {
 	shardManager  *shardserver.LocalShardManager
 	entityManager EntityManager
 	worldStore    *worldstore.WorldStore
-	authserver    server_auth.IAuthenticator
+	connManager   *ConnManager
 
 	// Mapping between entityId/name and player object
 	players     map[EntityId]*player.Player
@@ -42,12 +42,12 @@ type Game struct {
 	playerDisconnect chan EntityId
 
 	// Server information
-	time                Ticks
-	serverId            string
-	UnderMaintenanceMsg string // if set, logins are disallowed.
+	time           Ticks
+	serverId       string
+	maintenanceMsg string // if set, logins are disallowed.
 }
 
-func NewGame(worldPath string) (game *Game, err os.Error) {
+func NewGame(worldPath string, addr string, maintenanceMsg string) (game *Game, err os.Error) {
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
 	if err != nil {
 		return nil, err
@@ -66,8 +66,23 @@ func NewGame(worldPath string) (game *Game, err os.Error) {
 		playerDisconnect: make(chan EntityId),
 		time:             worldStore.Time,
 		worldStore:       worldStore,
-		authserver:       authserver,
 	}
+
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return
+	}
+	log.Print("Listening on ", addr)
+
+	game.connManager = NewConnManager(listener, &GameInfo{
+		game: game,
+		maintenanceMsg: maintenanceMsg,
+		serverId: game.serverId,
+		shardManager: game.shardManager,
+		entityManager: &game.entityManager,
+		worldStore: game.worldStore,
+		authserver: authserver,
+	})
 
 	game.entityManager.Init()
 
@@ -132,6 +147,7 @@ func (game *Game) onTick() {
 	}
 }
 
+/* TODO remove
 // Negotiate a new player client login. This function runs in a new goroutine
 // for each player connection and therefore should not attempt to alter the
 // game structure without enqueue().
@@ -229,23 +245,10 @@ func (game *Game) login(conn net.Conn) {
 	game.playerConnect <- player
 	player.Run()
 }
+*/
 
-func (game *Game) Serve(addr string) {
-	listener, e := net.Listen("tcp", addr)
-	if e != nil {
-		log.Fatalf("Listen: %s", e.String())
-	}
-	log.Print("Listening on ", addr)
-
-	for {
-		conn, e2 := listener.Accept()
-		if e2 != nil {
-			log.Print("Accept: ", e2.String())
-			break
-		}
-
-		go game.login(conn)
-	}
+func (game *Game) Serve() {
+	game.connManager.run()
 }
 
 // Utility functions

@@ -292,9 +292,9 @@ func (player *Player) Run() {
 	// TODO pass proper dimension. This is low priority, because we don't yet
 	// support multiple dimensions.
 	// TODO pass proper map seed.
-	// TODO pass proper values for the unknown - when its meaning is known.
+	// TODO pass proper values for the difficulty.
 	// TODO proper max number of players.
-	proto.ServerWriteLogin(buf, player.EntityId, 0, 0, DimensionNormal, 1, MaxYCoord+1, 8)
+	proto.ServerWriteLogin(buf, player.EntityId, 0, 0, DimensionNormal, GameDifficultyNormal, MaxYCoord+1, 8)
 	proto.WriteSpawnPosition(buf, &player.spawnBlock)
 	player.TransmitPacket(buf.Bytes())
 
@@ -318,6 +318,16 @@ func (player *Player) Stop() {
 
 func (player *Player) PacketKeepAlive(id int32) {
 	player.pingReceived(id)
+}
+
+func (player *Player) PacketServerLogin(username string) {
+	// Unexpected packet.
+	player.Stop()
+}
+
+func (player *Player) PacketServerHandshake(username string) {
+	// Unexpected packet.
+	player.Stop()
 }
 
 func (player *Player) PacketChatMessage(message string) {
