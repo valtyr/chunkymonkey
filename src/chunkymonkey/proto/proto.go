@@ -438,7 +438,6 @@ func ServerWriteLogin(writer io.Writer, entityId EntityId, mapSeed RandomSeed, s
 	return commonWriteLogin(writer, int32(entityId), "", mapSeed, serverMode, dimension, difficulty, worldHeight, maxPlayers)
 }
 
-
 func ClientWriteLogin(writer io.Writer, username, password string) (err os.Error) {
 	if err = binary.Write(writer, binary.BigEndian, byte(PacketIdLogin)); err != nil {
 		return
@@ -3144,16 +3143,19 @@ var commonReadFns = commonPacketReaderMap{
 // Client->server specific packet mapping
 var serverReadFns = serverPacketReaderMap{
 	PacketIdLogin:              serverReadLogin,
+	PacketIdHandshake:          serverReadHandshake,
 	PacketIdPlayer:             readPlayer,
 	PacketIdPlayerPositionLook: serverReadPlayerPositionLook,
 	PacketIdWindowClick:        readWindowClick,
 	PacketIdHoldingChange:      readHoldingChange,
 	PacketIdWindowClose:        readWindowClose,
+	PacketIdServerListPing:     readServerListPing,
 }
 
 // Server->client specific packet mapping
 var clientReadFns = clientPacketReaderMap{
 	PacketIdLogin:                clientReadLogin,
+	PacketIdHandshake:            clientReadHandshake,
 	PacketIdTimeUpdate:           readTimeUpdate,
 	PacketIdEntityEquipment:      readEntityEquipment,
 	PacketIdSpawnPosition:        readSpawnPosition,

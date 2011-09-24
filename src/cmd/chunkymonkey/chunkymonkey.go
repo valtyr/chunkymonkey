@@ -38,8 +38,12 @@ var furnaceDefs = flag.String(
 	"furnace", "furnace.json",
 	"The JSON file containing furnace fuel and reaction definitions.")
 
-var underMaintenaceMsg = flag.String(
-	"underMaintenanceMsg", "",
+var serverDesc = flag.String(
+	"server_desc", "Chunkymonkey Minecraft server",
+	"The server description.")
+
+var maintenanceMsg = flag.String(
+	"maintenance_msg", "",
 	"If set, all logins will be denied and this message will be given as reason.")
 
 var userDefs = flag.String(
@@ -49,6 +53,12 @@ var userDefs = flag.String(
 var groupDefs = flag.String(
 	"groups", "groups.json",
 	"The JSON file containing group permissions.")
+
+// TODO Implement max player count enforcement. Probably would have to be
+// implemented atomically at the game level.
+var maxPlayerCount = flag.Int(
+	"max_player_count", 16,
+	"Maximum number of players to allow concurrently. (Does not work yet)")
 
 func usage() {
 	os.Stderr.WriteString("usage: " + os.Args[0] + " [flags] <world>\n")
@@ -99,7 +109,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	game, err := chunkymonkey.NewGame(worldPath, *addr, *underMaintenaceMsg)
+	listener, err := net.Listen("tcp", *addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	game, err := chunkymonkey.NewGame(worldPath, listener, *serverDesc, *maintenanceMsg, *maxPlayerCount)
 	if err != nil {
 		log.Fatal(err)
 	}

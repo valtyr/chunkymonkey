@@ -24,9 +24,9 @@ type GameDifficulty int8
 
 const (
 	GameDifficultyPeaceful = 0
-	GameDifficultyEasy = 1
-	GameDifficultyNormal = 2
-	GameDifficultyHard = 3
+	GameDifficultyEasy     = 1
+	GameDifficultyNormal   = 2
+	GameDifficultyHard     = 3
 )
 
 // Which 'world'?

@@ -30,7 +30,7 @@ type Game struct {
 	shardManager  *shardserver.LocalShardManager
 	entityManager EntityManager
 	worldStore    *worldstore.WorldStore
-	connManager   *ConnManager
+	connHandler   *ConnHandler
 
 	// Mapping between entityId/name and player object
 	players     map[EntityId]*player.Player
@@ -47,7 +47,7 @@ type Game struct {
 	maintenanceMsg string // if set, logins are disallowed.
 }
 
-func NewGame(worldPath string, addr string, maintenanceMsg string) (game *Game, err os.Error) {
+func NewGame(worldPath string, listener net.Listener, serverDesc, maintenanceMsg string, maxPlayerCount int) (game *Game, err os.Error) {
 	worldStore, err := worldstore.LoadWorldStore(worldPath)
 	if err != nil {
 		return nil, err
@@ -68,22 +68,6 @@ func NewGame(worldPath string, addr string, maintenanceMsg string) (game *Game, 
 		worldStore:       worldStore,
 	}
 
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return
-	}
-	log.Print("Listening on ", addr)
-
-	game.connManager = NewConnManager(listener, &GameInfo{
-		game: game,
-		maintenanceMsg: maintenanceMsg,
-		serverId: game.serverId,
-		shardManager: game.shardManager,
-		entityManager: &game.entityManager,
-		worldStore: game.worldStore,
-		authserver: authserver,
-	})
-
 	game.entityManager.Init()
 
 	game.serverId = fmt.Sprintf("%016x", rand.NewSource(worldStore.Seed).Int63())
@@ -94,12 +78,26 @@ func NewGame(worldPath string, addr string, maintenanceMsg string) (game *Game, 
 	// TODO: Load the prefix from a config file
 	gamerules.CommandFramework = command.NewCommandFramework("/")
 
-	go game.mainLoop()
+	// Start accepting connections.
+	game.connHandler = NewConnHandler(listener, &GameInfo{
+		game:           game,
+		maxPlayerCount: maxPlayerCount,
+		serverDesc:     serverDesc,
+		maintenanceMsg: maintenanceMsg,
+		serverId:       game.serverId,
+		shardManager:   game.shardManager,
+		entityManager:  &game.entityManager,
+		worldStore:     game.worldStore,
+		authserver:     authserver,
+	})
+
 	return
 }
 
-// Fetch external events and respond appropriately
-func (game *Game) mainLoop() {
+// Fetch external events and respond appropriately.
+func (game *Game) Serve() {
+	defer game.connHandler.Stop()
+
 	ticker := time.NewTicker(NanosecondsInSecond / TicksPerSecond)
 
 	for {
@@ -147,110 +145,6 @@ func (game *Game) onTick() {
 	}
 }
 
-/* TODO remove
-// Negotiate a new player client login. This function runs in a new goroutine
-// for each player connection and therefore should not attempt to alter the
-// game structure without enqueue().
-func (game *Game) login(conn net.Conn) {
-	// TODO: This function should access game in a thread-safe way for reading.
-	// TODO: Handle 0xfe being first packet with well-formed disconnect packet.
-	var err, clientErr os.Error
-
-	defer func() {
-		if err != nil {
-			log.Print(err.String())
-			if clientErr == nil {
-				clientErr = os.NewError("Server error.")
-			}
-			proto.WriteDisconnect(conn, clientErr.String())
-			conn.Close()
-		}
-	}()
-
-	var username string
-	if username, err = proto.ServerReadHandshake(conn); err != nil {
-		clientErr = os.NewError("Handshake error.")
-		return
-	}
-
-	if !validPlayerUsername.MatchString(username) {
-		err = os.NewError("Bad username")
-		clientErr = err
-		return
-	}
-
-	log.Print("Client ", conn.RemoteAddr(), " connected as ", username)
-
-	if game.UnderMaintenanceMsg != "" {
-		err = fmt.Errorf("Server under maintenance, kicking player: %q", username)
-		clientErr = os.NewError(game.UnderMaintenanceMsg)
-		return
-	}
-
-	// Load player permissions.
-	permissions := gamerules.Permissions.UserPermissions(username)
-	if !permissions.Has("login") {
-		err = fmt.Errorf("Player %q does not have login permission", username)
-		clientErr = os.NewError("You do not have access to this server.")
-		return
-	}
-
-	if err = proto.ServerWriteHandshake(conn, game.serverId); err != nil {
-		clientErr = os.NewError("Handshake error.")
-		return
-	}
-
-	if game.serverId != "-" {
-		var authenticated bool
-		authenticated, err = game.authserver.Authenticate(game.serverId, username)
-		if !authenticated || err != nil {
-			var reason string
-			if err != nil {
-				reason = "Authentication check failed: " + err.String()
-			} else {
-				reason = "Failed authentication"
-			}
-			err = fmt.Errorf("Client %v: %s", conn.RemoteAddr(), reason)
-			clientErr = os.NewError(reason)
-			return
-		}
-		log.Print("Client ", conn.RemoteAddr(), " passed minecraft.net authentication")
-	}
-
-	if _, err = proto.ServerReadLogin(conn); err != nil {
-		clientErr = os.NewError("Login error.")
-		return
-	}
-
-	entityId := game.entityManager.NewEntity()
-
-	var playerData *nbt.Compound
-	if playerData, err = game.worldStore.PlayerData(username); err != nil {
-		clientErr = os.NewError("Error reading user data. Please contact the server administrator.")
-		return
-	}
-
-	player := player.NewPlayer(entityId, game.shardManager, conn, username, game.worldStore.SpawnPosition, game.playerDisconnect, game)
-	if playerData != nil {
-		if err = player.UnmarshalNbt(playerData); err != nil {
-			// Don't let the player log in, as they will only have default inventory
-			// etc., which could lose items from them. Better for an administrator to
-			// sort this out.
-			err = fmt.Errorf("Error parsing player data for %q: %v", username, err)
-			clientErr = os.NewError("Error reading user data. Please contact the server administrator.")
-			return
-		}
-	}
-
-	game.playerConnect <- player
-	player.Run()
-}
-*/
-
-func (game *Game) Serve() {
-	game.connManager.run()
-}
-
 // Utility functions
 
 // Send a time/keepalive packet
@@ -294,6 +188,14 @@ func (game *Game) BroadcastMessage(msg string) {
 func (game *Game) ItemTypeById(id int) (gamerules.ItemType, bool) {
 	itemType, ok := gamerules.Items[ItemTypeId(id)]
 	return *itemType, ok
+}
+
+func (game *Game) PlayerCount() int {
+	result := make(chan int)
+	game.enqueue(func(_ *Game) {
+		result <- len(game.players)
+	})
+	return <-result
 }
 
 func (game *Game) PlayerByEntityId(id EntityId) gamerules.IPlayerClient {
