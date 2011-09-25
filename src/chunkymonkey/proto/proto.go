@@ -895,8 +895,6 @@ func readPlayerLook(reader io.Reader, handler IPacketHandler) (err os.Error) {
 
 // PacketIdPlayerPositionLook
 
-// PacketIdPlayerPositionLook
-
 func writePlayerPositionLookCommon(writer io.Writer, x, y1, y2, z AbsCoord, look *LookDegrees, onGround bool) (err os.Error) {
 	var packet = struct {
 		PacketId byte
@@ -933,71 +931,45 @@ func ServerWritePlayerPositionLook(writer io.Writer, position *AbsXyz, stance Ab
 		onGround)
 }
 
-func clientReadPlayerPositionLook(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+func commonReadPlayerPositionLook(reader io.Reader) (x, y1, y2, z AbsCoord, look *LookDegrees, onGround bool, err os.Error) {
 	var packet struct {
 		X        AbsCoord
-		Stance   AbsCoord
-		Y        AbsCoord
+		Y1       AbsCoord
+		Y2       AbsCoord
 		Z        AbsCoord
 		Yaw      AngleDegrees
 		Pitch    AngleDegrees
 		OnGround byte
 	}
 
-	err = binary.Read(reader, binary.BigEndian, &packet)
+	if err = binary.Read(reader, binary.BigEndian, &packet); err != nil {
+		return
+	}
+
+	return packet.X, packet.Y1, packet.Y2, packet.Z, &LookDegrees{packet.Yaw, packet.Pitch}, byteToBool(packet.OnGround), nil
+}
+
+func clientReadPlayerPositionLook(reader io.Reader, handler IClientPacketHandler) (err os.Error) {
+	x, y1, y2, z, look, onGround, err := commonReadPlayerPositionLook(reader)
 	if err != nil {
 		return
 	}
 
-	handler.PacketPlayerPosition(
-		&AbsXyz{
-			packet.X,
-			packet.Y,
-			packet.Z,
-		},
-		packet.Stance,
-		byteToBool(packet.OnGround))
+	handler.PacketPlayerPosition(&AbsXyz{x, y2, z}, y1, onGround)
+	handler.PacketPlayerLook(look, onGround)
 
-	handler.PacketPlayerLook(
-		&LookDegrees{
-			packet.Yaw,
-			packet.Pitch,
-		},
-		byteToBool(packet.OnGround))
 	return
 }
 
 func serverReadPlayerPositionLook(reader io.Reader, handler IServerPacketHandler) (err os.Error) {
-	var packet struct {
-		X        AbsCoord
-		Y        AbsCoord
-		Stance   AbsCoord
-		Z        AbsCoord
-		Yaw      AngleDegrees
-		Pitch    AngleDegrees
-		OnGround byte
-	}
-
-	err = binary.Read(reader, binary.BigEndian, &packet)
+	x, y1, y2, z, look, onGround, err := commonReadPlayerPositionLook(reader)
 	if err != nil {
 		return
 	}
 
-	handler.PacketPlayerPosition(
-		&AbsXyz{
-			packet.X,
-			packet.Y,
-			packet.Z,
-		},
-		packet.Stance,
-		byteToBool(packet.OnGround))
+	handler.PacketPlayerPosition(&AbsXyz{x, y1, z}, y2, onGround)
+	handler.PacketPlayerLook(look, onGround)
 
-	handler.PacketPlayerLook(
-		&LookDegrees{
-			packet.Yaw,
-			packet.Pitch,
-		},
-		byteToBool(packet.OnGround))
 	return
 }
 
