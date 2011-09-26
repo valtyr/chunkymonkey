@@ -15,7 +15,7 @@ import (
 
 const (
 	// Currently only this protocol version is supported.
-	protocolVersion = 18
+	protocolVersion = 17
 
 	maxUcs2Char  = 0xffff
 	ucs2ReplChar = 0xfffd
