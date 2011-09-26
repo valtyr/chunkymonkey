@@ -5,20 +5,20 @@ The structure of blocks.json is at the top-level a mapping from block type ID
 to the definition. The definition itself consists of two main parts: the basic
 block attributes and the aspect.
 
-  {
-    "0": {
-      "BlockAttrs": {
-        ... basic block attributes ...
-      },
-      "Aspect": "aspect name",
-      "AspectArgs": {
-        ... aspect parameters ...
+    {
+      "0": {
+        "BlockAttrs": {
+          ... basic block attributes ...
+        },
+        "Aspect": "aspect name",
+        "AspectArgs": {
+          ... aspect parameters ...
+        }
       }
     }
-  }
 
 
-`BlockAttrs`
+BlockAttrs
 ------------
 
 This defines very basic physical properties of a block type. The fields are:
@@ -43,7 +43,7 @@ This defines very basic physical properties of a block type. The fields are:
 *  `Attachable` (bool) `true` means that players can place blocks *against*
    this block type. Stone is attachable, chests, water, torches etc. are not.
 
-`Aspect` and `AspectArgs`
+Aspect and AspectArgs
 -------------------------
 
 This defines more advanced behaviour of the block. `Aspect` refers to a block
