@@ -311,10 +311,10 @@ const (
 type InvTypeId int8
 
 const (
-	InvTypeIdChest     = InvTypeId(0)
-	InvTypeIdWorkbench = InvTypeId(1)
-	InvTypeIdFurnace   = InvTypeId(2)
-	InvTypeIdDispenser = InvTypeId(3)
+	InvTypeIdChest InvTypeId = iota
+	InvTypeIdWorkbench
+	InvTypeIdFurnace
+	InvTypeIdDispenser
 )
 
 // ID of the slow in inventory or other item-slotted window element
@@ -328,8 +328,8 @@ const (
 type PrgBarId int16
 
 const (
-	PrgBarIdFurnaceProgress = PrgBarId(0)
-	PrgBarIdFurnaceFire     = PrgBarId(1)
+	PrgBarIdFurnaceProgress PrgBarId = iota
+	PrgBarIdFurnaceFire
 )
 
 type PrgBarValue int16
@@ -344,7 +344,7 @@ type TxId int16
 type TxState byte
 
 const (
-	TxStateAccepted = TxState(iota)
+	TxStateAccepted TxState = iota
 	TxStateRejected
 	TxStateDeferred
 )
@@ -398,12 +398,6 @@ type RelMove struct {
 	X, Y, Z RelMoveCoord
 }
 
-// Angle-related types and constants
-
-const (
-	DegreesToBytes = 256.0 / 360.0
-)
-
 // An angle, where there are 256 units in a circle.
 type AngleBytes byte
 
@@ -415,7 +409,7 @@ func (d *AngleDegrees) ToAngleBytes() AngleBytes {
 	if norm < 0 {
 		norm = 360 + norm
 	}
-	return AngleBytes(norm * DegreesToBytes)
+	return AngleBytes(norm * 256.0 / 360.0)
 }
 
 type LookDegrees struct {
@@ -460,15 +454,11 @@ const (
 	MinChunkRadius = 2
 
 	// Sometimes it is useful to convert block coordinates to pixels
-	PixelShift     = 5
-	PixelsPerBlock = 1 << PixelShift
 
-	PixelsPerChunkShift = (ChunkHShift + PixelShift)
+	PixelsPerBlock = 32
+
+	PixelsPerChunkShift = (ChunkHShift + 5)
 	PixelsPerChunk      = 1 << PixelsPerChunkShift
-
-	// Millipixels are used in velocity values
-	MilliPixelsPerPixel = 1000
-	MilliPixelsPerBlock = PixelsPerBlock * MilliPixelsPerPixel
 )
 
 // Specifies exact world distance in blocks (floating point)
@@ -749,7 +739,7 @@ func (b *BlockXyz) IsZero() bool {
 // overflow. If overflow occurs, return nil. There may be a more elegant
 // solution to check this, here we go for simplicity and clarity. This
 // function assumes we cannot have a negative Y coordinate.
-func (b *BlockXyz) AddXyz(dx BlockCoord, dy BlockYCoord, dz BlockCoord) (newb *BlockXyz) {
+func (b *BlockXyz) AddXyz(dx BlockCoord, dy BlockYCoord, dz BlockCoord) *BlockXyz {
 	// Check for overflow
 	sumx := b.X + dx
 	if b.X >= 0 && sumx < dx {
@@ -786,9 +776,9 @@ func (b *BlockXyz) AddXyz(dx BlockCoord, dy BlockYCoord, dz BlockCoord) (newb *B
 }
 
 // Convert an (x, y, z) block coordinate to chunk coordinates.
-func (blockLoc *BlockXyz) ToChunkXz() (chunkLoc *ChunkXz) {
-	chunkX, _ := blockLoc.X.ToChunkLocalCoord()
-	chunkZ, _ := blockLoc.Z.ToChunkLocalCoord()
+func (b *BlockXyz) ToChunkXz() (chunkLoc *ChunkXz) {
+	chunkX, _ := b.X.ToChunkLocalCoord()
+	chunkZ, _ := b.Z.ToChunkLocalCoord()
 
 	chunkLoc = &ChunkXz{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
 	return
@@ -796,36 +786,36 @@ func (blockLoc *BlockXyz) ToChunkXz() (chunkLoc *ChunkXz) {
 
 // Convert an (x, y, z) block coordinate to chunk coordinates and the
 // coordinates of the block within the chunk
-func (blockLoc *BlockXyz) ToChunkLocal() (chunkLoc *ChunkXz, subLoc *SubChunkXyz) {
-	chunkX, subX := blockLoc.X.ToChunkLocalCoord()
-	chunkZ, subZ := blockLoc.Z.ToChunkLocalCoord()
+func (b *BlockXyz) ToChunkLocal() (chunkLoc *ChunkXz, subLoc *SubChunkXyz) {
+	chunkX, subX := b.X.ToChunkLocalCoord()
+	chunkZ, subZ := b.Z.ToChunkLocalCoord()
 
 	chunkLoc = &ChunkXz{ChunkCoord(chunkX), ChunkCoord(chunkZ)}
-	subLoc = &SubChunkXyz{SubChunkCoord(subX), SubChunkCoord(blockLoc.Y), SubChunkCoord(subZ)}
+	subLoc = &SubChunkXyz{SubChunkCoord(subX), SubChunkCoord(b.Y), SubChunkCoord(subZ)}
 	return
 }
 
-func (blockLoc *BlockXyz) ToAbsIntXyz() *AbsIntXyz {
+func (b *BlockXyz) ToAbsIntXyz() *AbsIntXyz {
 	return &AbsIntXyz{
-		AbsIntCoord(blockLoc.X) * PixelsPerBlock,
-		AbsIntCoord(blockLoc.Y) * PixelsPerBlock,
-		AbsIntCoord(blockLoc.Z) * PixelsPerBlock,
+		AbsIntCoord(b.X) * PixelsPerBlock,
+		AbsIntCoord(b.Y) * PixelsPerBlock,
+		AbsIntCoord(b.Z) * PixelsPerBlock,
 	}
 }
 
-func (blockLoc *BlockXyz) ToAbsXyz() *AbsXyz {
+func (b *BlockXyz) ToAbsXyz() *AbsXyz {
 	return &AbsXyz{
-		AbsCoord(blockLoc.X),
-		AbsCoord(blockLoc.Y),
-		AbsCoord(blockLoc.Z),
+		AbsCoord(b.X),
+		AbsCoord(b.Y),
+		AbsCoord(b.Z),
 	}
 }
 
-func (blockLoc *BlockXyz) MidPointToAbsXyz() AbsXyz {
+func (b *BlockXyz) MidPointToAbsXyz() AbsXyz {
 	return AbsXyz{
-		AbsCoord(blockLoc.X) + 0.5,
-		AbsCoord(blockLoc.Y) + 0.5,
-		AbsCoord(blockLoc.Z) + 0.5,
+		AbsCoord(b.X) + 0.5,
+		AbsCoord(b.Y) + 0.5,
+		AbsCoord(b.Z) + 0.5,
 	}
 }
 
@@ -834,11 +824,8 @@ func (blockLoc *BlockXyz) MidPointToAbsXyz() AbsXyz {
 type ChunkLoadMode byte
 
 const (
-	// Client should unload the chunk
-	ChunkUnload = ChunkLoadMode(0)
-
-	// Client should initialise the chunk
-	ChunkInit = ChunkLoadMode(1)
+	ChunkUnload ChunkLoadMode = iota // Client should unload the chunk
+	ChunkInit                        // Client should initialise the chunk
 )
 
 func init() {
