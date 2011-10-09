@@ -4,13 +4,13 @@ import (
 	"os"
 
 	"chunkymonkey/nbtutil"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
 type tileEntity struct {
 	chunk    IChunkBlock
-	blockLoc BlockXyz
+	blockLoc types.BlockXyz
 }
 
 func (tileEntity *tileEntity) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
@@ -30,6 +30,6 @@ func (tileEntity *tileEntity) SetChunk(chunk IChunkBlock) {
 	tileEntity.chunk = chunk
 }
 
-func (tileEntity *tileEntity) Block() BlockXyz {
+func (tileEntity *tileEntity) Block() types.BlockXyz {
 	return tileEntity.blockLoc
 }

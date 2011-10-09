@@ -6,12 +6,12 @@ import (
 	"json"
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 type typeInstance struct {
-	Id   ItemTypeId
-	Data ItemData
+	Id   types.ItemTypeId
+	Data types.ItemData
 }
 
 func (ti *typeInstance) createRecipeSlot(itemTypes ItemTypeMap) (slot Slot) {
@@ -26,7 +26,7 @@ type recipeTemplate struct {
 	Input       []string
 	InputTypes  map[string][]typeInstance
 	OutputTypes []typeInstance
-	OutputCount ItemCount
+	OutputCount types.ItemCount
 	height      byte
 	width       byte
 }

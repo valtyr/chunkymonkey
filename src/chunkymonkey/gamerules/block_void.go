@@ -3,7 +3,7 @@ package gamerules
 import (
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 func makeVoidAspect() (aspect IBlockAspect) {
@@ -24,7 +24,7 @@ func (aspect *VoidAspect) Check() os.Error {
 	return nil
 }
 
-func (aspect *VoidAspect) Hit(instance *BlockInstance, player IPlayerClient, digStatus DigStatus) (destroyed bool) {
+func (aspect *VoidAspect) Hit(instance *BlockInstance, player IPlayerClient, digStatus types.DigStatus) (destroyed bool) {
 	destroyed = false
 	return
 }

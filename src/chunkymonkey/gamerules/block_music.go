@@ -3,7 +3,7 @@ package gamerules
 import (
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
@@ -13,7 +13,7 @@ func makeMusicAspect() (aspect IBlockAspect) {
 
 type musicTileEntity struct {
 	tileEntity
-	note NotePitch
+	note types.NotePitch
 }
 
 func NewMusicTileEntity() ITileEntity {
@@ -28,7 +28,7 @@ func (music *musicTileEntity) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 	if noteTag, ok := tag.Lookup("note").(*nbt.Byte); !ok {
 		return os.NewError("missing or incorrect type for Music note")
 	} else {
-		music.note = NotePitch(noteTag.Value)
+		music.note = types.NotePitch(noteTag.Value)
 	}
 
 	return nil

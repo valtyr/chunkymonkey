@@ -8,7 +8,7 @@ import (
 	"chunkymonkey/nbtutil"
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
@@ -23,16 +23,16 @@ func init() {
 // When using an object of type Mob or a sub-type, the caller must set an
 // EntityId, most likely obtained from the EntityManager.
 type Mob struct {
-	EntityId
+	types.EntityId
 	physics.PointObject
-	mobType EntityMobType
-	look    LookDegrees
+	mobType types.EntityMobType
+	look    types.LookDegrees
 	// TODO(nictuku): Move to a more structured form.
 	metadata map[byte]byte
 	// TODO: Change to an AABB object when we have that.
 }
 
-func (mob *Mob) Init(id EntityMobType) {
+func (mob *Mob) Init(id types.EntityMobType) {
 	mob.mobType = id
 	mob.metadata = map[byte]byte{
 		0:  byte(0),
@@ -64,7 +64,7 @@ func (mob *Mob) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 }
 
 func (mob *Mob) MarshalNbt(tag *nbt.Compound) (err os.Error) {
-	mobTypeName, ok := MobNameByType[mob.mobType]
+	mobTypeName, ok := types.MobNameByType[mob.mobType]
 	if !ok {
 		return os.NewError("unknown mob type")
 	}
@@ -87,7 +87,7 @@ func (mob *Mob) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	return nil
 }
 
-func (mob *Mob) SetLook(look LookDegrees) {
+func (mob *Mob) SetLook(look types.LookDegrees) {
 	mob.look = look
 }
 

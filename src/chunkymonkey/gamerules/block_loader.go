@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 type aspectMakerFn func() (aspect IBlockAspect)
@@ -108,10 +108,10 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
 		if err != nil {
 			return
 		}
-		if id < BlockIdMin || id > BlockIdMax {
+		if id < types.BlockIdMin || id > types.BlockIdMax {
 			err = os.NewError(fmt.Sprintf(
 				"Encountered block type with ID %d which is outside the range"+
-					"%d <= N <= %d", id, BlockIdMin, BlockIdMax))
+					"%d <= N <= %d", id, types.BlockIdMin, types.BlockIdMax))
 			return
 		}
 		if id > maxId {
@@ -135,7 +135,7 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
 		if err != nil {
 			return
 		}
-		block.id = BlockId(id)
+		block.id = types.BlockId(id)
 		block.defined = true
 		blocks[id] = *block
 	}
@@ -144,7 +144,7 @@ func LoadBlockDefs(reader io.Reader) (blocks BlockTypeList, err os.Error) {
 	// set id on each block type.
 	for id := range blocks {
 		block := &blocks[id]
-		block.id = BlockId(id)
+		block.id = types.BlockId(id)
 		if !block.defined {
 			void := makeVoidAspect()
 			block.Aspect = void

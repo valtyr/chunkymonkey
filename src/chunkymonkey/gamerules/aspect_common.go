@@ -4,40 +4,40 @@ import (
 	"fmt"
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 // spawnItemInBlock creates an item in a block. It must be run within
 // instance.Chunk's goroutine.
-func spawnItemInBlock(chunk IChunkBlock, blockLoc BlockXyz, itemTypeId ItemTypeId, count ItemCount, data ItemData) {
+func spawnItemInBlock(chunk IChunkBlock, blockLoc types.BlockXyz, itemTypeId types.ItemTypeId, count types.ItemCount, data types.ItemData) {
 	rand := chunk.Rand()
 	position := blockLoc.ToAbsXyz()
-	position.X += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
-	position.Y += AbsCoord(blockItemSpawnFromEdge)
-	position.Z += AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
+	position.X += types.AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
+	position.Y += types.AbsCoord(blockItemSpawnFromEdge)
+	position.Z += types.AbsCoord(blockItemSpawnFromEdge + rand.Float64()*(1-2*blockItemSpawnFromEdge))
 	chunk.AddEntity(
 		NewItem(
 			itemTypeId, count, data,
 			position,
-			&AbsVelocity{0, 0, 0},
+			&types.AbsVelocity{0, 0, 0},
 			0,
 		),
 	)
 }
 
 type blockDropItem struct {
-	DroppedItem ItemTypeId
+	DroppedItem types.ItemTypeId
 	Probability byte // Probabilities specified as a percentage
-	Count       ItemCount
+	Count       types.ItemCount
 	CopyData    bool
 }
 
-func (bdi *blockDropItem) drop(chunk IChunkBlock, blockLoc BlockXyz, blockData byte) {
-	var itemData ItemData
+func (bdi *blockDropItem) drop(chunk IChunkBlock, blockLoc types.BlockXyz, blockData byte) {
+	var itemData types.ItemData
 	if !bdi.CopyData {
 		itemData = 0
 	} else {
-		itemData = ItemData(blockData)
+		itemData = types.ItemData(blockData)
 	}
 
 	spawnItemInBlock(chunk, blockLoc, bdi.DroppedItem, bdi.Count, itemData)

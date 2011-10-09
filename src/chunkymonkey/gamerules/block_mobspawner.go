@@ -3,7 +3,7 @@ package gamerules
 import (
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
@@ -14,7 +14,7 @@ func makeMobSpawnerAspect() (aspect IBlockAspect) {
 type mobSpawnerTileEntity struct {
 	tileEntity
 	entityMobType string
-	delay         Ticks
+	delay         types.Ticks
 }
 
 func NewMobSpawnerTileEntity() ITileEntity {
@@ -35,7 +35,7 @@ func (mobSpawner *mobSpawnerTileEntity) UnmarshalNbt(tag *nbt.Compound) (err os.
 	if delayTag, ok := tag.Lookup("Delay").(*nbt.Short); !ok {
 		return os.NewError("missing or incorrect type for MobSpawner Delay")
 	} else {
-		mobSpawner.delay = Ticks(delayTag.Value)
+		mobSpawner.delay = types.Ticks(delayTag.Value)
 	}
 
 	return nil

@@ -3,28 +3,28 @@ package gamerules
 import (
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
 const (
-	furnaceSlotReagent = SlotId(0)
-	furnaceSlotFuel    = SlotId(1)
-	furnaceSlotOutput  = SlotId(2)
+	furnaceSlotReagent = types.SlotId(0)
+	furnaceSlotFuel    = types.SlotId(1)
+	furnaceSlotOutput  = types.SlotId(2)
 	furnaceNumSlots    = 3
 
-	reactionDuration = Ticks(185)
+	reactionDuration = types.Ticks(185)
 	maxFuelPrg       = 255
 )
 
 type FurnaceInventory struct {
 	Inventory
-	burnTimeMax Ticks
-	burnTime    Ticks
-	cookTime    Ticks
+	burnTimeMax types.Ticks
+	burnTime    types.Ticks
+	cookTime    types.Ticks
 
-	lastCurFuel           PrgBarValue
-	lastReactionRemaining PrgBarValue
+	lastCurFuel           types.PrgBarValue
+	lastReactionRemaining types.PrgBarValue
 	ticksSinceUpdate      int
 }
 
@@ -47,7 +47,7 @@ func (inv *FurnaceInventory) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 	if burnTimeTag, ok := tag.Lookup("BurnTime").(*nbt.Short); !ok {
 		return os.NewError("Bad or missing BurnTime tag in Furnace NBT")
 	} else {
-		inv.burnTime = Ticks(burnTimeTag.Value)
+		inv.burnTime = types.Ticks(burnTimeTag.Value)
 
 		// We don't know what the burnTimeMax was, as it is not stored, so taking
 		// BurnTime for this value as well.
@@ -57,7 +57,7 @@ func (inv *FurnaceInventory) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 	if cookTimeTag, ok := tag.Lookup("CookTime").(*nbt.Short); !ok {
 		return os.NewError("Bad or missing CookTime tag in Furnace NBT")
 	} else {
-		inv.cookTime = Ticks(cookTimeTag.Value)
+		inv.cookTime = types.Ticks(cookTimeTag.Value)
 	}
 
 	return nil
@@ -70,7 +70,7 @@ func (inv *FurnaceInventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	return inv.Inventory.MarshalNbt(tag)
 }
 
-func (inv *FurnaceInventory) Click(click *Click) (txState TxState) {
+func (inv *FurnaceInventory) Click(click *Click) (txState types.TxState) {
 
 	switch click.SlotId {
 	case furnaceSlotReagent:
@@ -184,19 +184,19 @@ func (inv *FurnaceInventory) sendProgressUpdates() {
 	if inv.ticksSinceUpdate > 5 || !inv.IsLit() {
 		inv.ticksSinceUpdate = 0
 
-		curFuelPrg := PrgBarValue(0)
+		curFuelPrg := types.PrgBarValue(0)
 		if inv.burnTimeMax != 0 {
-			curFuelPrg = PrgBarValue((maxFuelPrg * inv.burnTime) / inv.burnTimeMax)
+			curFuelPrg = types.PrgBarValue((maxFuelPrg * inv.burnTime) / inv.burnTimeMax)
 		}
 		if inv.lastCurFuel != curFuelPrg {
 			inv.lastCurFuel = curFuelPrg
-			inv.subscriber.ProgressUpdate(PrgBarIdFurnaceFire, curFuelPrg)
+			inv.subscriber.ProgressUpdate(types.PrgBarIdFurnaceFire, curFuelPrg)
 		}
 
-		curReactionRemaining := PrgBarValue(reactionDuration - inv.cookTime)
+		curReactionRemaining := types.PrgBarValue(reactionDuration - inv.cookTime)
 		if inv.lastReactionRemaining != curReactionRemaining {
 			inv.lastReactionRemaining = curReactionRemaining
-			inv.subscriber.ProgressUpdate(PrgBarIdFurnaceProgress, curReactionRemaining)
+			inv.subscriber.ProgressUpdate(types.PrgBarIdFurnaceProgress, curReactionRemaining)
 		}
 	}
 }

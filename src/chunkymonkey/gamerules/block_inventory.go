@@ -3,7 +3,7 @@ package gamerules
 import (
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
@@ -13,16 +13,16 @@ import (
 type blockInventory struct {
 	tileEntity
 	inv                IInventory
-	subscribers        map[EntityId]IPlayerClient
+	subscribers        map[types.EntityId]IPlayerClient
 	ejectOnUnsubscribe bool
-	invTypeId          InvTypeId
+	invTypeId          types.InvTypeId
 }
 
 // newBlockInventory creates a new blockInventory.
-func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscribe bool, invTypeId InvTypeId) *blockInventory {
+func newBlockInventory(instance *BlockInstance, inv IInventory, ejectOnUnsubscribe bool, invTypeId types.InvTypeId) *blockInventory {
 	blkInv := &blockInventory{
 		inv:                inv,
-		subscribers:        make(map[EntityId]IPlayerClient),
+		subscribers:        make(map[types.EntityId]IPlayerClient),
 		ejectOnUnsubscribe: ejectOnUnsubscribe,
 		invTypeId:          invTypeId,
 	}
@@ -67,16 +67,16 @@ func (blkInv *blockInventory) Click(player IPlayerClient, click *Click) {
 	player.InventoryCursorUpdate(blkInv.blockLoc, click.Cursor)
 
 	// Inform client of operation status.
-	player.InventoryTxState(blkInv.blockLoc, click.TxId, txState == TxStateAccepted)
+	player.InventoryTxState(blkInv.blockLoc, click.TxId, txState == types.TxStateAccepted)
 }
 
-func (blkInv *blockInventory) SlotUpdate(slot *Slot, slotId SlotId) {
+func (blkInv *blockInventory) SlotUpdate(slot *Slot, slotId types.SlotId) {
 	for _, subscriber := range blkInv.subscribers {
 		subscriber.InventorySlotUpdate(blkInv.blockLoc, *slot, slotId)
 	}
 }
 
-func (blkInv *blockInventory) ProgressUpdate(prgBarId PrgBarId, value PrgBarValue) {
+func (blkInv *blockInventory) ProgressUpdate(prgBarId types.PrgBarId, value types.PrgBarValue) {
 	for _, subscriber := range blkInv.subscribers {
 		subscriber.InventoryProgressUpdate(blkInv.blockLoc, prgBarId, value)
 	}
@@ -95,7 +95,7 @@ func (blkInv *blockInventory) AddSubscriber(player IPlayerClient) {
 	player.InventorySubscribed(blkInv.blockLoc, blkInv.invTypeId, slots)
 }
 
-func (blkInv *blockInventory) RemoveSubscriber(entityId EntityId) {
+func (blkInv *blockInventory) RemoveSubscriber(entityId types.EntityId) {
 	blkInv.subscribers[entityId] = nil, false
 	blkInv.chunk.RemoveOnUnsubscribe(entityId, blkInv)
 	if blkInv.ejectOnUnsubscribe && len(blkInv.subscribers) == 0 {
@@ -113,7 +113,7 @@ func (blkInv *blockInventory) Destroyed() {
 
 // Unsubscribed implements IUnsubscribed. It removes a player's
 // subscription to the inventory when they unsubscribe from the chunk.
-func (blkInv *blockInventory) Unsubscribed(entityId EntityId) {
+func (blkInv *blockInventory) Unsubscribed(entityId types.EntityId) {
 	blkInv.subscribers[entityId] = nil, false
 }
 

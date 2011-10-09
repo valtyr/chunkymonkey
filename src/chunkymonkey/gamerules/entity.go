@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"chunkymonkey/physics"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
@@ -27,7 +27,7 @@ type INbtSerializable interface {
 // can be present in a chunk.
 type IEntity interface {
 	// Returns the entity's ID.
-	GetEntityId() EntityId
+	GetEntityId() types.EntityId
 
 	// SendSpawn writes the packets required to tell a client about the existance
 	// and current state of the entity.
@@ -38,7 +38,7 @@ type IEntity interface {
 	SendUpdate(io.Writer) os.Error
 
 	// Returns the entity's current position.
-	Position() *AbsXyz
+	Position() *types.AbsXyz
 }
 
 // INonPlayerEntity is the interface for entities other than players which are
@@ -48,7 +48,7 @@ type INonPlayerEntity interface {
 	INbtSerializable
 
 	// Sets the entity's ID.
-	SetEntityId(EntityId)
+	SetEntityId(types.EntityId)
 
 	// Runs the physics for the entity for a single server tick.
 	Tick(physics.IBlockQuerier) (leftBlock bool)
@@ -64,5 +64,5 @@ type ITileEntity interface {
 	SetChunk(chunk IChunkBlock)
 
 	// Block returns the position of the tile entity.
-	Block() BlockXyz
+	Block() types.BlockXyz
 }

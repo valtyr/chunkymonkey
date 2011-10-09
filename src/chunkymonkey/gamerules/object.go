@@ -9,23 +9,23 @@ import (
 
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
 // TODO Object sub-types?
 
 type Object struct {
-	EntityId
-	ObjTypeId
+	types.EntityId
+	types.ObjTypeId
 	physics.PointObject
-	orientation OrientationBytes
+	orientation types.OrientationBytes
 }
 
-func NewObject(objType ObjTypeId) (object *Object) {
+func NewObject(objType types.ObjTypeId) (object *Object) {
 	object = &Object{
 		// TODO: proper orientation
-		orientation: OrientationBytes{0, 0, 0},
+		orientation: types.OrientationBytes{0, 0, 0},
 	}
 	object.ObjTypeId = objType
 	return
@@ -44,7 +44,7 @@ func (object *Object) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 	}
 
 	var ok bool
-	if object.ObjTypeId, ok = ObjTypeByName[typeName]; !ok {
+	if object.ObjTypeId, ok = types.ObjTypeByName[typeName]; !ok {
 		return os.NewError("unknown object type id")
 	}
 
@@ -54,7 +54,7 @@ func (object *Object) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 }
 
 func (object *Object) MarshalNbt(tag *nbt.Compound) (err os.Error) {
-	objTypeName, ok := ObjNameByType[object.ObjTypeId]
+	objTypeName, ok := types.ObjNameByType[object.ObjTypeId]
 	if !ok {
 		return os.NewError("unknown object type")
 	}
@@ -83,51 +83,51 @@ func (object *Object) SendUpdate(writer io.Writer) (err os.Error) {
 	}
 
 	// TODO: Should this be the Rotation information?
-	err = object.PointObject.SendUpdate(writer, object.EntityId, &LookBytes{0, 0})
+	err = object.PointObject.SendUpdate(writer, object.EntityId, &types.LookBytes{0, 0})
 
 	return
 }
 
 func NewBoat() INonPlayerEntity {
-	return NewObject(ObjTypeIdBoat)
+	return NewObject(types.ObjTypeIdBoat)
 }
 
 func NewMinecart() INonPlayerEntity {
-	return NewObject(ObjTypeIdMinecart)
+	return NewObject(types.ObjTypeIdMinecart)
 }
 
 func NewStorageCart() INonPlayerEntity {
-	return NewObject(ObjTypeIdStorageCart)
+	return NewObject(types.ObjTypeIdStorageCart)
 }
 
 func NewPoweredCart() INonPlayerEntity {
-	return NewObject(ObjTypeIdPoweredCart)
+	return NewObject(types.ObjTypeIdPoweredCart)
 }
 
 func NewActivatedTnt() INonPlayerEntity {
-	return NewObject(ObjTypeIdActivatedTnt)
+	return NewObject(types.ObjTypeIdActivatedTnt)
 }
 
 func NewArrow() INonPlayerEntity {
-	return NewObject(ObjTypeIdArrow)
+	return NewObject(types.ObjTypeIdArrow)
 }
 
 func NewThrownSnowball() INonPlayerEntity {
-	return NewObject(ObjTypeIdThrownSnowball)
+	return NewObject(types.ObjTypeIdThrownSnowball)
 }
 
 func NewThrownEgg() INonPlayerEntity {
-	return NewObject(ObjTypeIdThrownEgg)
+	return NewObject(types.ObjTypeIdThrownEgg)
 }
 
 func NewFallingSand() INonPlayerEntity {
-	return NewObject(ObjTypeIdFallingSand)
+	return NewObject(types.ObjTypeIdFallingSand)
 }
 
 func NewFallingGravel() INonPlayerEntity {
-	return NewObject(ObjTypeIdFallingGravel)
+	return NewObject(types.ObjTypeIdFallingGravel)
 }
 
 func NewFishingFloat() INonPlayerEntity {
-	return NewObject(ObjTypeIdFishingFloat)
+	return NewObject(types.ObjTypeIdFishingFloat)
 }

@@ -3,7 +3,7 @@ package gamerules
 import (
 	"rand"
 	"time"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"log"
 )
 
@@ -36,7 +36,7 @@ func (aspect *SaplingAspect) makeTree(instance *BlockInstance) bool {
 	minheight := 3
 	maxheight := 6
 	height := minheight + rand.Intn(maxheight-minheight)
-	maxy := loc.Y + SubChunkCoord(height)
+	maxy := loc.Y + types.SubChunkCoord(height)
 
 	for y := loc.Y; y < maxy; y++ {
 		loc.Y = y
@@ -45,7 +45,7 @@ func (aspect *SaplingAspect) makeTree(instance *BlockInstance) bool {
 			// TODO: Can't place a block outside chunk boundaries
 			log.Printf("Couldn't place a tree block (%v,%v,%v)", loc.X, loc.Y, loc.Z)
 		} else {
-			instance.Chunk.SetBlockByIndex(index, BlockId(17), byte(0))
+			instance.Chunk.SetBlockByIndex(index, types.BlockId(17), byte(0))
 		}
 	}
 
@@ -69,15 +69,15 @@ func (aspect *SaplingAspect) makeTree(instance *BlockInstance) bool {
 		for x := treex - radius; x <= treex+radius; x++ {
 			for z := treez - radius; z <= treez+radius; z++ {
 				if y > treey || x != treex || z != treez {
-					loc.X = SubChunkCoord(x)
-					loc.Y = SubChunkCoord(y)
-					loc.Z = SubChunkCoord(z)
+					loc.X = types.SubChunkCoord(x)
+					loc.Y = types.SubChunkCoord(y)
+					loc.Z = types.SubChunkCoord(z)
 					index, ok := loc.BlockIndex()
 					if !ok {
 						// TODO: Can't place a block outside chunk boundaries
 						log.Printf("Couldn't place a leaf block (%v,%v,%v)", loc.X, loc.Y, loc.Z)
 					} else {
-						instance.Chunk.SetBlockByIndex(index, BlockId(18), byte(0))
+						instance.Chunk.SetBlockByIndex(index, types.BlockId(18), byte(0))
 					}
 				}
 			}

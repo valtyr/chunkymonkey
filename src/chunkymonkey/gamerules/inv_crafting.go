@@ -1,7 +1,7 @@
 package gamerules
 
 import (
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 const (
@@ -45,7 +45,7 @@ func NewWorkbenchInventory() *CraftingInventory {
 }
 
 // Click handles window clicks from a user with special handling for crafting.
-func (inv *CraftingInventory) Click(click *Click) (txState TxState) {
+func (inv *CraftingInventory) Click(click *Click) (txState types.TxState) {
 	if click.SlotId == 0 {
 		// Player may only *take* the *whole* stack from the output slot.
 		txState = inv.Inventory.TakeOnlyClick(click)
@@ -54,7 +54,7 @@ func (inv *CraftingInventory) Click(click *Click) (txState TxState) {
 		txState = inv.Inventory.Click(click)
 	}
 
-	if txState == TxStateRejected {
+	if txState == types.TxStateRejected {
 		return
 	}
 
@@ -63,7 +63,7 @@ func (inv *CraftingInventory) Click(click *Click) (txState TxState) {
 		// non-empty input slot.
 		for i := 1; i < len(inv.slots); i++ {
 			inv.slots[i].Decrement()
-			inv.slotUpdate(&inv.slots[i], SlotId(i))
+			inv.slotUpdate(&inv.slots[i], types.SlotId(i))
 		}
 	}
 

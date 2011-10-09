@@ -1,7 +1,7 @@
 package gamerules
 
 import (
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 func makeWorkbenchAspect() (aspect IBlockAspect) {
@@ -17,6 +17,6 @@ func createWorkbenchInventory(instance *BlockInstance) *blockInventory {
 		instance,
 		inv,
 		true,
-		InvTypeIdWorkbench,
+		types.InvTypeIdWorkbench,
 	)
 }

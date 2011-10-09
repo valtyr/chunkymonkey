@@ -1,21 +1,21 @@
 package gamerules
 
 import (
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 const (
-	MaxStackDefault = ItemCount(64)
+	MaxStackDefault = types.ItemCount(64)
 )
 
 type ToolTypeId byte
 
 type ItemType struct {
-	Id       ItemTypeId
+	Id       types.ItemTypeId
 	Name     string
-	MaxStack ItemCount
+	MaxStack types.ItemCount
 	ToolType ToolTypeId
-	ToolUses ItemData
+	ToolUses types.ItemData
 }
 
-type ItemTypeMap map[ItemTypeId]*ItemType
+type ItemTypeMap map[types.ItemTypeId]*ItemType

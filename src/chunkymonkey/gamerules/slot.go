@@ -5,16 +5,16 @@ import (
 	"os"
 
 	"chunkymonkey/proto"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
 // Represents an inventory slot, e.g in a player's inventory, their cursor, a
 // chest.
 type Slot struct {
-	ItemTypeId ItemTypeId
-	Count      ItemCount
-	Data       ItemData
+	ItemTypeId types.ItemTypeId
+	Count      types.ItemCount
+	Data       types.ItemData
 }
 
 func (s *Slot) Clear() {
@@ -46,7 +46,7 @@ func (s *Slot) IsCompatible(other *Slot) bool {
 // MaxStack returns the maximum number of items that can be held in the slot
 // for its current item type. It returns 0 for unknown items or MaxStackDefault
 // for empty slots.
-func (s *Slot) MaxStack() ItemCount {
+func (s *Slot) MaxStack() types.ItemCount {
 	if s.IsEmpty() {
 		return MaxStackDefault
 	}
@@ -78,7 +78,7 @@ func (s *Slot) ItemType() (itemType *ItemType) {
 	return
 }
 
-func (s *Slot) Attr() (ItemTypeId, ItemCount, ItemData) {
+func (s *Slot) Attr() (types.ItemTypeId, types.ItemCount, types.ItemData) {
 	return s.ItemTypeId, s.Count, s.Data
 }
 
@@ -94,15 +94,15 @@ func (s *Slot) SetWindowSlot(windowSlot *proto.WindowSlot) {
 
 }
 
-func (s *Slot) SendUpdate(writer io.Writer, windowId WindowId, slotId SlotId) os.Error {
+func (s *Slot) SendUpdate(writer io.Writer, windowId types.WindowId, slotId types.SlotId) os.Error {
 	return proto.WriteWindowSetSlot(writer, windowId, slotId, s.ItemTypeId, s.Count, s.Data)
 }
 
-func (s *Slot) SendEquipmentUpdate(writer io.Writer, entityId EntityId, slotId SlotId) os.Error {
+func (s *Slot) SendEquipmentUpdate(writer io.Writer, entityId types.EntityId, slotId types.SlotId) os.Error {
 	return proto.WriteEntityEquipment(writer, entityId, slotId, s.ItemTypeId, s.Data)
 }
 
-func (s *Slot) setCount(count ItemCount) {
+func (s *Slot) setCount(count types.ItemCount) {
 	s.Count = count
 	if s.Count == 0 {
 		s.ItemTypeId = 0
@@ -268,9 +268,9 @@ func (s *Slot) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 		return os.NewError("Damage tag not Short")
 	}
 
-	s.ItemTypeId = ItemTypeId(idTag.Value)
-	s.Count = ItemCount(countTag.Value)
-	s.Data = ItemData(damageTag.Value)
+	s.ItemTypeId = types.ItemTypeId(idTag.Value)
+	s.Count = types.ItemCount(countTag.Value)
+	s.Data = types.ItemData(damageTag.Value)
 
 	return
 }

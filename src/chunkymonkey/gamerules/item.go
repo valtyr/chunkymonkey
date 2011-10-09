@@ -6,23 +6,23 @@ import (
 
 	"chunkymonkey/physics"
 	"chunkymonkey/proto"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
 type Item struct {
-	EntityId
+	types.EntityId
 	Slot
 	physics.PointObject
-	orientation    OrientationBytes
-	PickupImmunity Ticks
+	orientation    types.OrientationBytes
+	PickupImmunity types.Ticks
 }
 
 func NewBlankItem() INonPlayerEntity {
 	return new(Item)
 }
 
-func NewItem(itemTypeId ItemTypeId, count ItemCount, data ItemData, position *AbsXyz, velocity *AbsVelocity, pickupImmunity Ticks) (item *Item) {
+func NewItem(itemTypeId types.ItemTypeId, count types.ItemCount, data types.ItemData, position *types.AbsXyz, velocity *types.AbsVelocity, pickupImmunity types.Ticks) (item *Item) {
 	item = &Item{
 		Slot: Slot{
 			ItemTypeId: itemTypeId,
@@ -54,9 +54,9 @@ func (item *Item) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 	}
 
 	item.Slot = Slot{
-		ItemTypeId: ItemTypeId(id.Value),
-		Count:      ItemCount(count.Value),
-		Data:       ItemData(data.Value),
+		ItemTypeId: types.ItemTypeId(id.Value),
+		Count:      types.ItemCount(count.Value),
+		Data:       types.ItemData(data.Value),
 	}
 
 	return nil
@@ -100,7 +100,7 @@ func (item *Item) SendUpdate(writer io.Writer) (err os.Error) {
 		return
 	}
 
-	err = item.PointObject.SendUpdate(writer, item.EntityId, &LookBytes{0, 0})
+	err = item.PointObject.SendUpdate(writer, item.EntityId, &types.LookBytes{0, 0})
 
 	return
 }

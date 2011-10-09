@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 func LoadItemDefs(reader io.Reader) (items ItemTypeMap, err os.Error) {
@@ -24,9 +24,9 @@ func LoadItemDefs(reader io.Reader) (items ItemTypeMap, err os.Error) {
 			return
 		}
 
-		item.Id = ItemTypeId(id)
+		item.Id = types.ItemTypeId(id)
 
-		items[ItemTypeId(id)] = itemsStr[idStr]
+		items[types.ItemTypeId(id)] = itemsStr[idStr]
 	}
 
 	return

@@ -1,7 +1,7 @@
 package gamerules
 
 import (
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 func makeDispenserAspect() (aspect IBlockAspect) {
@@ -20,7 +20,7 @@ func createDispenserInventory(instance *BlockInstance) *blockInventory {
 		instance,
 		NewDispenserInventory(),
 		false,
-		InvTypeIdDispenser,
+		types.InvTypeIdDispenser,
 	)
 }
 

@@ -1,7 +1,7 @@
 package gamerules
 
 import (
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 func makeChestAspect() (aspect IBlockAspect) {
@@ -22,6 +22,6 @@ func createChestInventory(instance *BlockInstance) *blockInventory {
 		instance,
 		NewChestInventory(),
 		false,
-		InvTypeIdChest,
+		types.InvTypeIdChest,
 	)
 }

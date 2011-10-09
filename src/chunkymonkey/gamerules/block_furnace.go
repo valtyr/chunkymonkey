@@ -1,7 +1,7 @@
 package gamerules
 
 import (
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 func makeFurnaceAspect() IBlockAspect {
@@ -15,8 +15,8 @@ func makeFurnaceAspect() IBlockAspect {
 
 type FurnaceAspect struct {
 	InventoryAspect
-	Inactive BlockId
-	Active   BlockId
+	Inactive types.BlockId
+	Active   types.BlockId
 }
 
 // Creates a new tile entity for a furnace. UnmarshalNbt and SetChunk must be
@@ -30,7 +30,7 @@ func createFurnaceInventory(instance *BlockInstance) *blockInventory {
 		instance,
 		NewFurnaceInventory(),
 		false,
-		InvTypeIdFurnace,
+		types.InvTypeIdFurnace,
 	)
 }
 
@@ -84,7 +84,7 @@ func (aspect *FurnaceAspect) updateBlock(instance *BlockInstance, blockInv *bloc
 	priorState := aspect.blockAttrs.id == aspect.Active
 
 	if priorState != currentState {
-		var newBlockId BlockId
+		var newBlockId types.BlockId
 		if currentState {
 			newBlockId = aspect.Active
 			instance.Chunk.AddActiveBlockIndex(instance.Index)

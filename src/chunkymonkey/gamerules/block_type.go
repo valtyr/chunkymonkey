@@ -1,11 +1,11 @@
 package gamerules
 
 import (
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 type BlockAttrs struct {
-	id           BlockId
+	id           types.BlockId
 	Name         string
 	Opacity      int8
 	defined      bool
@@ -26,7 +26,7 @@ type BlockTypeList []BlockType
 
 // Get returns the requested BlockType by ID. ok = false if the block type does
 // not exist.
-func (btl *BlockTypeList) Get(id BlockId) (block *BlockType, ok bool) {
+func (btl *BlockTypeList) Get(id types.BlockId) (block *BlockType, ok bool) {
 	if id < 0 || int(id) > len(*btl) {
 		ok = false
 		return
@@ -44,7 +44,7 @@ func (btl *BlockTypeList) CreateBlockItemTypes(itemTypes ItemTypeMap) {
 		if !blockType.defined {
 			continue
 		}
-		if itemType, exists := itemTypes[ItemTypeId(id)]; exists {
+		if itemType, exists := itemTypes[types.ItemTypeId(id)]; exists {
 			if len(itemType.Name) == 0 {
 				itemType.Name = blockType.Name
 			}
@@ -54,8 +54,8 @@ func (btl *BlockTypeList) CreateBlockItemTypes(itemTypes ItemTypeMap) {
 			continue
 		}
 
-		itemTypes[ItemTypeId(id)] = &ItemType{
-			Id:       ItemTypeId(id),
+		itemTypes[types.ItemTypeId(id)] = &ItemType{
+			Id:       types.ItemTypeId(id),
 			Name:     blockType.Name,
 			MaxStack: MaxStackDefault,
 		}

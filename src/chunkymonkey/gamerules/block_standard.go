@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 )
 
 func makeStandardAspect() (aspect IBlockAspect) {
@@ -18,7 +18,7 @@ type StandardAspect struct {
 	blockAttrs *BlockAttrs
 	// Items, up to one of which will potentially spawn when block destroyed.
 	DroppedItems []blockDropItem
-	BreakOn      DigStatus
+	BreakOn      types.DigStatus
 }
 
 func (aspect *StandardAspect) setAttrs(blockAttrs *BlockAttrs) {
@@ -38,7 +38,7 @@ func (aspect *StandardAspect) Check() os.Error {
 	return nil
 }
 
-func (aspect *StandardAspect) Hit(instance *BlockInstance, player IPlayerClient, digStatus DigStatus) (destroyed bool) {
+func (aspect *StandardAspect) Hit(instance *BlockInstance, player IPlayerClient, digStatus types.DigStatus) (destroyed bool) {
 	if aspect.BreakOn != digStatus {
 		return
 	}

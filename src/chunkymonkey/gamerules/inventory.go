@@ -4,38 +4,38 @@ import (
 	"os"
 
 	"chunkymonkey/proto"
-	. "chunkymonkey/types"
+	"chunkymonkey/types"
 	"nbt"
 )
 
 type IInventorySubscriber interface {
 	// SlotUpdate is called when a slot inside the inventory changes its
 	// contents.
-	SlotUpdate(slot *Slot, slotId SlotId)
+	SlotUpdate(slot *Slot, slotId types.SlotId)
 
 	// ProgressUpdate is called when a progress bar inside the inventory changes.
-	ProgressUpdate(prgBarId PrgBarId, value PrgBarValue)
+	ProgressUpdate(prgBarId types.PrgBarId, value types.PrgBarValue)
 }
 
 // IInventory is the general interface provided by inventory implementations.
 type IInventory interface {
-	NumSlots() SlotId
-	Click(click *Click) (txState TxState)
+	NumSlots() types.SlotId
+	Click(click *Click) (txState types.TxState)
 	SetSubscriber(subscriber IInventorySubscriber)
 	MakeProtoSlots() []proto.WindowSlot
 	WriteProtoSlots(slots []proto.WindowSlot)
 	TakeAllItems() (items []Slot)
 	UnmarshalNbt(tag *nbt.Compound) (err os.Error)
 	MarshalNbt(tag *nbt.Compound) (err os.Error)
-	SlotUnmarshalNbt(tag *nbt.Compound, slotId SlotId) (err os.Error)
+	SlotUnmarshalNbt(tag *nbt.Compound, slotId types.SlotId) (err os.Error)
 }
 
 type Click struct {
-	SlotId       SlotId
+	SlotId       types.SlotId
 	Cursor       Slot
 	RightClick   bool
 	ShiftClick   bool
-	TxId         TxId
+	TxId         types.TxId
 	ExpectedSlot Slot
 }
 
@@ -51,8 +51,8 @@ func (inv *Inventory) Init(size int) {
 	inv.slots = make([]Slot, size)
 }
 
-func (inv *Inventory) NumSlots() SlotId {
-	return SlotId(len(inv.slots))
+func (inv *Inventory) NumSlots() types.SlotId {
+	return types.SlotId(len(inv.slots))
 }
 
 func (inv *Inventory) SetSubscriber(subscriber IInventorySubscriber) {
@@ -61,15 +61,15 @@ func (inv *Inventory) SetSubscriber(subscriber IInventorySubscriber) {
 
 // Click takes the default actions upon a click event from a player. The Cursor
 // attribute of click may be modified to represent the cursors new contents.
-func (inv *Inventory) Click(click *Click) TxState {
+func (inv *Inventory) Click(click *Click) types.TxState {
 	if click.SlotId < 0 || int(click.SlotId) > len(inv.slots) {
-		return TxStateRejected
+		return types.TxStateRejected
 	}
 
 	clickedSlot := &inv.slots[click.SlotId]
 
 	if !click.ExpectedSlot.Equals(clickedSlot) {
-		return TxStateRejected
+		return types.TxStateRejected
 	}
 
 	// Apply the change.
@@ -97,22 +97,22 @@ func (inv *Inventory) Click(click *Click) TxState {
 	// the client's idea.
 	inv.slotUpdate(clickedSlot, click.SlotId)
 
-	return TxStateAccepted
+	return types.TxStateAccepted
 }
 
 // TakeOnlyClick is similar to Click, but only allows items to be taken from
 // the slot, and it only allows the *whole* stack to be taken, otherwise no
 // items are taken at all. This is intended for use by crafting/furnace output
 // slots.
-func (inv *Inventory) TakeOnlyClick(click *Click) TxState {
+func (inv *Inventory) TakeOnlyClick(click *Click) types.TxState {
 	if click.SlotId < 0 || int(click.SlotId) > len(inv.slots) {
-		return TxStateRejected
+		return types.TxStateRejected
 	}
 
 	clickedSlot := &inv.slots[click.SlotId]
 
 	if !click.ExpectedSlot.Equals(clickedSlot) {
-		return TxStateRejected
+		return types.TxStateRejected
 	}
 
 	// Apply the change.
@@ -122,14 +122,14 @@ func (inv *Inventory) TakeOnlyClick(click *Click) TxState {
 	// the client's idea.
 	inv.slotUpdate(clickedSlot, click.SlotId)
 
-	return TxStateAccepted
+	return types.TxStateAccepted
 }
 
-func (inv *Inventory) Slot(slotId SlotId) Slot {
+func (inv *Inventory) Slot(slotId types.SlotId) Slot {
 	return inv.slots[slotId]
 }
 
-func (inv *Inventory) TakeOneItem(slotId SlotId, into *Slot) {
+func (inv *Inventory) TakeOneItem(slotId types.SlotId, into *Slot) {
 	slot := &inv.slots[slotId]
 	if into.AddOne(slot) {
 		inv.slotUpdate(slot, slotId)
@@ -148,7 +148,7 @@ func (inv *Inventory) PutItem(item *Slot) {
 		}
 		slot := &inv.slots[slotIndex]
 		if slot.Add(item) {
-			inv.slotUpdate(slot, SlotId(slotIndex))
+			inv.slotUpdate(slot, types.SlotId(slotIndex))
 		}
 	}
 }
@@ -204,7 +204,7 @@ func (inv *Inventory) TakeAllItems() (items []Slot) {
 			var taken Slot
 			taken.Swap(curSlot)
 			items = append(items, taken)
-			inv.slotUpdate(curSlot, SlotId(i))
+			inv.slotUpdate(curSlot, types.SlotId(i))
 		}
 	}
 
@@ -212,7 +212,7 @@ func (inv *Inventory) TakeAllItems() (items []Slot) {
 }
 
 // Send message about the slot change to the relevant places.
-func (inv *Inventory) slotUpdate(slot *Slot, slotId SlotId) {
+func (inv *Inventory) slotUpdate(slot *Slot, slotId types.SlotId) {
 	if inv.subscriber != nil {
 		inv.subscriber.SlotUpdate(slot, slotId)
 	}
@@ -234,7 +234,7 @@ func (inv *Inventory) UnmarshalNbt(tag *nbt.Compound) (err os.Error) {
 		if slotIdTag, ok = slotTag.Lookup("Slot").(*nbt.Byte); !ok {
 			return os.NewError("Slot ID not a byte")
 		}
-		slotId := SlotId(slotIdTag.Value)
+		slotId := types.SlotId(slotIdTag.Value)
 
 		if err = inv.SlotUnmarshalNbt(slotTag, slotId); err != nil {
 			return
@@ -270,7 +270,7 @@ func (inv *Inventory) MarshalNbt(tag *nbt.Compound) (err os.Error) {
 	return nil
 }
 
-func (inv *Inventory) SlotUnmarshalNbt(tag *nbt.Compound, slotId SlotId) (err os.Error) {
+func (inv *Inventory) SlotUnmarshalNbt(tag *nbt.Compound, slotId types.SlotId) (err os.Error) {
 	if slotId < 0 || int(slotId) >= len(inv.slots) {
 		return os.NewError("Bad slot ID")
 	}
